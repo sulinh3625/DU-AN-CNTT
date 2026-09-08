@@ -1,10 +1,13 @@
 dataset:
-  name: dataco
-  raw_path: data/raw/dataco/DataCoSupplyChainDataset.csv
-  encoding: latin1
+  name: hm
+  raw_path: data/raw/hm/transactions_train.csv
+  encoding: utf-8
   k_core: 5
   audit_k_values: [3, 5, 10]
   min_interactions_for_loo: 3
+  nrows: 500000
+  start_date: null
+  end_date: null
 
 feedback:
   mode: binary
@@ -17,16 +20,16 @@ model:
   pretrain_alpha: 0.5
 
 training:
-  batch_size: 256
+  batch_size: 512
   negative_ratio: 4
   pretrain_optimizer: adam
   pretrain_lr: 0.001
   finetune_optimizer: sgd
   finetune_lr: 0.01
   weight_decay: 0.000001
-  max_epochs_pretrain: 50
-  max_epochs_finetune: 50
-  patience: 10
+  max_epochs_pretrain: 20
+  max_epochs_finetune: 20
+  patience: 7
   monitor: NDCG@10
   device: auto
   seed: 42
@@ -40,10 +43,10 @@ evaluation:
   head_fraction: 0.10
 
 baselines:
-  enabled: [random, popularity, itemknn, bpr]
+  enabled: [random, popularity, bpr]
   bpr:
     embedding_dim: 32
-    epochs: 30
+    epochs: 20
     lr: 0.03
     reg: 0.005
 

@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import numpy as np
+from tqdm import tqdm
 
 from src.data.negative_sampling import available_negatives
 
@@ -70,7 +71,16 @@ class BPRMFBaseline:
             positives.setdefault(int(u), set()).add(int(i))
         neg_pool = {u: available_negatives(pos, self.n_items) for u, pos in positives.items()}
 
-        for _ in range(int(epochs)):
+        epoch_bar = tqdm(
+            range(int(epochs)),
+            desc="    [BPR-MF] Epochs",
+            unit="epoch",
+            ncols=90,
+            leave=True,
+        )
+
+        for ep in epoch_bar:
+            n_updates = 0
             for idx in rng.permutation(len(users)):
                 u, i = int(users[idx]), int(items[idx])
                 pool = neg_pool[u]
@@ -89,6 +99,10 @@ class BPRMFBaseline:
                 self.P[u] += lr * (grad_factor * (qi - qj) - reg * pu)
                 self.Q[i] += lr * (grad_factor * pu - reg * qi)
                 self.Q[j] += lr * (-grad_factor * pu - reg * qj)
+                n_updates += 1
+
+            epoch_bar.set_postfix_str(f"updates={n_updates:,}")
+        epoch_bar.close()
         return self
 
     def score(self, user: int, item: int) -> float:

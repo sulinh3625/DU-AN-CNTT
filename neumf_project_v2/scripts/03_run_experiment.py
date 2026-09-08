@@ -10,6 +10,7 @@ import sys
 import numpy as np
 import pandas as pd
 import torch
+from tqdm import tqdm
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(PROJECT_ROOT))
@@ -24,7 +25,7 @@ from src.evaluation.full_ranking import build_full_ranking_records, evaluate_tor
 from src.evaluation.sampled_ranking import build_sampled_ranking_records
 from src.evaluation.long_tail import define_head_items, split_records_head_tail
 from src.models.neumf import GMF, MLP, NeuMF
-from src.training.trainer import train_one_model, make_optimizer
+from src.training.trainer import train_one_model, make_optimizer, get_device
 from src.utils.seed import seed_everything
 from src.utils.io import ensure_dir, write_json
 
@@ -60,28 +61,49 @@ def build_eval_records(cfg, val_df, test_df, train_df, full_df, n_users, n_items
 
 
 def run(config_path: str, run_tag: str | None = None):
+    experiment_start = time.perf_counter()
     cfg, adapter = build_adapter(config_path)
     seed_everything(cfg.training.seed)
-    device = torch.device(cfg.training.device)
+
+    print("\n" + "═"*60)
+    print("  🧪 NeuMF EXPERIMENT")
+    print("═"*60)
+
+    # Auto-detect device
+    print("\n📱 Thiết bị:")
+    device = get_device(cfg.training.device)
+
     run_tag = run_tag or f"{cfg.dataset.name}_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
     run_dir = ensure_dir(cfg.output_root / "experiments" / run_tag)
     ckpt_dir = ensure_dir(cfg.output_root / "checkpoints" / run_tag)
+    print(f"\n📂 Output: {run_dir}")
 
     # 1) Data pipeline
+    print("\n" + "─"*60)
+    print("  📊 PHASE 1: Data Pipeline")
+    print("─"*60)
+    t0 = time.perf_counter()
+    print("  Loading raw events...")
     events = adapter.load_events()
+    print(f"  ✓ {len(events):,} raw events loaded")
+    print("  Building interactions (aggregate → k-core)...")
     data = build_interactions(events, cfg.dataset.k_core)
+    print(f"  ✓ {data.n_users:,} users | {data.n_items:,} items | {len(data.df):,} interactions")
+    print("  Splitting (temporal Leave-One-Out)...")
     train_df, val_df, test_df = temporal_leave_one_out(data.df, cfg.dataset.min_interactions_for_loo)
     assert_disjoint_splits(train_df, val_df, test_df)
     train_df, val_df, test_df, feedback_meta = apply_feedback_weights(
         train_df, val_df, test_df, cfg.feedback.mode, cfg.feedback.confidence_alpha
     )
-
+    print(f"  ✓ Train: {len(train_df):,} | Val: {len(val_df):,} | Test: {len(test_df):,}")
+    print("  Building evaluation records...")
     train_pos, val_records, test_records, sampled_test = build_eval_records(
         cfg, val_df, test_df, train_df, data.df, data.n_users, data.n_items
     )
     train_dataset = TrainDataset(
         train_df, data.n_items, train_pos, cfg.training.negative_ratio, seed=cfg.training.seed
     )
+    print(f"  ✓ Data pipeline hoàn thành ({time.perf_counter() - t0:.1f}s)")
 
     eval_kwargs = dict(
         k_values=cfg.evaluation.k_values,
@@ -98,6 +120,10 @@ def run(config_path: str, run_tag: str | None = None):
     train_meta = {}
     models = {}
     score_fns = {}
+
+    print("\n" + "─"*60)
+    print("  🧠 PHASE 2: Neural Models Training")
+    print("─"*60)
 
     # 2) Pretrain GMF
     gmf = GMF(data.n_users, data.n_items, cfg.model.embedding_dim).to(device)
@@ -152,19 +178,30 @@ def run(config_path: str, run_tag: str | None = None):
     torch.save(pretrained.state_dict(), ckpt_dir / "neumf_pretrained.pt")
 
     # 5) Classical baselines
+    print("\n" + "─"*60)
+    print("  📐 PHASE 3: Classical Baselines")
+    print("─"*60)
     enabled = {x.lower() for x in cfg.baselines.enabled}
     if "random" in enabled:
+        print("  → Random baseline...")
         random_bl = RandomBaseline(cfg.training.seed)
         score_fns["Random"] = random_bl.score
+        print("    ✓ Random baseline ready")
     if "popularity" in enabled:
+        print("  → MostPopular baseline...")
         pop_bl = MostPopularBaseline(train_df, data.n_items)
         score_fns["MostPopular"] = pop_bl.score
+        print("    ✓ MostPopular baseline ready")
     if "itemknn" in enabled:
+        print("  → ItemKNN baseline (computing similarity matrix)...")
         t0 = time.perf_counter()
         itemknn = ItemKNNBaseline(train_df, data.n_users, data.n_items)
-        train_meta["ItemKNN"] = {"train_time_s": time.perf_counter() - t0, "n_parameters": 0}
+        knn_time = time.perf_counter() - t0
+        train_meta["ItemKNN"] = {"train_time_s": knn_time, "n_parameters": 0}
         score_fns["ItemKNN"] = itemknn.score
+        print(f"    ✓ ItemKNN ready ({knn_time:.1f}s)")
     if "bpr" in enabled:
+        print(f"  → BPR-MF baseline ({cfg.baselines.bpr.epochs} epochs)...")
         bpr = BPRMFBaseline(
             data.n_users, data.n_items, cfg.baselines.bpr.embedding_dim, seed=cfg.training.seed
         )
@@ -176,31 +213,44 @@ def run(config_path: str, run_tag: str | None = None):
             reg=cfg.baselines.bpr.reg,
             seed=cfg.training.seed,
         )
+        bpr_time = time.perf_counter() - t0
         train_meta["BPR-MF"] = {
-            "train_time_s": time.perf_counter() - t0,
+            "train_time_s": bpr_time,
             "n_parameters": int(bpr.P.size + bpr.Q.size),
         }
         score_fns["BPR-MF"] = bpr.score
+        print(f"    ✓ BPR-MF ready ({bpr_time:.1f}s)")
 
     # 6) Evaluate primary + sampled reproduction protocol
-    for name, model in models.items():
-        results_primary[name] = eval_torch(model, test_records)
-        results_sampled[name] = evaluate_torch_model(model, sampled_test, **eval_kwargs)
-    for name, fn in score_fns.items():
-        results_primary[name] = evaluate_score_function(
-            fn, test_records, cfg.evaluation.k_values,
-            tie_seed=cfg.evaluation.tie_break_seed,
-            include_redundant=cfg.evaluation.include_redundant_metrics,
-        )
-        results_sampled[name] = evaluate_score_function(
-            fn, sampled_test, cfg.evaluation.k_values,
-            tie_seed=cfg.evaluation.tie_break_seed,
-            include_redundant=cfg.evaluation.include_redundant_metrics,
-        )
+    print("\n" + "─"*60)
+    print("  📈 PHASE 4: Evaluation")
+    print("─"*60)
+    all_eval_items = list(models.items()) + [(n, None) for n in score_fns]
+    eval_bar = tqdm(all_eval_items, desc="  Evaluating", unit="model", ncols=80)
+    for name, _ in eval_bar:
+        eval_bar.set_postfix_str(name)
+        if name in models:
+            results_primary[name] = eval_torch(models[name], test_records)
+            results_sampled[name] = evaluate_torch_model(models[name], sampled_test, **eval_kwargs)
+        else:
+            fn = score_fns[name]
+            results_primary[name] = evaluate_score_function(
+                fn, test_records, cfg.evaluation.k_values,
+                tie_seed=cfg.evaluation.tie_break_seed,
+                include_redundant=cfg.evaluation.include_redundant_metrics,
+            )
+            results_sampled[name] = evaluate_score_function(
+                fn, sampled_test, cfg.evaluation.k_values,
+                tie_seed=cfg.evaluation.tie_break_seed,
+                include_redundant=cfg.evaluation.include_redundant_metrics,
+            )
+    eval_bar.close()
 
     # 7) Long-tail segmentation from TRAIN only
+    print("\n  📊 Long-tail evaluation...")
     head_items = define_head_items(train_df, data.n_items, cfg.evaluation.head_fraction)
     head_records, tail_records = split_records_head_tail(test_records, head_items)
+    print(f"    Head items: {len(head_items)} | Head test users: {len(head_records)} | Tail test users: {len(tail_records)}")
     results_tail = {}
     for name, model in models.items():
         results_tail[name] = eval_torch(model, tail_records) if tail_records else {}
@@ -242,8 +292,17 @@ def run(config_path: str, run_tag: str | None = None):
         "metadata": metadata,
     })
 
-    print(f"Run complete: {run_dir}")
+    total_time = time.perf_counter() - experiment_start
+    print("\n" + "═"*60)
+    print("  ✅ EXPERIMENT HOÀN THÀNH")
+    print("═"*60)
+    print(f"  ⏱ Tổng thời gian: {total_time:.1f}s ({total_time/60:.1f} phút)")
+    print(f"  📂 Kết quả: {run_dir}")
+    print(f"  💾 Checkpoints: {ckpt_dir}")
+    print("\n📋 KẾT QUẢ PRIMARY (Full-Ranking):")
     print(pd.DataFrame.from_dict(results_primary, orient="index").reindex(order).to_string())
+    print("\n📋 KẾT QUẢ SAMPLED (99 negatives):")
+    print(pd.DataFrame.from_dict(results_sampled, orient="index").reindex(order).to_string())
     return run_dir
 
 

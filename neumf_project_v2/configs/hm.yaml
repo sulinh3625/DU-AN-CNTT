@@ -31,7 +31,7 @@ training:
   max_epochs_finetune: 30
   patience: 7
   monitor: NDCG@10
-  device: cpu
+  device: auto
   seed: 42
 
 evaluation:
