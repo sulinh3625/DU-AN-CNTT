@@ -135,4 +135,3 @@ python scripts/04_multi_seed.py --config configs/dataco.yaml --seeds 42 2024 202
 
 Chỉ triển khai sau khi DataCo V2 đã pass audit và evaluator.
 
-Đặt `transactions_train.csv` vào `data/raw/hm/`. Không dùng bản Excel vì bị giới hạn số dòng.

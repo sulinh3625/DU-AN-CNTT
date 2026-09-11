@@ -5,7 +5,7 @@ dataset:
   k_core: 5
   audit_k_values: [3, 5, 10]
   min_interactions_for_loo: 3
-  nrows: 500000
+  nrows: 1000000
   start_date: null
   end_date: null
 

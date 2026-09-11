@@ -609,20 +609,16 @@ def plot_heatmap(primary_df, tail_df, beyond_df, fig_dir):
 # ──────────────────────────────────────────────────────────
 # Main
 # ──────────────────────────────────────────────────────────
-def main():
-    ap = argparse.ArgumentParser(description="Đánh giá mô hình NeuMF V2")
-    ap.add_argument("--run-tag", default=None, help="Tên run (mặc định: mới nhất)")
-    args = ap.parse_args()
-
+def run_evaluation(run_tag: str | None = None):
     experiments_dir = PROJECT_ROOT / "outputs" / "experiments"
-    run_tag = args.run_tag or find_latest_run(experiments_dir)
+    tag = run_tag or find_latest_run(experiments_dir)
 
     print("═" * 65)
     print("  📊 ĐÁNH GIÁ MÔ HÌNH — NeuMF Recommendation V2")
     print("═" * 65)
-    print(f"\n  Run tag : {run_tag}")
+    print(f"\n  Run tag : {tag}")
 
-    results, metadata, histories, run_dir = load_run(run_tag)
+    results, metadata, histories, run_dir = load_run(tag)
 
     # Beyond-accuracy
     beyond_df = compute_beyond_accuracy(results, metadata)
@@ -632,7 +628,7 @@ def main():
 
     # Tables
     print("\n📋 Sinh bảng kết quả...")
-    table_dir = PROJECT_ROOT / "outputs" / "tables" / run_tag
+    table_dir = PROJECT_ROOT / "outputs" / "tables" / tag
     primary_df, sampled_df, tail_df, train_df = generate_tables(
         results, metadata, beyond_df, table_dir
     )
@@ -640,7 +636,7 @@ def main():
 
     # Figures
     print("\n📈 Sinh biểu đồ...")
-    fig_dir = PROJECT_ROOT / "outputs" / "figures" / run_tag
+    fig_dir = PROJECT_ROOT / "outputs" / "figures" / tag
     fig_dir.mkdir(parents=True, exist_ok=True)
 
     if histories:
@@ -662,7 +658,16 @@ def main():
     print("═" * 65)
     print(f"  📋 Bảng:    {table_dir}")
     print(f"  📈 Biểu đồ: {fig_dir}\n")
+    return table_dir, fig_dir
+
+
+def main():
+    ap = argparse.ArgumentParser(description="Đánh giá mô hình NeuMF V2")
+    ap.add_argument("--run-tag", default=None, help="Tên run (mặc định: mới nhất)")
+    args = ap.parse_args()
+    run_evaluation(args.run_tag)
 
 
 if __name__ == "__main__":
     main()
+
