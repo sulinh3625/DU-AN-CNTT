@@ -51,6 +51,9 @@ class TrainingConfig:
     monitor: str = "NDCG@10"
     device: str = "cpu"
     seed: int = 42
+    # EarlyFusionModel dùng cùng optimizer/LR/budget với NeuMF-Scratch
+    # (finetune_*) để ablation Early vs Late fusion công bằng.
+    train_early_fusion: bool = True
 
 
 @dataclass

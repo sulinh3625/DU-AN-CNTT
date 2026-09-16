@@ -28,10 +28,25 @@ class MostPopularBaseline:
 
 
 class ItemKNNBaseline:
-    """Item-based CF cosine. Chỉ nên dùng khi catalog đủ nhỏ (DataCo)."""
+    """Item-based CF cosine. Chỉ nên dùng khi catalog đủ nhỏ (DataCo).
+
+    Similarity matrix là DENSE n_items x n_items (self.sim.toarray()) — với
+    catalog lớn (VD H&M, hàng chục nghìn item) việc này cấp phát bộ nhớ
+    O(n_items^2), có thể vượt RAM. ITEMKNN_MAX_ITEMS chặn cứng trường hợp
+    này thay vì để nó âm thầm treo máy.
+    """
+
+    ITEMKNN_MAX_ITEMS = 5000
 
     def __init__(self, train_df, n_users: int, n_items: int):
         from scipy.sparse import csr_matrix
+
+        if n_items > self.ITEMKNN_MAX_ITEMS:
+            raise ValueError(
+                f"ItemKNNBaseline dùng dense similarity O(n_items^2); "
+                f"n_items={n_items:,} vượt ngưỡng an toàn {self.ITEMKNN_MAX_ITEMS:,}. "
+                f"Dùng trên catalog nhỏ (VD DataCo) hoặc cài bản sparse top-N trước khi chạy trên catalog lớn."
+            )
 
         rows = train_df["user"].to_numpy(dtype=np.int64)
         cols = train_df["item"].to_numpy(dtype=np.int64)
@@ -56,6 +71,10 @@ class ItemKNNBaseline:
 
 
 class BPRMFBaseline:
+    # Clip trước sigmoid để tránh overflow của np.exp(); 35 đủ lớn để
+    # sigmoid(-35) ~ 0 về mặt số học, không ảnh hưởng gradient thực tế.
+    SIGMOID_CLIP = 35.0
+
     def __init__(self, n_users: int, n_items: int, embedding_dim: int = 32, seed: int = 42):
         rng = np.random.default_rng(seed)
         self.P = rng.normal(0, 0.01, size=(n_users, embedding_dim)).astype(np.float64)
@@ -93,7 +112,7 @@ class BPRMFBaseline:
                 qj = self.Q[j].copy()
                 x = float(pu @ (qi - qj))
                 # sigmoid(-x), stable enough with clipping.
-                x = np.clip(x, -35.0, 35.0)
+                x = np.clip(x, -self.SIGMOID_CLIP, self.SIGMOID_CLIP)
                 grad_factor = 1.0 / (1.0 + np.exp(x))
 
                 self.P[u] += lr * (grad_factor * (qi - qj) - reg * pu)

@@ -51,3 +51,57 @@ def test_sampled_candidates_do_not_duplicate_positive():
     rec = build_sampled_ranking_records(eval_df, n_items=6, all_positive_sets=all_pos, n_negatives=3, seed=1)[0]
     assert list(rec.candidates).count(2) == 1
     assert not ({0, 1} & set(rec.candidates))
+
+
+# ─────────────────────────────────────────────────────────
+# Beyond-accuracy metrics tests
+# ─────────────────────────────────────────────────────────
+from src.evaluation.beyond_accuracy import (
+    catalog_coverage, average_recommendation_popularity,
+    head_recommendation_rate, novelty_score,
+)
+
+
+def test_catalog_coverage_full():
+    recs = {0: [0, 1], 1: [1, 2], 2: [2, 3]}
+    assert catalog_coverage(recs, n_items=4) == 1.0
+
+
+def test_catalog_coverage_partial():
+    recs = {0: [0], 1: [0]}  # chỉ item 0
+    assert catalog_coverage(recs, n_items=4) == 0.25
+
+
+def test_catalog_coverage_empty():
+    assert catalog_coverage({}, n_items=10) == 0.0
+
+
+def test_arp_most_popular_higher():
+    # item 0 xuất hiện 100 lần, item 1 xuất hiện 1 lần
+    pop_recs = {0: [0, 0]}        # recommend popular
+    tail_recs = {0: [1, 1]}       # recommend tail
+    counts = {0: 100, 1: 1}
+    assert average_recommendation_popularity(pop_recs, counts) > \
+           average_recommendation_popularity(tail_recs, counts)
+
+
+def test_head_rec_rate_all_head():
+    head = {0, 1}
+    recs = {0: [0, 1], 1: [0, 1]}
+    assert head_recommendation_rate(recs, head) == 1.0
+
+
+def test_head_rec_rate_no_head():
+    head = {0, 1}
+    recs = {0: [2, 3], 1: [4, 5]}
+    assert head_recommendation_rate(recs, head) == 0.0
+
+
+def test_novelty_popular_lower():
+    # item 0 rất phổ biến → novelty thấp; item 99 hiếm → novelty cao
+    counts = {0: 1000, 99: 1}
+    n_train = 1001
+    pop_recs = {0: [0]}
+    rare_recs = {0: [99]}
+    assert novelty_score(pop_recs, counts, n_train) < novelty_score(rare_recs, counts, n_train)
+

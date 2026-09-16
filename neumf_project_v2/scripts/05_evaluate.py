@@ -68,19 +68,21 @@ MODEL_COLORS = {
     "BPR-MF":           "#2980b9",
     "GMF":              "#8e44ad",
     "MLP":              "#c0392b",
+    "EarlyFusion":      "#1abc9c",
     "NeuMF-Scratch":    "#16a085",
     "NeuMF-Pretrained": "#d4ac0d",
 }
 MODEL_MARKERS = {
     "Random": "x", "MostPopular": "s", "ItemKNN": "D",
     "BPR-MF": "^", "GMF": "o", "MLP": "v",
+    "EarlyFusion": "h",
     "NeuMF-Scratch": "*", "NeuMF-Pretrained": "P",
 }
 METHOD_ORDER = [
     "Random", "MostPopular", "ItemKNN", "BPR-MF",
-    "GMF", "MLP", "NeuMF-Scratch", "NeuMF-Pretrained",
+    "GMF", "MLP", "EarlyFusion", "NeuMF-Scratch", "NeuMF-Pretrained",
 ]
-NEURAL_MODELS = ["GMF", "MLP", "NeuMF-Scratch", "NeuMF-Pretrained"]
+NEURAL_MODELS = ["GMF", "MLP", "EarlyFusion", "NeuMF-Scratch", "NeuMF-Pretrained"]
 K_SENSITIVITY = [1, 3, 5, 10, 20]
 
 
@@ -105,7 +107,7 @@ def load_run(run_tag: str):
         metadata = json.load(f)
     histories = {}
     for name in NEURAL_MODELS:
-        fname = f"history_{name.lower().replace('-', '_')}.csv"
+        fname = f"history_{name.lower().replace('-', '_').replace(' ', '_')}.csv"
         p = run_dir / fname
         if p.exists():
             histories[name] = pd.read_csv(p)
@@ -123,119 +125,85 @@ def _savefig(fig, path: Path, name: str):
     print(f"  ✓ {name}")
 
 
-# ──────────────────────────────────────────────────────────
-# Beyond-accuracy metrics (tính từ results.json nếu có
-# hoặc ước tính từ long_tail data)
-# ──────────────────────────────────────────────────────────
+# ────────────────────────────────────────────────────────
+# Beyond-accuracy metrics — lấy từ results['beyond_accuracy'] đã lưu
+# (03_run_experiment.py lưu catalog_coverage và avg_rec_popularity thực)
+# ────────────────────────────────────────────────────────
 def compute_beyond_accuracy(results: dict, metadata: dict) -> pd.DataFrame:
-    """Tính coverage, ARP proxy, head-rate, novelty từ dữ liệu sẵn có."""
-    n_items = metadata.get("n_items", 1)
-    n_head = metadata.get("n_head_items", 1)
-    train_info = metadata.get("training", {})
+    """Lấy beyond-accuracy metrics đã được tính thực từ actual Top-K recommendations.
 
-    # Head recommendation rate: dùng head/tail split đã có
-    # head_test_users = số user có test item thuộc head
-    n_head_users = metadata.get("n_head_test_users", 0)
-    n_tail_users = metadata.get("n_long_tail_test_users", 0)
-    n_test = metadata.get("test", 1)
+    Nếu run cũ chưa có 'beyond_accuracy' trong results.json (trước khi sửa
+    03_run_experiment.py), hàm này trả về DataFrame rỗng và in cảnh báo.
+    """
+    beyond_data = results.get("beyond_accuracy", {})
+    n_items = metadata.get("n_items", 1)
+
+    if not beyond_data:
+        print(
+            "  ⚠️  'beyond_accuracy' không có trong results.json.\n"
+            "      Chạy lại 03_run_experiment.py để tính giá trị thực."
+        )
+        return pd.DataFrame()
 
     rows = []
     for name in METHOD_ORDER:
-        if name not in results.get("primary", {}):
+        if name not in beyond_data:
             continue
-
-        # HR@10 overall vs long-tail → ước tính head-rate từ ratio
-        overall = results["primary"][name]
-        tail_res = results.get("long_tail", {}).get(name, {})
-
-        hr10 = overall.get("HR@10", 0)
-        tail_hr10 = tail_res.get("HR@10", 0)
-
-        # Head Recommendation Rate (HRR): xác suất recommend head item
-        # Với MostPopular → cao; Random → n_head/n_items
-        if name == "Random":
-            hrr = n_head / n_items
-        elif name == "MostPopular":
-            hrr = min(0.99, n_head / max(n_items * 0.05, 1))
-        else:
-            # Ước tính từ hiệu suất: model giỏi overall nhưng kém tail → bias về head
-            if n_test > 0:
-                hrr = (hr10 * n_test - tail_hr10 * n_tail_users) / max(n_head_users, 1)
-                hrr = float(np.clip(hrr, 0.0, 1.0))
-            else:
-                hrr = 0.5
-
-        # Coverage@10: phần trăm catalog được recommend
-        # Ước tính: Random = 100%, MostPopular = thấp, Neural = trung bình
-        if name == "Random":
-            coverage = 1.0
-        elif name == "MostPopular":
-            coverage = min(10 / n_items, 1.0)
-        elif name in NEURAL_MODELS:
-            ndcg10 = overall.get("NDCG@10", 0)
-            coverage = float(np.clip(0.3 + ndcg10 * 0.5, 0.1, 0.95))
-        else:
-            coverage = float(np.clip(0.15 + hr10 * 0.3, 0.05, 0.80))
-
-        # Novelty@10: 1 - head_rate (proxy)
-        novelty = 1.0 - hrr
-
-        # ARP proxy: ít popular → arp thấp
-        if name == "MostPopular":
-            arp = 1.0
-        elif name == "Random":
-            arp = 0.5
-        else:
-            arp = float(np.clip(hrr * 0.8 + 0.1, 0.0, 1.0))
-
-        rows.append({
+        ba = beyond_data[name]
+        cov = ba.get("catalog_coverage", 0.0)
+        arp = ba.get("avg_rec_popularity", 0.0)
+        hrr = ba.get("head_rec_rate", None)
+        nov = ba.get("novelty", None)
+        # Normalize ARP theo số training interaction (để có thể so sánh giữa dataset)
+        n_train = metadata.get("train", 1)
+        arp_norm = arp / max(n_train, 1)  # giá trị tương đối, càng cao càng popular
+        row = {
             "Model": name,
-            "Coverage@10": round(coverage, 4),
-            "ARP (norm)": round(arp, 4),
-            "Head Rate@10": round(hrr, 4),
-            "Novelty@10": round(novelty, 4),
-        })
+            "Coverage@K": round(cov, 4),
+            "Avg Rec Popularity": round(arp, 2),
+            "ARP (norm ×100)": round(arp_norm * 100, 4),
+        }
+        if hrr is not None:
+            row["Head Rec Rate"] = round(hrr, 4)
+        if nov is not None:
+            row["Novelty"] = round(nov, 4)
+        rows.append(row)
 
+    if not rows:
+        return pd.DataFrame()
     return pd.DataFrame(rows).set_index("Model")
 
 
-# ──────────────────────────────────────────────────────────
-# K-sensitivity: interpolate từ K=5,10 đã có + estimate K=1,3,20
-# ──────────────────────────────────────────────────────────
+
+# ────────────────────────────────────────────────────────
+# K-sensitivity: chỉ dùng K values đã được evaluate thực, không ước tính
+# ────────────────────────────────────────────────────────
 def build_k_sensitivity(results: dict) -> dict[str, dict[str, list]]:
-    """Ước tính metrics theo K từ kết quả K=5 và K=10 đã có."""
+    """Xây dựng dữ liệu K-sensitivity từ các k_values đã tính thực trong results.
+
+    Chỉ dùng giá trị đã evaluate thực — không extrapolate hay estimate.
+    K_SENSITIVITY sẽ là tập các K thực sự có trong kết quả.
+    """
     primary = results.get("primary", {})
+    if not primary:
+        return {}
+
+    # Lấy danh sách k_values thực từ cột HR@K và NDCG@K
+    first_method = next(iter(primary.values()), {})
+    real_k_values = sorted(set(
+        int(key.split("@")[1])
+        for key in first_method
+        if "HR@" in key or "NDCG@" in key
+    ))
+
     sens = {}
     for name in METHOD_ORDER:
         if name not in primary:
             continue
         r = primary[name]
-        hr5  = r.get("HR@5",   0.0)
-        hr10 = r.get("HR@10",  0.0)
-        nd5  = r.get("NDCG@5", 0.0)
-        nd10 = r.get("NDCG@10",0.0)
-
-        # Interpolate/extrapolate các K khác
-        # K=1: rất thấp (~nd5 * 0.3), K=3: (~nd5 * 0.7), K=20: (~hr10 + nhỏ)
-        hr_vals  = []
-        ndcg_vals = []
-        for k in K_SENSITIVITY:
-            if k == 5:
-                hr_vals.append(hr5); ndcg_vals.append(nd5)
-            elif k == 10:
-                hr_vals.append(hr10); ndcg_vals.append(nd10)
-            elif k == 1:
-                # K=1: NDC@1 ~ NDCG@5 * 0.35
-                hr_vals.append(float(np.clip(hr5 * 0.35, 0, 1)))
-                ndcg_vals.append(float(np.clip(nd5 * 0.35, 0, 1)))
-            elif k == 3:
-                hr_vals.append(float(np.clip(hr5 * 0.75, 0, 1)))
-                ndcg_vals.append(float(np.clip(nd5 * 0.82, 0, 1)))
-            elif k == 20:
-                # K=20: HR tăng nhẹ, NDCG tăng ít
-                hr_vals.append(float(np.clip(hr10 * 1.04, 0, 1)))
-                ndcg_vals.append(float(np.clip(nd10 * 1.01, 0, 1)))
-        sens[name] = {"HR": hr_vals, "NDCG": ndcg_vals}
+        hr_vals = [r.get(f"HR@{k}", 0.0) for k in real_k_values]
+        ndcg_vals = [r.get(f"NDCG@{k}", 0.0) for k in real_k_values]
+        sens[name] = {"HR": hr_vals, "NDCG": ndcg_vals, "K": real_k_values}
     return sens
 
 
@@ -339,6 +307,13 @@ def _build_report(primary_df, sampled_df, tail_df, beyond_df, train_df, metadata
     if "GMF" in primary_df.index and "MLP" in primary_df.index:
         g = primary_df.loc["GMF","NDCG@10"]; m = primary_df.loc["MLP","NDCG@10"]
         L.append(f"  GMF vs MLP: {g:.4f} vs {m:.4f} → {'GMF' if g>m else 'MLP'} wins")
+    # Early Fusion vs Late Fusion (NeuMF)
+    if "EarlyFusion" in primary_df.index and "NeuMF-Scratch" in primary_df.index:
+        ef = primary_df.loc["EarlyFusion","NDCG@10"]
+        ns = primary_df.loc["NeuMF-Scratch","NDCG@10"]
+        winner = "Late Fusion (NeuMF-Scratch)" if ns >= ef else "Early Fusion"
+        diff = abs(ns - ef) / max(ef, 1e-9) * 100
+        L.append(f"  Early vs Late Fusion: EarlyFusion={ef:.4f} vs NeuMF-Scratch={ns:.4f} → {winner} wins (+{diff:.2f}%)")
     L += ["", sep]
     return "\n".join(L)
 
@@ -412,17 +387,24 @@ def plot_hr_bar(primary_df, fig_dir):
 
 
 def plot_k_sensitivity(sens, fig_dir):
-    # NDCG
     models_show = [m for m in METHOD_ORDER if m in sens and m != "Random"]
+    if not models_show:
+        print("  ⚠️  Không có dữ liệu K-sensitivity để vẽ.")
+        return
+
+    # Lấy K values thực từ data (không hardcode)
+    k_vals = sens[models_show[0]].get("K", [5, 10])
+
+    # NDCG
     fig, ax = plt.subplots(figsize=(11, 6))
     for name in models_show:
         c = MODEL_COLORS.get(name, "#555")
         mk = MODEL_MARKERS.get(name, "o")
-        ax.plot(K_SENSITIVITY, sens[name]["NDCG"], marker=mk, markersize=6,
+        ax.plot(k_vals, sens[name]["NDCG"], marker=mk, markersize=6,
                 label=name, color=c, linewidth=2)
     ax.set_xlabel("K"); ax.set_ylabel("NDCG@K")
-    ax.set_title("K-Sensitivity — NDCG@K")
-    ax.set_xticks(K_SENSITIVITY); ax.legend(loc="lower right")
+    ax.set_title("K-Sensitivity — NDCG@K (giá trị thực)")
+    ax.set_xticks(k_vals); ax.legend(loc="lower right")
     fig.tight_layout(); _savefig(fig, fig_dir, "05_k_sensitivity_ndcg.png")
 
     # HR
@@ -430,12 +412,13 @@ def plot_k_sensitivity(sens, fig_dir):
     for name in models_show:
         c = MODEL_COLORS.get(name, "#555")
         mk = MODEL_MARKERS.get(name, "o")
-        ax.plot(K_SENSITIVITY, sens[name]["HR"], marker=mk, markersize=6,
+        ax.plot(k_vals, sens[name]["HR"], marker=mk, markersize=6,
                 label=name, color=c, linewidth=2)
     ax.set_xlabel("K"); ax.set_ylabel("HR@K")
-    ax.set_title("K-Sensitivity — HR@K")
-    ax.set_xticks(K_SENSITIVITY); ax.legend(loc="lower right")
+    ax.set_title("K-Sensitivity — HR@K (giá trị thực)")
+    ax.set_xticks(k_vals); ax.legend(loc="lower right")
     fig.tight_layout(); _savefig(fig, fig_dir, "06_k_sensitivity_hr.png")
+
 
 
 def plot_long_tail(primary_df, tail_df, metadata, fig_dir):
@@ -473,21 +456,38 @@ def plot_long_tail(primary_df, tail_df, metadata, fig_dir):
 
 
 def plot_beyond_accuracy(beyond_df, fig_dir):
-    models = [m for m in METHOD_ORDER if m in beyond_df.index]
-    metrics = ["Coverage@10", "ARP (norm)", "Head Rate@10", "Novelty@10"]
-    df = beyond_df.loc[models, metrics]
+    if beyond_df.empty:
+        print("  ⚠️  Không có beyond-accuracy data để vẽ (cần chạy lại 03_run_experiment.py).")
+        return
 
-    x = np.arange(len(models)); w = 0.20
-    colors_m = ["#3498db","#e74c3c","#f39c12","#2ecc71"]
+    models = [m for m in METHOD_ORDER if m in beyond_df.index]
+    if not models:
+        return
+
+    # Chỉ lấy các metric có trong DataFrame thực (dynamic)
+    available_metrics = [c for c in beyond_df.columns if beyond_df.loc[models, c].notna().any()]
+    df = beyond_df.loc[models, available_metrics]
+
+    colors_m = ["#3498db", "#e74c3c", "#f39c12", "#2ecc71", "#8e44ad", "#1abc9c"]
+    x = np.arange(len(models))
+    w = max(0.12, 0.8 / max(len(available_metrics), 1))
 
     fig, ax = plt.subplots(figsize=(13, 6))
-    for i, (metric, col) in enumerate(zip(metrics, colors_m)):
-        bars = ax.bar(x + i*w, df[metric], w, label=metric, color=col, alpha=0.85)
-    ax.set_xticks(x + w*1.5)
+    for i, (metric, col) in enumerate(zip(available_metrics, colors_m)):
+        bars = ax.bar(x + i * w, df[metric], w, label=metric, color=col, alpha=0.85)
+        for bar, v in zip(bars, df[metric]):
+            if not np.isnan(v):
+                ax.text(bar.get_x() + bar.get_width() / 2, bar.get_height() + 0.005,
+                        f"{v:.3f}", ha="center", va="bottom", fontsize=7)
+    ax.set_xticks(x + w * (len(available_metrics) - 1) / 2)
     ax.set_xticklabels(models, rotation=30, ha="right")
-    ax.set_ylabel("Score"); ax.set_title("Beyond-Accuracy Metrics @K=10")
-    ax.legend(loc="upper right"); ax.set_ylim(0, 1.15)
-    fig.tight_layout(); _savefig(fig, fig_dir, "08_beyond_accuracy.png")
+    ax.set_ylabel("Score")
+    ax.set_title("Beyond-Accuracy Metrics (giá trị thực từ actual Top-K recommendations)")
+    ax.legend(loc="upper right")
+    ax.set_ylim(0, max(df.max().max() * 1.2, 1.0))
+    fig.tight_layout()
+    _savefig(fig, fig_dir, "08_beyond_accuracy.png")
+
 
 
 def plot_radar(primary_df, beyond_df, fig_dir):

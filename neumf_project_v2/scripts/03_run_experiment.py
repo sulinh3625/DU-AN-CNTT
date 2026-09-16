@@ -21,17 +21,22 @@ from src.data.dataset import TrainDataset
 from src.data.negative_sampling import build_user_positive_sets
 from src.data.preprocessing import build_interactions, apply_feedback_weights
 from src.data.splitting import temporal_leave_one_out, assert_disjoint_splits
+from src.evaluation.beyond_accuracy import (
+    catalog_coverage, average_recommendation_popularity,
+    head_recommendation_rate, novelty_score,
+)
 from src.evaluation.full_ranking import build_full_ranking_records, evaluate_torch_model, evaluate_score_function
 from src.evaluation.sampled_ranking import build_sampled_ranking_records
 from src.evaluation.long_tail import define_head_items, split_records_head_tail
 from src.models.neumf import GMF, MLP, NeuMF
+from src.models.early_fusion import EarlyFusionModel
 from src.training.trainer import train_one_model, make_optimizer, get_device
 from src.utils.seed import seed_everything
 from src.utils.io import ensure_dir, write_json
 
 METHOD_ORDER = [
     "Random", "MostPopular", "ItemKNN", "BPR-MF",
-    "GMF", "MLP", "NeuMF-Scratch", "NeuMF-Pretrained",
+    "GMF", "MLP", "EarlyFusion", "NeuMF-Scratch", "NeuMF-Pretrained",
 ]
 
 
@@ -151,6 +156,28 @@ def run(config_path: str, run_tag: str | None = None):
     pd.DataFrame(hist).to_csv(run_dir / "history_mlp.csv", index=False)
     torch.save(mlp.state_dict(), ckpt_dir / "mlp.pt")
 
+    # 3b) Early Fusion baseline — đối chứng trực tiếp với NeuMF (Late Fusion).
+    # Dùng cùng optimizer/LR/budget với NeuMF-Scratch (finetune_*) để so sánh
+    # công bằng: chỉ khác nhau ở chỗ kết hợp sớm (concat rồi 1 mạng chung)
+    # hay muộn (2 nhánh riêng rồi mới nối ở cuối).
+    if cfg.training.train_early_fusion:
+        early_fusion = EarlyFusionModel(
+            data.n_users, data.n_items, cfg.model.embedding_dim, cfg.model.mlp_layers, cfg.model.dropout
+        ).to(device)
+        opt = make_optimizer(
+            cfg.training.finetune_optimizer, early_fusion.parameters(),
+            cfg.training.finetune_lr, cfg.training.weight_decay
+        )
+        early_fusion, hist, meta = train_one_model(
+            early_fusion, train_dataset, val_records, eval_torch, opt, device,
+            cfg.training.max_epochs_finetune, cfg.training.patience, cfg.training.batch_size,
+            monitor=cfg.training.monitor, seed=cfg.training.seed + 55, model_name="EarlyFusion"
+        )
+        models["EarlyFusion"] = early_fusion
+        train_meta["EarlyFusion"] = meta
+        pd.DataFrame(hist).to_csv(run_dir / "history_early_fusion.csv", index=False)
+        torch.save(early_fusion.state_dict(), ckpt_dir / "early_fusion.pt")
+
     # 4) Controlled pretraining ablation: same optimizer/LR/budget for scratch & pretrained.
     scratch = NeuMF(data.n_users, data.n_items, cfg.model.embedding_dim, cfg.model.mlp_layers, cfg.model.dropout).to(device)
     opt = make_optimizer(cfg.training.finetune_optimizer, scratch.parameters(), cfg.training.finetune_lr, cfg.training.weight_decay)
@@ -225,20 +252,33 @@ def run(config_path: str, run_tag: str | None = None):
     print("\n" + "─"*60)
     print("  📈 PHASE 4: Evaluation")
     print("─"*60)
+
+    # Tính item popularity từ TRAIN để dùng cho ARP (Average Recommendation Popularity)
+    item_popularity = train_df["item"].value_counts().to_dict()
+
+    results_topk = {}  # Actual Top-K lists cho beyond-accuracy
+    max_k = max(cfg.evaluation.k_values)
+    eval_topk_kwargs = dict(**eval_kwargs, return_topk=True)
+
     all_eval_items = list(models.items()) + [(n, None) for n in score_fns]
     eval_bar = tqdm(all_eval_items, desc="  Evaluating", unit="model", ncols=80)
     for name, _ in eval_bar:
         eval_bar.set_postfix_str(name)
         if name in models:
-            results_primary[name] = eval_torch(models[name], test_records)
+            metrics, topk = evaluate_torch_model(models[name], test_records, **eval_topk_kwargs)
+            results_primary[name] = metrics
+            results_topk[name] = topk
             results_sampled[name] = evaluate_torch_model(models[name], sampled_test, **eval_kwargs)
         else:
             fn = score_fns[name]
-            results_primary[name] = evaluate_score_function(
+            metrics, topk = evaluate_score_function(
                 fn, test_records, cfg.evaluation.k_values,
                 tie_seed=cfg.evaluation.tie_break_seed,
                 include_redundant=cfg.evaluation.include_redundant_metrics,
+                return_topk=True,
             )
+            results_primary[name] = metrics
+            results_topk[name] = topk
             results_sampled[name] = evaluate_score_function(
                 fn, sampled_test, cfg.evaluation.k_values,
                 tie_seed=cfg.evaluation.tie_break_seed,
@@ -246,11 +286,33 @@ def run(config_path: str, run_tag: str | None = None):
             )
     eval_bar.close()
 
-    # 7) Long-tail segmentation from TRAIN only
+    # 7) Long-tail segmentation from TRAIN only (trước beyond-accuracy để có head_items)
     print("\n  📊 Long-tail evaluation...")
     head_items = define_head_items(train_df, data.n_items, cfg.evaluation.head_fraction)
     head_records, tail_records = split_records_head_tail(test_records, head_items)
     print(f"    Head items: {len(head_items)} | Head test users: {len(head_records)} | Tail test users: {len(tail_records)}")
+
+    # Tính beyond-accuracy metrics từ actual recommendations (sau khi có head_items)
+    print("  📊 Computing beyond-accuracy metrics (coverage, ARP, HRR, novelty)...")
+    n_train_interactions = int(len(train_df))
+    results_beyond = {}
+    for name, topk in results_topk.items():
+        if topk:
+            cov  = catalog_coverage(topk, data.n_items)
+            arp  = average_recommendation_popularity(topk, item_popularity)
+            hrr  = head_recommendation_rate(topk, head_items)
+            nov  = novelty_score(topk, item_popularity, n_train_interactions)
+            results_beyond[name] = {
+                "catalog_coverage": round(cov, 6),
+                "avg_rec_popularity": round(arp, 4),
+                "head_rec_rate": round(hrr, 6),
+                "novelty": round(nov, 6),
+            }
+        else:
+            results_beyond[name] = {
+                "catalog_coverage": 0.0, "avg_rec_popularity": 0.0,
+                "head_rec_rate": 0.0, "novelty": 0.0,
+            }
     results_tail = {}
     for name, model in models.items():
         results_tail[name] = eval_torch(model, tail_records) if tail_records else {}
@@ -289,6 +351,8 @@ def run(config_path: str, run_tag: str | None = None):
         "primary": results_primary,
         "sampled_99": results_sampled,
         "long_tail": results_tail,
+        "beyond_accuracy": results_beyond,
+        "item_popularity": {str(k): int(v) for k, v in item_popularity.items()},
         "metadata": metadata,
     })
 
