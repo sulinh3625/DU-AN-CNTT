@@ -569,14 +569,14 @@ def plot_heatmap(primary_df, tail_df, beyond_df, fig_dir):
     models = [m for m in METHOD_ORDER if m in primary_df.index and m != "Random"]
     cols_primary = ["HR@5","HR@10","NDCG@5","NDCG@10"]
     cols_tail    = ["NDCG@10"]
-    cols_beyond  = ["Coverage@10","Novelty@10"]
+    cols_beyond  = ["Coverage@K","Novelty"]
 
     parts = [primary_df.loc[models, cols_primary]]
     if not tail_df.empty and all(c in tail_df.columns for c in cols_tail):
         t = tail_df.loc[[m for m in models if m in tail_df.index], cols_tail].copy()
         t.columns = ["Tail NDCG@10"]
         parts.append(t)
-    if not beyond_df.empty:
+    if not beyond_df.empty and all(c in beyond_df.columns for c in cols_beyond):
         b = beyond_df.loc[[m for m in models if m in beyond_df.index], cols_beyond]
         parts.append(b)
 

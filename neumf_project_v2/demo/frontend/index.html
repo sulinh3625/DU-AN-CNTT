@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>NeuMF Recommendation Demo</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4/dist/chart.umd.min.js"></script>
+<style>
+  :root {
+    --surface: #fcfcfb;
+    --page: #f4f4f2;
+    --ink: #0b0b0b;
+    --ink-secondary: #52514e;
+    --ink-muted: #898781;
+    --border: #e1e0d9;
+    --accent: #2a78d6;
+    --accent-2: #eb6834;
+    --good: #0ca30c;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; background: var(--page); color: var(--ink);
+    font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+    padding: 0 16px 48px;
+  }
+  header {
+    max-width: 1080px; margin: 0 auto; padding: 28px 0 12px;
+  }
+  header h1 { font-size: 22px; margin: 0 0 4px; }
+  header p { color: var(--ink-secondary); margin: 0; font-size: 14px; }
+  .wrap { max-width: 1080px; margin: 0 auto; display: flex; flex-direction: column; gap: 20px; }
+  .card {
+    background: var(--surface); border: 1px solid var(--border); border-radius: 10px;
+    padding: 20px;
+  }
+  .card h2 { font-size: 15px; margin: 0 0 14px; color: var(--ink); }
+  .controls {
+    display: flex; flex-wrap: wrap; gap: 12px; align-items: end;
+  }
+  .field { display: flex; flex-direction: column; gap: 4px; min-width: 160px; }
+  .field label { font-size: 12px; color: var(--ink-muted); }
+  select, input, button {
+    font: inherit; padding: 8px 10px; border-radius: 6px; border: 1px solid var(--border);
+    background: #fff; color: var(--ink);
+  }
+  button {
+    background: var(--accent); color: white; border: none; cursor: pointer; font-weight: 600;
+    padding: 9px 18px;
+  }
+  button:hover { filter: brightness(1.08); }
+  button:disabled { background: var(--ink-muted); cursor: not-allowed; }
+  .status { font-size: 13px; color: var(--ink-muted); min-height: 18px; }
+  .status.error { color: #c0392b; }
+  table { width: 100%; border-collapse: collapse; font-size: 14px; }
+  th, td { text-align: left; padding: 8px 10px; border-bottom: 1px solid var(--border); }
+  th { color: var(--ink-muted); font-weight: 600; font-size: 12px; text-transform: uppercase; }
+  .score-bar-bg { background: #eee; border-radius: 4px; height: 8px; width: 100%; overflow: hidden; }
+  .score-bar-fill { background: var(--accent); height: 100%; }
+  .rank-badge {
+    display: inline-flex; align-items: center; justify-content: center;
+    width: 22px; height: 22px; border-radius: 50%; background: var(--accent);
+    color: white; font-size: 12px; font-weight: 700;
+  }
+  .grid-2 { display: grid; grid-template-columns: 1.1fr 1fr; gap: 20px; }
+  @media (max-width: 860px) { .grid-2 { grid-template-columns: 1fr; } }
+  canvas { max-height: 320px; }
+  .badge-note {
+    font-size: 12px; color: var(--ink-muted); border: 1px dashed var(--border);
+    border-radius: 6px; padding: 8px 12px; margin-top: 10px;
+  }
+  code { background: #eee; padding: 1px 5px; border-radius: 4px; font-size: 12.5px; }
+</style>
+</head>
+<body>
+<header>
+  <h1>NeuMF Recommendation Demo</h1>
+  <p>Giao diện thực nghiệm suy diễn (inference-only) trên checkpoint đã huấn luyện — thiết kế theo mục 3.7 của báo cáo, số liệu đối chiếu theo Chương 4.</p>
+</header>
+
+<div class="wrap">
+  <section class="card">
+    <h2>1. Chọn bộ dữ liệu, mô hình và khách hàng</h2>
+    <div class="controls">
+      <div class="field">
+        <label for="dataset">Bộ dữ liệu</label>
+        <select id="dataset"></select>
+      </div>
+      <div class="field">
+        <label for="model">Mô hình</label>
+        <select id="model"></select>
+      </div>
+      <div class="field" style="min-width:220px;">
+        <label for="user">Khách hàng (chọn mẫu hoặc nhập ID)</label>
+        <input list="user-options" id="user" placeholder="Chọn hoặc gõ ID khách hàng">
+        <datalist id="user-options"></datalist>
+      </div>
+      <div class="field" style="min-width:80px;">
+        <label for="k">Top-K</label>
+        <input type="number" id="k" value="10" min="1" max="50">
+      </div>
+      <button id="go">Gợi ý sản phẩm</button>
+    </div>
+    <div class="status" id="status"></div>
+  </section>
+
+  <section class="grid-2">
+    <div class="card">
+      <h2>2. Danh sách Top-K gợi ý</h2>
+      <table id="rec-table">
+        <thead><tr><th>#</th><th>Sản phẩm</th><th>Mã gốc</th><th>Điểm dự đoán</th></tr></thead>
+        <tbody></tbody>
+      </table>
+      <div class="badge-note" id="rec-empty">Chọn khách hàng và bấm "Gợi ý sản phẩm" để xem kết quả.</div>
+    </div>
+
+    <div class="card">
+      <h2>3. So sánh hiệu năng các mô hình (Chương 4, Full Ranking)</h2>
+      <canvas id="metrics-chart"></canvas>
+      <div class="badge-note">Số liệu lấy trực tiếp từ <code>results_primary.csv</code> của lần chạy thực nghiệm — không phải giá trị minh họa.</div>
+    </div>
+  </section>
+</div>
+
+<script>
+const API = "/api";
+const MODEL_COLORS = {
+  "GMF": "#8e44ad", "MLP": "#c0392b", "EarlyFusion": "#1abc9c",
+  "NeuMF-Scratch": "#16a085", "NeuMF-Pretrained": "#d4ac0d",
+};
+
+let metricsChart = null;
+
+async function j(url) {
+  const res = await fetch(url);
+  if (!res.ok) {
+    const body = await res.json().catch(() => ({}));
+    throw new Error(body.detail || `Lỗi HTTP ${res.status}`);
+  }
+  return res.json();
+}
+
+function setStatus(msg, isError = false) {
+  const el = document.getElementById("status");
+  el.textContent = msg;
+  el.className = "status" + (isError ? " error" : "");
+}
+
+async function loadDatasets() {
+  const datasets = await j(`${API}/datasets`);
+  const sel = document.getElementById("dataset");
+  sel.innerHTML = datasets.map(d => `<option value="${d.key}">${d.label}</option>`).join("");
+  await onDatasetChange();
+}
+
+async function onDatasetChange() {
+  const dataset = document.getElementById("dataset").value;
+  setStatus("Đang nạp mô hình và dữ liệu (lần đầu có thể mất vài giây)...");
+  try {
+    const [models, users] = await Promise.all([
+      j(`${API}/models/${dataset}`),
+      j(`${API}/users/${dataset}?limit=40`),
+    ]);
+    const modelSel = document.getElementById("model");
+    modelSel.innerHTML = models.map(m => `<option value="${m.name}">${m.name}</option>`).join("");
+    const dl = document.getElementById("user-options");
+    dl.innerHTML = users.map(u => `<option value="${u}">`).join("");
+    document.getElementById("user").value = users[0] || "";
+    await renderMetricsChart(dataset);
+    setStatus("Sẵn sàng.");
+  } catch (e) {
+    setStatus(e.message, true);
+  }
+}
+
+async function renderMetricsChart(dataset) {
+  const rows = await j(`${API}/metrics/${dataset}`);
+  const labels = rows.map(r => r.model);
+  const hr10 = rows.map(r => r["HR@10"]);
+  const ndcg10 = rows.map(r => r["NDCG@10"]);
+  const colors = labels.map(m => MODEL_COLORS[m] || "#999");
+
+  const ctx = document.getElementById("metrics-chart").getContext("2d");
+  if (metricsChart) metricsChart.destroy();
+  metricsChart = new Chart(ctx, {
+    type: "bar",
+    data: {
+      labels,
+      datasets: [
+        { label: "HR@10", data: hr10, backgroundColor: colors, borderRadius: 4 },
+      ],
+    },
+    options: {
+      responsive: true,
+      plugins: { legend: { display: false }, title: { display: true, text: "HR@10 theo mô hình (Full Ranking)" } },
+      scales: { y: { beginAtZero: true, grid: { color: "#e1e0d9" } }, x: { grid: { display: false } } },
+    },
+  });
+}
+
+async function getRecommendations() {
+  const dataset = document.getElementById("dataset").value;
+  const model = document.getElementById("model").value;
+  const user = document.getElementById("user").value.trim();
+  const k = document.getElementById("k").value || 10;
+  if (!user) { setStatus("Vui lòng chọn hoặc nhập ID khách hàng.", true); return; }
+
+  setStatus("Đang suy diễn...");
+  document.getElementById("go").disabled = true;
+  try {
+    const data = await j(`${API}/recommend/${dataset}/${model}/${encodeURIComponent(user)}?k=${k}`);
+    const tbody = document.querySelector("#rec-table tbody");
+    tbody.innerHTML = "";
+    const maxScore = Math.max(...data.recommendations.map(r => r.score), 0.0001);
+    data.recommendations.forEach(r => {
+      const tr = document.createElement("tr");
+      tr.innerHTML = `
+        <td><span class="rank-badge">${r.rank}</span></td>
+        <td>${r.label}</td>
+        <td>${r.item_id}</td>
+        <td>
+          <div style="display:flex; align-items:center; gap:8px;">
+            <div class="score-bar-bg" style="max-width:120px;"><div class="score-bar-fill" style="width:${(r.score / maxScore) * 100}%"></div></div>
+            <span>${r.score.toFixed(4)}</span>
+          </div>
+        </td>`;
+      tbody.appendChild(tr);
+    });
+    document.getElementById("rec-empty").style.display = data.recommendations.length ? "none" : "block";
+    setStatus(`Đã gợi ý ${data.recommendations.length} sản phẩm cho khách hàng ${user} bằng mô hình ${model}.`);
+  } catch (e) {
+    setStatus(e.message, true);
+  } finally {
+    document.getElementById("go").disabled = false;
+  }
+}
+
+document.getElementById("dataset").addEventListener("change", onDatasetChange);
+document.getElementById("go").addEventListener("click", getRecommendations);
+
+const params = new URLSearchParams(location.search);
+loadDatasets().then(() => {
+  // Chỉ dùng để tự động điền + chạy 1 lượt gợi ý khi chụp ảnh minh họa cho báo cáo
+  // (?autorun=1[&dataset=hm][&model=NeuMF-Pretrained]) — không ảnh hưởng luồng dùng bình thường.
+  if (params.get("autorun") === "1") {
+    if (params.get("dataset")) {
+      document.getElementById("dataset").value = params.get("dataset");
+      onDatasetChange().then(() => {
+        if (params.get("model")) document.getElementById("model").value = params.get("model");
+        getRecommendations();
+      });
+    } else {
+      if (params.get("model")) document.getElementById("model").value = params.get("model");
+      getRecommendations();
+    }
+  }
+});
+</script>
+</body>
+</html>

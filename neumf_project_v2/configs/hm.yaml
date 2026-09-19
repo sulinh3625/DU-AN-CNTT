@@ -1,11 +1,11 @@
 dataset:
   name: hm
-  raw_path: data/raw/hm/transactions_train.csv
+  raw_path: data/processed/hm/transactions_clean.parquet
   encoding: utf-8
   k_core: 5
   audit_k_values: [3, 5, 10]
   min_interactions_for_loo: 3
-  nrows: 1000000
+  nrows: null
   start_date: null
   end_date: null
 

@@ -6,3 +6,6 @@ matplotlib>=3.7
 pytest>=7.0
 torch>=2.0
 tqdm>=4.60
+fastapi>=0.100
+uvicorn[standard]>=0.23
+pyarrow>=14.0

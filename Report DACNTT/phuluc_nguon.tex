@@ -1,0 +1,74 @@
+% =====================================================================
+%  phuluc_nguon.tex  —  PHỤ LỤC: BẢNG ĐỐI CHIẾU LUẬN ĐIỂM - NGUỒN TRÍCH DẪN
+% =====================================================================
+
+\chapter*{PHỤ LỤC A. ĐỐI CHIẾU LUẬN ĐIỂM VÀ NGUỒN TRÍCH DẪN}
+\addcontentsline{toc}{chapter}{PHỤ LỤC A. ĐỐI CHIẾU LUẬN ĐIỂM VÀ NGUỒN TRÍCH DẪN}
+\label{app:nguon}
+
+Phụ lục này liệt kê từng luận điểm lý thuyết và phương pháp luận được sử dụng trong dự án kèm nguồn gốc học thuật tương ứng, nhằm bảo đảm mọi khẳng định đều truy nguyên được về tài liệu công bố chính thống.
+
+\begin{longtable}{|p{0.08\textwidth}|p{0.48\textwidth}|p{0.34\textwidth}|}
+\hline
+\textbf{Mục} & \textbf{Luận điểm} & \textbf{Nguồn} \\
+\hline
+\endfirsthead
+\hline
+\textbf{Mục} & \textbf{Luận điểm} & \textbf{Nguồn} \\
+\hline
+\endhead
+
+\hline
+\multicolumn{3}{|l|}{\textit{A.1. Tổng quan về Hệ thống gợi ý \& Lọc cộng tác}} \\
+\hline
+1.1.1 & Quá tải thông tin và vai trò của hệ thống gợi ý trong TMĐT &
+\textcite{schafer2001commerce}; \textcite{linden2003amazon} \\
+\hline
+1.1.2 & Nền tảng Lọc cộng tác (Collaborative Filtering) &
+\textcite{resnick1994grouplens}; \textcite{sarwar2001item}; \textcite{su2009survey} \\
+\hline
+1.1.2 & Phương pháp Nhân tử hóa ma trận (Matrix Factorization) &
+\textcite{koren2009matrix} \\
+\hline
+1.2.2 & Bộ dữ liệu DataCo Smart Supply Chain Dataset &
+\textcite{dataco2019} \\
+\hline
+
+\hline
+\multicolumn{3}{|l|}{\textit{A.2. Phản hồi ẩn \& Kiến trúc Neural Collaborative Filtering}} \\
+\hline
+2.1.2 & Xếp hạng cá nhân hóa Bayes (BPR) từ phản hồi ẩn &
+\textcite{rendle2009bpr} \\
+\hline
+2.3 & Khung làm việc NCF và kiến trúc mô hình lai NeuMF (GMF + MLP) &
+\textcite{he2017ncf} \\
+\hline
+2.3 & Chiến lược kết hợp Early Fusion và Late Fusion &
+\textcite{he2017ncf} \\
+\hline
+3.4 & Thuật toán tối ưu hóa thích ứng Adam &
+\textcite{kingma2014adam} \\
+\hline
+2.5 & Mô hình Wide \& Deep và DeepFM trong gợi ý &
+\textcite{cheng2016wide}; \textcite{guo2017deepfm} \\
+\hline
+
+\hline
+\multicolumn{3}{|l|}{\textit{A.3. Đánh giá Top-K, Cài đặt \& Hướng phát triển}} \\
+\hline
+2.4 & Giao thức đánh giá hiệu năng xếp hạng Top-N Recommendation &
+\textcite{cremonesi2010performance}; \textcite{he2017ncf} \\
+\hline
+4.1 & Vấn đề đánh giá bằng mẫu âm lấy mẫu con (Sampled Metrics) &
+\textcite{krichene2020sampled} \\
+\hline
+3.3 & Nền tảng và thư viện tính toán học sâu PyTorch &
+\textcite{paszke2019pytorch} \\
+\hline
+2.4 & Đánh giá xếp hạng dựa trên độ đo NDCG &
+\textcite{jarvelin2002} \\
+\hline
+\end{longtable}
+
+\vspace{0.5\baselineskip}
+\noindent\textbf{Ghi chú.} Các thông số cấu hình và thiết kế hệ thống trình bày trong Chương~\ref{chap:thietke_trienkhai} và kết quả thực nghiệm trong Chương~\ref{chap:thucnghiem} do nhóm tác giả tự triển khai và tính toán từ mã nguồn thực nghiệm của dự án.
