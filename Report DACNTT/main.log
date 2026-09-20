@@ -1,4 +1,4 @@
-This is XeTeX, Version 3.141592653-2.6-0.999998 (MiKTeX 26.5) (preloaded format=xelatex 2026.8.16)  19 SEP 2026 07:00
+This is XeTeX, Version 3.141592653-2.6-0.999998 (MiKTeX 26.5) (preloaded format=xelatex 2026.8.16)  20 SEP 2026 13:24
 entering extended mode
  restricted \write18 enabled.
  %&-line parsing enabled.
@@ -1515,12 +1515,7 @@ Chương 1.
 
 
 
-] [2] [3]
-Package microtype Info: Loading generic protrusion settings for font family
-(microtype)             `lmtt' (encoding: TU).
-(microtype)             For optimal results, create family-specific settings.
-(microtype)             See the microtype manual for details.
- [4] [5]) [6]
+] [2] [3] [4] [5]) [6]
 \openout2 = `content/C2.aux'.
 
  (content/C2.tex
@@ -1534,353 +1529,314 @@ Chương 2.
 LaTeX Font Info:    Calculating math sizes for size <11.86258> on input line 14
 4.
  [11] [12] [13] [14] [15] [16] [17]
-Underfull \hbox (badness 10000) in paragraph at lines 356--356
-[]|\TU/TimesNewRoman(0)/b/n/11.86258 Mô hình /
+Underfull \hbox (badness 10000) in paragraph at lines 360--360
+[]|\TU/TimesNewRoman(0)/b/n/13 Mô hình /
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 356--356
-[]|\TU/TimesNewRoman(0)/b/n/11.86258 Rendle et al.
+Underfull \hbox (badness 10000) in paragraph at lines 360--360
+[]|\TU/TimesNewRoman(0)/b/n/13 Mô hình /
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 356--356
-[]|\TU/TimesNewRoman(0)/m/n/11.86258 BPR (Bayesian
+Underfull \hbox (badness 10000) in paragraph at lines 360--360
+[]|\TU/TimesNewRoman(0)/b/n/13 Rendle et al.
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 356--356
-\TU/TimesNewRoman(0)/m/n/11.86258 Personalized
+Underfull \hbox (badness 10000) in paragraph at lines 360--360
+\TU/TimesNewRoman(0)/m/n/13 Personalized
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 356--356
-[]|\TU/TimesNewRoman(0)/m/n/11.86258 MovieLens,
+Underfull \hbox (badness 10000) in paragraph at lines 360--360
+[]|\TU/TimesNewRoman(0)/m/n/13 MovieLens,
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 356--356
-[]|\TU/TimesNewRoman(0)/m/n/11.86258 MovieLens,
+Underfull \hbox (badness 1308) in paragraph at lines 360--360
+[]|\TU/TimesNewRoman(0)/m/n/13 Khung tối ưu dựa trên so
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 356--356
-[]|\TU/TimesNewRoman(0)/b/n/11.86258 Cheng et al.
+Underfull \hbox (badness 4927) in paragraph at lines 360--360
+\TU/TimesNewRoman(0)/m/n/13 back. \TU/TimesNewRoman(0)/m/it/13 Hạn chế: \TU/Tim
+esNewRoman(0)/m/n/13 mô hình
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 356--356
-[]|\TU/TimesNewRoman(0)/m/n/11.86258 Wide & Deep
+Underfull \hbox (badness 10000) in paragraph at lines 360--360
+[]|\TU/TimesNewRoman(0)/m/n/13 MovieLens,
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 356--356
-[]|\TU/TimesNewRoman(0)/m/n/11.86258 Google Play
+Underfull \hbox (badness 10000) in paragraph at lines 360--360
+[]|\TU/TimesNewRoman(0)/m/n/13 Kết hợp GMF và MLP,
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 356--356
-[]|\TU/TimesNewRoman(0)/m/n/11.86258 SASRec (Self-
+Underfull \hbox (badness 10000) in paragraph at lines 360--360
+[]|\TU/TimesNewRoman(0)/b/n/13 Cheng et al.
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 356--356
-\TU/TimesNewRoman(0)/m/n/11.86258 Attention tuần
+Underfull \hbox (badness 1484) in paragraph at lines 360--360
+[]|\TU/TimesNewRoman(0)/m/n/13 Wide & Deep
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 356--356
-[]|\TU/TimesNewRoman(0)/m/n/11.86258 Amazon,
+Underfull \hbox (badness 7397) in paragraph at lines 360--360
+[]|\TU/TimesNewRoman(0)/m/n/13 Google Play
  []
 
 
-Underfull \hbox (badness 2269) in paragraph at lines 356--356
-[]|\TU/TimesNewRoman(0)/m/n/11.86258 Mô hình hóa chuỗi hành vi
+Underfull \hbox (badness 10000) in paragraph at lines 360--360
+[]|\TU/TimesNewRoman(0)/m/n/13 Criteo, Dữ
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 356--356
-[]|\TU/TimesNewRoman(0)/b/n/11.86258 Wang et al.
+Underfull \hbox (badness 10000) in paragraph at lines 360--360
+\TU/TimesNewRoman(0)/m/n/13 liệu doanh
  []
 
 
-Underfull \hbox (badness 2564) in paragraph at lines 356--356
-\TU/TimesNewRoman(0)/b/n/11.86258 (2019); He et al.
+Underfull \hbox (badness 10000) in paragraph at lines 360--360
+[]|\TU/TimesNewRoman(0)/b/n/13 Kang &
  []
 
 
-Underfull \hbox (badness 5274) in paragraph at lines 356--356
-[]|\TU/TimesNewRoman(0)/m/n/11.86258 NGCF / Light-
+Underfull \hbox (badness 2790) in paragraph at lines 360--360
+[]|\TU/TimesNewRoman(0)/m/n/13 SASRec (Self-
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 356--356
-\TU/TimesNewRoman(0)/m/n/11.86258 GCN (Graph-
+Underfull \hbox (badness 3657) in paragraph at lines 360--360
+\TU/TimesNewRoman(0)/m/n/13 Attention tuần
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 356--356
-[]|\TU/TimesNewRoman(0)/m/n/11.86258 Gowalla,
+Underfull \hbox (badness 10000) in paragraph at lines 360--360
+[]|\TU/TimesNewRoman(0)/m/n/13 Amazon,
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 356--356
-\TU/TimesNewRoman(0)/m/n/11.86258 Amazon-Book,
+Underfull \hbox (badness 10000) in paragraph at lines 360--360
+\TU/TimesNewRoman(0)/m/n/13 Steam,
  []
 
 
-Underfull \hbox (badness 1337) in paragraph at lines 356--356
-\TU/TimesNewRoman(0)/m/n/11.86258 bậc cao qua đồ thị hai phía.
+Underfull \hbox (badness 3907) in paragraph at lines 360--360
+[]|\TU/TimesNewRoman(0)/m/n/13 Mô hình hóa chuỗi hành
  []
 
 
-Underfull \hbox (badness 1789) in paragraph at lines 356--356
-[]|\TU/TimesNewRoman(0)/b/n/11.86258 Wu et al. (2024)
+Underfull \hbox (badness 10000) in paragraph at lines 360--360
+[]|\TU/TimesNewRoman(0)/b/n/13 Wang et al.
  []
 
 
-Underfull \hbox (badness 3623) in paragraph at lines 356--356
-[]|\TU/TimesNewRoman(0)/m/n/11.86258 Khảo sát LLM
+Underfull \hbox (badness 10000) in paragraph at lines 360--360
+[]|\TU/TimesNewRoman(0)/m/n/13 NGCF /
  []
 
 
-Underfull \hbox (badness 1406) in paragraph at lines 356--356
-\TU/TimesNewRoman(0)/m/n/11.86258 cho Recommen-
+Underfull \hbox (badness 10000) in paragraph at lines 360--360
+\TU/TimesNewRoman(0)/m/n/13 LightGCN
  []
 
 
-Underfull \hbox (badness 4859) in paragraph at lines 356--356
-[]|\TU/TimesNewRoman(0)/m/n/11.86258 Tổng hợp đa
+Underfull \hbox (badness 10000) in paragraph at lines 360--360
+\TU/TimesNewRoman(0)/m/n/13 (Graph-based
  []
 
 
-Underfull \hbox (badness 2050) in paragraph at lines 356--356
-\TU/TimesNewRoman(0)/m/n/11.86258 LLM cho gợi ý (Generative,
+Underfull \hbox (badness 10000) in paragraph at lines 360--360
+[]|\TU/TimesNewRoman(0)/m/n/13 Gowalla,
  []
 
 
-Underfull \hbox (badness 7379) in paragraph at lines 356--356
-[]|\TU/TimesNewRoman(0)/b/n/11.86258 Li et al. (2024)
+Underfull \hbox (badness 10000) in paragraph at lines 360--360
+\TU/TimesNewRoman(0)/m/n/13 Amazon-
  []
 
 
-Underfull \hbox (badness 2941) in paragraph at lines 356--356
-[]|\TU/TimesNewRoman(0)/m/n/11.86258 Khảo sát DNN
+Underfull \hbox (badness 10000) in paragraph at lines 360--360
+\TU/TimesNewRoman(0)/m/n/13 Book,
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 356--356
-\TU/TimesNewRoman(0)/m/n/11.86258 cho Collabora-
+Underfull \hbox (badness 10000) in paragraph at lines 360--360
+\TU/TimesNewRoman(0)/m/n/13 cho Recom-
  []
 
 
-Underfull \hbox (badness 4859) in paragraph at lines 356--356
-[]|\TU/TimesNewRoman(0)/m/n/11.86258 Tổng hợp đa
+Underfull \hbox (badness 1728) in paragraph at lines 360--360
+[]|\TU/TimesNewRoman(0)/m/n/13 Hệ thống hóa hướng khai
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 356--356
-\TU/TimesNewRoman(0)/m/n/11.86258 miền (2020–
+Underfull \hbox (badness 1275) in paragraph at lines 360--360
+\TU/TimesNewRoman(0)/m/it/13 chế: \TU/TimesNewRoman(0)/m/n/13 chi phí suy luận 
+lớn,
  []
 
 
-Underfull \hbox (badness 2503) in paragraph at lines 356--356
-[]|\TU/TimesNewRoman(0)/m/n/11.86258 Hệ thống hóa các kiến trúc
+Underfull \hbox (badness 1394) in paragraph at lines 360--360
+[]|\TU/TimesNewRoman(0)/b/n/13 Li et al. (2024)
  []
 
 
-Underfull \hbox (badness 1688) in paragraph at lines 356--356
-\TU/TimesNewRoman(0)/m/n/11.86258 toencoder, GAN đã tích hợp
+Underfull \hbox (badness 1755) in paragraph at lines 360--360
+\TU/TimesNewRoman(0)/m/n/13 cho Collabora-
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 356--356
-[]|\TU/TimesNewRoman(0)/b/n/11.86258 Wei & Fang
+Underfull \hbox (badness 5985) in paragraph at lines 360--360
+\TU/TimesNewRoman(0)/m/n/13 miền (2020–
  []
 
 
-Underfull \hbox (badness 1558) in paragraph at lines 356--356
-[]|\TU/TimesNewRoman(0)/m/n/11.86258 Khảo sát Diffu-
+Underfull \hbox (badness 6575) in paragraph at lines 360--360
+\TU/TimesNewRoman(0)/m/n/13 MLP, CNN, RNN, GNN,
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 356--356
-\TU/TimesNewRoman(0)/m/n/11.86258 Recommenda-
+Underfull \hbox (badness 10000) in paragraph at lines 360--360
+\TU/TimesNewRoman(0)/m/n/13 hợp vào CF, xác nhận
  []
 
 
-Underfull \hbox (badness 4859) in paragraph at lines 356--356
-[]|\TU/TimesNewRoman(0)/m/n/11.86258 Tổng hợp đa
+Underfull \hbox (badness 10000) in paragraph at lines 360--360
+\TU/TimesNewRoman(0)/m/n/13 GMF/MLP vẫn là thành
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 356--356
-[]|\TU/TimesNewRoman(0)/m/n/11.86258 Hệ thống hóa hướng sinh
+Underfull \hbox (badness 7064) in paragraph at lines 360--360
+\TU/TimesNewRoman(0)/m/n/13 phần nền tảng phổ biến.
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 356--356
-[]|\TU/TimesNewRoman(0)/b/n/11.86258 Dự án đề xuất
+Underfull \hbox (badness 10000) in paragraph at lines 360--360
+[]|\TU/TimesNewRoman(0)/b/n/13 Wei & Fang
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 356--356
-[]|\TU/TimesNewRoman(0)/b/n/11.86258 Mô hình
+Underfull \hbox (badness 3954) in paragraph at lines 360--360
+[]|\TU/TimesNewRoman(0)/m/n/13 Khảo sát Dif-
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 356--356
-\TU/TimesNewRoman(0)/b/n/11.86258 lai NeuMF
+Underfull \hbox (badness 2762) in paragraph at lines 360--360
+\TU/TimesNewRoman(0)/m/n/13 fusion Models
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 356--356
-\TU/TimesNewRoman(0)/b/n/11.86258 (Early/Late
+Underfull \hbox (badness 10000) in paragraph at lines 360--360
+\TU/TimesNewRoman(0)/m/n/13 cho Recom-
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 356--356
-[]|\TU/TimesNewRoman(0)/b/n/11.86258 DataCo Sup-
+Underfull \hbox (badness 1960) in paragraph at lines 360--360
+[]|\TU/TimesNewRoman(0)/m/n/13 Hệ thống hóa hướng sinh
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 356--356
-[]|\TU/TimesNewRoman(0)/b/n/11.86258 Xây dựng và đánh giá
+Underfull \hbox (badness 7888) in paragraph at lines 360--360
+\TU/TimesNewRoman(0)/m/n/13 (generative) dựa trên mô
  []
 
 
-Underfull \hbox (badness 4492) in paragraph at lines 356--356
-\TU/TimesNewRoman(0)/b/n/11.86258 NeuMF, Early Fusion trên
+Underfull \hbox (badness 1817) in paragraph at lines 360--360
+[]|\TU/TimesNewRoman(0)/b/n/13 Dự án đề xuất
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 356--356
-\TU/TimesNewRoman(0)/b/n/11.86258 dữ liệu chuỗi cung ứng,
+Underfull \hbox (badness 10000) in paragraph at lines 360--360
+[]|\TU/TimesNewRoman(0)/m/n/13 Mô hình
  []
 
 
-Underfull \hbox (badness 6204) in paragraph at lines 356--356
-\TU/TimesNewRoman(0)/b/n/11.86258 phản hồi ẩn có trọng số,
+Underfull \hbox (badness 10000) in paragraph at lines 360--360
+\TU/TimesNewRoman(0)/m/n/13 lai NeuMF
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 356--356
-\TU/TimesNewRoman(0)/b/n/11.86258 Ablation Study, đánh giá
+Underfull \hbox (badness 10000) in paragraph at lines 360--360
+\TU/TimesNewRoman(0)/m/n/13 (Early/Late
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 356--356
-\TU/TimesNewRoman(0)/b/n/11.86258 Popular/Long-tail và kiểm
+Underfull \hbox (badness 4492) in paragraph at lines 360--360
+[]|\TU/TimesNewRoman(0)/m/n/13 DataCo Sup-
  []
 
 
-LaTeX Warning: Float too large for page by 112.00465pt on input line 357.
+Underfull \hbox (badness 10000) in paragraph at lines 360--360
+\TU/TimesNewRoman(0)/m/n/13 ply Chain,
+ []
 
-) [18] [19] [20]
+
+Underfull \hbox (badness 10000) in paragraph at lines 360--360
+[]|\TU/TimesNewRoman(0)/m/n/13 Xây dựng và đánh giá
+ []
+
+
+Underfull \hbox (badness 1888) in paragraph at lines 360--360
+\TU/TimesNewRoman(0)/m/n/13 NeuMF, Early Fusion trên
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 360--360
+\TU/TimesNewRoman(0)/m/n/13 dữ liệu chuỗi cung ứng
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 360--360
+\TU/TimesNewRoman(0)/m/n/13 và thương mại điện tử,
+ []
+
+
+Underfull \hbox (badness 3219) in paragraph at lines 360--360
+\TU/TimesNewRoman(0)/m/n/13 phản hồi ẩn có trọng số,
+ []
+
+
+Underfull \hbox (badness 7415) in paragraph at lines 360--360
+\TU/TimesNewRoman(0)/m/n/13 Ablation Study, đánh giá
+ []
+
+
+Underfull \hbox (badness 4995) in paragraph at lines 360--360
+\TU/TimesNewRoman(0)/m/n/13 Popular/Long-tail và kiểm
+ []
+
+[18] [19]) [20] [21]
 \openout2 = `content/C3.aux'.
 
  (content/C3.tex
 Chương 3.
-[21
+[22
 
 
 
 
-] [22]
-Overfull \hbox (1.90295pt too wide) in paragraph at lines 109--111
-[]\TU/TimesNewRoman(0)/m/n/13 Toàn bộ quy trình được cài đặt tường minh trong \
-TU/lmtt/m/n/13 scripts/01_data_audit.py
- []
-
-
-Underfull \hbox (badness 2245) in paragraph at lines 111--112
-[]\TU/TimesNewRoman(0)/b/n/13 Nạp dữ liệu thô: \TU/TimesNewRoman(0)/m/n/13 Đọc 
-\TU/lmtt/m/n/13 DataCoSupplyChainDataset.csv \TU/TimesNewRoman(0)/m/n/13 (mã ho
-á
- []
-
-
-Underfull \hbox (badness 10000) in paragraph at lines 111--112
-\TU/lmtt/m/n/13 Item Cardprod Id\TU/TimesNewRoman(0)/m/n/13 , \TU/lmtt/m/n/13 O
-rder Item Quantity/Sales\TU/TimesNewRoman(0)/m/n/13 , \TU/lmtt/m/n/13 order dat
-e
- []
-
-[23]
-Underfull \hbox (badness 3792) in paragraph at lines 113--114
-\TU/lmtt/m/n/13 outputs/data_audit/dataco/kcore_sensitivity.csv\TU/TimesNewRoma
-n(0)/m/n/13 ). Cấu hình
- []
-
-[24] [25]
-Underfull \hbox (badness 1895) in paragraph at lines 200--201
-\TU/TimesNewRoman(0)/m/n/13 pipeline (\TU/lmtt/m/n/13 t_dat\TU/TimesNewRoman(0)
-/m/n/13 , \TU/lmtt/m/n/13 customer_id\TU/TimesNewRoman(0)/m/n/13 , \TU/lmtt/m/n
-/13 article_id\TU/TimesNewRoman(0)/m/n/13 , \TU/lmtt/m/n/13 price\TU/TimesNewRo
-man(0)/m/n/13 ) bằng tham số
- []
-
-
-Overfull \hbox (3.15785pt too wide) in paragraph at lines 202--203
-[]\TU/TimesNewRoman(0)/b/n/13 Mã hoá định danh (ID factorization): \TU/TimesNew
-Roman(0)/m/n/13 Ánh xạ \TU/lmtt/m/n/13 customer_id\TU/TimesNewRoman(0)/m/n/13 /
-\TU/lmtt/m/n/13 article_id
- []
-
-[26] [27] [28] [29] [30] [31] [32] [33]
-Underfull \hbox (badness 5133) in paragraph at lines 478--478
-[]\TU/TimesNewRoman(0)/m/n/11.86258 Checkpoint NeuMF/GMF/MLP đã huấn luyện 
- []
-
-[34] [35]
-Underfull \hbox (badness 2393) in paragraph at lines 506--506
-[]|\TU/TimesNewRoman(0)/m/n/13 Trả về danh sách Top-$\OML/cmm/m/it/12 K$ \TU/Ti
-mesNewRoman(0)/m/n/13 sản
- []
-
-
-Underfull \hbox (badness 10000) in paragraph at lines 506--506
-[]|\TU/TimesNewRoman(0)/m/n/13 Liệt kê các checkpoint khả
- []
-
-
-Underfull \hbox (badness 2277) in paragraph at lines 506--506
-\TU/TimesNewRoman(0)/m/n/13 dụng kèm số liệu tóm tắt từ
- []
-
-
-Underfull \hbox (badness 2707) in paragraph at lines 506--506
-\TU/TimesNewRoman(0)/m/n/13 demo hiểu sự khác biệt hiệu
- []
-
-[36]
+] [23] [24] [25] [26] [27] [28] [29] [30] [31] [32] [33] [34] [35] [36]
 File: media/figures/demo/demo_dataco.png Graphic file (type bmp)
 <media/figures/demo/demo_dataco.png>
 File: media/figures/demo/demo_hm.png Graphic file (type bmp)
 <media/figures/demo/demo_hm.png>
-) [37] [38]
+)
+[37] [38] [39]
 \openout2 = `content/C4.aux'.
 
  (content/C4.tex
 Chương 4.
-[39
+[40
 
 
 
 
-]
-Underfull \hbox (badness 1117) in paragraph at lines 36--37
-[]\TU/TimesNewRoman(0)/m/n/13 Bảng []4.1[] tổng hợp kết quả đánh giá theo giao 
-thức Full Ranking trên
- []
-
-
-Underfull \hbox (badness 5475) in paragraph at lines 36--37
-\TU/TimesNewRoman(0)/m/n/13 DataCo – số liệu trích trực tiếp từ \TU/lmtt/m/n/13
- results_primary.csv \TU/TimesNewRoman(0)/m/n/13 của lần chạy
- []
-
-[40]
+] [41]
 File: media/figures/dataco_vs_hm_comparison.png Graphic file (type bmp)
 <media/figures/dataco_vs_hm_comparison.png>
 File: media/figures/dataco/11_heatmap_all_metrics.png Graphic file (type bmp)
@@ -1893,37 +1849,29 @@ Package biblatex Warning: Bibliography string 'and' untranslated
 (biblatex)                at entry 'krichene2020sampled' on input line 129.
 
 
-Underfull \hbox (badness 1997) in paragraph at lines 131--132
-[]\TU/TimesNewRoman(0)/b/n/13 Trên DataCo\TU/TimesNewRoman(0)/m/n/13 , kết quả 
-Sampled-99 trích từ \TU/lmtt/m/n/13 results_sampled_99.csv
+Underfull \hbox (badness 1466) in paragraph at lines 131--132
+[]\TU/TimesNewRoman(0)/m/n/13 Trên DataCo, kết quả Sampled-99 \TU/TimesNewRoman
+(0)/m/it/13 trùng khớp tuyệt đối, đến từng chữ
  []
 
-[41] [42]
-Underfull \hbox (badness 4647) in paragraph at lines 224--225
+
+Underfull \hbox (badness 2351) in paragraph at lines 131--132
+\TU/TimesNewRoman(0)/m/it/13 số thập phân\TU/TimesNewRoman(0)/m/n/13 , với kết 
+quả Full Ranking ở Bảng []4.1[]. Nguyên nhân đến từ
+ []
+
+[42] [43]
+Underfull \hbox (badness 5403) in paragraph at lines 224--225
 []\TU/TimesNewRoman(0)/m/n/13 Phát hiện đáng chú ý nhất ở Bảng []4.4[]: trên Da
-taCo, \TU/TimesNewRoman(0)/b/n/13 Random có
+taCo, Random có
  []
 
-[43] [44]
+[44] [45]
 File: media/figures/dataco/07_long_tail_analysis.png Graphic file (type bmp)
 <media/figures/dataco/07_long_tail_analysis.png>
 File: media/figures/hm/07_long_tail_analysis.png Graphic file (type bmp)
 <media/figures/hm/07_long_tail_analysis.png>
- [45] [46]
-Underfull \hbox (badness 1484) in paragraph at lines 328--329
-\TU/TimesNewRoman(0)/m/n/13 NeuMF (from scratch): NDCG@10 $\OT1/cmr/m/n/12 73\O
-ML/cmm/m/it/12 ; \OT1/cmr/m/n/12 79[]$ \TU/TimesNewRoman(0)/m/n/13 so với $\OT1
-/cmr/m/n/12 70\OML/cmm/m/it/12 ; \OT1/cmr/m/n/12 63[]$ \TU/TimesNewRoman(0)/m/n
-/13 (+4,47%
- []
-
-
-Underfull \hbox (badness 2617) in paragraph at lines 328--329
-\TU/TimesNewRoman(0)/m/n/13 scratch) vượt trội Early Fusion với biên độ rất lớn
- – NDCG@10
- []
-
-[47] [48]) [49] [50]
+ [46] [47] [48] [49]) [50]
 \openout2 = `content/C5.aux'.
 
  (content/C5.tex
@@ -1933,13 +1881,11 @@ Chương 5.
 
 
 
-] [52]
-Underfull \hbox (badness 1308) in paragraph at lines 36--37
-[]\TU/TimesNewRoman(0)/m/n/13 Hoàn tất kiểm định ý nghĩa thống kê đa seed (mục 
-[]4.3.4[]) trên cả
+] [52]) [53] (phuluc_nguon.tex
+Underfull \hbox (badness 10000) in paragraph at lines 24--24
+[]|\TU/TimesNewRoman(0)/m/n/13 Vai trò cá nhân hóa gợi ý trong
  []
 
-[53]) [54] (phuluc_nguon.tex
 
 Package biblatex Warning: Bibliography string 'andothers' untranslated
 (biblatex)                at entry 'schafer2001commerce' on input line 25.
@@ -1947,6 +1893,11 @@ Package biblatex Warning: Bibliography string 'andothers' untranslated
 
 Package biblatex Warning: Bibliography string 'andothers' untranslated
 (biblatex)                at entry 'linden2003amazon' on input line 25.
+
+
+Underfull \hbox (badness 2119) in paragraph at lines 27--27
+\TU/TimesNewRoman(0)/m/n/13 (Memory-based CF, GroupLens, Item-
+ []
 
 
 Package biblatex Warning: Bibliography string 'andothers' untranslated
@@ -1990,35 +1941,137 @@ Package biblatex Warning: Bibliography string 'andothers' untranslated
 
 
 Package biblatex Warning: Bibliography string 'andothers' untranslated
-(biblatex)                at entry 'cremonesi2010performance' on input line 60.
+(biblatex)                at entry 'covington2016youtube' on input line 60.
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 62--62
+[]|\TU/TimesNewRoman(0)/m/n/13 Gợi ý theo chuỗi hành vi
+ []
+
+
+Package biblatex Warning: Bibliography string 'andothers' untranslated
+(biblatex)                at entry 'hidasi2016gru4rec' on input line 63.
+
+
+Package biblatex Warning: Bibliography string 'and' untranslated
+(biblatex)                at entry 'kang2018self' on input line 63.
+
+
+Package biblatex Warning: Bibliography string 'andothers' untranslated
+(biblatex)                at entry 'sun2019bert4rec' on input line 63.
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 63--64
+[]|\TU/TimesNewRoman(0)/m/n/13 Hidasi [] [[]19[]];
+ []
+
+
+Underfull \hbox (badness 4846) in paragraph at lines 63--64
+\TU/TimesNewRoman(0)/m/n/13 Kang [] McAuley [[]20[]];
+ []
+
+
+Package biblatex Warning: Bibliography string 'andothers' untranslated
+(biblatex)                at entry 'wang2019ngcf' on input line 66.
+
+
+Package biblatex Warning: Bibliography string 'andothers' untranslated
+(biblatex)                at entry 'he2020lightgcn' on input line 66.
+
+
+Underfull \hbox (badness 2426) in paragraph at lines 66--67
+[]|\TU/TimesNewRoman(0)/m/n/13 Wang [] [[]22[]]; He
+ []
+
+
+Package biblatex Warning: Bibliography string 'andothers' untranslated
+(biblatex)                at entry 'liang2018multvae' on input line 69.
+
+
+Package biblatex Warning: Bibliography string 'andothers' untranslated
+(biblatex)                at entry 'wu2021sgl' on input line 69.
+
+
+Package biblatex Warning: Bibliography string 'andothers' untranslated
+(biblatex)                at entry 'rajput2023tiger' on input line 69.
+
+
+Package biblatex Warning: Bibliography string 'andothers' untranslated
+(biblatex)                at entry 'wu2023survey_llm4rec' on input line 69.
+
+
+Package biblatex Warning: Bibliography string 'and' untranslated
+(biblatex)                at entry 'wei2025diffusion' on input line 69.
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 69--70
+[]|\TU/TimesNewRoman(0)/m/n/13 Liang [] [[]24[]];
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 69--70
+\TU/TimesNewRoman(0)/m/n/13 Wu [] [[]25[]]; Ra-
+ []
+
+
+Underfull \hbox (badness 7759) in paragraph at lines 69--70
+\TU/TimesNewRoman(0)/m/n/13 jput [] [[]26[]]; Wu
+ []
+
+
+Underfull \hbox (badness 4792) in paragraph at lines 69--70
+[] \TU/TimesNewRoman(0)/m/n/13 [[]27[]]; Wei []
+ []
+
+
+Package biblatex Warning: Bibliography string 'andothers' untranslated
+(biblatex)                at entry 'li2024dnncf' on input line 72.
+
+
+Package biblatex Warning: Bibliography string 'andothers' untranslated
+(biblatex)                at entry 'zhang2019deeplearningsurvey' on input line 
+72.
+
+
+Underfull \hbox (badness 2635) in paragraph at lines 72--73
+[]|\TU/TimesNewRoman(0)/m/n/13 Li [] [[]30[]]; Zhang
+ []
+
+
+Package biblatex Warning: Bibliography string 'andothers' untranslated
+(biblatex)                at entry 'cremonesi2010performance' on input line 79.
 
 
 
 Package biblatex Warning: Bibliography string 'andothers' untranslated
-(biblatex)                at entry 'he2017ncf' on input line 60.
+(biblatex)                at entry 'he2017ncf' on input line 79.
 
 
-Underfull \hbox (badness 1137) in paragraph at lines 60--61
+Underfull \hbox (badness 1137) in paragraph at lines 79--80
 []|\TU/TimesNewRoman(0)/m/n/13 Cremonesi [] [[]32[]];
  []
 
 
 Package biblatex Warning: Bibliography string 'and' untranslated
-(biblatex)                at entry 'krichene2020sampled' on input line 63.
+(biblatex)                at entry 'krichene2020sampled' on input line 82.
 
 
 Package biblatex Warning: Bibliography string 'andothers' untranslated
-(biblatex)                at entry 'paszke2019pytorch' on input line 66.
+(biblatex)                at entry 'paszke2019pytorch' on input line 85.
 
 
 Package biblatex Warning: Bibliography string 'and' untranslated
-(biblatex)                at entry 'jarvelin2002' on input line 69.
-
-[55
+(biblatex)                at entry 'jarvelin2002' on input line 88.
 
 
+Package biblatex Warning: Bibliography string 'and' untranslated
+(biblatex)                at entry 'vargas2011novelty' on input line 91.
 
-]) [56]
+[54
+
+
+
+]) [55]
 
 Package biblatex Warning: Bibliography string 'and' untranslated
 (biblatex)                at entry 'koren2009matrix' on input line 39.
@@ -2042,6 +2095,10 @@ Package biblatex Warning: Using fallback definition for \mkbibdatelong.
 (biblatex)                loaded, is faulty or does not contain a definition
 (biblatex)                for \mkbibdatelong.
 
+Package microtype Info: Loading generic protrusion settings for font family
+(microtype)             `lmtt' (encoding: TU).
+(microtype)             For optimal results, create family-specific settings.
+(microtype)             See the microtype manual for details.
 
 Package biblatex Warning: Bibliography string 'and' untranslated
 (biblatex)                at entry 'he2017ncf' on input line 39.
@@ -2200,7 +2257,7 @@ Package biblatex Warning: Using fallback definition for \mkbibdatelong.
 Package biblatex Warning: Bibliography string 'pages' untranslated
 (biblatex)                at entry 'krichene2020sampled' on input line 39.
 
-[57
+[56
 
 ]
 
@@ -2351,7 +2408,7 @@ Package biblatex Warning: Using fallback definition for \mkbibdatelong.
 Package biblatex Warning: Bibliography string 'pages' untranslated
 (biblatex)                at entry 'zhou2018din' on input line 39.
 
-[58]
+[57]
 
 Package biblatex Warning: Bibliography string 'and' untranslated
 (biblatex)                at entry 'covington2016youtube' on input line 39.
@@ -2539,7 +2596,7 @@ Package biblatex Warning: Using fallback definition for \mkbibdatelong.
 (biblatex)                loaded, is faulty or does not contain a definition
 (biblatex)                for \mkbibdatelong.
 
-[59]
+[58]
 
 Package biblatex Warning: Bibliography string 'andothers' untranslated
 (biblatex)                at entry 'wu2023survey_llm4rec' on input line 39.
@@ -2655,7 +2712,7 @@ Package biblatex Warning: Bibliography string 'pages' untranslated
 (biblatex)                at entry 'cremonesi2010performance' on input line 39.
 
 
-[60] (main.aux (content/C1.aux) (content/C2.aux) (content/C3.aux)
+[59] (main.aux (content/C1.aux) (content/C2.aux) (content/C3.aux)
 (content/C4.aux) (content/C5.aux))
  ***********
 LaTeX2e <2026-06-01>
@@ -2667,18 +2724,18 @@ LaTeX Font Warning: Size substitutions with differences
 (Font)              up to 1.0pt have occurred.
 
 Package rerunfilecheck Info: File `main.out' has not changed.
-(rerunfilecheck)             Checksum: 744B7D95265D257B0EF4E42335DF78BE;27777.
+(rerunfilecheck)             Checksum: 1DAFA89332180CB8EE1B459FE458D49A;27734.
 Package logreq Info: Writing requests to 'main.run.xml'.
 \openout1 = `main.run.xml'.
 
  ) 
 Here is how much of TeX's memory you used:
- 37535 strings out of 402620
- 747520 string characters out of 5439504
- 1713278 words of memory out of 5000000
- 66017 multiletter control sequences out of 15000+600000
- 635836 words of font info for 107 fonts, out of 8000000 for 9000
+ 37531 strings out of 402620
+ 747334 string characters out of 5439504
+ 1727289 words of memory out of 5000000
+ 66015 multiletter control sequences out of 15000+600000
+ 635820 words of font info for 105 fonts, out of 8000000 for 9000
  1348 hyphenation exceptions out of 8191
  97i,12n,134p,1655b,5429s stack positions out of 10000i,1000n,20000p,200000b,200000s
 
-Output written on main.pdf (75 pages).
+Output written on main.pdf (74 pages).

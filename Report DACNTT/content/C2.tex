@@ -31,7 +31,7 @@ Phương pháp này được sử dụng làm baseline ItemKNN trong thực nghi
 \subsection{Vì sao bài toán buộc phải dùng phản hồi ẩn (Implicit Feedback)}
 \label{subsec:feedback_types}
 
-Về nguyên tắc, phản hồi của User có thể là \textbf{hiện (Explicit)} -- điểm số đánh giá trực tiếp như rating 1--5 sao -- hoặc \textbf{ẩn (Implicit)} -- suy ra gián tiếp từ hành vi như lịch sử mua hàng, lượt click \parencite{he2017ncf, rendle2009bpr}. Điểm cần nói rõ ở đây không phải là định nghĩa chung của hai khái niệm này, mà là một ràng buộc thực tế: cả \texttt{DataCoSupplyChainDataset.csv} lẫn \texttt{transactions\_train.csv} của H\&M \textbf{đều không có bất kỳ cột rating nào} -- chỉ có bản ghi giao dịch đã xảy ra. Điều này loại bỏ hoàn toàn khả năng dùng Explicit Feedback, và buộc toàn bộ đề tài phải xây dựng tín hiệu tương tác dưới dạng nhị phân từ chính sự kiện mua hàng:
+Về nguyên tắc, phản hồi của User có thể là phản hồi hiện (Explicit) -- điểm số đánh giá trực tiếp như rating 1--5 sao -- hoặc phản hồi ẩn (Implicit) -- suy ra gián tiếp từ hành vi như lịch sử mua hàng, lượt click \parencite{he2017ncf, rendle2009bpr}. Điểm cần nói rõ ở đây không phải là định nghĩa chung của hai khái niệm này, mà là một ràng buộc thực tế: cả dữ liệu giao dịch DataCo lẫn dữ liệu giao dịch H\&M đều không có bất kỳ cột đánh giá (rating) nào -- chỉ có bản ghi giao dịch đã xảy ra. Điều này loại bỏ hoàn toàn khả năng dùng Explicit Feedback, và buộc toàn bộ đề tài phải xây dựng tín hiệu tương tác dưới dạng nhị phân từ chính sự kiện mua hàng:
 \begin{equation}
     y_{ui} = \begin{cases}
         1, & \text{nếu tồn tại giao dịch giữa User } u \text{ và Item } i \text{ trong dữ liệu} \\
@@ -324,37 +324,40 @@ Bộ ba chỉ số này được trình bày song song với HR@K/NDCG@K trong C
 
 Bảng~\ref{tab:related_work} tổng hợp các công trình nền tảng liên quan trực tiếp đến hướng tiếp cận của dự án.
 
-\begin{table}[htbp]
-    \centering
+\begin{xltabular}{\textwidth}{|p{3.2cm}|p{2.8cm}|p{2.5cm}|X|}
     \caption{Tổng quan các công trình nghiên cứu liên quan}
-    \label{tab:related_work}
-    \small
-    \begin{tabularx}{\textwidth}{|p{3.2cm}|p{2.8cm}|p{2.5cm}|X|}
-        \hline
-        \textbf{Tác giả \& Năm} & \textbf{Mô hình / Phương pháp} & \textbf{Dữ liệu} & \textbf{Đóng góp chính \& Hạn chế} \\
-        \hline
-        \textbf{Rendle et al. (2009)} \cite{rendle2009bpr} & BPR (Bayesian Personalized Ranking) & MovieLens, Netflix & Khung tối ưu dựa trên so sánh cặp cho implicit feedback. \textit{Hạn chế:} mô hình tuyến tính. \\
-        \hline
-        \textbf{He et al. (2017)} \cite{he2017ncf} & NCF / NeuMF & MovieLens, Pinterest & Kết hợp GMF và MLP, chứng minh ưu thế của học sâu. \textit{Hạn chế:} chưa tích hợp đặc trưng nội dung. \\
-        \hline
-        \textbf{Cheng et al. (2016)} \cite{cheng2016wide} & Wide \& Deep Learning & Google Play Store & Kết hợp ghi nhớ (Wide) và khái quát hóa (Deep). \textit{Hạn chế:} cần kỹ nghệ đặc trưng thủ công. \\
-        \hline
-        \textbf{Guo et al. (2017)} \cite{guo2017deepfm} & DeepFM & Criteo, Dữ liệu doanh nghiệp & Thay Wide bằng Factorization Machine. \textit{Hạn chế:} chi phí tính toán tăng khi số đặc trưng lớn. \\
-        \hline
-        \textbf{Kang \& McAuley (2018)} \cite{kang2018self} & SASRec (Self-Attention tuần tự) & Amazon, Steam, MovieLens & Mô hình hóa chuỗi hành vi bằng Self-Attention. \textit{Hạn chế:} cần mốc thời gian/phiên rõ ràng, chưa khai thác được với dữ liệu DataCo. \\
-        \hline
-        \textbf{Wang et al. (2019); He et al. (2020)} \cite{wang2019ngcf, he2020lightgcn} & NGCF / LightGCN (Graph-based CF) & Gowalla, Amazon-Book, Yelp2018 & Lan truyền tín hiệu tương tác bậc cao qua đồ thị hai phía. \textit{Hạn chế:} chi phí tính toán lan truyền tăng theo số tầng, chưa thử nghiệm trên dữ liệu chuỗi cung ứng. \\
-        \hline
-        \textbf{Wu et al. (2024)} \cite{wu2023survey_llm4rec} & Khảo sát LLM cho Recommendation & Tổng hợp đa miền & Hệ thống hóa hướng khai thác LLM cho gợi ý (Generative, Conversational). \textit{Hạn chế:} chi phí suy luận lớn, chưa phù hợp bài toán ID thuần túy quy mô vừa. \\
-        \hline
-        \textbf{Li et al. (2024)} \cite{li2024dnncf} & Khảo sát DNN cho Collaborative Filtering & Tổng hợp đa miền (2020--2024) & Hệ thống hóa các kiến trúc MLP, CNN, RNN, GNN, Autoencoder, GAN đã tích hợp vào CF, xác nhận GMF/MLP vẫn là thành phần nền tảng phổ biến. \textit{Hạn chế:} khảo sát tổng hợp, không đề xuất mô hình mới hay thực nghiệm riêng. \\
-        \hline
-        \textbf{Wei \& Fang (2025)} \cite{wei2025diffusion} & Khảo sát Diffusion Models cho Recommendation & Tổng hợp đa miền & Hệ thống hóa hướng sinh (generative) dựa trên mô hình khuếch tán cho gợi ý. \textit{Hạn chế:} còn rất mới, chưa kiểm chứng trên dữ liệu tabular quy mô vừa như DataCo. \\
-        \hline
-        \textbf{Dự án đề xuất (2026)} & \textbf{Mô hình lai NeuMF (Early/Late Fusion)} & \textbf{DataCo Supply Chain} & \textbf{Xây dựng và đánh giá NeuMF, Early Fusion trên dữ liệu chuỗi cung ứng, phản hồi ẩn có trọng số, Ablation Study, đánh giá Popular/Long-tail và kiểm định thống kê đa seed.} \\
-        \hline
-    \end{tabularx}
-\end{table}
+    \label{tab:related_work} \\
+    \hline
+    \textbf{Tác giả \& Năm} & \textbf{Mô hình / Phương pháp} & \textbf{Dữ liệu} & \textbf{Đóng góp chính \& Hạn chế} \\
+    \hline
+    \endfirsthead
+    \hline
+    \textbf{Tác giả \& Năm} & \textbf{Mô hình / Phương pháp} & \textbf{Dữ liệu} & \textbf{Đóng góp chính \& Hạn chế} \\
+    \hline
+    \endhead
+    \hline
+    \endfoot
+    \textbf{Rendle et al. (2009)} \cite{rendle2009bpr} & BPR (Bayesian Personalized Ranking) & MovieLens, Netflix & Khung tối ưu dựa trên so sánh cặp cho implicit feedback. \textit{Hạn chế:} mô hình tuyến tính. \\
+    \hline
+    \textbf{He et al. (2017)} \cite{he2017ncf} & NCF / NeuMF & MovieLens, Pinterest & Kết hợp GMF và MLP, chứng minh ưu thế của học sâu. \textit{Hạn chế:} chưa tích hợp đặc trưng nội dung. \\
+    \hline
+    \textbf{Cheng et al. (2016)} \cite{cheng2016wide} & Wide \& Deep Learning & Google Play Store & Kết hợp ghi nhớ (Wide) và khái quát hóa (Deep). \textit{Hạn chế:} cần kỹ nghệ đặc trưng thủ công. \\
+    \hline
+    \textbf{Guo et al. (2017)} \cite{guo2017deepfm} & DeepFM & Criteo, Dữ liệu doanh nghiệp & Thay Wide bằng Factorization Machine. \textit{Hạn chế:} chi phí tính toán tăng khi số đặc trưng lớn. \\
+    \hline
+    \textbf{Kang \& McAuley (2018)} \cite{kang2018self} & SASRec (Self-Attention tuần tự) & Amazon, Steam, MovieLens & Mô hình hóa chuỗi hành vi bằng Self-Attention. \textit{Hạn chế:} cần mốc thời gian/phiên rõ ràng, chưa khai thác được với dữ liệu DataCo. \\
+    \hline
+    \textbf{Wang et al. (2019); He et al. (2020)} \cite{wang2019ngcf, he2020lightgcn} & NGCF / LightGCN (Graph-based CF) & Gowalla, Amazon-Book, Yelp2018 & Lan truyền tín hiệu tương tác bậc cao qua đồ thị hai phía. \textit{Hạn chế:} chi phí tính toán lan truyền tăng theo số tầng, chưa thử nghiệm trên dữ liệu chuỗi cung ứng. \\
+    \hline
+    \textbf{Wu et al. (2024)} \cite{wu2023survey_llm4rec} & Khảo sát LLM cho Recommendation & Tổng hợp đa miền & Hệ thống hóa hướng khai thác LLM cho gợi ý (Generative, Conversational). \textit{Hạn chế:} chi phí suy luận lớn, chưa phù hợp bài toán ID thuần túy quy mô vừa. \\
+    \hline
+    \textbf{Li et al. (2024)} \cite{li2024dnncf} & Khảo sát DNN cho Collaborative Filtering & Tổng hợp đa miền (2020--2024) & Hệ thống hóa các kiến trúc MLP, CNN, RNN, GNN, Autoencoder, GAN đã tích hợp vào CF, xác nhận GMF/MLP vẫn là thành phần nền tảng phổ biến. \textit{Hạn chế:} khảo sát tổng hợp, không đề xuất mô hình mới hay thực nghiệm riêng. \\
+    \hline
+    \textbf{Wei \& Fang (2025)} \cite{wei2025diffusion} & Khảo sát Diffusion Models cho Recommendation & Tổng hợp đa miền & Hệ thống hóa hướng sinh (generative) dựa trên mô hình khuếch tán cho gợi ý. \textit{Hạn chế:} còn rất mới, chưa kiểm chứng trên dữ liệu tabular quy mô vừa như DataCo. \\
+    \hline
+    \textbf{Dự án đề xuất (2026)} & Mô hình lai NeuMF (Early/Late Fusion) & DataCo Supply Chain, H\&M & Xây dựng và đánh giá NeuMF, Early Fusion trên dữ liệu chuỗi cung ứng và thương mại điện tử, phản hồi ẩn có trọng số, Ablation Study, đánh giá Popular/Long-tail và kiểm định thống kê đa seed. \\
+    \hline
+\end{xltabular}
 
 \section{Khoảng trống nghiên cứu}
 \label{sec:khoangtrong_nghiencuu}

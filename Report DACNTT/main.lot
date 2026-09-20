@@ -1,24 +1,24 @@
 \babel@toc {vietnamese}{}\relax 
 \addvspace {10\p@ }
 \addvspace {10\p@ }
-\contentsline {table}{\numberline {2.1}{\ignorespaces Tổng quan các công trình nghiên cứu liên quan}}{19}{table.caption.5}%
+\contentsline {table}{\numberline {2.1}{\ignorespaces Tổng quan các công trình nghiên cứu liên quan}}{18}{table.2.1}%
 \addvspace {10\p@ }
-\contentsline {table}{\numberline {3.1}{\ignorespaces Độ nhạy của tập dữ liệu DataCo theo ngưỡng lọc $k$-core}}{24}{table.caption.7}%
-\contentsline {table}{\numberline {3.2}{\ignorespaces Kết quả phân chia Leave-One-Out và kiểm tra Disjoint trên DataCo}}{25}{table.caption.8}%
-\contentsline {table}{\numberline {3.3}{\ignorespaces Hiệu quả tiền xử lý dữ liệu H\&M: trước và sau khi cache hoá thành Parquet}}{27}{table.caption.9}%
-\contentsline {table}{\numberline {3.4}{\ignorespaces Độ nhạy $k$-core trên toàn bộ dữ liệu H\&M (31.788.324 dòng, quy mô đầy đủ)}}{27}{table.caption.10}%
-\contentsline {table}{\numberline {3.5}{\ignorespaces Độ nhạy của lát cắt dữ liệu H\&M (100.000 dòng) theo ngưỡng lọc $k$-core}}{28}{table.caption.11}%
-\contentsline {table}{\numberline {3.6}{\ignorespaces Kết quả phân chia Leave-One-Out và kiểm tra Disjoint trên H\&M (lát cắt 100.000 dòng, $k=5$)}}{28}{table.caption.12}%
-\contentsline {table}{\numberline {3.7}{\ignorespaces So sánh đặc trưng dữ liệu sau tiền xử lý: DataCo và H\&M}}{28}{table.caption.13}%
-\contentsline {table}{\numberline {3.8}{\ignorespaces Bảng thiết lập siêu tham số huấn luyện mô hình NeuMF}}{34}{table.caption.14}%
-\contentsline {table}{\numberline {3.9}{\ignorespaces Đặc tả các endpoint chính của API suy diễn}}{36}{table.caption.16}%
+\contentsline {table}{\numberline {3.1}{\ignorespaces Độ nhạy của tập dữ liệu DataCo theo ngưỡng lọc $k$-core}}{25}{table.caption.6}%
+\contentsline {table}{\numberline {3.2}{\ignorespaces Kết quả phân chia Leave-One-Out và kiểm tra Disjoint trên DataCo}}{26}{table.caption.7}%
+\contentsline {table}{\numberline {3.3}{\ignorespaces Hiệu quả tiền xử lý dữ liệu H\&M: trước và sau khi cache hoá thành Parquet}}{27}{table.caption.8}%
+\contentsline {table}{\numberline {3.4}{\ignorespaces Độ nhạy $k$-core trên toàn bộ dữ liệu H\&M (31.788.324 dòng, quy mô đầy đủ)}}{28}{table.caption.9}%
+\contentsline {table}{\numberline {3.5}{\ignorespaces Độ nhạy của lát cắt dữ liệu H\&M (100.000 dòng) theo ngưỡng lọc $k$-core}}{28}{table.caption.10}%
+\contentsline {table}{\numberline {3.6}{\ignorespaces Kết quả phân chia Leave-One-Out và kiểm tra Disjoint trên H\&M (lát cắt 100.000 dòng, $k=5$)}}{29}{table.caption.11}%
+\contentsline {table}{\numberline {3.7}{\ignorespaces So sánh đặc trưng dữ liệu sau tiền xử lý: DataCo và H\&M}}{29}{table.caption.12}%
+\contentsline {table}{\numberline {3.8}{\ignorespaces Bảng thiết lập siêu tham số huấn luyện mô hình NeuMF}}{35}{table.caption.13}%
+\contentsline {table}{\numberline {3.9}{\ignorespaces Đặc tả các chức năng chính của API suy diễn}}{36}{table.caption.15}%
 \addvspace {10\p@ }
-\contentsline {table}{\numberline {4.1}{\ignorespaces Kết quả so sánh hiệu năng giữa NeuMF và các baseline trên tập kiểm thử DataCo (Full Ranking)}}{40}{table.caption.19}%
-\contentsline {table}{\numberline {4.2}{\ignorespaces Kết quả so sánh hiệu năng giữa NeuMF và các baseline trên tập kiểm thử H\&M (Full Ranking, lát cắt 100.000 dòng)}}{41}{table.caption.20}%
-\contentsline {table}{\numberline {4.3}{\ignorespaces Đối chiếu NDCG@10: Full Ranking và Sampled-99 trên H\&M, cùng hệ số thổi phồng}}{43}{table.caption.23}%
-\contentsline {table}{\numberline {4.4}{\ignorespaces So sánh HR@10 / NDCG@10 trên nhóm Long-tail -- DataCo}}{44}{table.caption.24}%
-\contentsline {table}{\numberline {4.5}{\ignorespaces So sánh HR@10 / NDCG@10 trên nhóm Long-tail -- H\&M}}{44}{table.caption.25}%
-\contentsline {table}{\numberline {4.6}{\ignorespaces Trích Head Recommendation Rate (Beyond-Accuracy) trên H\&M -- minh hoạ mức độ thiên vị phổ biến}}{45}{table.caption.26}%
-\contentsline {table}{\numberline {4.7}{\ignorespaces Tổng hợp huấn luyện trên DataCo (CPU, seed=42)}}{46}{table.caption.28}%
-\contentsline {table}{\numberline {4.8}{\ignorespaces Tổng hợp huấn luyện trên H\&M, lát cắt 100.000 dòng (CPU, seed=42)}}{46}{table.caption.29}%
+\contentsline {table}{\numberline {4.1}{\ignorespaces Kết quả so sánh hiệu năng giữa NeuMF và các baseline trên tập kiểm thử DataCo (Full Ranking)}}{41}{table.caption.18}%
+\contentsline {table}{\numberline {4.2}{\ignorespaces Kết quả so sánh hiệu năng giữa NeuMF và các baseline trên tập kiểm thử H\&M (Full Ranking, lát cắt 100.000 dòng)}}{42}{table.caption.19}%
+\contentsline {table}{\numberline {4.3}{\ignorespaces Đối chiếu NDCG@10: Full Ranking và Sampled-99 trên H\&M, cùng hệ số thổi phồng}}{44}{table.caption.22}%
+\contentsline {table}{\numberline {4.4}{\ignorespaces So sánh HR@10 / NDCG@10 trên nhóm Long-tail -- DataCo}}{45}{table.caption.23}%
+\contentsline {table}{\numberline {4.5}{\ignorespaces So sánh HR@10 / NDCG@10 trên nhóm Long-tail -- H\&M}}{45}{table.caption.24}%
+\contentsline {table}{\numberline {4.6}{\ignorespaces Trích Head Recommendation Rate (Beyond-Accuracy) trên H\&M -- minh hoạ mức độ thiên vị phổ biến}}{46}{table.caption.25}%
+\contentsline {table}{\numberline {4.7}{\ignorespaces Tổng hợp huấn luyện trên DataCo (CPU, seed=42)}}{47}{table.caption.27}%
+\contentsline {table}{\numberline {4.8}{\ignorespaces Tổng hợp huấn luyện trên H\&M, lát cắt 100.000 dòng (CPU, seed=42)}}{47}{table.caption.28}%
 \addvspace {10\p@ }

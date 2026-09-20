@@ -23,15 +23,45 @@ PROJECT_ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(PROJECT_ROOT))
 
 from scripts.common import build_adapter  # noqa: E402
+<<<<<<< HEAD
 from src.data_pipeline.preprocessing import build_interactions  # noqa: E402
 from src.data_pipeline.negative_sampling import build_user_positive_sets  # noqa: E402
+=======
+from src.data.preprocessing import build_interactions  # noqa: E402
+from src.data.negative_sampling import build_user_positive_sets  # noqa: E402
+from src.evaluation.long_tail import define_head_items  # noqa: E402
+>>>>>>> 1705d54150e8671dd1f1e84408218c493061db62
 from src.models.neumf import GMF, MLP, NeuMF  # noqa: E402
 from src.models.early_fusion import EarlyFusionModel  # noqa: E402
 
 DATASETS = {
-    "dataco": {"config": "configs/dataco.yaml", "run_tag": "dataco_20260918_verify", "label": "DataCo Supply Chain"},
-    "hm": {"config": "configs/hm_subset.yaml", "run_tag": "hm_20260918_verify", "label": "H&M Fashion (lát cắt 100k)"},
+    "dataco": {"config": "configs/dataco.yaml", "prefix": "dataco_", "label": "DataCo Supply Chain"},
+    "hm": {"config": "configs/hm_subset.yaml", "prefix": "hm_", "label": "H&M Fashion (lát cắt 100k)"},
 }
+
+
+def resolve_latest_run_tag(prefix: str) -> str:
+    """Tìm run_tag MỚI NHẤT khớp tiền tố, ưu tiên run đã huấn luyện xong hoàn
+    chỉnh (có results.json + ít nhất 1 checkpoint .pt) -- tránh chọn nhầm một
+    run bị ngắt giữa chừng (vd. do bấm dừng khi đang train)."""
+    exp_dir = PROJECT_ROOT / "outputs" / "experiments"
+    ckpt_dir = PROJECT_ROOT / "outputs" / "checkpoints"
+    candidates = []
+    if exp_dir.exists():
+        for d in exp_dir.iterdir():
+            if not d.is_dir() or not d.name.startswith(prefix):
+                continue
+            results_path = d / "results.json"
+            has_ckpt = (ckpt_dir / d.name).exists() and any((ckpt_dir / d.name).glob("*.pt"))
+            if results_path.exists() and has_ckpt:
+                candidates.append((results_path.stat().st_mtime, d.name))
+    if not candidates:
+        raise FileNotFoundError(
+            f"Không tìm thấy run nào đã train xong hoàn chỉnh với tiền tố '{prefix}' "
+            f"trong outputs/experiments/. Hãy chạy scripts/run_all.py trước."
+        )
+    candidates.sort(key=lambda t: t[0], reverse=True)
+    return candidates[0][1]
 
 MODEL_CHECKPOINTS = {
     "GMF": "gmf.pt",
@@ -67,9 +97,10 @@ class DatasetContext:
         info = DATASETS[key]
         self.key = key
         self.label = info["label"]
-        self.run_tag = info["run_tag"]
+        self.run_tag = resolve_latest_run_tag(info["prefix"])
 
-        print(f"[demo] Đang nạp bối cảnh dữ liệu cho '{key}' ({info['config']})...")
+        print(f"[demo] Đang nạp bối cảnh dữ liệu cho '{key}' ({info['config']}), "
+              f"run_tag mới nhất = '{self.run_tag}'...")
         cfg, adapter = build_adapter(info["config"])
         self.cfg = cfg
         events = adapter.load_events()
@@ -82,9 +113,11 @@ class DatasetContext:
         self.idx2user = {v: k for k, v in data.user2idx.items()}
         self.idx2item = {v: k for k, v in data.item2idx.items()}
         self.seen = build_user_positive_sets(data.df, data.n_users)
+        self.head_items = define_head_items(data.df, data.n_items, cfg.evaluation.head_fraction)
 
         ckpt_dir = PROJECT_ROOT / "outputs" / "checkpoints" / self.run_tag
         table_dir = PROJECT_ROOT / "outputs" / "tables" / self.run_tag
+        self.beyond_path = table_dir / "beyond_accuracy.csv"
 
         self.models: dict[str, torch.nn.Module] = {}
         for name, fname in MODEL_CHECKPOINTS.items():
@@ -190,8 +223,64 @@ class DatasetContext:
                 "item_id": str(self.idx2item[item_idx]),
                 "label": self.item_label.get(item_idx, f"Item #{item_idx}"),
                 "score": round(float(scores[pos]), 4),
+                "is_head": item_idx in self.head_items,
             })
         return results
+
+    def history(self, external_user_id: str, limit: int = 20) -> list[dict]:
+        u_idx = self.resolve_user(external_user_id)
+        items = sorted(self.seen[u_idx])[:limit]
+        return [
+            {
+                "item_idx": i,
+                "item_id": str(self.idx2item[i]),
+                "label": self.item_label.get(i, f"Item #{i}"),
+                "is_head": i in self.head_items,
+            }
+            for i in items
+        ]
+
+    def _item_embedding(self) -> tuple[str, torch.Tensor] | None:
+        for name in ("GMF", "NeuMF-Pretrained", "NeuMF-Scratch", "MLP"):
+            model = self.models.get(name)
+            if model is None:
+                continue
+            if hasattr(model, "item_emb"):
+                return name, model.item_emb.weight.detach()
+            if hasattr(model, "gmf_item_emb"):
+                return name, model.gmf_item_emb.weight.detach()
+        return None
+
+    def similar_items(self, item_idx: int, k: int = 8) -> dict:
+        found = self._item_embedding()
+        if found is None:
+            return {"source_model": None, "items": []}
+        source_model, emb = found
+        if not (0 <= item_idx < emb.shape[0]):
+            raise KeyError(item_idx)
+        vecs = torch.nn.functional.normalize(emb, dim=1)
+        sims = (vecs @ vecs[item_idx]).numpy()
+        sims[item_idx] = -1.0  # loại chính nó
+        top_k = min(k, len(sims) - 1)
+        order = np.argsort(-sims)[:top_k]
+        items = [
+            {
+                "item_idx": int(i),
+                "item_id": str(self.idx2item[int(i)]),
+                "label": self.item_label.get(int(i), f"Item #{i}"),
+                "similarity": round(float(sims[i]), 4),
+                "is_head": int(i) in self.head_items,
+            }
+            for i in order
+        ]
+        return {"source_model": source_model, "items": items}
+
+    def beyond_accuracy(self) -> list[dict]:
+        if not self.beyond_path.exists():
+            return []
+        df = pd.read_csv(self.beyond_path).rename(columns={"Model": "model"})
+        df = df[df["model"].isin(MODEL_ORDER)]
+        return df.to_dict(orient="records")
 
 
 _contexts: dict[str, DatasetContext] = {}
@@ -208,14 +297,47 @@ def get_context(key: str) -> DatasetContext:
 app = FastAPI(title="NeuMF Demo API", description="Suy diễn (inference-only) trên checkpoint đã huấn luyện — xem Chương 3 (mục 3.7) và Chương 4 của báo cáo.")
 
 
+@app.middleware("http")
+async def no_cache(request, call_next):
+    """Demo đang trong giai đoạn chỉnh sửa liên tục — tắt hẳn cache của trình
+    duyệt để tránh hiển thị bản HTML/JS cũ sau khi server đã cập nhật."""
+    response = await call_next(request)
+    response.headers["Cache-Control"] = "no-store, no-cache, must-revalidate, max-age=0"
+    response.headers["Pragma"] = "no-cache"
+    return response
+
+
 @app.get("/api/health")
 def health():
     return {"status": "ok", "datasets_loaded": list(_contexts.keys())}
 
 
+@app.post("/api/reload/{dataset}")
+def reload_dataset(dataset: str):
+    """Xoá cache trong bộ nhớ để lần gọi API tiếp theo nạp lại run_tag MỚI
+    NHẤT hiện có trên đĩa -- dùng sau khi train xong một lần chạy mới, không
+    cần khởi động lại server."""
+    if dataset not in DATASETS:
+        raise HTTPException(404, f"Dataset '{dataset}' không tồn tại")
+    old_tag = _contexts.pop(dataset, None)
+    new_ctx = get_context(dataset)
+    return {
+        "dataset": dataset,
+        "previous_run_tag": old_tag.run_tag if old_tag else None,
+        "current_run_tag": new_ctx.run_tag,
+    }
+
+
 @app.get("/api/datasets")
 def list_datasets():
-    return [{"key": k, "label": v["label"], "run_tag": v["run_tag"]} for k, v in DATASETS.items()]
+    out = []
+    for k, v in DATASETS.items():
+        try:
+            tag = resolve_latest_run_tag(v["prefix"])
+        except FileNotFoundError:
+            tag = None
+        out.append({"key": k, "label": v["label"], "run_tag": tag})
+    return out
 
 
 @app.get("/api/models/{dataset}")
@@ -262,6 +384,32 @@ def recommend(dataset: str, model_name: str, user_id: str, k: int = 10):
             f"nằm ngoài phạm vi mô hình (xem mục 3.7.2 / 4.4 của báo cáo).",
         )
     return {"dataset": dataset, "model": model_name, "user_id": user_id, "k": k, "recommendations": recs}
+
+
+@app.get("/api/history/{dataset}/{user_id}")
+def history(dataset: str, user_id: str, limit: int = 20):
+    ctx = get_context(dataset)
+    try:
+        items = ctx.history(user_id, limit=limit)
+    except KeyError:
+        raise HTTPException(404, f"User '{user_id}' không có trong dữ liệu huấn luyện")
+    return {"dataset": dataset, "user_id": user_id, "total_purchases": len(ctx.seen[ctx.resolve_user(user_id)]), "items": items}
+
+
+@app.get("/api/similar-items/{dataset}/{item_idx}")
+def similar_items(dataset: str, item_idx: int, k: int = 8):
+    ctx = get_context(dataset)
+    try:
+        result = ctx.similar_items(item_idx, k=k)
+    except KeyError:
+        raise HTTPException(404, f"Sản phẩm #{item_idx} không tồn tại trong dataset '{dataset}'")
+    return {"dataset": dataset, "item_idx": item_idx, **result}
+
+
+@app.get("/api/beyond/{dataset}")
+def beyond_accuracy(dataset: str):
+    ctx = get_context(dataset)
+    return ctx.beyond_accuracy()
 
 
 FRONTEND_DIR = Path(__file__).resolve().parents[1] / "frontend"
