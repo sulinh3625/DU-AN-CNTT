@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import numpy as np
 
-from src.data.negative_sampling import sample_eval_negatives
+from src.data_pipeline.negative_sampling import sample_eval_negatives
 from .full_ranking import EvalRecord
 
 

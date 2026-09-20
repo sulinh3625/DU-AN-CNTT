@@ -3,7 +3,7 @@ from __future__ import annotations
 import numpy as np
 from tqdm import tqdm
 
-from src.data.negative_sampling import available_negatives
+from src.data_pipeline.negative_sampling import available_negatives
 
 
 class RandomBaseline:

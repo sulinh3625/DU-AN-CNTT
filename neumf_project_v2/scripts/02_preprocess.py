@@ -8,8 +8,8 @@ PROJECT_ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(PROJECT_ROOT))
 
 from scripts.common import build_adapter
-from src.data.preprocessing import build_interactions, apply_feedback_weights
-from src.data.splitting import temporal_leave_one_out, assert_disjoint_splits
+from src.data_pipeline.preprocessing import build_interactions, apply_feedback_weights
+from src.data_pipeline.splitting import temporal_leave_one_out, assert_disjoint_splits
 from src.utils.io import ensure_dir, write_json
 
 

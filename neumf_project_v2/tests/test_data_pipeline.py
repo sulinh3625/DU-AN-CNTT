@@ -4,12 +4,12 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from src.data.kcore import iterative_k_core
-from src.data.preprocessing import aggregate_unique_user_item, build_interactions, apply_feedback_weights
-from src.data.splitting import temporal_leave_one_out, assert_disjoint_splits
-from src.data.negative_sampling import build_user_positive_sets, sample_train_negatives
-from src.data.dataset import TrainDataset
-from src.data.adapters.hm import HMAdapter
+from src.data_pipeline.kcore import iterative_k_core
+from src.data_pipeline.preprocessing import aggregate_unique_user_item, build_interactions, apply_feedback_weights
+from src.data_pipeline.splitting import temporal_leave_one_out, assert_disjoint_splits
+from src.data_pipeline.negative_sampling import build_user_positive_sets, sample_train_negatives
+from src.data_pipeline.dataset import TrainDataset
+from src.data_pipeline.adapters.hm import HMAdapter
 
 
 def test_aggregate_before_kcore_counts_unique_edges():

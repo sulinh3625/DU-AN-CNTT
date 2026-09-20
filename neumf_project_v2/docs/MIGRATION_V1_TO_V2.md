@@ -34,7 +34,7 @@ V2 tách rõ:
 
 - `configs/`: dataset/experiment config.
 - `data/`: raw, processed, splits.
-- `src/data/`: adapter + preprocessing.
+- `src/data_pipeline/`: adapter + preprocessing.
 - `src/models/`, `src/baselines/`.
 - `src/training/`.
 - `src/evaluation/`.

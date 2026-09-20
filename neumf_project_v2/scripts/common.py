@@ -3,7 +3,7 @@ from __future__ import annotations
 from pathlib import Path
 
 from src.config import load_config, resolve_project_path
-from src.data.adapters import DataCoAdapter, HMAdapter
+from src.data_pipeline.adapters import DataCoAdapter, HMAdapter
 
 
 def build_adapter(config_path: str):

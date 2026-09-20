@@ -17,10 +17,10 @@ sys.path.insert(0, str(PROJECT_ROOT))
 
 from scripts.common import build_adapter
 from src.baselines import RandomBaseline, MostPopularBaseline, ItemKNNBaseline, BPRMFBaseline
-from src.data.dataset import TrainDataset
-from src.data.negative_sampling import build_user_positive_sets
-from src.data.preprocessing import build_interactions, apply_feedback_weights
-from src.data.splitting import temporal_leave_one_out, assert_disjoint_splits
+from src.data_pipeline.dataset import TrainDataset
+from src.data_pipeline.negative_sampling import build_user_positive_sets
+from src.data_pipeline.preprocessing import build_interactions, apply_feedback_weights
+from src.data_pipeline.splitting import temporal_leave_one_out, assert_disjoint_splits
 from src.evaluation.beyond_accuracy import (
     catalog_coverage, average_recommendation_popularity,
     head_recommendation_rate, novelty_score,

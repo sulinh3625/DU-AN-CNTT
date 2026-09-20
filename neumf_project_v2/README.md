@@ -27,7 +27,7 @@ neumf_project_v2/
 │   └── legacy_v1_pham_vi_du_an.md
 ├── src/
 │   ├── config.py
-│   ├── data/
+│   ├── data_pipeline/          # xử lý dữ liệu (KHÁC với thư mục data/ chứa file dữ liệu thô ở trên)
 │   │   ├── adapters/
 │   │   │   ├── base.py
 │   │   │   ├── dataco.py
@@ -59,7 +59,9 @@ neumf_project_v2/
 │   ├── 01_data_audit.py
 │   ├── 02_preprocess.py
 │   ├── 03_run_experiment.py
-│   └── 04_multi_seed.py
+│   ├── 04_multi_seed.py
+│   └── run_all.py       # được run.py ở gốc gọi vào
+├── run.py               # chạy trọn gói nhanh: python run.py --config ...
 ├── tests/
 ├── outputs/
 │   ├── data_audit/
@@ -90,7 +92,20 @@ Nếu cần CUDA, cài PyTorch theo đúng bản CUDA của máy trước khi c�
 data/raw/dataco/DataCoSupplyChainDataset.csv
 ```
 
-## 3. Audit dữ liệu — phải chạy trước training
+## 3. Chạy nhanh (khuyến nghị)
+
+Thay vì chạy tuần tự từng script bên dưới, dùng `run.py` ở gốc dự án để huấn
+luyện + đánh giá + xuất biểu đồ trong một lệnh:
+
+```bash
+python run.py --config configs/dataco.yaml
+```
+
+`run.py` chỉ là entry point tiện dùng, gọi thẳng vào `scripts/run_all.py`.
+Muốn chạy từng bước riêng lẻ (audit, preprocess, train...) thì làm theo các
+mục 4–7 bên dưới.
+
+## 4. Audit dữ liệu — phải chạy trước training
 
 ```bash
 python scripts/01_data_audit.py --config configs/dataco.yaml
@@ -106,13 +121,13 @@ val_test_overlap   = 0
 
 Kết quả lưu ở `outputs/data_audit/dataco/`.
 
-## 4. Sinh splits
+## 5. Sinh splits
 
 ```bash
 python scripts/02_preprocess.py --config configs/dataco.yaml
 ```
 
-## 5. Chạy core experiment
+## 6. Chạy core experiment
 
 ```bash
 python scripts/03_run_experiment.py --config configs/dataco.yaml
@@ -125,13 +140,13 @@ Kết quả gồm:
 - `results_long_tail.csv`.
 - histories và metadata/checkpoints.
 
-## 6. Multi-seed
+## 7. Multi-seed
 
 ```bash
 python scripts/04_multi_seed.py --config configs/dataco.yaml --seeds 42 2024 2025 2026 3407
 ```
 
-## 7. H&M
+## 8. H&M
 
 Chỉ triển khai sau khi DataCo V2 đã pass audit và evaluator.
 
