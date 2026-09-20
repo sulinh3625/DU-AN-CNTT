@@ -41,50 +41,50 @@
 \contentsline {section}{\numberline {2.5}Các chỉ số đánh giá hệ thống gợi ý Top-K}{17}{section.2.5}%
 \contentsline {subsection}{\numberline {2.5.1}Các chỉ số đánh giá ngoài độ chính xác (Beyond-Accuracy Metrics)}{17}{subsection.2.5.1}%
 \contentsline {section}{\numberline {2.6}Tổng quan các công trình nghiên cứu liên quan}{18}{section.2.6}%
-\contentsline {section}{\numberline {2.7}Khoảng trống nghiên cứu}{18}{section.2.7}%
-\contentsline {chapter}{\numberline {3}PHƯƠNG PHÁP NGHIÊN CỨU VÀ THIẾT KẾ MÔ HÌNH NEUMF}{21}{chapter.3}%
-\contentsline {section}{\numberline {3.1}Kiến trúc tổng thể của hệ thống nghiên cứu}{21}{section.3.1}%
-\contentsline {section}{\numberline {3.2}Phân tích và tiền xử lý dữ liệu DataCo Supply Chain}{21}{section.3.2}%
-\contentsline {subsection}{\numberline {3.2.1}Đặc tả bộ dữ liệu DataCo Supply Chain}{21}{subsection.3.2.1}%
-\contentsline {subsection}{\numberline {3.2.2}Xây dựng ma trận tương tác và phản hồi ẩn có trọng số}{23}{subsection.3.2.2}%
-\contentsline {subsubsection}{\numberline {3.2.2.1}Quy trình tiền xử lý DataCo theo từng bước cụ thể}{23}{subsubsection.3.2.2.1}%
-\contentsline {subsection}{\numberline {3.2.3}Phân chia dữ liệu theo giao thức Leave-One-Out}{24}{subsection.3.2.3}%
-\contentsline {section}{\numberline {3.3}Phân tích và tiền xử lý dữ liệu H\&M Personalized Fashion Recommendations}{25}{section.3.3}%
-\contentsline {subsection}{\numberline {3.3.1}Đặc tả bộ dữ liệu và thách thức về quy mô}{25}{subsection.3.3.1}%
-\contentsline {subsection}{\numberline {3.3.2}Giải pháp: tiền xử lý một lần thành cache Parquet gọn nhẹ}{26}{subsection.3.3.2}%
-\contentsline {subsection}{\numberline {3.3.3}Áp dụng quy trình tiền xử lý chung và lựa chọn quy mô thực nghiệm}{27}{subsection.3.3.3}%
+\contentsline {section}{\numberline {2.7}Khoảng trống nghiên cứu}{20}{section.2.7}%
+\contentsline {chapter}{\numberline {3}PHƯƠNG PHÁP NGHIÊN CỨU VÀ THIẾT KẾ MÔ HÌNH NEUMF}{22}{chapter.3}%
+\contentsline {section}{\numberline {3.1}Kiến trúc tổng thể của hệ thống nghiên cứu}{22}{section.3.1}%
+\contentsline {section}{\numberline {3.2}Phân tích và tiền xử lý dữ liệu DataCo Supply Chain}{22}{section.3.2}%
+\contentsline {subsection}{\numberline {3.2.1}Đặc tả bộ dữ liệu DataCo Supply Chain}{22}{subsection.3.2.1}%
+\contentsline {subsection}{\numberline {3.2.2}Xây dựng ma trận tương tác và phản hồi ẩn có trọng số}{24}{subsection.3.2.2}%
+\contentsline {subsubsection}{\numberline {3.2.2.1}Quy trình tiền xử lý DataCo theo từng bước cụ thể}{24}{subsubsection.3.2.2.1}%
+\contentsline {subsection}{\numberline {3.2.3}Phân chia dữ liệu theo giao thức Leave-One-Out}{25}{subsection.3.2.3}%
+\contentsline {section}{\numberline {3.3}Phân tích và tiền xử lý dữ liệu H\&M Personalized Fashion Recommendations}{26}{section.3.3}%
+\contentsline {subsection}{\numberline {3.3.1}Đặc tả bộ dữ liệu và thách thức về quy mô}{26}{subsection.3.3.1}%
+\contentsline {subsection}{\numberline {3.3.2}Giải pháp: tiền xử lý một lần thành cache gọn nhẹ}{27}{subsection.3.3.2}%
+\contentsline {subsection}{\numberline {3.3.3}Áp dụng quy trình tiền xử lý chung và lựa chọn quy mô thực nghiệm}{28}{subsection.3.3.3}%
 \contentsline {section}{\numberline {3.4}Thiết kế kiến trúc mô hình NeuMF}{29}{section.3.4}%
 \contentsline {subsection}{\numberline {3.4.1}Cấu hình không gian nhúng Embedding độc lập}{29}{subsection.3.4.1}%
-\contentsline {subsection}{\numberline {3.4.2}Thiết kế nhánh Generalized Matrix Factorization (GMF)}{29}{subsection.3.4.2}%
-\contentsline {subsection}{\numberline {3.4.3}Thiết kế nhánh Multi-Layer Perceptron (MLP)}{30}{subsection.3.4.3}%
-\contentsline {subsection}{\numberline {3.4.4}Mô hình đối chứng Early Fusion}{30}{subsection.3.4.4}%
-\contentsline {subsection}{\numberline {3.4.5}Tầng kết hợp NeuMF và lớp dự đoán đầu ra}{31}{subsection.3.4.5}%
+\contentsline {subsection}{\numberline {3.4.2}Thiết kế nhánh Generalized Matrix Factorization (GMF)}{30}{subsection.3.4.2}%
+\contentsline {subsection}{\numberline {3.4.3}Thiết kế nhánh Multi-Layer Perceptron (MLP)}{31}{subsection.3.4.3}%
+\contentsline {subsection}{\numberline {3.4.4}Mô hình đối chứng Early Fusion}{31}{subsection.3.4.4}%
+\contentsline {subsection}{\numberline {3.4.5}Tầng kết hợp NeuMF và lớp dự đoán đầu ra}{32}{subsection.3.4.5}%
 \contentsline {section}{\numberline {3.5}Kỹ thuật lấy mẫu tiêu cực và hàm mục tiêu huấn luyện}{32}{section.3.5}%
 \contentsline {subsection}{\numberline {3.5.1}Kỹ thuật lấy mẫu tiêu cực động (Dynamic Negative Sampling)}{32}{subsection.3.5.1}%
-\contentsline {subsection}{\numberline {3.5.2}Hàm tổn thất Binary Cross-Entropy (BCE) và Regularization}{32}{subsection.3.5.2}%
+\contentsline {subsection}{\numberline {3.5.2}Hàm tổn thất Binary Cross-Entropy (BCE) và Regularization}{33}{subsection.3.5.2}%
 \contentsline {section}{\numberline {3.6}Quy trình huấn luyện và tối ưu hóa mô hình}{33}{section.3.6}%
 \contentsline {subsection}{\numberline {3.6.1}Chiến lược tiền huấn luyện (Pre-training GMF + MLP)}{33}{subsection.3.6.1}%
 \contentsline {subsection}{\numberline {3.6.2}Bảng thiết lập siêu tham số và kỹ thuật dừng sớm (Early Stopping)}{34}{subsection.3.6.2}%
 \contentsline {section}{\numberline {3.7}Thiết kế hệ thống giao diện thực nghiệm (Demo)}{34}{section.3.7}%
-\contentsline {subsection}{\numberline {3.7.1}Kiến trúc tổng thể: ba tầng tách biệt}{34}{subsection.3.7.1}%
-\contentsline {subsection}{\numberline {3.7.2}Thiết kế API suy diễn}{36}{subsection.3.7.2}%
+\contentsline {subsection}{\numberline {3.7.1}Kiến trúc tổng thể: ba tầng tách biệt}{35}{subsection.3.7.1}%
+\contentsline {subsection}{\numberline {3.7.2}Thiết kế API suy diễn}{35}{subsection.3.7.2}%
 \contentsline {subsection}{\numberline {3.7.3}Lựa chọn mô hình triển khai và mục tiêu phi chức năng}{37}{subsection.3.7.3}%
 \contentsline {subsection}{\numberline {3.7.4}Minh họa hệ thống demo đã cài đặt}{37}{subsection.3.7.4}%
-\contentsline {chapter}{\numberline {4}THỰC NGHIỆM VÀ ĐÁNH GIÁ KẾT QUẢ}{39}{chapter.4}%
-\contentsline {section}{\numberline {4.1}Cấu hình thực nghiệm}{39}{section.4.1}%
-\contentsline {section}{\numberline {4.2}Phương pháp đối chứng (Baselines)}{39}{section.4.2}%
-\contentsline {section}{\numberline {4.3}Kết quả thực nghiệm}{40}{section.4.3}%
-\contentsline {subsection}{\numberline {4.3.1}So sánh HR@K và NDCG@K (Full Ranking)}{40}{subsection.4.3.1}%
-\contentsline {subsection}{\numberline {4.3.2}Đối chiếu với giao thức Sampled-99}{41}{subsection.4.3.2}%
-\contentsline {subsection}{\numberline {4.3.3}Đánh giá phân tầng Popular / Long-tail}{43}{subsection.4.3.3}%
+\contentsline {chapter}{\numberline {4}THỰC NGHIỆM VÀ ĐÁNH GIÁ KẾT QUẢ}{40}{chapter.4}%
+\contentsline {section}{\numberline {4.1}Cấu hình thực nghiệm}{40}{section.4.1}%
+\contentsline {section}{\numberline {4.2}Phương pháp đối chứng (Baselines)}{40}{section.4.2}%
+\contentsline {section}{\numberline {4.3}Kết quả thực nghiệm}{41}{section.4.3}%
+\contentsline {subsection}{\numberline {4.3.1}So sánh HR@K và NDCG@K (Full Ranking)}{41}{subsection.4.3.1}%
+\contentsline {subsection}{\numberline {4.3.2}Đối chiếu với giao thức Sampled-99}{42}{subsection.4.3.2}%
+\contentsline {subsection}{\numberline {4.3.3}Đánh giá phân tầng Popular / Long-tail}{44}{subsection.4.3.3}%
 \contentsline {subsection}{\numberline {4.3.4}Kết quả đa seed và kiểm định ý nghĩa thống kê}{46}{subsection.4.3.4}%
 \contentsline {subsection}{\numberline {4.3.5}Phân tích Ablation Study}{47}{subsection.4.3.5}%
-\contentsline {section}{\numberline {4.4}Phạm vi và giới hạn thực nghiệm}{48}{section.4.4}%
-\contentsline {section}{\numberline {4.5}Thảo luận}{48}{section.4.5}%
+\contentsline {section}{\numberline {4.4}Phạm vi và giới hạn thực nghiệm}{49}{section.4.4}%
+\contentsline {section}{\numberline {4.5}Thảo luận}{49}{section.4.5}%
 \contentsline {chapter}{\numberline {5}KẾT LUẬN VÀ HƯỚNG PHÁT TRIỂN}{51}{chapter.5}%
 \contentsline {section}{\numberline {5.1}Kết luận}{51}{section.5.1}%
 \contentsline {section}{\numberline {5.2}Hạn chế của đề tài}{52}{section.5.2}%
 \contentsline {section}{\numberline {5.3}Hướng phát triển}{52}{section.5.3}%
 \contentsline {section}{\numberline {5.4}Triển khai thực tế giao diện thực nghiệm}{53}{section.5.4}%
-\contentsline {chapter}{PHỤ LỤC A. ĐỐI CHIẾU LUẬN ĐIỂM VÀ NGUỒN TRÍCH DẪN}{55}{chapter*.30}%
-\contentsline {chapter}{TÀI LIỆU THAM KHẢO}{57}{section*.31}%
+\contentsline {chapter}{PHỤ LỤC A. ĐỐI CHIẾU LUẬN ĐIỂM VÀ NGUỒN TRÍCH DẪN}{54}{chapter*.29}%
+\contentsline {chapter}{TÀI LIỆU THAM KHẢO}{56}{section*.30}%

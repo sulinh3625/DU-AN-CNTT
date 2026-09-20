@@ -2497,11 +2497,25 @@
     <bcf:citekey order="127" intorder="1">kingma2014adam</bcf:citekey>
     <bcf:citekey order="128" intorder="1">cheng2016wide</bcf:citekey>
     <bcf:citekey order="129" intorder="1">guo2017deepfm</bcf:citekey>
-    <bcf:citekey order="130" intorder="1">cremonesi2010performance</bcf:citekey>
-    <bcf:citekey order="131" intorder="1">he2017ncf</bcf:citekey>
-    <bcf:citekey order="132" intorder="1">krichene2020sampled</bcf:citekey>
-    <bcf:citekey order="133" intorder="1">paszke2019pytorch</bcf:citekey>
-    <bcf:citekey order="134" intorder="1">jarvelin2002</bcf:citekey>
+    <bcf:citekey order="130" intorder="1">covington2016youtube</bcf:citekey>
+    <bcf:citekey order="131" intorder="1">hidasi2016gru4rec</bcf:citekey>
+    <bcf:citekey order="132" intorder="1">kang2018self</bcf:citekey>
+    <bcf:citekey order="133" intorder="1">sun2019bert4rec</bcf:citekey>
+    <bcf:citekey order="134" intorder="1">wang2019ngcf</bcf:citekey>
+    <bcf:citekey order="135" intorder="1">he2020lightgcn</bcf:citekey>
+    <bcf:citekey order="136" intorder="1">liang2018multvae</bcf:citekey>
+    <bcf:citekey order="137" intorder="1">wu2021sgl</bcf:citekey>
+    <bcf:citekey order="138" intorder="1">rajput2023tiger</bcf:citekey>
+    <bcf:citekey order="139" intorder="1">wu2023survey_llm4rec</bcf:citekey>
+    <bcf:citekey order="140" intorder="1">wei2025diffusion</bcf:citekey>
+    <bcf:citekey order="141" intorder="1">li2024dnncf</bcf:citekey>
+    <bcf:citekey order="142" intorder="1">zhang2019deeplearningsurvey</bcf:citekey>
+    <bcf:citekey order="143" intorder="1">cremonesi2010performance</bcf:citekey>
+    <bcf:citekey order="144" intorder="1">he2017ncf</bcf:citekey>
+    <bcf:citekey order="145" intorder="1">krichene2020sampled</bcf:citekey>
+    <bcf:citekey order="146" intorder="1">paszke2019pytorch</bcf:citekey>
+    <bcf:citekey order="147" intorder="1">jarvelin2002</bcf:citekey>
+    <bcf:citekey order="148" intorder="1">vargas2011novelty</bcf:citekey>
   </bcf:section>
   <!-- SORTING TEMPLATES -->
   <bcf:sortingtemplate name="none">

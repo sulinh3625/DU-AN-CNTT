@@ -34,19 +34,19 @@ Thay vì từ bỏ hoàn toàn cấu trúc tích vô hướng của MF (vốn đ
 
 \begin{itemize}
     \item Nghiên cứu cơ sở lý thuyết về Lọc cộng tác, Nhân tử hóa ma trận, Mạng nơ-ron sâu và kiến trúc mô hình lai NeuMF \parencite{he2017ncf, koren2009matrix}.
-    \item Xây dựng quy trình xử lý dữ liệu hoàn chỉnh trên bộ dữ liệu DataCo Supply Chain \parencite{dataco2019}, biến đổi dữ liệu giao dịch thành ma trận tương tác User--Item dạng tín hiệu ẩn (kết hợp trọng số giá trị đơn hàng), thực hiện lấy mẫu tiêu cực (Negative Sampling) và phân chia tập dữ liệu theo giao thức Leave-One-Out.
+    \item Xây dựng quy trình xử lý dữ liệu hoàn chỉnh, áp dụng trên hai bộ dữ liệu độc lập -- DataCo Smart Supply Chain \parencite{dataco2019} và H\&M Personalized Fashion Recommendations -- biến đổi dữ liệu giao dịch thành ma trận tương tác User--Item dạng tín hiệu ẩn (kết hợp trọng số giá trị đơn hàng), thực hiện lấy mẫu tiêu cực (Negative Sampling) và phân chia tập dữ liệu theo giao thức Leave-One-Out.
     \item Thiết kế, cài đặt và tối ưu hóa các mô hình GMF, MLP độc lập và mô hình lai NeuMF trên nền tảng PyTorch.
     \item Đánh giá thực nghiệm định lượng hiệu năng của NeuMF so với các nhánh thành phần (GMF, MLP, Early Fusion) và baseline cổ điển qua các độ đo HR@K, NDCG@K \parencite{jarvelin2002}, Precision@K, Recall@K; thực hiện phân tích bóc tách thành phần (Ablation Study), đánh giá theo phân tầng độ phổ biến (Popular / Long-tail) và kiểm định ý nghĩa thống kê qua nhiều lần chạy (Multi-seed).
 \end{itemize}
 
-\textit{Lưu ý về phạm vi:} Dự án tập trung vào nhóm người dùng và sản phẩm đã có đủ lịch sử tương tác để xây dựng biểu diễn Embedding (sau khi lọc $k$-core). Bài toán khởi đầu lạnh (Cold-start) cho người dùng/sản phẩm hoàn toàn mới \textbf{không nằm trong phạm vi đánh giá thực nghiệm} của dự án và được ghi nhận như một hướng phát triển trong tương lai (Chương~\ref{chap:ketluan}).
+\textit{Lưu ý về phạm vi:} Dự án tập trung vào nhóm người dùng và sản phẩm đã có đủ lịch sử tương tác để xây dựng biểu diễn Embedding (sau khi lọc $k$-core). Bài toán khởi đầu lạnh (Cold-start) cho người dùng/sản phẩm hoàn toàn mới không nằm trong phạm vi đánh giá thực nghiệm của dự án và được ghi nhận như một hướng phát triển trong tương lai (Chương~\ref{chap:ketluan}).
 
 \subsection{Phạm vi nghiên cứu}
 \label{subsec:phamvi}
 
 \begin{itemize}
     \item \textbf{Đối tượng nghiên cứu:} Kiến trúc Neural Collaborative Filtering (GMF, MLP, NeuMF) \parencite{he2017ncf}, chiến lược kết hợp biểu diễn Early Fusion và Late Fusion, kỹ thuật biểu diễn Embedding và các thuật toán đánh giá hệ thống gợi ý Top-K.
-    \item \textbf{Dữ liệu thực nghiệm:} Bộ dữ liệu DataCo Smart Supply Chain \parencite{dataco2019}, khai thác thông tin khách hàng, sản phẩm và lịch sử giao dịch mua sắm.
+    \item \textbf{Dữ liệu thực nghiệm:} Hai bộ dữ liệu độc lập, khai thác thông tin khách hàng, sản phẩm và lịch sử giao dịch mua sắm -- DataCo Smart Supply Chain \parencite{dataco2019} (chuỗi cung ứng, catalog nhỏ và dày đặc) và H\&M Personalized Fashion Recommendations (thời trang, catalog lớn và cực thưa) -- nhằm kiểm chứng khả năng tổng quát hóa của mô hình và quy trình xử lý dữ liệu trên hai đặc trưng cấu trúc trái ngược nhau.
     \item \textbf{Tín hiệu tương tác:} Phản hồi ẩn dạng nhị phân dựa trên lịch sử mua hàng, kết hợp thử nghiệm biến thể tương tác có trọng số theo giá trị đơn hàng (Sales / Order Item Total).
 \end{itemize}
 
@@ -62,7 +62,7 @@ Thay vì từ bỏ hoàn toàn cấu trúc tích vô hướng của MF (vốn đ
     \item \textbf{Phương pháp đánh giá định lượng và kiểm chứng thống kê:} Đo lường hiệu năng bằng các độ đo chuẩn của lĩnh vực (HR@K, NDCG@K \parencite{jarvelin2002}) theo cả hai giao thức Full Ranking và Sampled-99 \parencite{krichene2020sampled}, bổ sung nhóm chỉ số ngoài độ chính xác (Coverage, Novelty, Head Rate) để tránh kết luận sai lệch chỉ dựa trên độ chính xác đơn thuần, và đối chiếu kết quả với các baseline cổ điển (Random, Most Popular, ItemKNN, BPR-MF) để định lượng chính xác mức độ đóng góp thực sự của từng thành phần kiến trúc (Chương~\ref{chap:thucnghiem}).
 \end{enumerate}
 
-Điểm xuyên suốt của phương pháp luận là ưu tiên \textbf{tính có thể tái lập và kiểm chứng được}: mọi số liệu trình bày trong báo cáo đều được trích xuất trực tiếp từ các tệp kết quả (\texttt{results\_primary.csv}, \texttt{data\_audit.json}...) do chính pipeline thực nghiệm sinh ra, thay vì ước lượng hay diễn giải gián tiếp.
+Điểm xuyên suốt của phương pháp luận là ưu tiên tính có thể tái lập và kiểm chứng được: mọi số liệu trình bày trong báo cáo đều được trích xuất trực tiếp từ kết quả do chính quy trình thực nghiệm sinh ra, thay vì ước lượng hay diễn giải gián tiếp.
 
 \section{Ý nghĩa khoa học và thực tiễn của đề tài}
 \label{sec:ynghia}
@@ -71,7 +71,7 @@ Thay vì từ bỏ hoàn toàn cấu trúc tích vô hướng của MF (vốn đ
 \label{subsec:ynghia_khoahoc}
 
 \begin{itemize}
-    \item Cung cấp bằng chứng thực nghiệm định lượng, đối chiếu trên \textbf{hai bộ dữ liệu có đặc trưng cấu trúc khác biệt rõ rệt} (DataCo: catalog nhỏ, dày đặc; H\&M: catalog lớn, cực thưa) về việc kiến trúc NeuMF có thực sự vượt trội các nhánh thành phần của chính nó (GMF, MLP) hay không -- một câu hỏi mà phần lớn các công trình gốc chỉ kiểm chứng trên một loại dữ liệu duy nhất (phim ảnh MovieLens, mạng xã hội hình ảnh Pinterest).
+    \item Cung cấp bằng chứng thực nghiệm định lượng, đối chiếu trên hai bộ dữ liệu có đặc trưng cấu trúc khác biệt rõ rệt (DataCo: catalog nhỏ, dày đặc; H\&M: catalog lớn, cực thưa) về việc kiến trúc NeuMF có thực sự vượt trội các nhánh thành phần của chính nó (GMF, MLP) hay không -- một câu hỏi mà phần lớn các công trình gốc chỉ kiểm chứng trên một loại dữ liệu duy nhất (phim ảnh MovieLens, mạng xã hội hình ảnh Pinterest).
     \item Làm rõ thực nghiệm câu hỏi về thời điểm hợp nhất biểu diễn tối ưu (Early Fusion và Late Fusion, mục~\ref{subsec:early_late_fusion}) -- cho thấy đây không phải một lựa chọn kiến trúc cố định mà phụ thuộc vào đặc trưng mật độ/quy mô catalog của dữ liệu, một đóng góp phân tích cụ thể bổ sung cho lý thuyết NCF gốc.
     \item Minh họa cụ thể, bằng số liệu thực đo, hiện tượng thiên vị phổ biến (\textit{popularity bias}) trong các mô hình Collaborative Filtering thuần túy dựa trên ID, góp phần củng cố luận điểm đã được ghi nhận trong tài liệu học thuật về sự cần thiết của các chỉ số đánh giá ngoài độ chính xác (mục~\ref{subsec:beyond_accuracy}).
 \end{itemize}

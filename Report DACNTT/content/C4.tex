@@ -4,7 +4,7 @@
 \section{Cấu hình thực nghiệm}
 \label{sec:exp_config}
 
-Thực nghiệm được tiến hành trên máy tính cá nhân cấu hình CPU Intel Core i5-1135G7 (4 nhân/8 luồng, 2,40GHz), 16GB RAM, \textbf{không sử dụng GPU} (huấn luyện và suy diễn đều chạy trên CPU). Môi trường phần mềm: Python 3.13, PyTorch 2.13 (bản CPU), Pandas, NumPy và SciPy trên Windows 11. Hai lần chạy thực nghiệm chính thức được dùng làm nguồn số liệu cho chương này: \texttt{dataco\_20260918\_verify} (toàn bộ tập DataCo sau lọc $k$-core, mục~\ref{subsec:interaction_matrix}) và \texttt{hm\_20260918\_verify} (lát cắt 100.000 dòng H\&M, mục~\ref{subsec:hm_apply}).
+Thực nghiệm được tiến hành trên máy tính cá nhân cấu hình CPU Intel Core i5-1135G7 (4 nhân/8 luồng, 2,40GHz), 16GB RAM, không sử dụng GPU (huấn luyện và suy diễn đều chạy trên CPU). Môi trường phần mềm: Python 3.13, PyTorch 2.13 (bản CPU), Pandas, NumPy và SciPy trên Windows 11. Số liệu trong chương này được trích từ hai lần chạy thực nghiệm chính thức, thực hiện ngày 18/09/2026: một lần trên toàn bộ tập DataCo sau lọc $k$-core (mục~\ref{subsec:interaction_matrix}), và một lần trên lát cắt 100.000 dòng H\&M (mục~\ref{subsec:hm_apply}).
 
 Quy trình đánh giá sử dụng hai giao thức song song:
 \begin{itemize}
@@ -33,7 +33,7 @@ Hiệu năng của mô hình đề xuất NeuMF được đối chiếu với c�
 \subsection{So sánh HR@K và NDCG@K (Full Ranking)}
 \label{subsec:hr_ndcg_comparison}
 
-Bảng~\ref{tab:results} tổng hợp kết quả đánh giá theo giao thức Full Ranking trên DataCo -- số liệu trích trực tiếp từ \texttt{results\_primary.csv} của lần chạy \texttt{dataco\_20260918\_verify}.
+Bảng~\ref{tab:results} tổng hợp kết quả đánh giá theo giao thức Full Ranking trên DataCo -- số liệu trích trực tiếp từ bảng kết quả chính của lần chạy thực nghiệm nêu ở mục~\ref{sec:exp_config}.
 
 \begin{table}[htbp]
     \centering
@@ -47,7 +47,7 @@ Bảng~\ref{tab:results} tổng hợp kết quả đánh giá theo giao thức F
         \hline
         Most Popular & 92,57\% & 93,45\% & 70,32\% & 70,62\% \\
         \hline
-        ItemKNN & 92,27\% & \textbf{93,61\%} & 67,23\% & 67,69\% \\
+        ItemKNN & 92,27\% & 93,61\% & 67,23\% & 67,69\% \\
         \hline
         BPR-MF & 92,54\% & 93,53\% & 70,11\% & 70,45\% \\
         \hline
@@ -55,16 +55,16 @@ Bảng~\ref{tab:results} tổng hợp kết quả đánh giá theo giao thức F
         \hline
         MLP & 92,64\% & 93,54\% & 69,95\% & 70,25\% \\
         \hline
-        Early Fusion & 92,82\% & 93,49\% & \textbf{73,57\%} & \textbf{73,79\%} \\
+        Early Fusion & 92,82\% & 93,49\% & 73,57\% & 73,79\% \\
         \hline
-        \textbf{NeuMF (from scratch)} & 92,54\% & 93,54\% & 70,30\% & 70,63\% \\
+        NeuMF (from scratch) & 92,54\% & 93,54\% & 70,30\% & 70,63\% \\
         \hline
-        \textbf{NeuMF (pre-trained)} & 92,69\% & 93,55\% & 70,45\% & 70,74\% \\
+        NeuMF (pre-trained) & 92,69\% & 93,55\% & 70,45\% & 70,74\% \\
         \hline
     \end{tabular}
 \end{table}
 
-Bảng~\ref{tab:results_hm} trình bày kết quả tương ứng trên lát cắt H\&M (\texttt{hm\_20260918\_verify}, mục~\ref{subsec:hm_apply}); catalog H\&M không bao gồm ItemKNN do cấu hình \texttt{hm\_subset.yaml} loại bỏ baseline này (ma trận item-item dày đặc không phù hợp khi mở rộng lên catalog lớn, xem chú thích trong file cấu hình).
+Bảng~\ref{tab:results_hm} trình bày kết quả tương ứng trên lát cắt H\&M (mục~\ref{subsec:hm_apply}); catalog H\&M không bao gồm ItemKNN vì đây là mô hình dựa trên ma trận độ tương đồng item-item dày đặc, không phù hợp khi mở rộng lên catalog lớn.
 
 \begin{table}[htbp]
     \centering
@@ -82,20 +82,20 @@ Bảng~\ref{tab:results_hm} trình bày kết quả tương ứng trên lát c�
         \hline
         GMF & 5,11\% & 6,14\% & 3,41\% & 3,75\% \\
         \hline
-        MLP & 4,99\% & \textbf{7,63\%} & 3,26\% & \textbf{4,10\%} \\
+        MLP & 4,99\% & 7,63\% & 3,26\% & 4,10\% \\
         \hline
         Early Fusion & 0,57\% & 1,20\% & 0,39\% & 0,60\% \\
         \hline
-        \textbf{NeuMF (from scratch)} & 2,01\% & 2,58\% & 1,74\% & 1,93\% \\
+        NeuMF (from scratch) & 2,01\% & 2,58\% & 1,74\% & 1,93\% \\
         \hline
-        \textbf{NeuMF (pre-trained)} & 4,99\% & \textbf{7,63\%} & 3,26\% & 4,09\% \\
+        NeuMF (pre-trained) & 4,99\% & 7,63\% & 3,26\% & 4,09\% \\
         \hline
     \end{tabular}
 \end{table}
 
-Hai điểm khác biệt quan trọng cần lưu ý ngay khi đọc hai bảng trên. \textit{Thứ nhất}, thang giá trị tuyệt đối giữa hai bộ dữ liệu chênh lệch rất lớn (HR@10 DataCo $\approx$ 93\%, HR@10 H\&M $\approx$ 1--8\%) -- hệ quả trực tiếp của catalog DataCo chỉ có 100 sản phẩm (một mô hình chỉ cần xếp đúng vào top-10/100 là đủ), trong khi H\&M có 1.080 sản phẩm với mật độ thưa hơn khoảng 13 lần (Bảng~\ref{tab:dataco_vs_hm}); do đó \textbf{không nên so sánh trực tiếp giá trị tuyệt đối giữa hai bộ dữ liệu}, chỉ nên so sánh \emph{thứ hạng tương đối} giữa các mô hình trong cùng một bộ dữ liệu. Hình~\ref{fig:dataco_vs_hm} minh hoạ điều này bằng cách đặt HR@10 và NDCG@10 của hai bộ dữ liệu trên hai trục riêng biệt (không dùng trục kép trên cùng một biểu đồ để tránh gây hiểu lầm về độ lớn).
+Hai điểm khác biệt quan trọng cần lưu ý ngay khi đọc hai bảng trên. \textit{Thứ nhất}, thang giá trị tuyệt đối giữa hai bộ dữ liệu chênh lệch rất lớn (HR@10 DataCo $\approx$ 93\%, HR@10 H\&M $\approx$ 1--8\%) -- hệ quả trực tiếp của catalog DataCo chỉ có 100 sản phẩm (một mô hình chỉ cần xếp đúng vào top-10/100 là đủ), trong khi H\&M có 1.080 sản phẩm với mật độ thưa hơn khoảng 13 lần (Bảng~\ref{tab:dataco_vs_hm}); do đó không nên so sánh trực tiếp giá trị tuyệt đối giữa hai bộ dữ liệu, chỉ nên so sánh \emph{thứ hạng tương đối} giữa các mô hình trong cùng một bộ dữ liệu. Hình~\ref{fig:dataco_vs_hm} minh hoạ điều này bằng cách đặt HR@10 và NDCG@10 của hai bộ dữ liệu trên hai trục riêng biệt (không dùng trục kép trên cùng một biểu đồ để tránh gây hiểu lầm về độ lớn).
 
-\textit{Thứ hai}, HR@10 trên DataCo gần như bão hoà ở mọi mô hình (kể cả Most Popular đạt 93,45\%) do catalog quá nhỏ, khiến HR@10 mất khả năng phân biệt các phương pháp; \textbf{NDCG@10 mới là chỉ số phân biệt rõ ràng nhất trên DataCo}, cho thấy Early Fusion (73,79\%) vượt trội mọi phương pháp còn lại, kể cả NeuMF (70,74\%) -- một kết quả không như kỳ vọng ban đầu, được phân tích chi tiết ở mục~\ref{subsec:ablation}.
+\textit{Thứ hai}, HR@10 trên DataCo gần như bão hoà ở mọi mô hình (kể cả Most Popular đạt 93,45\%) do catalog quá nhỏ, khiến HR@10 mất khả năng phân biệt các phương pháp; NDCG@10 mới là chỉ số phân biệt rõ ràng nhất trên DataCo, cho thấy Early Fusion (73,79\%) vượt trội mọi phương pháp còn lại, kể cả NeuMF (70,74\%) -- một kết quả không như kỳ vọng ban đầu, được phân tích chi tiết ở mục~\ref{subsec:ablation}.
 
 \begin{figure}[htbp]
     \centering
@@ -128,9 +128,9 @@ Hình~\ref{fig:heatmap_both} tổng hợp đồng thời toàn bộ chỉ số (
 
 Kết quả đối chiếu cho thấy hai bộ dữ liệu minh hoạ hai tình huống hoàn toàn khác nhau đối với sai lệch của giao thức đánh giá lấy mẫu, đúng như cảnh báo của \textcite{krichene2020sampled}.
 
-\textbf{Trên DataCo}, kết quả Sampled-99 trích từ \texttt{results\_sampled\_99.csv} \emph{trùng khớp tuyệt đối, đến từng chữ số thập phân}, với kết quả Full Ranking ở Bảng~\ref{tab:results}. Nguyên nhân đến từ chính cách cấu hình lấy mẫu âm khi đánh giá (\texttt{src/data/negative\_sampling.py}): số lượng mẫu âm thực lấy được luôn là $\min(99, \text{số sản phẩm chưa tương tác})$. Do DataCo chỉ có $N=100$ sản phẩm và mỗi người dùng trung bình chỉ tương tác với khoảng 8 sản phẩm (88.088 tương tác / 10.799 người dùng), số sản phẩm khả dụng làm mẫu âm cho mỗi người dùng gần như luôn nhỏ hơn 99 -- khiến "99 mẫu âm" trong thực tế bao phủ \emph{toàn bộ} sản phẩm còn lại, làm Sampled-99 suy biến đúng thành Full Ranking. Đây là một minh hoạ thực nghiệm trực tiếp cho khuyến cáo của Krichene và Rendle: giao thức Sampled-$k$ chỉ thực sự là một \emph{xấp xỉ lấy mẫu con} khi $k \ll N$; khi catalog nhỏ, nó không còn ý nghĩa như một phép xấp xỉ mà trùng khít với Full Ranking.
+Trên DataCo, kết quả Sampled-99 \emph{trùng khớp tuyệt đối, đến từng chữ số thập phân}, với kết quả Full Ranking ở Bảng~\ref{tab:results}. Nguyên nhân đến từ chính cách lấy mẫu âm khi đánh giá: số lượng mẫu âm thực lấy được luôn là $\min(99, \text{số sản phẩm chưa tương tác})$. Do DataCo chỉ có $N=100$ sản phẩm và mỗi người dùng trung bình chỉ tương tác với khoảng 8 sản phẩm (88.088 tương tác / 10.799 người dùng), số sản phẩm khả dụng làm mẫu âm cho mỗi người dùng gần như luôn nhỏ hơn 99 -- khiến "99 mẫu âm" trong thực tế bao phủ \emph{toàn bộ} sản phẩm còn lại, làm Sampled-99 suy biến đúng thành Full Ranking. Đây là một minh hoạ thực nghiệm trực tiếp cho khuyến cáo của Krichene và Rendle: giao thức Sampled-$k$ chỉ thực sự là một \emph{xấp xỉ lấy mẫu con} khi $k \ll N$; khi catalog nhỏ, nó không còn ý nghĩa như một phép xấp xỉ mà trùng khít với Full Ranking.
 
-\textbf{Trên H\&M}, ngược lại, $N=1.080 \gg 99$ nên Sampled-99 là một phép xấp xỉ thực sự -- và sai lệch bộc lộ rất rõ (Bảng~\ref{tab:sampled_hm}). Mọi mô hình đều bị \emph{thổi phồng} chỉ số dưới Sampled-99, nhưng mức độ thổi phồng không đồng đều: Random bị thổi phồng NDCG@10 gấp $\approx 12,4$ lần (0,34\% $\to$ 4,20\%) và Early Fusion gấp $\approx 9,4$ lần (0,60\% $\to$ 5,64\%) -- đúng hai mô hình có hiệu năng Full Ranking thấp nhất -- trong khi MLP và NeuMF (pre-trained), vốn là hai mô hình mạnh nhất, chỉ bị thổi phồng $\approx 3,4$--$3,5$ lần. Nói cách khác, \textbf{Sampled-99 hệ thống hoá việc thu hẹp khoảng cách giữa mô hình yếu và mô hình mạnh}, khiến các phương pháp yếu trông "gần đạt" hiệu năng của phương pháp mạnh hơn thực tế rất nhiều -- đúng là dạng sai lệch định lượng mà giao thức Full Ranking được chọn làm giao thức chính (mục~\ref{sec:exp_config}) nhằm tránh.
+Trên H\&M, ngược lại, $N=1.080 \gg 99$ nên Sampled-99 là một phép xấp xỉ thực sự -- và sai lệch bộc lộ rất rõ (Bảng~\ref{tab:sampled_hm}). Mọi mô hình đều bị \emph{thổi phồng} chỉ số dưới Sampled-99, nhưng mức độ thổi phồng không đồng đều: Random bị thổi phồng NDCG@10 gấp $\approx 12,4$ lần (0,34\% $\to$ 4,20\%) và Early Fusion gấp $\approx 9,4$ lần (0,60\% $\to$ 5,64\%) -- đúng hai mô hình có hiệu năng Full Ranking thấp nhất -- trong khi MLP và NeuMF (pre-trained), vốn là hai mô hình mạnh nhất, chỉ bị thổi phồng $\approx 3,4$--$3,5$ lần. Nói cách khác, Sampled-99 hệ thống hoá việc thu hẹp khoảng cách giữa mô hình yếu và mô hình mạnh, khiến các phương pháp yếu trông "gần đạt" hiệu năng của phương pháp mạnh hơn thực tế rất nhiều -- đúng là dạng sai lệch định lượng mà giao thức Full Ranking được chọn làm giao thức chính (mục~\ref{sec:exp_config}) nhằm tránh.
 
 \begin{table}[htbp]
     \centering
@@ -149,7 +149,7 @@ Kết quả đối chiếu cho thấy hai bộ dữ liệu minh hoạ hai tình 
         \hline
         GMF & 3,75\% & 13,76\% & $\times$3,7 \\
         \hline
-        MLP & \textbf{4,10\%} & 14,03\% & $\times$3,4 \\
+        MLP & 4,10\% & 14,03\% & $\times$3,4 \\
         \hline
         Early Fusion & 0,60\% & 5,64\% & $\times$9,4 \\
         \hline
@@ -173,7 +173,7 @@ Bảng~\ref{tab:longtail} và~\ref{tab:longtail_hm} so sánh HR@10/NDCG@10 riên
         \hline
         \textbf{Mô hình} & \textbf{HR@10 (Long-tail)} & \textbf{NDCG@10 (Long-tail)} \\
         \hline
-        Random & \textbf{13,06\%} & \textbf{5,84\%} \\
+        Random & 13,06\% & 5,84\% \\
         \hline
         Most Popular & 4,85\% & 1,57\% \\
         \hline
@@ -189,7 +189,7 @@ Bảng~\ref{tab:longtail} và~\ref{tab:longtail_hm} so sánh HR@10/NDCG@10 riên
         \hline
         NeuMF-Scratch & 6,06\% & 1,99\% \\
         \hline
-        \textbf{NeuMF (pre-trained)} & 7,00\% & 2,50\% \\
+        NeuMF (pre-trained) & 7,00\% & 2,50\% \\
         \hline
     \end{tabular}
 \end{table}
@@ -212,16 +212,16 @@ Bảng~\ref{tab:longtail} và~\ref{tab:longtail_hm} so sánh HR@10/NDCG@10 riên
         \hline
         MLP & 0,00\% & 0,00\% \\
         \hline
-        \textbf{Early Fusion} & \textbf{0,98\%} & \textbf{0,59\%} \\
+        Early Fusion & 0,98\% & 0,59\% \\
         \hline
         NeuMF-Scratch & 0,23\% & 0,07\% \\
         \hline
-        \textbf{NeuMF (pre-trained)} & 0,00\% & 0,00\% \\
+        NeuMF (pre-trained) & 0,00\% & 0,00\% \\
         \hline
     \end{tabular}
 \end{table}
 
-Phát hiện đáng chú ý nhất ở Bảng~\ref{tab:longtail}: trên DataCo, \textbf{Random có HR@10/NDCG@10 cao nhất trong nhóm Long-tail}, vượt qua mọi mô hình đã huấn luyện. Điều này không có nghĩa Random "tốt hơn" -- mà cho thấy mọi mô hình đã huấn luyện (kể cả NeuMF) đều thiên vị hệ thống về phía sản phẩm phổ biến (\textit{popularity bias}), nên khi mục tiêu thực sự nằm ở nhóm Long-tail, một dự đoán không thiên vị (ngẫu nhiên) lại có xác suất trúng cao hơn. Trên H\&M, mức độ thiên vị này còn cực đoan hơn: Bảng~\ref{tab:longtail_hm} cho thấy Most Popular, GMF, MLP và NeuMF (pre-trained) đều đạt \textbf{0,00\%} HR@10/NDCG@10 trên nhóm Long-tail -- bốn mô hình này không trả về đúng bất kỳ sản phẩm Long-tail nào trong top-10 cho toàn bộ 1.321 người dùng kiểm thử thuộc nhóm này. Đối chiếu với Bảng~\ref{tab:beyond_hm_summary} (Head Rec Rate $=1{,}0000$ cho cả ba mô hình GMF/MLP/NeuMF-Pretrained), kết luận là nhất quán: các mô hình này đã hội tụ về chiến lược gần như chỉ gợi ý sản phẩm Head. Riêng Early Fusion -- vốn có HR@10/NDCG@10 tổng thể thấp nhất trên H\&M (Bảng~\ref{tab:results_hm}) -- lại là mô hình \emph{duy nhất} còn giữ được khả năng gợi ý Long-tail đáng kể (0,98\%/0,59\%) nhờ Head Rec Rate thấp nhất (0,0557, tương đương một mô hình chưa hội tụ tốt nhưng chưa "sụp" hoàn toàn về phía sản phẩm phổ biến).
+Phát hiện đáng chú ý nhất ở Bảng~\ref{tab:longtail}: trên DataCo, Random có HR@10/NDCG@10 cao nhất trong nhóm Long-tail, vượt qua mọi mô hình đã huấn luyện. Điều này không có nghĩa Random "tốt hơn" -- mà cho thấy mọi mô hình đã huấn luyện (kể cả NeuMF) đều thiên vị hệ thống về phía sản phẩm phổ biến (\textit{popularity bias}), nên khi mục tiêu thực sự nằm ở nhóm Long-tail, một dự đoán không thiên vị (ngẫu nhiên) lại có xác suất trúng cao hơn. Trên H\&M, mức độ thiên vị này còn cực đoan hơn: Bảng~\ref{tab:longtail_hm} cho thấy Most Popular, GMF, MLP và NeuMF (pre-trained) đều đạt 0,00\% HR@10/NDCG@10 trên nhóm Long-tail -- bốn mô hình này không trả về đúng bất kỳ sản phẩm Long-tail nào trong top-10 cho toàn bộ 1.321 người dùng kiểm thử thuộc nhóm này. Đối chiếu với Bảng~\ref{tab:beyond_hm_summary} (Head Rec Rate $=1{,}0000$ cho cả ba mô hình GMF/MLP/NeuMF-Pretrained), kết luận là nhất quán: các mô hình này đã hội tụ về chiến lược gần như chỉ gợi ý sản phẩm Head. Riêng Early Fusion -- vốn có HR@10/NDCG@10 tổng thể thấp nhất trên H\&M (Bảng~\ref{tab:results_hm}) -- lại là mô hình \emph{duy nhất} còn giữ được khả năng gợi ý Long-tail đáng kể (0,98\%/0,59\%) nhờ Head Rec Rate thấp nhất (0,0557, tương đương một mô hình chưa hội tụ tốt nhưng chưa "sụp" hoàn toàn về phía sản phẩm phổ biến).
 
 \begin{table}[htbp]
     \centering
@@ -266,7 +266,7 @@ Phát hiện đáng chú ý nhất ở Bảng~\ref{tab:longtail}: trên DataCo, 
 \subsection{Kết quả đa seed và kiểm định ý nghĩa thống kê}
 \label{subsec:multiseed_results}
 
-Bảng~\ref{tab:training_summary_dataco} và~\ref{tab:training_summary_hm} tổng hợp số tham số, epoch hội tụ tốt nhất và thời gian huấn luyện thuần (không tính tiền xử lý/đánh giá) của từng mô hình trên CPU, trích từ \texttt{training\_summary.csv}.
+Bảng~\ref{tab:training_summary_dataco} và~\ref{tab:training_summary_hm} tổng hợp số tham số, epoch hội tụ tốt nhất và thời gian huấn luyện thuần (không tính tiền xử lý/đánh giá) của từng mô hình trên CPU.
 
 \begin{table}[htbp]
     \centering
@@ -318,32 +318,32 @@ Bảng~\ref{tab:training_summary_dataco} và~\ref{tab:training_summary_hm} tổn
     \end{tabular}}
 \end{table}
 
-Tổng thời gian huấn luyện thuần trên DataCo là $\approx$ 654 giây ($\approx$ 10,9 phút) cho toàn bộ 7 mô hình cần huấn luyện (không tính Random/Most Popular vốn không cần huấn luyện, và chưa tính thời gian đánh giá Full Ranking + Sampled-99 + xuất 11 biểu đồ, chiếm thêm vài phút nữa trong tổng thời gian chạy \texttt{run\_all.py}). Pipeline đã hỗ trợ sẵn bước lặp lại thực nghiệm trên 5 seed (\texttt{scripts/04\_multi\_seed.py}, mặc định seed $\in \{42, 2024, 2025, 2026, 3407\}$) và kiểm định Wilcoxon signed-rank giữa NeuMF (pre-trained) với từng đối thủ chính (\texttt{scripts/06\_aggregate\_seeds.py}). Tuy nhiên, do mỗi seed yêu cầu huấn luyện lại toàn bộ pipeline trên CPU với thời gian tương đương Bảng~\ref{tab:training_summary_dataco}, việc chạy đủ 5 seed cho cả hai bộ dữ liệu (ước tính tối thiểu $\approx$ 55--75 phút chỉ riêng phần huấn luyện, chưa gồm đánh giá) nằm ngoài phạm vi thời gian của lần kiểm tra số liệu này. Kết quả ở Bảng~\ref{tab:results} và~\ref{tab:results_hm} vì vậy được báo cáo với \textbf{một seed duy nhất (seed = 42)} cho mỗi bộ dữ liệu; kiểm định ý nghĩa thống kê đa seed được ghi nhận là một hạng mục còn thiếu (không suy diễn quá mức từ chênh lệch một lần chạy) và được đề xuất là bước kiểm chứng bắt buộc trước khi công bố kết quả chính thức.
+Tổng thời gian huấn luyện thuần trên DataCo là $\approx$ 654 giây ($\approx$ 10,9 phút) cho toàn bộ 7 mô hình cần huấn luyện (không tính Random/Most Popular vốn không cần huấn luyện, và chưa tính thời gian đánh giá Full Ranking + Sampled-99 + xuất biểu đồ, chiếm thêm vài phút nữa trong tổng thời gian chạy). Quy trình thực nghiệm đã hỗ trợ sẵn bước lặp lại trên 5 seed (mặc định seed $\in \{42, 2024, 2025, 2026, 3407\}$) và kiểm định Wilcoxon signed-rank giữa NeuMF (pre-trained) với từng đối thủ chính. Tuy nhiên, do mỗi seed yêu cầu huấn luyện lại toàn bộ pipeline trên CPU với thời gian tương đương Bảng~\ref{tab:training_summary_dataco}, việc chạy đủ 5 seed cho cả hai bộ dữ liệu (ước tính tối thiểu $\approx$ 55--75 phút chỉ riêng phần huấn luyện, chưa gồm đánh giá) nằm ngoài phạm vi thời gian của lần kiểm tra số liệu này. Kết quả ở Bảng~\ref{tab:results} và~\ref{tab:results_hm} vì vậy được báo cáo với một seed duy nhất (seed = 42) cho mỗi bộ dữ liệu; kiểm định ý nghĩa thống kê đa seed được ghi nhận là một hạng mục còn thiếu (không suy diễn quá mức từ chênh lệch một lần chạy) và được đề xuất là bước kiểm chứng bắt buộc trước khi công bố kết quả chính thức.
 
 \subsection{Phân tích Ablation Study}
 \label{subsec:ablation}
 
 \begin{itemize}
     \item \textbf{Đóng góp riêng của GMF và MLP:} Trái với kỳ vọng ban đầu rằng việc hợp nhất GMF và MLP trong NeuMF sẽ cộng hưởng và vượt trội cả hai nhánh đơn lẻ, số liệu thực tế trên \emph{cả hai} bộ dữ liệu không xác nhận điều này. Trên DataCo, GMF đơn lẻ đạt NDCG@10 $=70,87\%$, cao hơn cả NeuMF (pre-trained) $=70,74\%$ (chênh $-0,13$ điểm phần trăm); trên H\&M, MLP đơn lẻ đạt NDCG@10 $=4,10\%$, xấp xỉ NeuMF (pre-trained) $=4,09\%$ (chênh $-0,01$ điểm phần trăm, không đáng kể). Nói cách khác, trong phạm vi thực nghiệm này, NeuMF chỉ \emph{đạt ngang} chứ chưa cho thấy vượt trội rõ rệt so với nhánh đơn lẻ mạnh nhất -- một quan sát khách quan cần đối chiếu thêm với kiểm định đa seed (mục~\ref{subsec:multiseed_results}) trước khi kết luận chắc chắn.
-    \item \textbf{Early Fusion so với Late Fusion (NeuMF):} Đây là phát hiện tương phản rõ nhất giữa hai bộ dữ liệu. Trên DataCo, Early Fusion vượt trội NeuMF (from scratch): NDCG@10 $73,79\%$ so với $70,63\%$ (+4,47\% tương đối). Trên H\&M, kết quả \textbf{đảo ngược hoàn toàn}: NeuMF (from scratch) vượt trội Early Fusion với biên độ rất lớn -- NDCG@10 $1,93\%$ so với $0,60\%$ (+219,65\% tương đối, theo tính toán tự động của \texttt{scripts/05\_evaluate.py}). Cách diễn giải hợp lý nhất: với catalog rất nhỏ và dày đặc như DataCo (100 sản phẩm, mật độ 8,16\%), một không gian nhúng chung duy nhất đã đủ biểu diễn tương tác User--Item mà không cần tách hai nhánh GMF/MLP; ngược lại, với catalog lớn và cực thưa như H\&M (mật độ 0,62\% trên lát cắt đang dùng, và chỉ 0,03\% ở quy mô toàn bộ theo Bảng~\ref{tab:kcore_hm_full}), việc tách hai không gian nhúng độc lập trong NeuMF giúp mô hình tránh xung đột gradient tốt hơn hẳn so với hợp nhất sớm. Kết luận: \textbf{thời điểm hợp nhất biểu diễn tối ưu phụ thuộc vào đặc trưng mật độ/quy mô catalog của dữ liệu}, không có câu trả lời cố định cho mọi bài toán.
+    \item \textbf{Early Fusion so với Late Fusion (NeuMF):} Đây là phát hiện tương phản rõ nhất giữa hai bộ dữ liệu. Trên DataCo, Early Fusion vượt trội NeuMF (from scratch): NDCG@10 $73,79\%$ so với $70,63\%$ (+4,47\% tương đối). Trên H\&M, kết quả đảo ngược hoàn toàn: NeuMF (from scratch) vượt trội Early Fusion với biên độ rất lớn -- NDCG@10 $1,93\%$ so với $0,60\%$ (+219,65\% tương đối). Cách diễn giải hợp lý nhất: với catalog rất nhỏ và dày đặc như DataCo (100 sản phẩm, mật độ 8,16\%), một không gian nhúng chung duy nhất đã đủ biểu diễn tương tác User--Item mà không cần tách hai nhánh GMF/MLP; ngược lại, với catalog lớn và cực thưa như H\&M (mật độ 0,62\% trên lát cắt đang dùng, và chỉ 0,03\% ở quy mô toàn bộ theo Bảng~\ref{tab:kcore_hm_full}), việc tách hai không gian nhúng độc lập trong NeuMF giúp mô hình tránh xung đột gradient tốt hơn hẳn so với hợp nhất sớm. Kết luận: thời điểm hợp nhất biểu diễn tối ưu phụ thuộc vào đặc trưng mật độ/quy mô catalog của dữ liệu, không có câu trả lời cố định cho mọi bài toán.
     \item \textbf{Ảnh hưởng của kích thước Embedding:} Dự án chưa thực hiện quét (sweep) kích thước embedding $d$ khác giá trị mặc định $d=32$ (Bảng~\ref{tab:hyperparams}); đây được ghi nhận là một hạng mục ablation còn thiếu, đề xuất bổ sung ở hướng phát triển (mục~\ref{sec:huongphattrien}).
-    \item \textbf{Hiệu quả của chiến lược Pre-training:} Hiệu quả của Pre-training phụ thuộc rõ rệt vào quy mô dữ liệu. Trên DataCo, chênh lệch NeuMF pre-trained so với from-scratch không đáng kể (NDCG@10 $70,74\%$ so với $70,63\%$, +0,16\% tương đối; cùng hội tụ ở epoch thứ 10). Trên H\&M, Pre-training mang lại cải thiện rất lớn: NDCG@10 tăng từ $1,93\%$ lên $4,09\%$ (+112,57\% tương đối), đồng thời rút ngắn số epoch hội tụ từ 20 (chạm ngưỡng \texttt{max\_epochs\_finetune}, có dấu hiệu chưa hội tụ hẳn) xuống chỉ 3 epoch, và thời gian huấn luyện từ 19,1 giây xuống 8,7 giây. Kết luận: Pre-training càng quan trọng khi bài toán càng khó hội tụ (catalog lớn, dữ liệu thưa) và ít cần thiết khi bài toán đã gần bão hoà (catalog nhỏ, dày đặc như DataCo).
+    \item \textbf{Hiệu quả của chiến lược Pre-training:} Hiệu quả của Pre-training phụ thuộc rõ rệt vào quy mô dữ liệu. Trên DataCo, chênh lệch NeuMF pre-trained so với from-scratch không đáng kể (NDCG@10 $70,74\%$ so với $70,63\%$, +0,16\% tương đối; cùng hội tụ ở epoch thứ 10). Trên H\&M, Pre-training mang lại cải thiện rất lớn: NDCG@10 tăng từ $1,93\%$ lên $4,09\%$ (+112,57\% tương đối), đồng thời rút ngắn số epoch hội tụ từ 20 (chạm ngưỡng số epoch tối đa cho phép, có dấu hiệu chưa hội tụ hẳn) xuống chỉ 3 epoch, và thời gian huấn luyện từ 19,1 giây xuống 8,7 giây. Kết luận: Pre-training càng quan trọng khi bài toán càng khó hội tụ (catalog lớn, dữ liệu thưa) và ít cần thiết khi bài toán đã gần bão hoà (catalog nhỏ, dày đặc như DataCo).
 \end{itemize}
 
 \section{Phạm vi và giới hạn thực nghiệm}
 \label{sec:pham_vi_thuc_nghiem}
 
-Thực nghiệm của dự án tập trung vào nhóm người dùng và sản phẩm đã có đủ lịch sử tương tác sau khi lọc $k$-core (mục~\ref{subsec:interaction_matrix}). Bài toán khởi đầu lạnh (Cold-start) cho người dùng/sản phẩm hoàn toàn mới, chưa có bất kỳ tương tác nào, \textbf{không được thực nghiệm và đánh giá định lượng} trong phạm vi dự án này; đây được ghi nhận là một hạn chế và hướng phát triển trong tương lai (mục~\ref{sec:hanche}, Chương~\ref{chap:ketluan}). Ngoài ra, kết quả trên H\&M (Bảng~\ref{tab:results_hm}) được đo trên lát cắt 100.000 dòng giao dịch đầu, \textbf{không phải toàn bộ 31,8 triệu dòng} của bộ dữ liệu gốc (lý do kỹ thuật và số liệu định lượng cụ thể tại mục~\ref{subsec:hm_apply}); các kết luận rút ra từ H\&M trong chương này cần được xác nhận lại ở quy mô đầy đủ trước khi tổng quát hoá.
+Thực nghiệm của dự án tập trung vào nhóm người dùng và sản phẩm đã có đủ lịch sử tương tác sau khi lọc $k$-core (mục~\ref{subsec:interaction_matrix}). Bài toán khởi đầu lạnh (Cold-start) cho người dùng/sản phẩm hoàn toàn mới, chưa có bất kỳ tương tác nào, không được thực nghiệm và đánh giá định lượng trong phạm vi dự án này; đây được ghi nhận là một hạn chế và hướng phát triển trong tương lai (mục~\ref{sec:hanche}, Chương~\ref{chap:ketluan}). Ngoài ra, kết quả trên H\&M (Bảng~\ref{tab:results_hm}) được đo trên lát cắt 100.000 dòng giao dịch đầu, không phải toàn bộ 31,8 triệu dòng của bộ dữ liệu gốc (lý do kỹ thuật và số liệu định lượng cụ thể tại mục~\ref{subsec:hm_apply}); các kết luận rút ra từ H\&M trong chương này cần được xác nhận lại ở quy mô đầy đủ trước khi tổng quát hoá.
 
 \section{Thảo luận}
 \label{sec:discussion}
 
 Ba câu hỏi nghiên cứu đặt ra ở đầu dự án có thể được trả lời khách quan dựa trên số liệu thực đo ở các mục trên như sau.
 
-\textbf{NeuMF có vượt trội rõ rệt so với các baseline hay không?} Câu trả lời là \emph{có, nhưng không đồng đều giữa các đối thủ so sánh}. So với các baseline truyền thống không dùng mạng nơ-ron (Random, Most Popular, ItemKNN, BPR-MF), NeuMF (pre-trained) cho NDCG@10 cao hơn rõ rệt trên cả hai bộ dữ liệu (DataCo: 70,74\% so với 67,69\%--70,45\%; H\&M: 4,09\% so với 0,34\%--3,72\%). Tuy nhiên, so với chính hai nhánh thành phần của nó (GMF, MLP) khi đứng riêng, NeuMF \textbf{không cho thấy cải thiện vượt trội}: trên DataCo, GMF đơn lẻ thậm chí nhỉnh hơn NeuMF (70,87\% so với 70,74\%); trên H\&M, MLP đơn lẻ gần như ngang bằng NeuMF (4,10\% so với 4,09\%). Đây là một kết quả \emph{không như kỳ vọng ban đầu} của khung lý thuyết NCF (vốn kỳ vọng hợp nhất GMF+MLP sẽ cộng hưởng), nhưng là một đóng góp khoa học hợp lệ nếu được phân tích nghiêm túc: với ngân sách huấn luyện và kích thước embedding đã dùng ($d=32$, Bảng~\ref{tab:hyperparams}), lợi ích của việc mở rộng số tham số (GMF: 348.800--90.368 tham số $\to$ NeuMF: 700.320--183.456 tham số, gấp đôi) không tự động chuyển hoá thành lợi ích về NDCG@10 trên hai bộ dữ liệu này. Do chưa có kiểm định đa seed (mục~\ref{subsec:multiseed_results}), \textbf{không thể khẳng định} chênh lệch nhỏ NeuMF--GMF/MLP có ý nghĩa thống kê hay chỉ là nhiễu ngẫu nhiên của một lần chạy -- đây là giới hạn quan trọng nhất của kết luận này và là lý do kiểm định đa seed được đặt làm hạng mục ưu tiên hàng đầu ở hướng phát triển (mục~\ref{sec:huongphattrien}).
+\textit{NeuMF có vượt trội rõ rệt so với các baseline hay không?} Câu trả lời là \emph{có, nhưng không đồng đều giữa các đối thủ so sánh}. So với các baseline truyền thống không dùng mạng nơ-ron (Random, Most Popular, ItemKNN, BPR-MF), NeuMF (pre-trained) cho NDCG@10 cao hơn rõ rệt trên cả hai bộ dữ liệu (DataCo: 70,74\% so với 67,69\%--70,45\%; H\&M: 4,09\% so với 0,34\%--3,72\%). Tuy nhiên, so với chính hai nhánh thành phần của nó (GMF, MLP) khi đứng riêng, NeuMF không cho thấy cải thiện vượt trội: trên DataCo, GMF đơn lẻ thậm chí nhỉnh hơn NeuMF (70,87\% so với 70,74\%); trên H\&M, MLP đơn lẻ gần như ngang bằng NeuMF (4,10\% so với 4,09\%). Đây là một kết quả \emph{không như kỳ vọng ban đầu} của khung lý thuyết NCF (vốn kỳ vọng hợp nhất GMF+MLP sẽ cộng hưởng), nhưng là một đóng góp khoa học hợp lệ nếu được phân tích nghiêm túc: với ngân sách huấn luyện và kích thước embedding đã dùng ($d=32$, Bảng~\ref{tab:hyperparams}), lợi ích của việc mở rộng số tham số (GMF: 348.800--90.368 tham số $\to$ NeuMF: 700.320--183.456 tham số, gấp đôi) không tự động chuyển hoá thành lợi ích về NDCG@10 trên hai bộ dữ liệu này. Do chưa có kiểm định đa seed (mục~\ref{subsec:multiseed_results}), không thể khẳng định chênh lệch nhỏ NeuMF--GMF/MLP có ý nghĩa thống kê hay chỉ là nhiễu ngẫu nhiên của một lần chạy -- đây là giới hạn quan trọng nhất của kết luận này và là lý do kiểm định đa seed được đặt làm hạng mục ưu tiên hàng đầu ở hướng phát triển (mục~\ref{sec:huongphattrien}).
 
-\textbf{Early Fusion so với Late Fusion (NeuMF) cho kết luận gì?} Đây là phát hiện rõ ràng và có biên độ lớn nhất trong toàn bộ chương, đồng thời là câu trả lời trực tiếp cho câu hỏi nghiên cứu về thời điểm hợp nhất biểu diễn User/Item (mục~\ref{subsec:early_late_fusion}): \textbf{không có câu trả lời cố định}. Trên DataCo (catalog nhỏ, dày đặc -- 100 sản phẩm, mật độ 8,16\%), Early Fusion vượt trội mọi phương pháp còn lại về NDCG@10 (73,79\%, cao hơn NeuMF 4,47\% tương đối). Trên H\&M (catalog lớn hơn, thưa hơn -- 1.080 sản phẩm ở lát cắt đang dùng, mật độ 0,62\%), kết quả đảo ngược hoàn toàn: NeuMF vượt trội Early Fusion với biên độ rất lớn (+219,65\% tương đối, mục~\ref{subsec:ablation}), và Early Fusion trở thành phương pháp có NDCG@10 tổng thể thấp nhất trong toàn bộ các mô hình có huấn luyện. Cách diễn giải nhất quán với toàn bộ số liệu: hợp nhất sớm (Early Fusion) phù hợp khi không gian tương tác đủ đơn giản để một bảng embedding chung biểu diễn được; hợp nhất muộn (NeuMF/Late Fusion) phát huy ưu thế khi catalog đủ lớn và thưa để việc tách hai không gian nhúng độc lập giúp tránh xung đột gradient. Đây là bằng chứng thực nghiệm ủng hộ thiết kế NeuMF \emph{đúng trong điều kiện dữ liệu phù hợp} (catalog lớn, thưa), chứ không phải một lựa chọn kiến trúc luôn luôn tối ưu bất kể đặc trưng dữ liệu.
+\textit{Early Fusion so với Late Fusion (NeuMF) cho kết luận gì?} Đây là phát hiện rõ ràng và có biên độ lớn nhất trong toàn bộ chương, đồng thời là câu trả lời trực tiếp cho câu hỏi nghiên cứu về thời điểm hợp nhất biểu diễn User/Item (mục~\ref{subsec:early_late_fusion}): không có câu trả lời cố định. Trên DataCo (catalog nhỏ, dày đặc -- 100 sản phẩm, mật độ 8,16\%), Early Fusion vượt trội mọi phương pháp còn lại về NDCG@10 (73,79\%, cao hơn NeuMF 4,47\% tương đối). Trên H\&M (catalog lớn hơn, thưa hơn -- 1.080 sản phẩm ở lát cắt đang dùng, mật độ 0,62\%), kết quả đảo ngược hoàn toàn: NeuMF vượt trội Early Fusion với biên độ rất lớn (+219,65\% tương đối, mục~\ref{subsec:ablation}), và Early Fusion trở thành phương pháp có NDCG@10 tổng thể thấp nhất trong toàn bộ các mô hình có huấn luyện. Cách diễn giải nhất quán với toàn bộ số liệu: hợp nhất sớm (Early Fusion) phù hợp khi không gian tương tác đủ đơn giản để một bảng embedding chung biểu diễn được; hợp nhất muộn (NeuMF/Late Fusion) phát huy ưu thế khi catalog đủ lớn và thưa để việc tách hai không gian nhúng độc lập giúp tránh xung đột gradient. Đây là bằng chứng thực nghiệm ủng hộ thiết kế NeuMF \emph{đúng trong điều kiện dữ liệu phù hợp} (catalog lớn, thưa), chứ không phải một lựa chọn kiến trúc luôn luôn tối ưu bất kể đặc trưng dữ liệu.
 
-\textbf{Mô hình có thực sự học được sở thích cá nhân hoá, hay chỉ thiên về sản phẩm phổ biến?} Phân tích Popular/Long-tail (mục~\ref{subsec:longtail_results}) cho thấy dấu hiệu thiên vị phổ biến (\textit{popularity bias}) rõ rệt, đặc biệt trên H\&M: bốn mô hình (Most Popular, GMF, MLP, NeuMF-Pretrained) đạt đúng 0,00\% HR@10 trên nhóm Long-tail, đồng thời Head Rec Rate $=1{,}0000$ -- nghĩa là 100\% gợi ý của các mô hình này rơi vào nhóm 10\% sản phẩm phổ biến nhất. Trên DataCo, mức độ thiên vị nhẹ hơn nhưng vẫn hiện diện: Random (không thiên vị) lại có HR@10/NDCG@10 Long-tail cao nhất trong số mọi phương pháp. Đây là hạn chế thực chất của cách tiếp cận Collaborative Filtering thuần tuý dựa trên ID (không có đặc trưng nội dung sản phẩm) khi phân bố tương tác lệch mạnh về một nhóm nhỏ sản phẩm phổ biến -- nhất quán với hạn chế đã nêu ở mục~\ref{sec:hanche} về việc chưa tích hợp đặc trưng đa phương thức.
+\textit{Mô hình có thực sự học được sở thích cá nhân hoá, hay chỉ thiên về sản phẩm phổ biến?} Phân tích Popular/Long-tail (mục~\ref{subsec:longtail_results}) cho thấy dấu hiệu thiên vị phổ biến (\textit{popularity bias}) rõ rệt, đặc biệt trên H\&M: bốn mô hình (Most Popular, GMF, MLP, NeuMF-Pretrained) đạt đúng 0,00\% HR@10 trên nhóm Long-tail, đồng thời Head Rec Rate $=1{,}0000$ -- nghĩa là 100\% gợi ý của các mô hình này rơi vào nhóm 10\% sản phẩm phổ biến nhất. Trên DataCo, mức độ thiên vị nhẹ hơn nhưng vẫn hiện diện: Random (không thiên vị) lại có HR@10/NDCG@10 Long-tail cao nhất trong số mọi phương pháp. Đây là hạn chế thực chất của cách tiếp cận Collaborative Filtering thuần tuý dựa trên ID (không có đặc trưng nội dung sản phẩm) khi phân bố tương tác lệch mạnh về một nhóm nhỏ sản phẩm phổ biến -- nhất quán với hạn chế đã nêu ở mục~\ref{sec:hanche} về việc chưa tích hợp đặc trưng đa phương thức.
 
-Tổng kết lại, kết quả thực nghiệm của dự án là \textbf{trung thực nhưng có sắc thái (nuanced)}: NeuMF hoạt động tốt và vượt trội các baseline cổ điển trên cả hai bộ dữ liệu, nhưng chưa chứng minh được lợi thế rõ rệt so với các nhánh thành phần của chính nó, và chỉ là lựa chọn kiến trúc tốt hơn Early Fusion trong điều kiện catalog lớn/thưa chứ không phải trong mọi trường hợp. Việc trình bày trung thực cả những kết quả không như kỳ vọng ban đầu (thay vì chỉ chọn lọc số liệu có lợi) được xem là một phần của tính nghiêm túc khoa học của báo cáo, và các giới hạn được nêu ở đây (chưa kiểm định đa seed, H\&M mới đánh giá trên lát cắt) được chuyển thành các hướng phát triển cụ thể ở Chương~\ref{chap:ketluan}.
+Tổng kết lại, kết quả thực nghiệm của dự án là trung thực nhưng có sắc thái (nuanced): NeuMF hoạt động tốt và vượt trội các baseline cổ điển trên cả hai bộ dữ liệu, nhưng chưa chứng minh được lợi thế rõ rệt so với các nhánh thành phần của chính nó, và chỉ là lựa chọn kiến trúc tốt hơn Early Fusion trong điều kiện catalog lớn/thưa chứ không phải trong mọi trường hợp. Việc trình bày trung thực cả những kết quả không như kỳ vọng ban đầu (thay vì chỉ chọn lọc số liệu có lợi) được xem là một phần của tính nghiêm túc khoa học của báo cáo, và các giới hạn được nêu ở đây (chưa kiểm định đa seed, H\&M mới đánh giá trên lát cắt) được chuyển thành các hướng phát triển cụ thể ở Chương~\ref{chap:ketluan}.
