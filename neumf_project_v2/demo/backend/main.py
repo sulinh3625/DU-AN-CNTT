@@ -23,14 +23,9 @@ PROJECT_ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(PROJECT_ROOT))
 
 from scripts.common import build_adapter  # noqa: E402
-<<<<<<< HEAD
 from src.data_pipeline.preprocessing import build_interactions  # noqa: E402
 from src.data_pipeline.negative_sampling import build_user_positive_sets  # noqa: E402
-=======
-from src.data.preprocessing import build_interactions  # noqa: E402
-from src.data.negative_sampling import build_user_positive_sets  # noqa: E402
 from src.evaluation.long_tail import define_head_items  # noqa: E402
->>>>>>> 1705d54150e8671dd1f1e84408218c493061db62
 from src.models.neumf import GMF, MLP, NeuMF  # noqa: E402
 from src.models.early_fusion import EarlyFusionModel  # noqa: E402
 
