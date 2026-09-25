@@ -62,7 +62,7 @@ Item không có ảnh sẽ hiển thị placeholder SVG ghi `product_type_name`.
 ## 4. Chạy web
 
 ```bash
-python -m uvicorn demo.backend.main:app --port 8000 --host 127.0.0.1
+python -m demo
 ```
 
 Mở **http://localhost:8000**. Lần gọi đầu mất khoảng 10 giây để dựng lại dữ liệu; sau đó được cache theo run_tag.
