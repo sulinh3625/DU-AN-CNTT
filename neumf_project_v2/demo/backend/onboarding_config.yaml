@@ -1,0 +1,31 @@
+# Cấu hình gợi ý rule-based cho khách hàng mới (KHÔNG phải mô hình).
+# Giá trị index_group_name phải khớp đúng cột index_group_name trong articles.csv.
+areas:
+  - key: women
+    label: Nữ
+    index_group_names: [Ladieswear]
+  - key: men
+    label: Nam
+    index_group_names: [Menswear]
+  - key: young
+    label: Trẻ trung
+    index_group_names: [Divided]
+  - key: sport
+    label: Thể thao
+    index_group_names: [Sport]
+  - key: kids
+    label: Trẻ em
+    index_group_names: [Baby/Children]
+
+# Popularity chỉ tính trên train split, trong N ngày cuối của train.
+popularity_window_days: 7
+
+# Nhóm tuổi (lấy từ cột age của customers.csv). Nhóm có ít giao dịch train hơn
+# ngưỡng này thì bỏ lọc tuổi và báo lên giao diện.
+min_age_group_transactions: 300
+age_groups:
+  - [16, 24]
+  - [25, 34]
+  - [35, 44]
+  - [45, 54]
+  - [55, 99]
