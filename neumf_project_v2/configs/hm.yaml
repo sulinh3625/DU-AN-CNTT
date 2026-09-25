@@ -41,15 +41,41 @@ evaluation:
   tie_break_seed: 2026
   include_redundant_metrics: false
   head_fraction: 0.10
+  cold_fraction: 0.20
+  strict_cold_start: true
+  strict_cold_max_users: 5000
 
 # ItemKNN dùng ma trận item-item dày nên không phù hợp khi catalog H&M rất lớn.
 baselines:
-  enabled: [random, popularity, bpr]
+  enabled: [random, popularity, bpr, age_popularity, category_popularity, content_based]
   bpr:
     embedding_dim: 32
     epochs: 20
     lr: 0.03
     reg: 0.005
+
+# Thông tin phụ trợ cho Content-based / Hybrid (xem src/data_pipeline/side_features.py)
+side_features:
+  articles_path: data/raw/hm/articles.csv
+  customers_path: data/raw/hm/customers.csv
+  # raw_path là cache Parquet -> cần bảng ánh xạ mã số -> ID gốc
+  item_id_map_path: data/processed/hm/item_id_map.parquet
+  user_id_map_path: data/processed/hm/user_id_map.parquet
+
+content:
+  category_col: product_type_name
+  categorical_cols: [product_code, product_type_name, product_group_name, graphical_appearance_name,
+                     colour_group_name, perceived_colour_master_name, department_name, index_name,
+                     section_name, garment_group_name]
+  text_cols: [prod_name, detail_desc]
+  text_weight: 1.0
+  recency_decays: [1.0, 0.8, 0.5]
+
+# Hybrid = alpha * NeuMF + (1 - alpha) * ContentBased, alpha chọn trên validation
+hybrid:
+  enabled: true
+  cf_model: NeuMF-Pretrained
+  alphas: [0.0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0]
 
 paths:
   outputs_dir: outputs

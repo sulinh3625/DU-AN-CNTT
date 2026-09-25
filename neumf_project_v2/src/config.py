@@ -64,6 +64,11 @@ class EvaluationConfig:
     tie_break_seed: int = 2026
     include_redundant_metrics: bool = False
     head_fraction: float = 0.10
+    # Cold-start TƯƠNG ĐỐI: cold_fraction% user ít tương tác nhất trong TRAIN.
+    cold_fraction: float = 0.20
+    # Cold-start TUYỆT ĐỐI: user bị k-core loại (xem cold_start.build_strict_cold_start).
+    strict_cold_start: bool = False
+    strict_cold_max_users: int | None = 5000
 
 
 @dataclass
@@ -81,6 +86,39 @@ class BaselineConfig:
 
 
 @dataclass
+class SideFeaturesConfig:
+    """Thông tin phụ trợ (H&M): articles.csv / customers.csv. None = không dùng."""
+    articles_path: str | None = None
+    customers_path: str | None = None
+    # Chỉ cần khi raw_path là cache Parquet (item_raw/user_raw là mã số).
+    item_id_map_path: str | None = None
+    user_id_map_path: str | None = None
+
+
+@dataclass
+class ContentConfig:
+    category_col: str = "product_type_name"
+    categorical_cols: list[str] = field(default_factory=lambda: [
+        "product_code", "product_type_name", "product_group_name",
+        "graphical_appearance_name", "colour_group_name", "perceived_colour_master_name",
+        "department_name", "index_name", "section_name", "garment_group_name",
+    ])
+    text_cols: list[str] = field(default_factory=lambda: ["prod_name", "detail_desc"])
+    block_weights: dict[str, float] = field(default_factory=dict)
+    text_weight: float = 1.0
+    text_max_features: int = 5000
+    # Grid recency_decay, chọn theo NDCG@10 trên validation.
+    recency_decays: list[float] = field(default_factory=lambda: [1.0, 0.8, 0.5])
+
+
+@dataclass
+class HybridConfig:
+    enabled: bool = False
+    cf_model: str = "NeuMF-Pretrained"
+    alphas: list[float] = field(default_factory=lambda: [round(x * 0.1, 1) for x in range(11)])
+
+
+@dataclass
 class PathsConfig:
     outputs_dir: str = "outputs"
 
@@ -94,6 +132,9 @@ class ProjectConfig:
     evaluation: EvaluationConfig = field(default_factory=EvaluationConfig)
     baselines: BaselineConfig = field(default_factory=BaselineConfig)
     paths: PathsConfig = field(default_factory=PathsConfig)
+    side_features: SideFeaturesConfig = field(default_factory=SideFeaturesConfig)
+    content: ContentConfig = field(default_factory=ContentConfig)
+    hybrid: HybridConfig = field(default_factory=HybridConfig)
 
     @property
     def output_root(self) -> Path:
@@ -126,6 +167,9 @@ def load_config(path: str | Path) -> ProjectConfig:
         evaluation=_merge_dataclass(EvaluationConfig, raw.get("evaluation")),
         baselines=_merge_dataclass(BaselineConfig, raw.get("baselines")),
         paths=_merge_dataclass(PathsConfig, raw.get("paths")),
+        side_features=_merge_dataclass(SideFeaturesConfig, raw.get("side_features")),
+        content=_merge_dataclass(ContentConfig, raw.get("content")),
+        hybrid=_merge_dataclass(HybridConfig, raw.get("hybrid")),
     )
     return cfg
 

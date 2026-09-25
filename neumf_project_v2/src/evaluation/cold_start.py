@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import math
 
+import numpy as np
 import pandas as pd
 
 
@@ -38,3 +39,49 @@ def split_records_by_coldness(records, cold_users: set[int]):
     for record in records:
         (cold if record.user in cold_users else warm).append(record)
     return cold, warm
+
+
+def build_strict_cold_start(events: pd.DataFrame, data, max_users: int | None = 5000, seed: int = 42):
+    """Cold-start TUYỆT ĐỐI: user bị k-core loại vì quá ít giao dịch.
+
+    Những user này không có trong ma trận User-Item nên mọi mô hình CF thuần
+    ID (GMF/MLP/NeuMF/BPR) KHÔNG có embedding để chấm điểm — chỉ các phương
+    pháp dựa trên nội dung/độ phổ biến mới gợi ý được. Giao thức:
+      - chỉ giữ tương tác với item nằm trong catalog đã train (item2idx);
+      - user cần >= 2 item khác nhau: item cuối (theo thời gian) = test,
+        phần còn lại = hồ sơ (profile) mà mô hình content-based được thấy;
+      - user được gán chỉ số mới n_users + j (không trùng user train).
+
+    Trả về (profile_df, test_df, user_raw_by_idx).
+    """
+    from src.data_pipeline.preprocessing import aggregate_unique_user_item
+
+    known_users = set(data.user2idx)
+    subset = events[~events["user_raw"].isin(known_users) & events["item_raw"].isin(set(data.item2idx))]
+    empty = pd.DataFrame(columns=["user", "item", "last_timestamp", "last_source_order"])
+    if subset.empty:
+        return empty, empty.copy(), {}
+
+    agg = aggregate_unique_user_item(subset)
+    counts = agg.groupby("user_raw")["item_raw"].transform("size")
+    agg = agg[counts >= 2].copy()
+    if agg.empty:
+        return empty, empty.copy(), {}
+
+    users = sorted(agg["user_raw"].unique().tolist(), key=lambda x: str(x))
+    if max_users is not None and len(users) > max_users:
+        rng = np.random.default_rng(seed)
+        users = sorted(rng.choice(np.array(users, dtype=object), size=max_users, replace=False).tolist(),
+                       key=lambda x: str(x))
+        agg = agg[agg["user_raw"].isin(set(users))].copy()
+
+    user_raw_by_idx = {data.n_users + j: u for j, u in enumerate(users)}
+    idx_by_raw = {u: idx for idx, u in user_raw_by_idx.items()}
+    agg["user"] = agg["user_raw"].map(idx_by_raw).astype(np.int64)
+    agg["item"] = agg["item_raw"].map(data.item2idx).astype(np.int64)
+    agg = agg.sort_values(["user", "last_timestamp", "last_source_order", "item"], kind="mergesort")
+
+    is_last = ~agg["user"].duplicated(keep="last")
+    test_df = agg[is_last].reset_index(drop=True)
+    profile_df = agg[~is_last].reset_index(drop=True)
+    return profile_df, test_df, user_raw_by_idx

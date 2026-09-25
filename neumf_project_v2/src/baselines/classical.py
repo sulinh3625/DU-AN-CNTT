@@ -26,6 +26,11 @@ class MostPopularBaseline:
     def score(self, user: int, item: int) -> float:
         return float(self.pop_score[int(item)])
 
+    __call__ = score
+
+    def score_items(self, user: int, items) -> np.ndarray:
+        return self.pop_score[np.asarray(items, dtype=np.int64)]
+
 
 class ItemKNNBaseline:
     """Item-based CF cosine. Chỉ nên dùng khi catalog đủ nhỏ (DataCo).
@@ -126,3 +131,8 @@ class BPRMFBaseline:
 
     def score(self, user: int, item: int) -> float:
         return float(self.P[int(user)] @ self.Q[int(item)])
+
+    __call__ = score
+
+    def score_items(self, user: int, items) -> np.ndarray:
+        return self.Q[np.asarray(items, dtype=np.int64)] @ self.P[int(user)]

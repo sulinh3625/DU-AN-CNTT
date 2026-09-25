@@ -22,8 +22,9 @@ import matplotlib.pyplot as plt
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 
 METHOD_ORDER = [
-    "Random", "MostPopular", "ItemKNN", "BPR-MF",
-    "GMF", "MLP", "EarlyFusion", "NeuMF-Scratch", "NeuMF-Pretrained",
+    "Random", "MostPopular", "AgeGroupPopularity", "CategoryPopularity", "ContentBased",
+    "ItemKNN", "BPR-MF",
+    "GMF", "MLP", "EarlyFusion", "NeuMF-Scratch", "NeuMF-Pretrained", "Hybrid-NeuMF-CBF",
 ]
 MODEL_COLORS = {
     "Random":           "#95a5a6",
@@ -35,6 +36,10 @@ MODEL_COLORS = {
     "EarlyFusion":      "#1abc9c",
     "NeuMF-Scratch":    "#16a085",
     "NeuMF-Pretrained": "#d4ac0d",
+    "AgeGroupPopularity": "#f5b041",
+    "CategoryPopularity": "#a04000",
+    "ContentBased":       "#2e86c1",
+    "Hybrid-NeuMF-CBF":   "#17202a",
 }
 
 plt.rcParams.update({
@@ -77,7 +82,7 @@ def _panel(ax, df, metric, dataset_label, exclude_random=True):
 
 def main():
     dataco_dir = PROJECT_ROOT / "outputs" / "tables" / "dataco_20260918_verify"
-    hm_dir = PROJECT_ROOT / "outputs" / "tables" / "hm_20260918_verify"
+    hm_dir = PROJECT_ROOT / "outputs" / "tables" / "hm_cbf_v1"
     out_dir = PROJECT_ROOT / "outputs" / "figures" / "comparison"
     out_dir.mkdir(parents=True, exist_ok=True)
 

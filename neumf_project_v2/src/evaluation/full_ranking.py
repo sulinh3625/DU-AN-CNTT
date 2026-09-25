@@ -100,12 +100,18 @@ def evaluate_torch_model(model, records, k_values, device="cpu", batch_size=1638
 
 
 def evaluate_score_function(score_fn, records, k_values, tie_seed=2026, include_redundant=False, return_topk=False):
+    """score_fn(user, item) -> float; nếu có thêm score_fn.score_items(user, items)
+    thì chấm điểm cả candidate set một lần (vector hoá, nhanh hơn nhiều)."""
     metrics = _empty_metric_lists(k_values, include_redundant)
     max_k = max(k_values)
     recommendations = {} if return_topk else None
+    score_items = getattr(score_fn, "score_items", None)
     for record in records:
         cand = record.candidates
-        scores = np.fromiter((score_fn(record.user, int(i)) for i in cand), dtype=np.float64, count=len(cand))
+        if score_items is not None:
+            scores = np.asarray(score_items(record.user, cand), dtype=np.float64)
+        else:
+            scores = np.fromiter((score_fn(record.user, int(i)) for i in cand), dtype=np.float64, count=len(cand))
         rank = rank_positive(scores, cand, record.positive_item, record.user, tie_seed)
         _append(metrics, rank, k_values, include_redundant)
         if return_topk:

@@ -21,6 +21,11 @@ DEFAULT_COMPARISONS = [
     ("NeuMF-Pretrained", "GMF"),
     ("NeuMF-Pretrained", "NeuMF-Scratch"),
     ("NeuMF-Pretrained", "EarlyFusion"),
+    # Content-based / Hybrid (H&M có articles.csv)
+    ("ContentBased", "MostPopular"),
+    ("ContentBased", "NeuMF-Pretrained"),
+    ("Hybrid-NeuMF-CBF", "NeuMF-Pretrained"),
+    ("Hybrid-NeuMF-CBF", "ContentBased"),
 ]
 
 
@@ -130,7 +135,7 @@ def main():
     ap.add_argument("--seeds", nargs="+", type=int, default=[42, 2024, 2025, 2026, 3407])
     ap.add_argument("--experiments-root", default=str(PROJECT_ROOT / "outputs" / "experiments"))
     ap.add_argument("--output-dir", default=str(PROJECT_ROOT / "outputs" / "tables"))
-    ap.add_argument("--split", default="primary", choices=["primary", "sampled_99", "long_tail"])
+    ap.add_argument("--split", default="primary", choices=["primary", "sampled_99", "long_tail", "cold_start", "warm", "cold_start_strict"])
     ap.add_argument("--primary-metric", default="NDCG@10")
     args = ap.parse_args()
 

@@ -16,11 +16,17 @@ PROJECT_ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(PROJECT_ROOT))
 
 from scripts.common import build_adapter
-from src.baselines import RandomBaseline, MostPopularBaseline, ItemKNNBaseline, BPRMFBaseline
+from src.baselines import (
+    RandomBaseline, MostPopularBaseline, ItemKNNBaseline, BPRMFBaseline,
+    CategoryPopularityBaseline, AgeGroupPopularityBaseline, ContentBasedBaseline,
+    build_item_feature_matrix, tune_recency_decay, HybridScorer, tune_hybrid_alpha,
+)
+from src.config import resolve_project_path
 from src.data_pipeline.dataset import TrainDataset
 from src.data_pipeline.negative_sampling import build_user_positive_sets
 from src.data_pipeline.preprocessing import build_interactions, apply_feedback_weights
 from src.data_pipeline.splitting import temporal_leave_one_out, assert_disjoint_splits
+from src.data_pipeline.side_features import load_hm_item_features, load_hm_user_age_groups
 from src.evaluation.beyond_accuracy import (
     catalog_coverage, average_recommendation_popularity,
     head_recommendation_rate, novelty_score,
@@ -28,6 +34,7 @@ from src.evaluation.beyond_accuracy import (
 from src.evaluation.full_ranking import build_full_ranking_records, evaluate_torch_model, evaluate_score_function
 from src.evaluation.sampled_ranking import build_sampled_ranking_records
 from src.evaluation.long_tail import define_head_items, split_records_head_tail
+from src.evaluation.cold_start import define_cold_users, split_records_by_coldness, build_strict_cold_start
 from src.models.neumf import GMF, MLP, NeuMF
 from src.models.early_fusion import EarlyFusionModel
 from src.training.trainer import train_one_model, make_optimizer, get_device
@@ -35,9 +42,38 @@ from src.utils.seed import seed_everything
 from src.utils.io import ensure_dir, write_json
 
 METHOD_ORDER = [
-    "Random", "MostPopular", "ItemKNN", "BPR-MF",
-    "GMF", "MLP", "EarlyFusion", "NeuMF-Scratch", "NeuMF-Pretrained",
+    "Random", "MostPopular", "AgeGroupPopularity", "CategoryPopularity", "ContentBased",
+    "ItemKNN", "BPR-MF",
+    "GMF", "MLP", "EarlyFusion", "NeuMF-Scratch", "NeuMF-Pretrained", "Hybrid-NeuMF-CBF",
 ]
+CONTENT_BASELINES = {"category_popularity", "content_based", "age_popularity"}
+
+
+def _opt_path(value):
+    return resolve_project_path(value) if value else None
+
+
+def load_side_features(cfg, data, extra_user_raws=()):
+    """Thuộc tính item (articles.csv) + nhóm tuổi user (customers.csv), nếu config có.
+
+    extra_user_raws: user ngoài tập train (cold-start tuyệt đối) cũng cần nhóm tuổi.
+    """
+    sf = cfg.side_features
+    item_df, user_group = None, None
+    if sf.articles_path:
+        cols = sorted(set(cfg.content.categorical_cols) | set(cfg.content.text_cols) | {cfg.content.category_col})
+        item_df = load_hm_item_features(
+            data.item2idx, resolve_project_path(sf.articles_path), cols, _opt_path(sf.item_id_map_path)
+        )
+        n_missing = int(item_df[cfg.content.category_col].isna().sum())
+        print(f"  ✓ articles.csv: {len(item_df) - n_missing:,}/{len(item_df):,} item có thuộc tính")
+    if sf.customers_path:
+        raws = list(data.user2idx.keys()) + list(extra_user_raws)
+        user_group = load_hm_user_age_groups(
+            raws, resolve_project_path(sf.customers_path), _opt_path(sf.user_id_map_path)
+        )
+        print(f"  ✓ customers.csv: nhóm tuổi cho {len(user_group):,} user")
+    return item_df, user_group
 
 
 def build_eval_records(cfg, val_df, test_df, train_df, full_df, n_users, n_items):
@@ -217,7 +253,7 @@ def run(config_path: str, run_tag: str | None = None):
     if "popularity" in enabled:
         print("  → MostPopular baseline...")
         pop_bl = MostPopularBaseline(train_df, data.n_items)
-        score_fns["MostPopular"] = pop_bl.score
+        score_fns["MostPopular"] = pop_bl
         print("    ✓ MostPopular baseline ready")
     if "itemknn" in enabled:
         print("  → ItemKNN baseline (computing similarity matrix)...")
@@ -245,8 +281,78 @@ def run(config_path: str, run_tag: str | None = None):
             "train_time_s": bpr_time,
             "n_parameters": int(bpr.P.size + bpr.Q.size),
         }
-        score_fns["BPR-MF"] = bpr.score
+        score_fns["BPR-MF"] = bpr
         print(f"    ✓ BPR-MF ready ({bpr_time:.1f}s)")
+
+    # 5b) Content-based (articles.csv / customers.csv) + Hybrid NeuMF+CBF
+    strict_profile_df = strict_test_df = None
+    strict_user_raw = {}
+    if cfg.evaluation.strict_cold_start:
+        strict_profile_df, strict_test_df, strict_user_raw = build_strict_cold_start(
+            events, data, cfg.evaluation.strict_cold_max_users, seed=cfg.training.seed
+        )
+    item_df, user_group_raw = None, None
+    if (enabled & CONTENT_BASELINES) or cfg.hybrid.enabled:
+        print("\n" + "─"*60)
+        print("  🧩 PHASE 3b: Content-based & Hybrid")
+        print("─"*60)
+        item_df, user_group_raw = load_side_features(cfg, data, strict_user_raw.values())
+        if item_df is None:
+            print("  ⚠️  Config không có side_features.articles_path → bỏ qua Content-based/Hybrid.")
+
+    item_category = item_matrix = content_model = None
+    content_meta = {}
+    user_group = {}
+    if user_group_raw is not None:
+        user_group = {idx: user_group_raw.get(raw) for raw, idx in data.user2idx.items()}
+        user_group.update({idx: user_group_raw.get(raw) for idx, raw in strict_user_raw.items()})
+    if item_df is not None:
+        item_category = item_df[cfg.content.category_col].to_dict()
+        if "category_popularity" in enabled:
+            score_fns["CategoryPopularity"] = CategoryPopularityBaseline(train_df, item_category, data.n_items)
+            print(f"  ✓ CategoryPopularity ({cfg.content.category_col}, "
+                  f"{item_df[cfg.content.category_col].nunique()} danh mục)")
+        if "content_based" in enabled or cfg.hybrid.enabled:
+            t0 = time.perf_counter()
+            item_matrix = build_item_feature_matrix(
+                item_df, cfg.content.categorical_cols, cfg.content.text_cols,
+                cfg.content.block_weights, cfg.content.text_weight, cfg.content.text_max_features,
+            )
+            best_decay, decay_scores = tune_recency_decay(
+                item_matrix, train_df, val_records, cfg.content.recency_decays,
+                tie_seed=cfg.evaluation.tie_break_seed,
+            )
+            content_model = ContentBasedBaseline(item_matrix, train_df, recency_decay=best_decay)
+            content_meta = {
+                "n_features": int(item_matrix.shape[1]),
+                "recency_decay": best_decay,
+                "val_ndcg10_by_decay": decay_scores,
+            }
+            train_meta["ContentBased"] = {
+                "train_time_s": time.perf_counter() - t0, "n_parameters": 0,
+                "best_metric": decay_scores[best_decay],
+            }
+            if "content_based" in enabled:
+                score_fns["ContentBased"] = content_model
+            print(f"  ✓ ContentBased: {item_matrix.shape[1]:,} đặc trưng | recency_decay={best_decay} "
+                  f"(val NDCG@10: {', '.join(f'{d}→{v:.4f}' for d, v in decay_scores.items())})")
+        if cfg.hybrid.enabled:
+            cf_name = cfg.hybrid.cf_model
+            if cf_name not in models:
+                raise ValueError(f"hybrid.cf_model='{cf_name}' không có trong các mô hình đã train: {list(models)}")
+            best_alpha, alpha_scores = tune_hybrid_alpha(
+                models[cf_name], content_model, val_records, cfg.hybrid.alphas,
+                device=device, tie_seed=cfg.evaluation.tie_break_seed,
+            )
+            score_fns["Hybrid-NeuMF-CBF"] = HybridScorer(models[cf_name], content_model, best_alpha, device)
+            content_meta.update({"hybrid_cf_model": cf_name, "hybrid_alpha": best_alpha,
+                                 "hybrid_val_ndcg10_by_alpha": alpha_scores})
+            train_meta["Hybrid-NeuMF-CBF"] = {"n_parameters": 0, "best_metric": alpha_scores[best_alpha]}
+            print(f"  ✓ Hybrid ({cf_name} + ContentBased): alpha={best_alpha} "
+                  f"(1.0 = thuần NeuMF, 0.0 = thuần CBF)")
+    if user_group and "age_popularity" in enabled:
+        score_fns["AgeGroupPopularity"] = AgeGroupPopularityBaseline(train_df, data.n_items, user_group)
+        print(f"  ✓ AgeGroupPopularity ({len(set(user_group.values()))} nhóm tuổi)")
 
     # 6) Evaluate primary + sampled reproduction protocol
     print("\n" + "─"*60)
@@ -323,11 +429,70 @@ def run(config_path: str, run_tag: str | None = None):
             include_redundant=cfg.evaluation.include_redundant_metrics,
         ) if tail_records else {}
 
+    # 8) Cold-start TƯƠNG ĐỐI: cold_fraction% user ít tương tác nhất (TRAIN)
+    print("\n  📊 Cold-start (tương đối) evaluation...")
+    cold_users = define_cold_users(train_df, data.n_users, cfg.evaluation.cold_fraction)
+    cold_records, warm_records = split_records_by_coldness(test_records, cold_users)
+    print(f"    Cold users: {len(cold_users)} | Cold test: {len(cold_records)} | Warm test: {len(warm_records)}")
+    results_cold, results_warm = {}, {}
+    for bucket, recs in ((results_cold, cold_records), (results_warm, warm_records)):
+        if not recs:
+            continue
+        for name, model in models.items():
+            bucket[name] = eval_torch(model, recs)
+        for name, fn in score_fns.items():
+            bucket[name] = evaluate_score_function(
+                fn, recs, cfg.evaluation.k_values, tie_seed=cfg.evaluation.tie_break_seed,
+                include_redundant=cfg.evaluation.include_redundant_metrics,
+            )
+
+    # 9) Cold-start TUYỆT ĐỐI: user bị k-core loại — CF thuần ID không chấm được
+    results_strict = {}
+    strict_meta = {}
+    if strict_test_df is not None and len(strict_test_df):
+        print("\n  📊 Cold-start (tuyệt đối) evaluation...")
+        strict_seen = build_user_positive_sets(strict_profile_df, data.n_users + len(strict_user_raw))
+        strict_records = build_full_ranking_records(strict_test_df, data.n_items, strict_seen)
+        profile_sizes = strict_profile_df.groupby("user").size()
+        strict_meta = {
+            "n_users": len(strict_records),
+            "profile_size_mean": float(profile_sizes.mean()),
+            "profile_size_median": float(profile_sizes.median()),
+        }
+        print(f"    Users: {len(strict_records):,} | Hồ sơ trung bình {strict_meta['profile_size_mean']:.2f} item")
+        strict_fns = {}
+        if "Random" in score_fns:
+            strict_fns["Random"] = score_fns["Random"]
+        strict_fns["MostPopular"] = MostPopularBaseline(train_df, data.n_items)
+        if user_group:
+            strict_fns["AgeGroupPopularity"] = AgeGroupPopularityBaseline(train_df, data.n_items, user_group)
+        if item_category is not None:
+            strict_fns["CategoryPopularity"] = CategoryPopularityBaseline(
+                train_df, item_category, data.n_items, profile_df=strict_profile_df
+            )
+        if content_model is not None:
+            strict_fns["ContentBased"] = ContentBasedBaseline(
+                item_matrix, strict_profile_df, recency_decay=content_meta["recency_decay"]
+            )
+        for name, fn in strict_fns.items():
+            results_strict[name] = evaluate_score_function(
+                fn, strict_records, cfg.evaluation.k_values, tie_seed=cfg.evaluation.tie_break_seed,
+                include_redundant=cfg.evaluation.include_redundant_metrics,
+            )
+    elif cfg.evaluation.strict_cold_start:
+        print("    ⚠️  Không có user cold-start tuyệt đối đủ điều kiện (>= 2 item trong catalog).")
+
     # Save consistent tables
     order = [m for m in METHOD_ORDER if m in results_primary]
     pd.DataFrame.from_dict(results_primary, orient="index").reindex(order).to_csv(run_dir / "results_primary.csv")
     pd.DataFrame.from_dict(results_sampled, orient="index").reindex(order).to_csv(run_dir / "results_sampled_99.csv")
     pd.DataFrame.from_dict(results_tail, orient="index").reindex(order).to_csv(run_dir / "results_long_tail.csv")
+    if results_cold:
+        pd.DataFrame.from_dict(results_cold, orient="index").reindex(order).to_csv(run_dir / "results_cold_start.csv")
+    if results_strict:
+        strict_order = [m for m in METHOD_ORDER if m in results_strict]
+        pd.DataFrame.from_dict(results_strict, orient="index").reindex(strict_order).to_csv(
+            run_dir / "results_cold_start_strict.csv")
 
     metadata = {
         "run_tag": run_tag,
@@ -344,6 +509,12 @@ def run(config_path: str, run_tag: str | None = None):
         "n_head_items": len(head_items),
         "n_head_test_users": len(head_records),
         "n_long_tail_test_users": len(tail_records),
+        "cold_fraction": cfg.evaluation.cold_fraction,
+        "n_cold_users": len(cold_users),
+        "n_cold_test_users": len(cold_records),
+        "n_warm_test_users": len(warm_records),
+        "strict_cold_start": strict_meta,
+        "content": content_meta,
         "training": train_meta,
     }
     write_json(run_dir / "metadata.json", metadata)
@@ -351,6 +522,9 @@ def run(config_path: str, run_tag: str | None = None):
         "primary": results_primary,
         "sampled_99": results_sampled,
         "long_tail": results_tail,
+        "cold_start": results_cold,
+        "warm": results_warm,
+        "cold_start_strict": results_strict,
         "beyond_accuracy": results_beyond,
         "item_popularity": {str(k): int(v) for k, v in item_popularity.items()},
         "metadata": metadata,
