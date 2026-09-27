@@ -1,4 +1,4 @@
-## Lượt hiện tại: 9 | Pha: 3
+## Lượt hiện tại: 10 | Pha: 3
 Prompt + quyết định người dùng: docs/audit/LOOP_PROMPT.md. Nhánh: loop/hm500k-audit (không push).
 
 ## Hạng mục
@@ -14,7 +14,7 @@ Prompt + quyết định người dùng: docs/audit/LOOP_PROMPT.md. Nhánh: loop
 | P2c | Khoá test: đánh giá test chỉ qua --final + docs/audit/test_access_log.csv | DONE | 03 run(final=...): không --final → mọi bảng trên VALIDATION; --final cần PREREG.md đã commit + --reason, ghi test_access_log.csv trước khi đánh giá; cờ truyền qua run.py/run_all/04; 05 ghi 'Đánh giá trên'; tests/test_test_lock.py | — |
 | P2d | Test không rò rỉ thời gian (train < val < test theo first_timestamp) trên dữ liệu thật | DONE | tests/test_no_leakage_real_data.py (global: 1 timeline + user/item val/test ⊂ train; LOO: val ≥ train, test ≥ val từng user) | — |
 | P3a | REFERENCES.md (đọc thật từng nguồn) | DONE (DMF chỉ abstract; MS notebook một phần) | docs/audit/REFERENCES.md | — |
-| P3b | CANDIDATES.md + đo 1 epoch/Full Ranking thử | TODO | | P3a |
+| P3b | CANDIDATES.md + đo 1 epoch/Full Ranking thử | DONE | docs/audit/CANDIDATES.md; docs/audit/measure_candidates.py | — |
 | P3c | Baseline mạnh: MostPopular cửa sổ gần, iALS (implicit) | DONE | src/baselines/classical.py IALSBaseline + MostPopularBaseline(window_days); 03 bật popularity_recent, ials (lưu ials.npz); configs hm500k*.yaml; tests/test_models.py (2 test) | — |
 | P3d | PREREG.md commit trước mọi test | TODO | | P3a, P3b |
 | P4a | Tuning chỉ val → tuning_log.csv (ngân sách như nhau) | TODO | | P2b, P2c, P3d |
@@ -34,9 +34,10 @@ Prompt + quyết định người dùng: docs/audit/LOOP_PROMPT.md. Nhánh: loop
   các run hm500k_seed42, hm500k_global_seed42 cần chạy lại (sẽ chạy lại trong Pha 4 theo khoá test).
 - Lệch bất biến: k-core = 10 (Q2) thay vì 5.
 
-## Ngân sách đã dùng: 0,3 / 8 giờ GPU (smoke 18,5 phút)
+## Ngân sách đã dùng: 0,4 / 8 giờ GPU (smoke 18,5 phút + đo ứng viên ~3 phút)
 
 ## Nhật ký lượt (mới nhất ở trên)
+- Lượt 10: P3b — đo thật trên VALIDATION hm500k_global: NeuMF d=32 1 epoch 6,3 s, full ranking val 3,4 s, GPU 0,04 GB; d=64 7,6 s / 3,9 s; CFNet prototype 18,7 s / 3,7 s / 0,84 GB; iALS fit 0,6 s. Quyết định: A (NeuMF tune), B (late fusion MF+NeuMF), C (CFNet) giữ; ConvNCF loại. Overhead 03 lớn (smoke 1 epoch 18,5 phút) → tuning bằng script nhẹ. Lượt sau: P3d (PREREG.md, commit trước mọi test).
 - Lượt 9: P3c — pip install implicit 0.7.3 (người dùng cho phép), thêm iALS (binary, chỉ train, save/load) và MostPopular-Recent (28 ngày cuối train). Kiểm chứng: `pytest tests -q` → 74 passed; chạy thử trên VALIDATION hm500k_global (không chạm test): MostPopular NDCG@10 0,0079 / Recall@10 0,0131; MostPopular-Recent 0,0068 / 0,0120; iALS mặc định (64, λ 0,01, α 1, 15 it) 0,0091 / 0,0136, fit 0,7 s — baseline mạnh, phải tune cùng ngân sách. Lượt sau: P3b (CANDIDATES.md + đo chi phí 1 epoch / Full Ranking).
 - Lượt 8: P3a — đọc NCF (full text + README code gốc), Rendle 2020, Dacrema 2019, Krichene & Rendle 2020, Rendle 2022 iALS, DeepCF (full text + README), RecBole NeuMF; DMF chỉ đọc được abstract; MS ncf_deep_dive chỉ một phần. Hệ quả: baseline MF/BPR phải tune cùng ngân sách, thêm iALS; ItemKNN không chạy được (10.345 item > ngưỡng 5.000). Kiểm chứng: file REFERENCES.md có link + điều lấy được + áp dụng/không cho từng nguồn. Lượt sau: P3c (baseline iALS + MostPopular cửa sổ gần).
 - Lượt 7: P2d — test rò rỉ thời gian trên dữ liệu thật hm500k (cả 2 cách chia). Kiểm chứng: `pytest tests -q` → 72 passed (2 test mới chạy thật trên hm500k, 9,6 s). Pha 2 xong. Lượt sau: P3a (REFERENCES.md, đọc thật từng nguồn).
