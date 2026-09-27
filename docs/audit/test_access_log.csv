@@ -1,0 +1,4 @@
+time,git_commit,git_dirty,config_hash,config_path,run_tag,models,reason
+2026-09-27T21:07:30,78059079a704cc718e64a99545997400741a4ded,False,a81194c60a2ad79d,configs/hm500k_global.yaml,final_seed42,Random;MostPopular;BPR-MF;GMF;MLP;NeuMF-Scratch;NeuMF-Pretrained,"P4b: đánh giá cuối 3 seed theo PREREG (loop 14, commit 7805907)"
+2026-09-27T21:31:35,78059079a704cc718e64a99545997400741a4ded,False,a81194c60a2ad79d,configs/hm500k_global.yaml,final_seed2024,Random;MostPopular;BPR-MF;GMF;MLP;NeuMF-Scratch;NeuMF-Pretrained,"P4b: đánh giá cuối 3 seed theo PREREG (loop 14, commit 7805907)"
+2026-09-27T21:52:36,78059079a704cc718e64a99545997400741a4ded,False,a81194c60a2ad79d,configs/hm500k_global.yaml,final_seed2025,Random;MostPopular;BPR-MF;GMF;MLP;NeuMF-Scratch;NeuMF-Pretrained,"P4b: đánh giá cuối 3 seed theo PREREG (loop 14, commit 7805907)"
