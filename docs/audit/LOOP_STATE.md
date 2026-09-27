@@ -1,4 +1,4 @@
-## Lượt hiện tại: 1 | Pha: 0 (xong) → 1
+## Lượt hiện tại: 2 | Pha: 1
 Prompt + quyết định người dùng: docs/audit/LOOP_PROMPT.md. Nhánh: loop/hm500k-audit (không push).
 
 ## Hạng mục
@@ -6,7 +6,7 @@ Prompt + quyết định người dùng: docs/audit/LOOP_PROMPT.md. Nhánh: loop
 |---|---|---|---|---|
 | P0 | Kiểm định R1–R8 + V3 → COMPLIANCE_MATRIX.md | DONE | docs/audit/COMPLIANCE_MATRIX.md | — |
 | P1a | Thuần CF: gỡ content-based khỏi code (Q3=a) | DONE | commit 44ddbf7 (loop 0) | — |
-| P1b | pytest: config chính không đọc metadata; confidence/popularity chỉ từ train | TODO | | — |
+| P1b | pytest: config chính không đọc metadata; confidence/popularity chỉ từ train | DONE | neumf_project_v2/tests/test_pure_cf.py (7 test) | — |
 | P1c | Lưu checkpoint BPR-MF (F7) | TODO | | — |
 | P1d | Xoá LightGCN/SASRec (F6, người dùng chọn xoá) | TODO | src/models/lightgcn.py, sasrec.py không được gọi | có thể bị chặn xoá |
 | P2a | Split theo Q1 (mốc thời gian chung) + metric nhiều item đúng + unit test | DONE | src/data_pipeline/splitting.py global_temporal_split; tests/test_global_split.py | — |
@@ -37,6 +37,7 @@ Prompt + quyết định người dùng: docs/audit/LOOP_PROMPT.md. Nhánh: loop
 ## Ngân sách đã dùng: 0 / 8 giờ GPU
 
 ## Nhật ký lượt (mới nhất ở trên)
+- Lượt 2: P1b — tests/test_pure_cf.py: config chính không có side_features/content/hybrid, baseline chỉ CF; code src/ + scripts 01–06 không nhắc articles/customers/side_features; adapter chỉ mở file transactions (monkeypatch pd.read_csv); scale confidence chỉ fit trên train; 03 tính popularity/head/cold/TrainDataset từ train_df. Kiểm chứng: `pytest tests -q` → 63 passed. Lượt sau: P1c (lưu checkpoint BPR-MF).
 - Lượt 1: Pha 0 — lập COMPLIANCE_MATRIX (R3 PASS; R1, R2, R4, R6 PARTIAL; R5, R7, R8 FAIL; V3 phần lớn FAIL);
   phát hiện `Report DACNTT/chuong1.tex` là đề tài khác. Kiểm chứng: `pytest tests -q` → 56 passed.
   Lượt sau: P1b (pytest thuần CF + chỉ-train).
