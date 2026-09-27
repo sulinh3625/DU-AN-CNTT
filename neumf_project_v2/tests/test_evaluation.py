@@ -105,3 +105,31 @@ def test_novelty_popular_lower():
     rare_recs = {0: [99]}
     assert novelty_score(pop_recs, counts, n_train) < novelty_score(rare_recs, counts, n_train)
 
+
+
+def test_per_user_rows_match_summary_and_count_candidates():
+    from src.evaluation.full_ranking import evaluate_score_function
+
+    records = [EvalRecord(0, 5, np.array([1, 2, 5, 6], dtype=np.int64)),
+               EvalRecord(1, 2, np.array([2, 3, 4, 7, 8], dtype=np.int64), np.array([2, 8]))]
+    rows = []
+    summary = evaluate_score_function(lambda u, i: float(i), records, [2], include_redundant=True, per_user=rows)
+    assert [r["n_candidates"] for r in rows] == [4, 5]
+    assert [r["n_positives"] for r in rows] == [1, 2]
+    assert rows[0]["ranks"] == "2" and rows[1]["ranks"] == "1;5"   # điểm = id item -> 8 đứng đầu, 2 đứng cuối
+    for name, value in summary.items():
+        assert np.mean([r[name] for r in rows]) == value
+
+
+def test_run_provenance_hash_tracks_config():
+    import dataclasses
+
+    from src.config import load_config
+    from src.utils.io import run_provenance
+
+    cfg = load_config("configs/hm500k.yaml")
+    a, b = run_provenance(cfg, "x"), run_provenance(load_config("configs/hm500k.yaml"), "x")
+    assert a["config_hash"] == b["config_hash"] and len(a["config_hash"]) == 16
+    changed = dataclasses.replace(cfg, training=dataclasses.replace(cfg.training, seed=7))
+    assert run_provenance(changed, "x")["config_hash"] != a["config_hash"]
+    assert "git_commit" in a and isinstance(a["git_dirty"], bool)

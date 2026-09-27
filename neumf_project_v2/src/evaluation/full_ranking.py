@@ -81,6 +81,12 @@ def _empty_metric_lists(k_values, include_redundant):
     return out
 
 
+def _per_user_row(record, cand, ranks, metrics) -> dict:
+    """Một dòng results_per_user: số candidate, rank từng item đúng, metric của riêng user này."""
+    return {"user": int(record.user), "n_candidates": int(len(cand)), "n_positives": int(len(ranks)),
+            "ranks": ";".join(str(int(r)) for r in ranks), **{name: vals[-1] for name, vals in metrics.items()}}
+
+
 def _append(metrics, ranks, k_values, include_redundant):
     for k in k_values:
         m = multi_ranking_metrics(ranks, k)
@@ -92,7 +98,8 @@ def _append(metrics, ranks, k_values, include_redundant):
 
 
 @torch.no_grad()
-def evaluate_torch_model(model, records, k_values, device="cpu", batch_size=16384, tie_seed=2026, include_redundant=False, return_topk=False):
+def evaluate_torch_model(model, records, k_values, device="cpu", batch_size=16384, tie_seed=2026, include_redundant=False, return_topk=False,
+                         per_user: list | None = None):
     """Evaluate PyTorch model with flattened batched scoring.
 
     Tránh gọi model một lần cho từng user; toàn bộ candidate pairs được flatten
@@ -129,6 +136,8 @@ def evaluate_torch_model(model, records, k_values, device="cpu", batch_size=1638
         scores = score_flat[a:b]
         ranks = rank_positives(scores, cand, record.positives, record.user, tie_seed)
         _append(metrics, ranks, k_values, include_redundant)
+        if per_user is not None:
+            per_user.append(_per_user_row(record, cand, ranks, metrics))
         if return_topk:
             tie = deterministic_tie_key(record.user, cand, tie_seed)
             order = np.lexsort((tie, -scores))[:max_k]
@@ -138,7 +147,8 @@ def evaluate_torch_model(model, records, k_values, device="cpu", batch_size=1638
     return (summary, recommendations) if return_topk else summary
 
 
-def evaluate_score_function(score_fn, records, k_values, tie_seed=2026, include_redundant=False, return_topk=False):
+def evaluate_score_function(score_fn, records, k_values, tie_seed=2026, include_redundant=False, return_topk=False,
+                            per_user: list | None = None):
     """score_fn(user, item) -> float; nếu có thêm score_fn.score_items(user, items)
     thì chấm điểm cả candidate set một lần (vector hoá, nhanh hơn nhiều)."""
     metrics = _empty_metric_lists(k_values, include_redundant)
@@ -153,6 +163,8 @@ def evaluate_score_function(score_fn, records, k_values, tie_seed=2026, include_
             scores = np.fromiter((score_fn(record.user, int(i)) for i in cand), dtype=np.float64, count=len(cand))
         ranks = rank_positives(scores, cand, record.positives, record.user, tie_seed)
         _append(metrics, ranks, k_values, include_redundant)
+        if per_user is not None:
+            per_user.append(_per_user_row(record, cand, ranks, metrics))
         if return_topk:
             tie = deterministic_tie_key(record.user, cand, tie_seed)
             order = np.lexsort((tie, -scores))[:max_k]

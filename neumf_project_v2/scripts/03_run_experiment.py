@@ -34,7 +34,7 @@ from src.models.neumf import GMF, MLP, NeuMF
 from src.models.early_fusion import EarlyFusionModel
 from src.training.trainer import train_one_model, make_optimizer, get_device
 from src.utils.seed import seed_everything
-from src.utils.io import ensure_dir, write_json
+from src.utils.io import ensure_dir, run_provenance, write_json
 
 METHOD_ORDER = [
     "Random", "MostPopular", "ItemKNN", "BPR-MF",
@@ -271,6 +271,7 @@ def run(config_path: str, run_tag: str | None = None):
     item_popularity = train_df["item"].value_counts().to_dict()
 
     results_topk = {}  # Actual Top-K lists cho beyond-accuracy
+    per_user_rows = {}  # model -> list dòng per-user trên test (results_per_user.csv)
     max_k = max(cfg.evaluation.k_values)
     eval_topk_kwargs = dict(**eval_kwargs, return_topk=True)
 
@@ -279,7 +280,9 @@ def run(config_path: str, run_tag: str | None = None):
     for name, _ in eval_bar:
         eval_bar.set_postfix_str(name)
         if name in models:
-            metrics, topk = evaluate_torch_model(models[name], test_records, **eval_topk_kwargs)
+            per_user_rows[name] = []
+            metrics, topk = evaluate_torch_model(models[name], test_records, **eval_topk_kwargs,
+                                                 per_user=per_user_rows[name])
             results_primary[name] = metrics
             results_topk[name] = topk
             results_sampled[name] = evaluate_torch_model(models[name], sampled_test, **eval_kwargs)
@@ -289,7 +292,7 @@ def run(config_path: str, run_tag: str | None = None):
                 fn, test_records, cfg.evaluation.k_values,
                 tie_seed=cfg.evaluation.tie_break_seed,
                 include_redundant=cfg.evaluation.include_redundant_metrics,
-                return_topk=True,
+                return_topk=True, per_user=per_user_rows.setdefault(name, []),
             )
             results_primary[name] = metrics
             results_topk[name] = topk
@@ -362,8 +365,16 @@ def run(config_path: str, run_tag: str | None = None):
     if results_cold:
         pd.DataFrame.from_dict(results_cold, orient="index").reindex(order).to_csv(run_dir / "results_cold_start.csv")
 
+    idx2user = {idx: str(raw) for raw, idx in data.user2idx.items()}
+    per_user_df = pd.DataFrame([{"model": m, **row} for m, rows in per_user_rows.items() for row in rows])
+    if not per_user_df.empty:
+        per_user_df.insert(2, "customer_id", per_user_df["user"].map(idx2user))
+        per_user_df.to_csv(run_dir / "results_per_user.csv", index=False)
+    n_cand = np.array([len(r.candidates) for r in test_records])
+
     metadata = {
         "run_tag": run_tag,
+        "provenance": run_provenance(cfg, config_path, cwd=PROJECT_ROOT),
         "dataset": cfg.dataset.name,
         "seed": cfg.training.seed,
         "n_users": data.n_users,
@@ -382,6 +393,8 @@ def run(config_path: str, run_tag: str | None = None):
         "n_head_items": len(head_items),
         "n_head_test_users": len(head_records),
         "n_long_tail_test_users": len(tail_records),
+        "n_candidates_test": {"min": int(n_cand.min()), "mean": float(n_cand.mean()), "max": int(n_cand.max())}
+        if len(n_cand) else {},
         "cold_fraction": cfg.evaluation.cold_fraction,
         "n_cold_users": len(cold_users),
         "n_cold_test_users": len(cold_records),
