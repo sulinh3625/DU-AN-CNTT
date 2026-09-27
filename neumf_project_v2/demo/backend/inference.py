@@ -27,8 +27,8 @@ def score_items(ctx, model_name: str, users: np.ndarray) -> np.ndarray:
     if model_name == "BPR-MF":
         if ctx.bpr is None:
             raise KeyError(model_name)
-        P, Q = ctx.bpr
-        return P[users] @ Q.T
+        # Cùng phép tính với BPRMFBaseline.score_items trong 03 (Q[items] @ P[u]) để rank khớp.
+        return np.stack([ctx.bpr.Q @ ctx.bpr.P[u] for u in users])
     model = ctx.models[model_name]
     out = np.empty((len(users), n_items), dtype=np.float32)
     items = torch.arange(n_items, dtype=torch.long)

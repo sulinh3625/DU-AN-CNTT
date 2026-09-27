@@ -259,6 +259,7 @@ def run(config_path: str, run_tag: str | None = None):
             "n_parameters": int(bpr.P.size + bpr.Q.size),
         }
         score_fns["BPR-MF"] = bpr
+        bpr.save(ckpt_dir / "bpr.npz")
         print(f"    ✓ BPR-MF ready ({bpr_time:.1f}s)")
 
     # 6) Evaluate primary + sampled reproduction protocol

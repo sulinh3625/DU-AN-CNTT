@@ -36,3 +36,20 @@ def test_mlp_dropout_is_configurable():
     m = MLP(10, 20, 8, [16, 8, 4], dropout=0.35)
     drops = [x for x in m.mlp_layers if isinstance(x, torch.nn.Dropout)]
     assert drops and all(d.p == pytest.approx(0.35) for d in drops)
+
+
+def test_bpr_checkpoint_roundtrip_and_demo_scoring_match(tmp_path):
+    import numpy as np
+    import pandas as pd
+
+    from src.baselines import BPRMFBaseline
+
+    train = pd.DataFrame({"user": [0, 0, 1, 2, 2], "item": [0, 1, 2, 3, 1]})
+    bpr = BPRMFBaseline(3, 6, 4, seed=0).fit(train, epochs=3)
+    bpr.save(tmp_path / "bpr.npz")
+    loaded = BPRMFBaseline.load(tmp_path / "bpr.npz")
+    cand = np.array([5, 0, 3, 2])
+    for u in range(3):
+        assert np.array_equal(loaded.score_items(u, cand), bpr.score_items(u, cand))
+        # demo/backend/inference.py chấm mọi item bằng Q @ P[u] rồi lấy theo candidates
+        assert np.array_equal((loaded.Q @ loaded.P[u])[cand], bpr.score_items(u, cand))

@@ -19,6 +19,7 @@ if str(PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(PROJECT_ROOT))
 
 from scripts.common import build_adapter  # noqa: E402
+from src.baselines import BPRMFBaseline  # noqa: E402
 from src.data_pipeline.negative_sampling import build_user_positive_sets  # noqa: E402
 from src.data_pipeline.preprocessing import build_interactions  # noqa: E402
 from src.data_pipeline.splitting import assert_disjoint_splits, temporal_leave_one_out  # noqa: E402
@@ -170,12 +171,11 @@ class DataContext:
         bpr = None
         bpr_path = ckpt_dir / BPR_CHECKPOINT
         if bpr_path.exists():
-            npz = np.load(bpr_path)
-            bpr = (npz["P"], npz["Q"])
+            bpr = BPRMFBaseline.load(bpr_path)
         else:
             unavailable["BPR-MF"] = (
-                f"Chưa có checkpoint {bpr_path.relative_to(PROJECT_ROOT).as_posix()}: scripts/03_run_experiment.py "
-                f"hiện không lưu trạng thái BPR-MF. Demo không tự train lại."
+                f"Run này chưa có {bpr_path.relative_to(PROJECT_ROOT).as_posix()} (run tạo trước khi 03 lưu "
+                f"checkpoint BPR-MF). Chạy lại 03 để có. Demo không tự train lại."
             )
         return models, bpr, unavailable
 

@@ -136,3 +136,15 @@ class BPRMFBaseline:
 
     def score_items(self, user: int, items) -> np.ndarray:
         return self.Q[np.asarray(items, dtype=np.int64)] @ self.P[int(user)]
+
+    def save(self, path) -> None:
+        """Checkpoint: mảng P (users x d), Q (items x d)."""
+        np.savez(path, P=self.P, Q=self.Q)
+
+    @classmethod
+    def load(cls, path) -> "BPRMFBaseline":
+        npz = np.load(path)
+        model = cls.__new__(cls)
+        model.P, model.Q = npz["P"], npz["Q"]
+        model.n_items = int(model.Q.shape[0])
+        return model
