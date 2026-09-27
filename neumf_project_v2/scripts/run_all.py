@@ -13,14 +13,15 @@ run_experiment = importlib.import_module("scripts.03_run_experiment").run
 run_evaluation = importlib.import_module("scripts.05_evaluate").run_evaluation
 
 
-def run_pipeline(config_path: str, run_tag: str | None = None, skip_eval: bool = False):
+def run_pipeline(config_path: str, run_tag: str | None = None, skip_eval: bool = False,
+                 final: bool = False, reason: str = ""):
     print("\n" + "🚀" * 35)
     print("  BẮT ĐẦU CHẠY TOÀN BỘ PIPELINE (END-TO-END)")
     print(f"  Config: {config_path}")
     print("🚀" * 35 + "\n")
 
     # Bước 1: Huấn luyện toàn bộ mô hình
-    run_dir = run_experiment(config_path, run_tag=run_tag)
+    run_dir = run_experiment(config_path, run_tag=run_tag, final=final, reason=reason)
     tag = run_dir.name
 
     # Bước 2: Tự động đánh giá và xuất biểu đồ PNG
@@ -43,9 +44,11 @@ def main():
     parser.add_argument("--config", default="configs/hm500k.yaml", help="Đường dẫn file config YAML")
     parser.add_argument("--run-tag", default=None, help="Tên đặt cho lần chạy này")
     parser.add_argument("--skip-eval", action="store_true", help="Bỏ qua bước vẽ biểu đồ")
+    parser.add_argument("--final", action="store_true", help="Đánh giá trên TEST (cần PREREG.md đã commit)")
+    parser.add_argument("--reason", default="", help="Lý do đánh giá test")
     args = parser.parse_args()
 
-    run_pipeline(args.config, args.run_tag, args.skip_eval)
+    run_pipeline(args.config, args.run_tag, args.skip_eval, final=args.final, reason=args.reason)
 
 
 if __name__ == "__main__":

@@ -51,8 +51,12 @@ def cmd_preprocess(args):
     _run("02_preprocess.py", "--config", args.config)
 
 
+def _final(args):
+    return ["--final", "--reason", args.reason] if getattr(args, "final", False) else []
+
+
 def cmd_train(args):
-    extra = ["--run-tag", args.run_tag] if args.run_tag else []
+    extra = (["--run-tag", args.run_tag] if args.run_tag else []) + _final(args)
     _run("03_run_experiment.py", "--config", args.config, *extra)
 
 
@@ -62,7 +66,7 @@ def cmd_evaluate(args):
 
 
 def cmd_multi_seed(args):
-    _run("04_multi_seed.py", "--config", args.config, "--seeds", *map(str, args.seeds))
+    _run("04_multi_seed.py", "--config", args.config, "--seeds", *map(str, args.seeds), *_final(args))
 
 
 def cmd_aggregate(args):
@@ -79,7 +83,7 @@ def cmd_demo(args):
 def cmd_all(args):
     """Audit + train + evaluate trọn gói (tương đương README mục 3)."""
     cmd_audit(args)
-    extra = ["--run-tag", args.run_tag] if args.run_tag else []
+    extra = (["--run-tag", args.run_tag] if args.run_tag else []) + _final(args)
     _run("run_all.py", "--config", args.config, *extra)
 
 
@@ -91,12 +95,17 @@ def main():
         p.add_argument("--config", default=DEFAULT_CONFIG, help=f"File config (mặc định: {DEFAULT_CONFIG})")
         return p
 
-    with_dataset(sub.add_parser("all", help="Audit + train + evaluate trọn gói cho 1 dataset")).add_argument("--run-tag", default=None)
+    def with_final(p):
+        p.add_argument("--final", action="store_true", help="Đánh giá trên TEST (cần docs/audit/PREREG.md đã commit)")
+        p.add_argument("--reason", default="", help="Lý do đánh giá test (ghi vào test_access_log.csv)")
+        return p
+
+    with_final(with_dataset(sub.add_parser("all", help="Audit + train + evaluate trọn gói"))).add_argument("--run-tag", default=None)
     with_dataset(sub.add_parser("audit", help="Audit dữ liệu — bắt buộc trước khi train"))
     with_dataset(sub.add_parser("preprocess", help="Sinh splits độc lập"))
-    with_dataset(sub.add_parser("train", help="Chỉ huấn luyện, không vẽ biểu đồ")).add_argument("--run-tag", default=None)
+    with_final(with_dataset(sub.add_parser("train", help="Chỉ huấn luyện, không vẽ biểu đồ"))).add_argument("--run-tag", default=None)
     sub.add_parser("evaluate", help="Đánh giá + xuất biểu đồ cho 1 run-tag").add_argument("--run-tag", default=None, help="Mặc định: run mới nhất")
-    with_dataset(sub.add_parser("multi-seed", help="Lặp lại train trên nhiều seed")).add_argument("--seeds", nargs="+", type=int, default=DEFAULT_SEEDS)
+    with_final(with_dataset(sub.add_parser("multi-seed", help="Lặp lại train trên nhiều seed"))).add_argument("--seeds", nargs="+", type=int, default=DEFAULT_SEEDS)
     with_dataset(sub.add_parser("aggregate", help="Tổng hợp mean/std + Wilcoxon từ multi-seed")).add_argument("--seeds", nargs="+", type=int, default=DEFAULT_SEEDS)
     sub.add_parser("sample-hm", help="Tạo bộ dữ liệu hm500k từ transactions_train.csv gốc (chạy 1 lần)")
     sub.add_parser("demo", help="Chạy giao diện demo (http://localhost:8000)")

@@ -297,6 +297,8 @@ def _build_report(primary_df, sampled_df, tail_df, beyond_df, train_df, metadata
         ("Run tag", metadata.get("run_tag")),
         ("Seed", metadata.get("seed")),
         ("Protocol", _protocol_line(metadata)),
+        ("Đánh giá trên", {"test": "TEST (--final)", "validation": "VALIDATION (chưa --final, dùng cho tuning)"}
+         .get(metadata.get("evaluated_on"), "test (run cũ, trước khoá tập test)")),
         ("Dataset", metadata.get("dataset")),
         ("Users", f"{metadata.get('n_users',0):,}"),
         ("Items", f"{metadata.get('n_items',0):,}"),

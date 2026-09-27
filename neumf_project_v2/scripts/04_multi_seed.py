@@ -14,6 +14,8 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--config", default="configs/hm500k.yaml")
     ap.add_argument("--seeds", nargs="+", type=int, default=[42, 2024, 2025, 2026, 3407, 7])
+    ap.add_argument("--final", action="store_true", help="Đánh giá trên TEST (cần PREREG.md đã commit)")
+    ap.add_argument("--reason", default="")
     args = ap.parse_args()
 
     cfg_path = PROJECT_ROOT / args.config
@@ -26,10 +28,11 @@ def main():
         cfg.setdefault("training", {})["seed"] = seed
         temp_cfg = temp_dir / f"{cfg_path.stem}_seed{seed}.yaml"
         temp_cfg.write_text(yaml.safe_dump(cfg, sort_keys=False, allow_unicode=True), encoding="utf-8")
-        tag = f"{cfg_path.stem}_seed{seed}"
+        tag = f"{cfg_path.stem}_seed{seed}{'_final' if args.final else ''}"
         subprocess.run(
             [sys.executable, str(PROJECT_ROOT / "scripts" / "03_run_experiment.py"),
-             "--config", str(temp_cfg), "--run-tag", tag],
+             "--config", str(temp_cfg), "--run-tag", tag,
+             *(["--final", "--reason", args.reason] if args.final else [])],
             cwd=PROJECT_ROOT,
             check=True,
         )

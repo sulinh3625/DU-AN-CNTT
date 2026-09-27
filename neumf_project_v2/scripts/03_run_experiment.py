@@ -34,7 +34,11 @@ from src.models.neumf import GMF, MLP, NeuMF
 from src.models.early_fusion import EarlyFusionModel
 from src.training.trainer import train_one_model, make_optimizer, get_device
 from src.utils.seed import seed_everything
-from src.utils.io import ensure_dir, run_provenance, write_json
+from src.utils.io import ensure_dir, log_test_access, prereg_committed, run_provenance, write_json
+
+AUDIT_DIR = PROJECT_ROOT.parent / "docs" / "audit"
+PREREG_PATH = AUDIT_DIR / "PREREG.md"
+TEST_ACCESS_LOG = AUDIT_DIR / "test_access_log.csv"
 
 METHOD_ORDER = [
     "Random", "MostPopular", "ItemKNN", "BPR-MF",
@@ -69,11 +73,20 @@ def build_eval_records(cfg, val_df, test_df, train_df, full_df, n_users, n_items
     sampled_test = build_sampled_ranking_records(
         test_df, n_items, all_pos, cfg.evaluation.sampled_negatives, seed=cfg.training.seed + 2
     )
-    return train_pos, val_records, test_records, sampled_test
+    sampled_val = build_sampled_ranking_records(
+        val_df, n_items, all_pos, cfg.evaluation.sampled_negatives, seed=cfg.training.seed + 1
+    )
+    return train_pos, val_records, test_records, sampled_test, sampled_val
 
 
-def run(config_path: str, run_tag: str | None = None):
+def run(config_path: str, run_tag: str | None = None, final: bool = False, reason: str = ""):
+    """final=False: mọi bảng kết quả tính trên VALIDATION (tuning). final=True: tính trên TEST,
+    chỉ được phép khi docs/audit/PREREG.md đã commit, và mỗi lần ghi 1 dòng test_access_log.csv."""
     experiment_start = time.perf_counter()
+    if final and not prereg_committed(PREREG_PATH):
+        raise SystemExit(f"--final bị khoá: chưa commit {PREREG_PATH} (khoá tập test, xem docs/audit/LOOP_PROMPT.md).")
+    if final and not reason.strip():
+        raise SystemExit("--final cần --reason (ghi vào test_access_log.csv).")
     cfg, adapter = build_adapter(config_path)
     seed_everything(cfg.training.seed)
 
@@ -85,7 +98,7 @@ def run(config_path: str, run_tag: str | None = None):
     print("\n📱 Thiết bị:")
     device = get_device(cfg.training.device)
 
-    run_tag = run_tag or f"{Path(config_path).stem}_seed{cfg.training.seed}"
+    run_tag = run_tag or f"{Path(config_path).stem}_seed{cfg.training.seed}{'_final' if final else ''}"
     run_dir = ensure_dir(cfg.output_root / "experiments" / run_tag)
     ckpt_dir = ensure_dir(cfg.output_root / "checkpoints" / run_tag)
     print(f"\n📂 Output: {run_dir}")
@@ -115,9 +128,13 @@ def run(config_path: str, run_tag: str | None = None):
     )
     print(f"  ✓ Train: {len(train_df):,} | Val: {len(val_df):,} | Test: {len(test_df):,}")
     print("  Building evaluation records...")
-    train_pos, val_records, test_records, sampled_test = build_eval_records(
+    train_pos, val_records, test_records, sampled_test, sampled_val = build_eval_records(
         cfg, val_df, test_df, train_df, data.df, data.n_users, data.n_items
     )
+    # Khoá tập test: không có --final thì mọi bảng kết quả dùng validation.
+    evaluated_on = "test" if final else "validation"
+    eval_records, eval_sampled = (test_records, sampled_test) if final else (val_records, sampled_val)
+    print(f"  ✓ Bảng kết quả sẽ tính trên: {evaluated_on.upper()}")
     train_dataset = TrainDataset(
         train_df, data.n_items, train_pos, cfg.training.negative_ratio, seed=cfg.training.seed
     )
@@ -276,20 +293,24 @@ def run(config_path: str, run_tag: str | None = None):
     eval_topk_kwargs = dict(**eval_kwargs, return_topk=True)
 
     all_eval_items = list(models.items()) + [(n, None) for n in score_fns]
+    provenance = run_provenance(cfg, config_path, cwd=PROJECT_ROOT)
+    if final:
+        log_test_access(TEST_ACCESS_LOG, run_tag, provenance, [n for n, _ in all_eval_items], reason)
+        print(f"  🔒 Đánh giá TEST — đã ghi {TEST_ACCESS_LOG}")
     eval_bar = tqdm(all_eval_items, desc="  Evaluating", unit="model", ncols=80)
     for name, _ in eval_bar:
         eval_bar.set_postfix_str(name)
         if name in models:
             per_user_rows[name] = []
-            metrics, topk = evaluate_torch_model(models[name], test_records, **eval_topk_kwargs,
+            metrics, topk = evaluate_torch_model(models[name], eval_records, **eval_topk_kwargs,
                                                  per_user=per_user_rows[name])
             results_primary[name] = metrics
             results_topk[name] = topk
-            results_sampled[name] = evaluate_torch_model(models[name], sampled_test, **eval_kwargs)
+            results_sampled[name] = evaluate_torch_model(models[name], eval_sampled, **eval_kwargs)
         else:
             fn = score_fns[name]
             metrics, topk = evaluate_score_function(
-                fn, test_records, cfg.evaluation.k_values,
+                fn, eval_records, cfg.evaluation.k_values,
                 tie_seed=cfg.evaluation.tie_break_seed,
                 include_redundant=cfg.evaluation.include_redundant_metrics,
                 return_topk=True, per_user=per_user_rows.setdefault(name, []),
@@ -297,7 +318,7 @@ def run(config_path: str, run_tag: str | None = None):
             results_primary[name] = metrics
             results_topk[name] = topk
             results_sampled[name] = evaluate_score_function(
-                fn, sampled_test, cfg.evaluation.k_values,
+                fn, eval_sampled, cfg.evaluation.k_values,
                 tie_seed=cfg.evaluation.tie_break_seed,
                 include_redundant=cfg.evaluation.include_redundant_metrics,
             )
@@ -306,7 +327,7 @@ def run(config_path: str, run_tag: str | None = None):
     # 7) Long-tail segmentation from TRAIN only (trước beyond-accuracy để có head_items)
     print("\n  📊 Long-tail evaluation...")
     head_items = define_head_items(train_df, data.n_items, cfg.evaluation.head_fraction)
-    head_records, tail_records = split_records_head_tail(test_records, head_items)
+    head_records, tail_records = split_records_head_tail(eval_records, head_items)
     print(f"    Head items: {len(head_items)} | Head test users: {len(head_records)} | Tail test users: {len(tail_records)}")
 
     # Tính beyond-accuracy metrics từ actual recommendations (sau khi có head_items)
@@ -343,7 +364,7 @@ def run(config_path: str, run_tag: str | None = None):
     # 8) Cold-start TƯƠNG ĐỐI: cold_fraction% user ít tương tác nhất (TRAIN)
     print("\n  📊 Cold-start (tương đối) evaluation...")
     cold_users = define_cold_users(train_df, data.n_users, cfg.evaluation.cold_fraction)
-    cold_records, warm_records = split_records_by_coldness(test_records, cold_users)
+    cold_records, warm_records = split_records_by_coldness(eval_records, cold_users)
     print(f"    Cold users: {len(cold_users)} | Cold test: {len(cold_records)} | Warm test: {len(warm_records)}")
     results_cold, results_warm = {}, {}
     for bucket, recs in ((results_cold, cold_records), (results_warm, warm_records)):
@@ -370,11 +391,12 @@ def run(config_path: str, run_tag: str | None = None):
     if not per_user_df.empty:
         per_user_df.insert(2, "customer_id", per_user_df["user"].map(idx2user))
         per_user_df.to_csv(run_dir / "results_per_user.csv", index=False)
-    n_cand = np.array([len(r.candidates) for r in test_records])
+    n_cand = np.array([len(r.candidates) for r in eval_records])
 
     metadata = {
         "run_tag": run_tag,
-        "provenance": run_provenance(cfg, config_path, cwd=PROJECT_ROOT),
+        "provenance": provenance,
+        "evaluated_on": evaluated_on,
         "dataset": cfg.dataset.name,
         "seed": cfg.training.seed,
         "n_users": data.n_users,
@@ -393,7 +415,7 @@ def run(config_path: str, run_tag: str | None = None):
         "n_head_items": len(head_items),
         "n_head_test_users": len(head_records),
         "n_long_tail_test_users": len(tail_records),
-        "n_candidates_test": {"min": int(n_cand.min()), "mean": float(n_cand.mean()), "max": int(n_cand.max())}
+        "n_candidates_eval": {"min": int(n_cand.min()), "mean": float(n_cand.mean()), "max": int(n_cand.max())}
         if len(n_cand) else {},
         "cold_fraction": cfg.evaluation.cold_fraction,
         "n_cold_users": len(cold_users),
@@ -431,8 +453,10 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--config", default="configs/hm500k.yaml")
     ap.add_argument("--run-tag", default=None)
+    ap.add_argument("--final", action="store_true", help="Đánh giá trên TEST (cần PREREG.md đã commit)")
+    ap.add_argument("--reason", default="", help="Lý do đánh giá test (bắt buộc với --final)")
     args = ap.parse_args()
-    run(args.config, args.run_tag)
+    run(args.config, args.run_tag, final=args.final, reason=args.reason)
 
 
 if __name__ == "__main__":

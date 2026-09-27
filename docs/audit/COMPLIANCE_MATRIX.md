@@ -17,13 +17,13 @@
 
 | Mục | Trạng thái | Bằng chứng | Việc cần làm |
 |---|---|---|---|
-| results_per_user.csv từ pipeline chính | PARTIAL (code xong loop 5, chưa có run) | 03 không xuất; chỉ có ở `demo/scripts/build_offline_artifacts.py` (LOO) và script tạm ngoài repo. | Pha 2: 03 xuất results_per_user.csv (user, model, rank từng test item, metric). |
+| results_per_user.csv từ pipeline chính | PASS (smoke loop 6) | 03 không xuất; chỉ có ở `demo/scripts/build_offline_artifacts.py` (LOO) và script tạm ngoài repo. | Pha 2: 03 xuất results_per_user.csv (user, model, rank từng test item, metric). |
 | multi-seed | PARTIAL | Có `scripts/04_multi_seed.py`, `06_aggregate_seeds.py`; chưa chạy. Mọi output đã bị xoá khỏi `outputs/` (không phải do agent). | Pha 4: 3 seed (Q4). |
-| n_candidates mỗi user | PARTIAL (code xong loop 5, chưa có run) | Không log trong 03 (grep rỗng). | Pha 2. |
+| n_candidates mỗi user | PASS (smoke loop 6) | Không log trong 03 (grep rỗng). | Pha 2. |
 | tuning_log.csv | FAIL | xem R5. | Pha 4. |
-| config hash + git commit mỗi run | PARTIAL (code xong loop 5, chưa có run) | metadata.json không có (grep `config_hash|git_commit` rỗng). | Pha 2: ghi vào metadata.json. |
+| config hash + git commit mỗi run | PASS (smoke loop 6) | metadata.json không có (grep `config_hash|git_commit` rỗng). | Pha 2: ghi vào metadata.json. |
 | kiểm định paired per-user | FAIL | Không có trong pipeline; chỉ có script tạm ngoài repo. | Pha 4: script kiểm định + Holm. |
-| khoá test (--final, test_access_log.csv) | FAIL | 03 luôn đánh giá test trong cùng lần chạy (grep `--final` rỗng). | Pha 2: tách đánh giá test sau cờ --final + log. |
+| khoá test (--final, test_access_log.csv) | PASS (loop 6; tests/test_test_lock.py) | 03 luôn đánh giá test trong cùng lần chạy (grep `--final` rỗng). | Pha 2: tách đánh giá test sau cờ --final + log. |
 
 ## Truy vết R2 (config → script → model/scorer)
 - `run.py train/all` → `scripts/03_run_experiment.py --config configs/hm500k*.yaml` → `build_adapter` (HMAdapter, chỉ transactions) → `build_interactions` → split → models GMF/MLP/EarlyFusion/NeuMF (`src/models/`) + baselines Random/MostPopular/BPR-MF/ItemKNN (`src/baselines/classical.py`). Không import module đọc metadata.
