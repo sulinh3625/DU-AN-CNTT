@@ -1,6 +1,6 @@
 """Tuning CHỈ trên validation theo docs/audit/PREREG.md mục 4 (script nhẹ, không dựng test records).
 
-    python scripts/10_tune.py --model all          # hoặc: ials | bpr | gmf | ... (xem ORDER)
+    python scripts/10_tune.py --model all          # hoặc: bpr | gmf | ... (xem ORDER)
 
 Mỗi cấu hình ghi 1 dòng vào docs/audit/tuning_log.csv (config hash, git commit, val metrics, thời gian).
 Cấu hình tốt nhất theo val NDCG@10 ghi vào docs/audit/best_configs.json; checkpoint ở outputs/tuning/.
@@ -24,19 +24,19 @@ from pathlib import Path
 from types import SimpleNamespace
 
 import numpy as np
+import pandas as pd
 import torch
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(PROJECT_ROOT))
 
 from scripts.common import build_adapter
-from src.baselines import BPRMFBaseline, IALSBaseline, MostPopularBaseline
+from src.baselines import BPRMFBaseline
 from src.data_pipeline.dataset import TrainDataset
 from src.data_pipeline.negative_sampling import build_user_positive_sets
 from src.data_pipeline.preprocessing import apply_feedback_weights, build_interactions
 from src.data_pipeline.splitting import assert_disjoint_splits, global_temporal_split
 from src.evaluation.full_ranking import build_full_ranking_records_multi, evaluate_score_function, evaluate_torch_model
-from src.models.cfnet import CFNet, interaction_matrix
 from src.models.neumf import GMF, MLP, NeuMF
 from src.training.trainer import get_device, make_optimizer, train_one_model
 from src.utils.io import ensure_dir, run_provenance
@@ -49,19 +49,16 @@ METRICS = ["NDCG@10", "Recall@10", "HR@10", "Precision@10", "NDCG@5"]
 NEURAL = dict(lr=[1e-3, 5e-4], negative_ratio=[4, 8], embedding_dim=[32, 64], weight_decay=[0.0, 1e-6],
               dropout=[0.0, 0.2])
 GRIDS = {
-    "popularity_recent": dict(window_days=[7, 14, 28, 56]),
-    "ials": dict(factors=[32, 64, 128, 256], regularization=[0.001, 0.01, 0.1], alpha=[1.0, 10.0, 40.0]),
     "bpr": dict(embedding_dim=[32, 64, 128], lr=[0.01, 0.03, 0.05], reg=[0.001, 0.005, 0.01], epochs=[20, 40]),
     "gmf": {k: v for k, v in NEURAL.items() if k != "dropout"},
     "mlp": NEURAL,
     "neumf_scratch": NEURAL,
     "neumf_pretrained": dict(lr=[1e-3, 5e-4, 1e-4], alpha=[0.3, 0.5, 0.7]),
-    "cfnet": {**NEURAL, "rl_layers": [[512, 64], [256, 64]]},
-    "fusion_b": dict(w=[round(0.1 * i, 1) for i in range(11)]),
 }
-ORDER = list(GRIDS)  # thứ tự chạy: neumf_pretrained cần gmf+mlp, fusion_b cần mọi thứ trước nó
-TORCH_MODELS = {"gmf", "mlp", "neumf_scratch", "neumf_pretrained", "cfnet"}
-# EarlyFusion không tune: kiến trúc trùng hệt MLP (PREREG mục 8, tests/test_tuning.py).
+ORDER = list(GRIDS)  # thứ tự chạy: neumf_pretrained cần gmf+mlp
+TORCH_MODELS = {"gmf", "mlp", "neumf_scratch", "neumf_pretrained"}
+# EarlyFusion không tune: kiến trúc trùng hệt MLP. iALS, MostPopular-Recent, CFNet, fusion B đã gỡ
+# theo quyết định người dùng (loop 14) — xem PREREG mục 8.
 
 
 def default_config(model: str, cfg) -> dict:
@@ -70,13 +67,9 @@ def default_config(model: str, cfg) -> dict:
     neural = dict(lr=t.finetune_lr if model == "neumf_scratch" else t.pretrain_lr, negative_ratio=t.negative_ratio,
                   embedding_dim=m.embedding_dim, weight_decay=t.weight_decay, dropout=m.dropout)
     return {
-        "popularity_recent": dict(window_days=b.popularity_window_days),
-        "ials": dict(factors=b.ials.factors, regularization=b.ials.regularization, alpha=b.ials.alpha),
         "bpr": dict(embedding_dim=b.bpr.embedding_dim, lr=b.bpr.lr, reg=b.bpr.reg, epochs=b.bpr.epochs),
         "gmf": {k: v for k, v in neural.items() if k != "dropout"},
         "neumf_pretrained": dict(lr=t.finetune_lr, alpha=m.pretrain_alpha),
-        "cfnet": {**neural, "rl_layers": [512, 64]},
-        "fusion_b": dict(w=0.5),
     }.get(model, neural)
 
 
@@ -102,12 +95,10 @@ def build_net(model: str, p: dict, D):
         return MLP(D.n_users, D.n_items, d, mlp_layers(d), p["dropout"])
     if model in ("neumf_scratch", "neumf_pretrained"):
         return NeuMF(D.n_users, D.n_items, d, mlp_layers(d), p["dropout"], gmf_dim=p.get("gmf_dim"))
-    if model == "cfnet":
-        return CFNet(D.R, d, mlp_layers(d), p["rl_layers"], p["dropout"])
     raise ValueError(model)
 
 
-def load_data(config_path: str):
+def load_data(config_path: str, with_test: bool = False):
     cfg, adapter = build_adapter(config_path)
     if cfg.dataset.split != "global":
         raise SystemExit("PREREG: tuning trên protocol chính (split: global).")
@@ -115,11 +106,14 @@ def load_data(config_path: str):
     tr, va, te = global_temporal_split(data.df, cfg.dataset.val_start, cfg.dataset.test_start)
     assert_disjoint_splits(tr, va, te)
     tr, va, _, _ = apply_feedback_weights(tr, va, te, cfg.feedback.mode, cfg.feedback.confidence_alpha)
-    del te  # không dùng test ở bất kỳ đâu trong tuning
     train_pos = build_user_positive_sets(tr, data.n_users)
-    val = build_full_ranking_records_multi(va, data.n_items, train_pos, np.unique(tr["item"].to_numpy()))
-    return cfg, SimpleNamespace(tr=tr, n_users=data.n_users, n_items=data.n_items, train_pos=train_pos, val=val,
-                                R=interaction_matrix(tr, data.n_users, data.n_items))
+    pool = np.unique(tr["item"].to_numpy())
+    val = build_full_ranking_records_multi(va, data.n_items, train_pos, pool)
+    D = SimpleNamespace(tr=tr, n_users=data.n_users, n_items=data.n_items, train_pos=train_pos, val=val)
+    if with_test:  # chỉ scripts/11_final.py (đã qua khoá test); tuning không bao giờ dựng test records
+        seen = build_user_positive_sets(pd.concat([tr, va], ignore_index=True), data.n_users)
+        D.test = build_full_ranking_records_multi(te, data.n_items, seen, pool)
+    return cfg, D
 
 
 class Tuner:
@@ -166,49 +160,11 @@ class Tuner:
 
     def fit_other(self, model, p):
         D = self.D
-        if model == "popularity_recent":
-            return self.eval_scores(MostPopularBaseline(D.tr, D.n_items, window_days=p["window_days"])), None, None
-        if model == "ials":
-            m = IALSBaseline(D.n_users, D.n_items, p["factors"], p["regularization"], p["alpha"],
-                             self.cfg.baselines.ials.iterations, seed=SEED).fit(D.tr)
-            return self.eval_scores(m), None, m
         if model == "bpr":
             m = BPRMFBaseline(D.n_users, D.n_items, p["embedding_dim"], seed=SEED)
             m.fit(D.tr, epochs=p["epochs"], lr=p["lr"], reg=p["reg"], seed=SEED)
             return self.eval_scores(m), None, m
-        if model == "fusion_b":
-            return self.eval_scores(self._fusion(p["w"])), None, None
         raise ValueError(model)
-
-    def _fusion(self, w):
-        """B: w * minmax(điểm MF) + (1-w) * minmax(điểm NeuMF), min-max trên candidate của từng user."""
-        if not hasattr(self, "_fusion_cache"):
-            best = self.best()
-            mf_name = max(("ials", "bpr"), key=lambda k: best[k]["val"]["NDCG@10"])
-            nn_name = max(("neumf_scratch", "neumf_pretrained"), key=lambda k: best[k]["val"]["NDCG@10"])
-            loader = IALSBaseline if mf_name == "ials" else BPRMFBaseline
-            mf, net = loader.load(PROJECT_ROOT / best[mf_name]["checkpoint"]), self.load_net(nn_name)
-
-            def mm(x):
-                x = np.asarray(x, dtype=np.float64)
-                return (x - x.min()) / (x.max() - x.min() + 1e-12)
-
-            cache = {}
-            with torch.no_grad():
-                for r in self.D.val:
-                    u = torch.full((len(r.candidates),), r.user, dtype=torch.long, device=self.device)
-                    i = torch.as_tensor(r.candidates, dtype=torch.long, device=self.device)
-                    cache[r.user] = (mm(mf.score_items(r.user, r.candidates)), mm(net(u, i).cpu().numpy()))
-            self._fusion_cache, self._fusion_parts = cache, {"mf": mf_name, "neumf": nn_name}
-        cache = self._fusion_cache
-
-        class Fused:
-            @staticmethod
-            def score_items(user, items):  # items = record.candidates (cùng thứ tự với cache)
-                a, b = cache[user]
-                return w * a + (1 - w) * b
-
-        return Fused()
 
     # ---------- vòng tuning 1 mô hình
     def tune(self, model: str, n_configs: int):
@@ -217,8 +173,7 @@ class Tuner:
             g, m = self.best()["gmf"]["params"], self.best()["mlp"]["params"]
             fixed = dict(embedding_dim=m["embedding_dim"], gmf_dim=g["embedding_dim"], dropout=m["dropout"],
                          negative_ratio=m["negative_ratio"], weight_decay=m["weight_decay"])
-        n = len(GRIDS["fusion_b"]["w"]) if model == "fusion_b" else n_configs
-        configs = sample_configs(GRIDS[model], default_config(model, self.cfg), n)
+        configs = sample_configs(GRIDS[model], default_config(model, self.cfg), n_configs)
         best_row, best_art = None, None
         for cid, p in enumerate(configs):
             p = {**fixed, **p}
@@ -232,8 +187,6 @@ class Tuner:
                 best_row, best_art = dict(params=p, val={k: metrics[k] for k in METRICS},
                                           config_hash=row["config_hash"]), art
         best_row["checkpoint"] = self._save(model, best_art)
-        if model == "fusion_b":
-            best_row["components"] = self._fusion_parts
         best = self.best()
         best[model] = best_row
         self.best_path.write_text(json.dumps(best, indent=2, ensure_ascii=False), encoding="utf-8")

@@ -17,7 +17,7 @@ MAIN_CONFIGS = ["configs/hm500k.yaml", "configs/hm500k_global.yaml"]
 PIPELINE_FILES = sorted({*ROOT.joinpath("src").rglob("*.py"), *ROOT.joinpath("scripts").glob("0[1-6]_*.py"),
                          ROOT / "scripts" / "common.py", ROOT / "scripts" / "run_all.py"})
 METADATA = re.compile(r"articles\.csv|customers\.csv|side_features|detail_desc|prod_name")
-CF_BASELINES = {"random", "popularity", "popularity_recent", "bpr", "ials", "itemknn"}
+CF_BASELINES = {"random", "popularity", "bpr", "itemknn"}
 
 
 @pytest.mark.parametrize("path", MAIN_CONFIGS)

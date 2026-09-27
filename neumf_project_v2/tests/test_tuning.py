@@ -1,4 +1,4 @@
-"""P4a: lấy cấu hình tuning, NeuMF hai nhánh khác chiều, CFNet (R chỉ từ train, cache eval đúng)."""
+"""P4a: lấy cấu hình tuning, NeuMF hai nhánh khác chiều, EarlyFusion trùng MLP."""
 from __future__ import annotations
 
 import importlib.util
@@ -10,7 +10,6 @@ import pytest
 import torch
 
 from scripts.common import build_adapter
-from src.models.cfnet import CFNet, interaction_matrix
 from src.models.early_fusion import EarlyFusionModel
 from src.models.neumf import GMF, MLP, NeuMF
 
@@ -41,20 +40,6 @@ def test_neumf_separate_gmf_dim_loads_pretrained_exactly():
         m.eval()
     assert torch.allclose(net(u, i), 0.3 * gmf(u, i) + 0.7 * mlp(u, i), atol=1e-6)
 
-
-def test_cfnet_matrix_from_train_only_and_eval_cache_matches():
-    train = pd.DataFrame({"user": [0, 0, 1, 2], "item": [1, 3, 0, 2]})
-    R = interaction_matrix(train, 3, 4)
-    assert R.sum() == 4 and R[0, 1] == 1 and R[2, 3] == 0
-    torch.manual_seed(0)
-    net = CFNet(R, 4, [8, 4], rl_layers=(6, 3))
-    u, i = torch.tensor([0, 1, 2, 2]), torch.tensor([3, 0, 1, 2])
-    net.train()
-    direct = net(u, i)  # đường tính trực tiếp (không cache)
-    net.eval()
-    assert torch.allclose(net(u, i), direct, atol=1e-6)
-    net.train()
-    assert net._cache is None  # đổi sang train thì bỏ cache
 
 
 def test_early_fusion_is_architecturally_identical_to_mlp():

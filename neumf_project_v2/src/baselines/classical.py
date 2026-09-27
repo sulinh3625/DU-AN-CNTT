@@ -17,16 +17,10 @@ class RandomBaseline:
 
 
 class MostPopularBaseline:
-    """Số user mua mỗi item trong train. window_days: chỉ đếm tương tác train có last_timestamp trong
-    window_days ngày cuối của train (độ phổ biến gần đây; vẫn chỉ dùng train)."""
+    """Số user mua mỗi item trong train."""
 
-    def __init__(self, train_df, n_items: int, window_days: int | None = None):
+    def __init__(self, train_df, n_items: int):
         self.pop_score = np.zeros(n_items, dtype=np.float64)
-        if window_days:
-            import pandas as pd
-
-            end = train_df["last_timestamp"].max()
-            train_df = train_df[train_df["last_timestamp"] > end - pd.Timedelta(days=int(window_days))]
         counts = train_df["item"].value_counts()
         for item, count in counts.items():
             self.pop_score[int(item)] = float(count)
@@ -157,49 +151,3 @@ class BPRMFBaseline:
         model.n_items = int(model.Q.shape[0])
         return model
 
-
-class IALSBaseline:
-    """iALS (Hu et al. 2008) qua thư viện `implicit`: confidence = 1 + alpha·r, r = 1 cho mỗi cặp
-    user–item trong TRAIN (Rendle et al. 2022: tune factors, regularization, alpha cùng nhau)."""
-
-    def __init__(self, n_users: int, n_items: int, factors: int = 64, regularization: float = 0.01,
-                 alpha: float = 1.0, iterations: int = 15, seed: int = 42):
-        self.n_users, self.n_items = int(n_users), int(n_items)
-        self.params = dict(factors=int(factors), regularization=float(regularization), alpha=float(alpha),
-                           iterations=int(iterations), random_state=int(seed))
-        self.P = self.Q = None
-
-    def fit(self, train_df) -> "IALSBaseline":
-        from implicit.cpu.als import AlternatingLeastSquares
-        from scipy.sparse import csr_matrix
-        from threadpoolctl import threadpool_limits
-
-        users = train_df["user"].to_numpy(dtype=np.int64)
-        items = train_df["item"].to_numpy(dtype=np.int64)
-        X = csr_matrix((np.ones(len(users), dtype=np.float32), (users, items)), shape=(self.n_users, self.n_items))
-        model = AlternatingLeastSquares(**self.params)
-        with threadpool_limits(1, "blas"):  # implicit khuyến nghị tắt threadpool BLAS
-            model.fit(X, show_progress=False)
-        self.P = np.asarray(model.user_factors, dtype=np.float64)
-        self.Q = np.asarray(model.item_factors, dtype=np.float64)
-        return self
-
-    def score(self, user: int, item: int) -> float:
-        return float(self.P[int(user)] @ self.Q[int(item)])
-
-    __call__ = score
-
-    def score_items(self, user: int, items) -> np.ndarray:
-        return self.Q[np.asarray(items, dtype=np.int64)] @ self.P[int(user)]
-
-    def save(self, path) -> None:
-        np.savez(path, P=self.P, Q=self.Q)
-
-    @classmethod
-    def load(cls, path) -> "IALSBaseline":
-        npz = np.load(path)
-        model = cls.__new__(cls)
-        model.P, model.Q = npz["P"], npz["Q"]
-        model.n_users, model.n_items = model.P.shape[0], model.Q.shape[0]
-        model.params = {}
-        return model

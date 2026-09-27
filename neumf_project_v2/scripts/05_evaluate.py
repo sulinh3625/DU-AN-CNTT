@@ -70,8 +70,6 @@ MODEL_COLORS = {
     "MostPopular":      "#e67e22",
     "ItemKNN":          "#27ae60",
     "BPR-MF":           "#2980b9",
-    "MostPopular-Recent": "#f0b27a",
-    "iALS":             "#1f618d",
     "GMF":              "#8e44ad",
     "MLP":              "#c0392b",
     "EarlyFusion":      "#1abc9c",
@@ -81,12 +79,11 @@ MODEL_COLORS = {
 MODEL_MARKERS = {
     "Random": "x", "MostPopular": "s", "ItemKNN": "D",
     "BPR-MF": "^", "GMF": "o", "MLP": "v",
-    "MostPopular-Recent": "s", "iALS": "D",
     "EarlyFusion": "h",
     "NeuMF-Scratch": "*", "NeuMF-Pretrained": "P",
 }
 METHOD_ORDER = [m for m in [
-    "Random", "MostPopular", "MostPopular-Recent", "ItemKNN", "BPR-MF", "iALS",
+    "Random", "MostPopular", "ItemKNN", "BPR-MF",
     "GMF", "MLP", "EarlyFusion", "NeuMF-Scratch", "NeuMF-Pretrained",
 ] if m not in REPORT_HIDDEN_MODELS]
 NEURAL_MODELS = ["GMF", "MLP", "EarlyFusion", "NeuMF-Scratch", "NeuMF-Pretrained"]
@@ -349,7 +346,7 @@ def _build_report(primary_df, sampled_df, tail_df, beyond_df, train_df, metadata
     if hidden:
         L.append(f"  (Ẩn khỏi bảng, vẫn lưu trong results.json: {', '.join(hidden)})")
     neural = [m for m in NEURAL_MODELS if m in primary_df.index]
-    classical = [m for m in ["MostPopular", "MostPopular-Recent", "ItemKNN", "BPR-MF", "iALS"] if m in primary_df.index]
+    classical = [m for m in ["MostPopular", "ItemKNN", "BPR-MF"] if m in primary_df.index]
     if neural and classical:
         bn = primary_df.loc[neural, "NDCG@10"].idxmax()
         bc = primary_df.loc[classical, "NDCG@10"].idxmax()

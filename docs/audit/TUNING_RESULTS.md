@@ -1,5 +1,8 @@
 # Kết quả tuning (P4a) — CHỈ validation, seed 42
 
+> **Loop 14:** theo quyết định người dùng, iALS, MostPopular-Recent, CFNet (C) và fusion B đã bỏ khỏi đề tài
+> và code (PREREG mục 8). Số của chúng dưới đây giữ lại để minh bạch; không đánh giá trên test.
+
 Nguồn: `docs/audit/tuning_log.csv` (57 dòng, toàn bộ ở commit `d1cfa3f`, git_dirty = False) và
 `docs/audit/best_configs.json`; chạy bằng `python scripts/10_tune.py --model all` (protocol mốc thời gian chung,
 2.275 user val, Full Ranking trên 10.345 item train). Tổng thời gian 1,90 giờ GPU (≤ 4,5 giờ PREREG → không cắt cấu hình).

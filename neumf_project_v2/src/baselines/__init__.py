@@ -1,3 +1,3 @@
-from .classical import RandomBaseline, MostPopularBaseline, ItemKNNBaseline, BPRMFBaseline, IALSBaseline
+from .classical import RandomBaseline, MostPopularBaseline, ItemKNNBaseline, BPRMFBaseline
 
-__all__ = ["RandomBaseline", "MostPopularBaseline", "ItemKNNBaseline", "BPRMFBaseline", "IALSBaseline"]
+__all__ = ["RandomBaseline", "MostPopularBaseline", "ItemKNNBaseline", "BPRMFBaseline"]

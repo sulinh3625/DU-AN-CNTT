@@ -25,10 +25,11 @@ Mọi lệch khỏi kế hoạch phải ghi vào mục "Lệch kế hoạch" ở
 ## 3. Mô hình
 | Nhóm | Mô hình |
 |---|---|
-| Baseline | Random, MostPopular, MostPopular-Recent, BPR-MF, iALS |
-| Ablation | GMF (MF), MLP (DNN), EarlyFusion |
+| Baseline | Random, MostPopular, BPR-MF |
+| Ablation | GMF (MF), MLP (DNN) |
 | Mô hình đề tài | NeuMF-Scratch, NeuMF-Pretrained |
-| Ứng viên lai (CANDIDATES.md) | B: late fusion MF + NeuMF (trọng số trên val); C: CFNet (DeepCF) |
+
+(Sửa loop 14 — xem mục 8. Bản đăng ký ban đầu còn MostPopular-Recent, iALS, EarlyFusion, B, C.)
 
 ItemKNN không chạy (10.345 item > ngưỡng dense 5.000) — ghi là hạn chế.
 
@@ -57,17 +58,15 @@ ItemKNN không chạy (10.345 item > ngưỡng dense 5.000) — ghi là hạn ch
 ## 6. Kiểm định
 - Paired per-user trên test: **Wilcoxon signed-rank** (per-user NDCG@10 trung bình qua seed) + **paired bootstrap**
   95% CI (10.000 lần, seed 0). Wilcoxon theo seed không dùng (3 seed không thể đạt p < 0,05).
-- Họ so sánh cố định (hiệu chỉnh **Holm** trên toàn họ, α = 0,05):
-  1. NeuMF-Pretrained vs iALS, 2. vs BPR-MF, 3. vs MostPopular, 4. vs GMF, 5. vs MLP, 6. vs NeuMF-Scratch,
-  7. mô hình lai tốt nhất (mục 7) vs iALS, 8. mô hình lai tốt nhất vs mô hình MF tốt nhất (iALS/BPR-MF).
+- Họ so sánh cố định (hiệu chỉnh **Holm** trên toàn họ, α = 0,05) — thay ở loop 14, trước mọi --final:
+  1. NeuMF-Pretrained vs BPR-MF, 2. vs MostPopular, 3. vs GMF, 4. vs MLP, 5. vs NeuMF-Scratch,
+  6. NeuMF-Scratch vs BPR-MF, 7. vs GMF, 8. vs MLP. (Cài đặt: `scripts/12_significance.py`.)
 - "A tốt hơn B" chỉ được viết khi: p Holm < 0,05 **và** CI bootstrap không chứa 0 **và** chênh lệch tương đối
   NDCG@10 ≥ **5%**. Ngược lại viết "không khác biệt có ý nghĩa".
 
 ## 7. Chọn "mô hình lai tốt nhất"
-- Trong {NeuMF-Scratch, NeuMF-Pretrained, B, C}, chọn mô hình có **val** NDCG@10 cao nhất (seed 42). Test chỉ để
-  báo cáo, không để chọn lại.
-- Nếu không ứng viên nào thắng NeuMF-Pretrained theo mục 6 thì giữ NeuMF-Pretrained là mô hình chính và ghi nhận
-  kết quả âm cho B/C.
+- Trong {NeuMF-Scratch, NeuMF-Pretrained}, chọn mô hình có **val** NDCG@10 cao nhất (seed 42). Test chỉ để
+  báo cáo, không để chọn lại. (Loop 14: B, C đã bỏ — mục 8.)
 - **Nếu mô hình lai không vượt baseline MF đã tune, báo cáo đúng như vậy.**
 
 ## 8. Lệch kế hoạch
@@ -78,3 +77,12 @@ ItemKNN không chạy (10.345 item > ngưỡng dense 5.000) — ghi là hạn ch
   chính là ablation "early fusion"/DNN-only. Họ 8 so sánh ở mục 6 không có EarlyFusion nên không đổi.
 - **Loop 12:** NeuMF-Pretrained cho phép nhánh GMF và MLP khác số chiều (`NeuMF(..., gmf_dim=...)`, như NCF gốc)
   để nạp được GMF/MLP tốt nhất; negative_ratio và weight_decay khi fine-tune lấy theo MLP tốt nhất.
+- **Loop 14 (quyết định của người dùng, TRƯỚC mọi --final, chưa xem test):** bỏ iALS, MostPopular-Recent, CFNet (C)
+  và late fusion B khỏi đề tài và khỏi code (người dùng: đã quá nhiều baseline). Tập mô hình cuối: Random,
+  MostPopular, BPR-MF, GMF, MLP, NeuMF-Scratch, NeuMF-Pretrained. Kết quả tuning val của các mô hình bị bỏ vẫn giữ
+  trong `tuning_log.csv` / `TUNING_RESULTS.md` để minh bạch (trên val, iALS 0,01141 và B 0,01260 cao hơn
+  NeuMF-Scratch 0,01107) — không chạy test cho chúng. Họ so sánh mục 6 và tập ứng viên mục 7 sửa tương ứng.
+  Mô hình lai được chọn (mục 7, theo val): **NeuMF-Scratch** (0,01107 > NeuMF-Pretrained 0,00913).
+- **Loop 14:** đánh giá cuối chạy bằng `scripts/11_final.py` (thay 03 --final): cùng khoá test (PREREG đã commit,
+  --reason, test_access_log.csv, từ chối khi working tree bẩn), cho phép mỗi mô hình dùng cấu hình tốt nhất riêng;
+  train trên train, early stopping trên val như lúc tuning, chấm test với candidate = item train, loại train ∪ val.
