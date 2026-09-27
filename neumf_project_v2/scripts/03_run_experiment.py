@@ -15,7 +15,7 @@ PROJECT_ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(PROJECT_ROOT))
 
 from scripts.common import build_adapter
-from src.baselines import RandomBaseline, MostPopularBaseline, ItemKNNBaseline, BPRMFBaseline
+from src.baselines import RandomBaseline, MostPopularBaseline, ItemKNNBaseline, BPRMFBaseline, IALSBaseline
 from src.data_pipeline.dataset import TrainDataset
 from src.data_pipeline.negative_sampling import build_user_positive_sets
 from src.data_pipeline.preprocessing import build_interactions, apply_feedback_weights
@@ -41,7 +41,7 @@ PREREG_PATH = AUDIT_DIR / "PREREG.md"
 TEST_ACCESS_LOG = AUDIT_DIR / "test_access_log.csv"
 
 METHOD_ORDER = [
-    "Random", "MostPopular", "ItemKNN", "BPR-MF",
+    "Random", "MostPopular", "MostPopular-Recent", "ItemKNN", "BPR-MF", "iALS",
     "GMF", "MLP", "EarlyFusion", "NeuMF-Scratch", "NeuMF-Pretrained",
 ]
 
@@ -249,6 +249,10 @@ def run(config_path: str, run_tag: str | None = None, final: bool = False, reaso
         pop_bl = MostPopularBaseline(train_df, data.n_items)
         score_fns["MostPopular"] = pop_bl
         print("    ✓ MostPopular baseline ready")
+    if "popularity_recent" in enabled:
+        days = cfg.baselines.popularity_window_days
+        score_fns["MostPopular-Recent"] = MostPopularBaseline(train_df, data.n_items, window_days=days)
+        print(f"    ✓ MostPopular-Recent ({days} ngày cuối của train) ready")
     if "itemknn" in enabled:
         print("  → ItemKNN baseline (computing similarity matrix)...")
         t0 = time.perf_counter()
@@ -278,6 +282,17 @@ def run(config_path: str, run_tag: str | None = None, final: bool = False, reaso
         score_fns["BPR-MF"] = bpr
         bpr.save(ckpt_dir / "bpr.npz")
         print(f"    ✓ BPR-MF ready ({bpr_time:.1f}s)")
+    if "ials" in enabled:
+        ic = cfg.baselines.ials
+        print(f"  → iALS baseline (factors={ic.factors}, reg={ic.regularization}, alpha={ic.alpha}, it={ic.iterations})...")
+        t0 = time.perf_counter()
+        ials = IALSBaseline(data.n_users, data.n_items, ic.factors, ic.regularization, ic.alpha, ic.iterations,
+                            seed=cfg.training.seed).fit(train_df)
+        train_meta["iALS"] = {"train_time_s": time.perf_counter() - t0,
+                              "n_parameters": int(ials.P.size + ials.Q.size)}
+        score_fns["iALS"] = ials
+        ials.save(ckpt_dir / "ials.npz")
+        print(f"    ✓ iALS ready ({train_meta['iALS']['train_time_s']:.1f}s)")
 
     # 6) Evaluate primary + sampled reproduction protocol
     print("\n" + "─"*60)

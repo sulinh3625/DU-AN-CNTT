@@ -81,9 +81,20 @@ class BPRConfig:
 
 
 @dataclass
+class IALSConfig:
+    factors: int = 64
+    regularization: float = 0.01
+    alpha: float = 1.0
+    iterations: int = 15
+
+
+@dataclass
 class BaselineConfig:
     enabled: list[str] = field(default_factory=lambda: ["random", "popularity", "itemknn", "bpr"])
     bpr: BPRConfig = field(default_factory=BPRConfig)
+    ials: IALSConfig = field(default_factory=IALSConfig)
+    # popularity_recent: MostPopular chỉ đếm N ngày cuối của train
+    popularity_window_days: int = 28
 
 
 @dataclass
@@ -110,9 +121,8 @@ class ProjectConfig:
 def _merge_dataclass(cls, data: dict[str, Any] | None):
     data = data or {}
     if cls is BaselineConfig:
-        bpr_data = data.get("bpr", {})
-        payload = {k: v for k, v in data.items() if k != "bpr"}
-        return BaselineConfig(**payload, bpr=BPRConfig(**bpr_data))
+        payload = {k: v for k, v in data.items() if k not in ("bpr", "ials")}
+        return BaselineConfig(**payload, bpr=BPRConfig(**data.get("bpr", {})), ials=IALSConfig(**data.get("ials", {})))
     return cls(**data)
 
 

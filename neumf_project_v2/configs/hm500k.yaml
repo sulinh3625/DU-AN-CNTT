@@ -48,12 +48,18 @@ evaluation:
   cold_fraction: 0.20
 
 baselines:
-  enabled: [random, popularity, bpr]
+  enabled: [random, popularity, popularity_recent, bpr, ials]
+  popularity_window_days: 28      # MostPopular-Recent: 4 tuần cuối của train
   bpr:
     embedding_dim: 32
     epochs: 20
     lr: 0.03
     reg: 0.005
+  ials:                           # tham số khởi đầu; tune ở Pha 4 cùng ngân sách với NeuMF
+    factors: 64
+    regularization: 0.01
+    alpha: 1.0
+    iterations: 15
 
 paths:
   outputs_dir: outputs

@@ -1,4 +1,4 @@
-## Lượt hiện tại: 8 | Pha: 3
+## Lượt hiện tại: 9 | Pha: 3
 Prompt + quyết định người dùng: docs/audit/LOOP_PROMPT.md. Nhánh: loop/hm500k-audit (không push).
 
 ## Hạng mục
@@ -15,7 +15,7 @@ Prompt + quyết định người dùng: docs/audit/LOOP_PROMPT.md. Nhánh: loop
 | P2d | Test không rò rỉ thời gian (train < val < test theo first_timestamp) trên dữ liệu thật | DONE | tests/test_no_leakage_real_data.py (global: 1 timeline + user/item val/test ⊂ train; LOO: val ≥ train, test ≥ val từng user) | — |
 | P3a | REFERENCES.md (đọc thật từng nguồn) | DONE (DMF chỉ abstract; MS notebook một phần) | docs/audit/REFERENCES.md | — |
 | P3b | CANDIDATES.md + đo 1 epoch/Full Ranking thử | TODO | | P3a |
-| P3c | Baseline mạnh: MostPopular cửa sổ gần, iALS (implicit) | TODO | | — |
+| P3c | Baseline mạnh: MostPopular cửa sổ gần, iALS (implicit) | DONE | src/baselines/classical.py IALSBaseline + MostPopularBaseline(window_days); 03 bật popularity_recent, ials (lưu ials.npz); configs hm500k*.yaml; tests/test_models.py (2 test) | — |
 | P3d | PREREG.md commit trước mọi test | TODO | | P3a, P3b |
 | P4a | Tuning chỉ val → tuning_log.csv (ngân sách như nhau) | TODO | | P2b, P2c, P3d |
 | P4b | Multi-seed (3) + --final + kiểm định paired + Holm | TODO | | P4a |
@@ -37,6 +37,7 @@ Prompt + quyết định người dùng: docs/audit/LOOP_PROMPT.md. Nhánh: loop
 ## Ngân sách đã dùng: 0,3 / 8 giờ GPU (smoke 18,5 phút)
 
 ## Nhật ký lượt (mới nhất ở trên)
+- Lượt 9: P3c — pip install implicit 0.7.3 (người dùng cho phép), thêm iALS (binary, chỉ train, save/load) và MostPopular-Recent (28 ngày cuối train). Kiểm chứng: `pytest tests -q` → 74 passed; chạy thử trên VALIDATION hm500k_global (không chạm test): MostPopular NDCG@10 0,0079 / Recall@10 0,0131; MostPopular-Recent 0,0068 / 0,0120; iALS mặc định (64, λ 0,01, α 1, 15 it) 0,0091 / 0,0136, fit 0,7 s — baseline mạnh, phải tune cùng ngân sách. Lượt sau: P3b (CANDIDATES.md + đo chi phí 1 epoch / Full Ranking).
 - Lượt 8: P3a — đọc NCF (full text + README code gốc), Rendle 2020, Dacrema 2019, Krichene & Rendle 2020, Rendle 2022 iALS, DeepCF (full text + README), RecBole NeuMF; DMF chỉ đọc được abstract; MS ncf_deep_dive chỉ một phần. Hệ quả: baseline MF/BPR phải tune cùng ngân sách, thêm iALS; ItemKNN không chạy được (10.345 item > ngưỡng 5.000). Kiểm chứng: file REFERENCES.md có link + điều lấy được + áp dụng/không cho từng nguồn. Lượt sau: P3c (baseline iALS + MostPopular cửa sổ gần).
 - Lượt 7: P2d — test rò rỉ thời gian trên dữ liệu thật hm500k (cả 2 cách chia). Kiểm chứng: `pytest tests -q` → 72 passed (2 test mới chạy thật trên hm500k, 9,6 s). Pha 2 xong. Lượt sau: P3a (REFERENCES.md, đọc thật từng nguồn).
 - Lượt 6: P2c — khoá tập test (--final + PREREG + test_access_log.csv). Kiểm chứng: `pytest tests -q` → 70 passed; smoke 03 (configs/hm500k_global.yaml, 1 epoch, run smoke_p2c, 18,5 phút): evaluated_on=validation, provenance có config_hash/git_commit, n_candidates_eval min 9.863/max 10.144, results_per_user.csv 8 model × 2.275 user, trung bình per-user khớp results_primary (lệch 1e-16), không tạo test_access_log.csv. Lượt sau: P2d (test không rò rỉ thời gian trên dữ liệu thật).
