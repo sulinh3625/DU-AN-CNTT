@@ -17,7 +17,7 @@ Prompt + quyết định người dùng: docs/audit/LOOP_PROMPT.md. Nhánh: loop
 | P3b | CANDIDATES.md + đo 1 epoch/Full Ranking thử | DONE | docs/audit/CANDIDATES.md; docs/audit/measure_candidates.py | — |
 | P3c | Baseline mạnh: MostPopular cửa sổ gần, iALS (implicit) | DONE | src/baselines/classical.py IALSBaseline + MostPopularBaseline(window_days); 03 bật popularity_recent, ials (lưu ials.npz); configs hm500k*.yaml; tests/test_models.py (2 test) | — |
 | P3d | PREREG.md commit trước mọi test | DONE | docs/audit/PREREG.md (commit loop 11, trước mọi --final; test_access_log.csv chưa tồn tại) | — |
-| P4a | Tuning chỉ val → tuning_log.csv (ngân sách như nhau) | TODO | | P2b, P2c, P3d |
+| P4a | Tuning chỉ val → tuning_log.csv (ngân sách như nhau) | ĐANG CHẠY | scripts/10_tune.py (+tests/test_tuning.py); NeuMF(gmf_dim), src/models/cfnet.py; smoke 1 epoch đủ 10 mô hình; tuning thật chạy nền → docs/audit/tuning_log.csv, best_configs.json, outputs/tuning/ | P2b, P2c, P3d |
 | P4b | Multi-seed (3) + --final + kiểm định paired + Holm | TODO | | P4a |
 | P4c | Đo độ trễ Top-K p50/p95 CPU (R7) | TODO | | — |
 | P5a | Bảng .tex sinh từ kết quả; C4 \input | TODO | | P4b |
@@ -34,9 +34,10 @@ Prompt + quyết định người dùng: docs/audit/LOOP_PROMPT.md. Nhánh: loop
   các run hm500k_seed42, hm500k_global_seed42 cần chạy lại (sẽ chạy lại trong Pha 4 theo khoá test).
 - Lệch bất biến: k-core = 10 (Q2) thay vì 5.
 
-## Ngân sách đã dùng: 0,4 / 8 giờ GPU (smoke 18,5 phút + đo ứng viên ~3 phút)
+## Ngân sách đã dùng: 0,5 / 8 giờ GPU (smoke 18,5 phút + đo ứng viên ~3 phút + smoke tuning ~5 phút)
 
 ## Nhật ký lượt (mới nhất ở trên)
+- Lượt 12: P4a (phần 1) — scripts/10_tune.py: lưới + rút 6 cấu hình (numpy seed 0, mặc định luôn có), chỉ dựng val records (test bị `del`), ghi tuning_log.csv/best_configs.json/checkpoint; NeuMF thêm `gmf_dim` (nạp GMF/MLP khác chiều); CFNet vào src/models (R chỉ từ train, cache tháp khi eval). Kiểm chứng: `pytest tests -q` → 86 passed; smoke 1 epoch × 1 cấu hình/mô hình trên VAL (log ở scratchpad, không tính): fusion w=0 = NeuMF-Pretrained (0,00857), w=1 = BPR (0,00912) → trộn đúng. Phát hiện: EarlyFusion trùng hệt kiến trúc MLP (val 0,00770 = 0,00770) → bỏ khỏi tuning, ghi PREREG mục 8 (trước mọi --final). Tuning thật (`python scripts/10_tune.py --model all`) khởi chạy nền sau commit. Lượt sau: theo dõi tuning, commit tuning_log.csv + best_configs.json, đóng P4a.
 - Lượt 11: P3d — PREREG.md: metric chính NDCG@10 Full Ranking test (protocol mốc thời gian chung), chọn trên val; 6 cấu hình/mô hình (lưới cố định, rút seed 0), ≤ 20 epoch, patience 5, tuning ≤ 4,5 giờ; 3 seed --final; Wilcoxon per-user + bootstrap CI, Holm trên 8 so sánh; 'tốt hơn' cần p_Holm<0,05 + CI ∌ 0 + ≥ 5%; câu kết quả âm. Kiểm chứng: sau commit, prereg_committed(docs/audit/PREREG.md) = True. Lượt sau: P4a (script tuning nhẹ + tuning_log.csv).
 - Lượt 10: P3b — đo thật trên VALIDATION hm500k_global: NeuMF d=32 1 epoch 6,3 s, full ranking val 3,4 s, GPU 0,04 GB; d=64 7,6 s / 3,9 s; CFNet prototype 18,7 s / 3,7 s / 0,84 GB; iALS fit 0,6 s. Quyết định: A (NeuMF tune), B (late fusion MF+NeuMF), C (CFNet) giữ; ConvNCF loại. Overhead 03 lớn (smoke 1 epoch 18,5 phút) → tuning bằng script nhẹ. Lượt sau: P3d (PREREG.md, commit trước mọi test).
 - Lượt 9: P3c — pip install implicit 0.7.3 (người dùng cho phép), thêm iALS (binary, chỉ train, save/load) và MostPopular-Recent (28 ngày cuối train). Kiểm chứng: `pytest tests -q` → 74 passed; chạy thử trên VALIDATION hm500k_global (không chạm test): MostPopular NDCG@10 0,0079 / Recall@10 0,0131; MostPopular-Recent 0,0068 / 0,0120; iALS mặc định (64, λ 0,01, α 1, 15 it) 0,0091 / 0,0136, fit 0,7 s — baseline mạnh, phải tune cùng ngân sách. Lượt sau: P3b (CANDIDATES.md + đo chi phí 1 epoch / Full Ranking).

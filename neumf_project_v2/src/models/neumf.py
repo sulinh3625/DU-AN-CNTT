@@ -58,16 +58,22 @@ class MLP(nn.Module):
 
 
 class NeuMF(nn.Module):
-    """NeuMF với 4 bảng embedding độc lập cho GMF/MLP."""
+    """NeuMF với 4 bảng embedding độc lập cho GMF/MLP.
 
-    def __init__(self, n_users: int, n_items: int, embedding_dim: int, layers: list[int], dropout: float = 0.2):
+    gmf_dim: số chiều nhánh GMF (mặc định = embedding_dim của nhánh MLP). He et al. (2017) cho phép hai nhánh
+    có kích thước riêng — cần khi GMF và MLP pretrain tốt nhất có số chiều khác nhau.
+    """
+
+    def __init__(self, n_users: int, n_items: int, embedding_dim: int, layers: list[int], dropout: float = 0.2,
+                 gmf_dim: int | None = None):
         super().__init__()
+        gmf_dim = gmf_dim or embedding_dim
         input_size = 2 * embedding_dim
         if not layers or layers[0] != input_size:
             raise ValueError(f"mlp_layers[0] phải bằng 2*embedding_dim = {input_size}")
 
-        self.gmf_user_emb = nn.Embedding(n_users, embedding_dim)
-        self.gmf_item_emb = nn.Embedding(n_items, embedding_dim)
+        self.gmf_user_emb = nn.Embedding(n_users, gmf_dim)
+        self.gmf_item_emb = nn.Embedding(n_items, gmf_dim)
         self.mlp_user_emb = nn.Embedding(n_users, embedding_dim)
         self.mlp_item_emb = nn.Embedding(n_items, embedding_dim)
 
@@ -75,7 +81,7 @@ class NeuMF(nn.Module):
         for in_size, out_size in zip(layers[:-1], layers[1:]):
             modules.extend([nn.Linear(in_size, out_size), nn.ReLU(), nn.Dropout(dropout)])
         self.mlp_layers = nn.Sequential(*modules)
-        self.output_layer = nn.Linear(embedding_dim + layers[-1], 1, bias=False)
+        self.output_layer = nn.Linear(gmf_dim + layers[-1], 1, bias=False)
         self._init_weights()
 
     def _init_weights(self):

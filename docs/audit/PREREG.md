@@ -71,4 +71,10 @@ ItemKNN không chạy (10.345 item > ngưỡng dense 5.000) — ghi là hạn ch
 - **Nếu mô hình lai không vượt baseline MF đã tune, báo cáo đúng như vậy.**
 
 ## 8. Lệch kế hoạch
-(chưa có)
+- **Loop 12 (trước mọi --final, chưa xem test):** EarlyFusion bị bỏ khỏi tuning và khỏi họ so sánh vì kiến trúc
+  **trùng hệt MLP** (`src/models/early_fusion.py` vs `MLP` trong `src/models/neumf.py`: cùng 2 embedding → nối →
+  cùng tháp MLP → lớp output). Bằng chứng: smoke tuning 1 epoch cùng seed cho val NDCG@10 bằng nhau (0,00770 vs
+  0,00770); `tests/test_tuning.py::test_early_fusion_is_architecturally_identical_to_mlp`. Trong báo cáo, MLP
+  chính là ablation "early fusion"/DNN-only. Họ 8 so sánh ở mục 6 không có EarlyFusion nên không đổi.
+- **Loop 12:** NeuMF-Pretrained cho phép nhánh GMF và MLP khác số chiều (`NeuMF(..., gmf_dim=...)`, như NCF gốc)
+  để nạp được GMF/MLP tốt nhất; negative_ratio và weight_decay khi fine-tune lấy theo MLP tốt nhất.
