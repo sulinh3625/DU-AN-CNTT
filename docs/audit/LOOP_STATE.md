@@ -1,4 +1,4 @@
-## Lượt hiện tại: 6 | Pha: 2
+## Lượt hiện tại: 7 | Pha: 2 (xong) → 3
 Prompt + quyết định người dùng: docs/audit/LOOP_PROMPT.md. Nhánh: loop/hm500k-audit (không push).
 
 ## Hạng mục
@@ -12,7 +12,7 @@ Prompt + quyết định người dùng: docs/audit/LOOP_PROMPT.md. Nhánh: loop
 | P2a | Split theo Q1 (mốc thời gian chung) + metric nhiều item đúng + unit test | DONE | src/data_pipeline/splitting.py global_temporal_split; tests/test_global_split.py | — |
 | P2b | 03: metadata ghi config hash + git commit; log n_candidates; xuất results_per_user.csv | DONE (smoke loop 6 OK) | src/utils/io.py run_provenance; src/evaluation/full_ranking.py per_user + _per_user_row; 03: metadata.provenance, n_candidates_test, results_per_user.csv; tests/test_evaluation.py (2 test mới) | — |
 | P2c | Khoá test: đánh giá test chỉ qua --final + docs/audit/test_access_log.csv | DONE | 03 run(final=...): không --final → mọi bảng trên VALIDATION; --final cần PREREG.md đã commit + --reason, ghi test_access_log.csv trước khi đánh giá; cờ truyền qua run.py/run_all/04; 05 ghi 'Đánh giá trên'; tests/test_test_lock.py | — |
-| P2d | Test không rò rỉ thời gian (train < val < test theo first_timestamp) trên dữ liệu thật | TODO | | — |
+| P2d | Test không rò rỉ thời gian (train < val < test theo first_timestamp) trên dữ liệu thật | DONE | tests/test_no_leakage_real_data.py (global: 1 timeline + user/item val/test ⊂ train; LOO: val ≥ train, test ≥ val từng user) | — |
 | P3a | REFERENCES.md (đọc thật từng nguồn) | TODO | | — |
 | P3b | CANDIDATES.md + đo 1 epoch/Full Ranking thử | TODO | | P3a |
 | P3c | Baseline mạnh: MostPopular cửa sổ gần, iALS (implicit) | TODO | | — |
@@ -37,6 +37,7 @@ Prompt + quyết định người dùng: docs/audit/LOOP_PROMPT.md. Nhánh: loop
 ## Ngân sách đã dùng: 0,3 / 8 giờ GPU (smoke 18,5 phút)
 
 ## Nhật ký lượt (mới nhất ở trên)
+- Lượt 7: P2d — test rò rỉ thời gian trên dữ liệu thật hm500k (cả 2 cách chia). Kiểm chứng: `pytest tests -q` → 72 passed (2 test mới chạy thật trên hm500k, 9,6 s). Pha 2 xong. Lượt sau: P3a (REFERENCES.md, đọc thật từng nguồn).
 - Lượt 6: P2c — khoá tập test (--final + PREREG + test_access_log.csv). Kiểm chứng: `pytest tests -q` → 70 passed; smoke 03 (configs/hm500k_global.yaml, 1 epoch, run smoke_p2c, 18,5 phút): evaluated_on=validation, provenance có config_hash/git_commit, n_candidates_eval min 9.863/max 10.144, results_per_user.csv 8 model × 2.275 user, trung bình per-user khớp results_primary (lệch 1e-16), không tạo test_access_log.csv. Lượt sau: P2d (test không rò rỉ thời gian trên dữ liệu thật).
 - Lượt 5: P2b — provenance (config_hash sha256 của config đã nạp, git_commit, git_dirty) + n_candidates_test vào metadata.json; evaluate_* nhận per_user=list → 03 ghi results_per_user.csv (model, user, customer_id, n_candidates, n_positives, ranks, metric). Kiểm chứng: `pytest tests -q` → 66 passed; py_compile 03 OK. Chưa chạy 03 thật để tránh chạm test trước P2c. Lượt sau: P2c (--final + test_access_log.csv).
 - Lượt 4: P1d — git rm src/models/lightgcn.py, sasrec.py (grep: không code nào dùng; chỉ docs/refactor_audit.md — file chờ người dùng xoá). Kiểm chứng: `pytest tests -q` → 64 passed. Pha 1 xong. Lượt sau: P2b (metadata config hash + git commit, n_candidates, results_per_user.csv trong 03).
