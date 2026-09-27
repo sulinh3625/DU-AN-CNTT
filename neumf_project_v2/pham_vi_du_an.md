@@ -18,7 +18,6 @@
 - Kiến trúc: GMF, MLP, EarlyFusion, NeuMF (from-scratch & pre-trained) — He et al. (2017)
 - Baselines truyền thống: Random, MostPopular, BPR-MF
 - Mọi mô hình chỉ học từ ma trận tương tác user–sản phẩm (lọc cộng tác thuần)
-- Mô hình bổ sung: LightGCN, SASRec (đã cài đặt, dùng để so sánh)
 - Đánh giá Full Ranking (chính) + Sampled-99 (đối chiếu protocol NCF gốc)
 - Phân tích phân tầng: Long-tail (head/tail items), Cold-start (cold/warm users)
 - Beyond-accuracy: Catalog Coverage, Novelty, Popularity Bias (ARP, HRR)
@@ -30,7 +29,7 @@
 
 - Thông tin nội dung: thuộc tính/ảnh/mô tả sản phẩm, thông tin khách hàng (các mô hình ContentBased,
   Hybrid-NeuMF-CBF, CategoryPopularity, AgeGroupPopularity đã gỡ khỏi code)
-- Mô hình hoá chuỗi thời gian / session-based (SASRec chỉ là baseline so sánh)
+- Mô hình đồ thị (LightGCN) và mô hình chuỗi (SASRec): không thuộc họ MF + DNN, đã gỡ khỏi code
 - Cold-start tuyệt đối (user/item mới hoàn toàn) — CF thuần ID không chấm được
 - Cold-start item mới hoàn toàn (item chưa có giao dịch nào không nằm trong catalog đánh giá)
 - Hyperparameter search tự động (Optuna/AutoML)

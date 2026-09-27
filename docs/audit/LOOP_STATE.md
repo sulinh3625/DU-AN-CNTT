@@ -1,4 +1,4 @@
-## Lượt hiện tại: 3 | Pha: 1
+## Lượt hiện tại: 4 | Pha: 1 (xong) → 2
 Prompt + quyết định người dùng: docs/audit/LOOP_PROMPT.md. Nhánh: loop/hm500k-audit (không push).
 
 ## Hạng mục
@@ -8,7 +8,7 @@ Prompt + quyết định người dùng: docs/audit/LOOP_PROMPT.md. Nhánh: loop
 | P1a | Thuần CF: gỡ content-based khỏi code (Q3=a) | DONE | commit 44ddbf7 (loop 0) | — |
 | P1b | pytest: config chính không đọc metadata; confidence/popularity chỉ từ train | DONE | neumf_project_v2/tests/test_pure_cf.py (7 test) | — |
 | P1c | Lưu checkpoint BPR-MF (F7) | DONE | src/baselines/classical.py BPRMFBaseline.save/load; scripts/03_run_experiment.py lưu ckpt_dir/bpr.npz; demo nạp qua BPRMFBaseline.load; tests/test_models.py::test_bpr_checkpoint_roundtrip_and_demo_scoring_match | — |
-| P1d | Xoá LightGCN/SASRec (F6, người dùng chọn xoá) | TODO | src/models/lightgcn.py, sasrec.py không được gọi | có thể bị chặn xoá |
+| P1d | Xoá LightGCN/SASRec (F6, người dùng chọn xoá) | DONE | git rm src/models/lightgcn.py, sasrec.py (không file nào import); pham_vi_du_an.md cập nhật | — |
 | P2a | Split theo Q1 (mốc thời gian chung) + metric nhiều item đúng + unit test | DONE | src/data_pipeline/splitting.py global_temporal_split; tests/test_global_split.py | — |
 | P2b | 03: metadata ghi config hash + git commit; log n_candidates; xuất results_per_user.csv | TODO | | — |
 | P2c | Khoá test: đánh giá test chỉ qua --final + docs/audit/test_access_log.csv | TODO | | — |
@@ -37,6 +37,7 @@ Prompt + quyết định người dùng: docs/audit/LOOP_PROMPT.md. Nhánh: loop
 ## Ngân sách đã dùng: 0 / 8 giờ GPU
 
 ## Nhật ký lượt (mới nhất ở trên)
+- Lượt 4: P1d — git rm src/models/lightgcn.py, sasrec.py (grep: không code nào dùng; chỉ docs/refactor_audit.md — file chờ người dùng xoá). Kiểm chứng: `pytest tests -q` → 64 passed. Pha 1 xong. Lượt sau: P2b (metadata config hash + git commit, n_candidates, results_per_user.csv trong 03).
 - Lượt 3: P1c — 03 lưu bpr.npz; BPRMFBaseline.save/load; demo chấm BPR bằng Q @ P[u] (khớp score_items của 03). Kiểm chứng: `pytest tests -q` → 64 passed; py_compile 03 + demo OK. Chưa chạy 03 thật (chờ Pha 4). Lượt sau: P1d (xoá LightGCN/SASRec).
 - Lượt 2: P1b — tests/test_pure_cf.py: config chính không có side_features/content/hybrid, baseline chỉ CF; code src/ + scripts 01–06 không nhắc articles/customers/side_features; adapter chỉ mở file transactions (monkeypatch pd.read_csv); scale confidence chỉ fit trên train; 03 tính popularity/head/cold/TrainDataset từ train_df. Kiểm chứng: `pytest tests -q` → 63 passed. Lượt sau: P1c (lưu checkpoint BPR-MF).
 - Lượt 1: Pha 0 — lập COMPLIANCE_MATRIX (R3 PASS; R1, R2, R4, R6 PARTIAL; R5, R7, R8 FAIL; V3 phần lớn FAIL);
