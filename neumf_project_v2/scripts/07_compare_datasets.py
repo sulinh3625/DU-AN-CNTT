@@ -13,6 +13,7 @@ liệu đó -- không phải trục kép (dual-axis) trên cùng một ô. Màu 
 """
 from __future__ import annotations
 
+import sys
 from pathlib import Path
 import pandas as pd
 import matplotlib
@@ -20,12 +21,15 @@ matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(PROJECT_ROOT))
 
-METHOD_ORDER = [
+from scripts.common import REPORT_HIDDEN_MODELS  # noqa: E402
+
+METHOD_ORDER = [m for m in [
     "Random", "MostPopular", "AgeGroupPopularity", "CategoryPopularity", "ContentBased",
     "ItemKNN", "BPR-MF",
     "GMF", "MLP", "EarlyFusion", "NeuMF-Scratch", "NeuMF-Pretrained", "Hybrid-NeuMF-CBF",
-]
+] if m not in REPORT_HIDDEN_MODELS]
 MODEL_COLORS = {
     "Random":           "#95a5a6",
     "MostPopular":      "#e67e22",

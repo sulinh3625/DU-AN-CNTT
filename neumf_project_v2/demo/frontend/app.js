@@ -241,7 +241,7 @@ function renderRecs(recs, k) {
     return `<div>
       <h3 style="color:${color(r.model)}">${esc(r.model)}</h3>
       ${r.items.map((it) => rowItem(it, `<div class="rank">#${it.rank}</div>`,
-        `<div class="score">${r.score_kind === "logit" ? "logit" : "lượt mua"} ${fmt(it.score, r.score_kind === "logit" ? 3 : 0)}<br>${headTag(it.is_head)}${it.is_test_item ? '<br><span class="tag tail">TEST ITEM</span>' : ""}</div>`,
+        `<div class="score">${esc(r.score_kind)} ${fmt(it.score, r.model === "MostPopular" ? 0 : 3)}<br>${headTag(it.is_head)}${it.is_test_item ? '<br><span class="tag tail">TEST ITEM</span>' : ""}</div>`,
         it.is_test_item ? "hit" : "")).join("")}
       <div class="note" style="margin-top:8px">${hit ? "Test item nằm trong top-K (tô xanh)." : `Test item không có trong top-${k} (rank ${r.evaluation.rank}).`}</div>
     </div>`;

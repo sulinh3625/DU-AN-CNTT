@@ -26,8 +26,8 @@ from src.evaluation.long_tail import define_head_items  # noqa: E402
 from src.models.early_fusion import EarlyFusionModel  # noqa: E402
 from src.models.neumf import GMF, MLP, NeuMF  # noqa: E402
 
-CONFIG_PATH = os.environ.get("DEMO_CONFIG", "configs/hm_subset.yaml")
-RUN_PREFIX = "hm_"
+CONFIG_PATH = os.environ.get("DEMO_CONFIG", "configs/hm500k.yaml")
+RUN_PREFIX = f"{Path(CONFIG_PATH).stem}_seed"  # run tag = <tên file config>_seed<seed>
 EXPERIMENTS_DIR = PROJECT_ROOT / "outputs" / "experiments"
 CHECKPOINTS_DIR = PROJECT_ROOT / "outputs" / "checkpoints"
 ARTICLES_PATH = PROJECT_ROOT / "data" / "raw" / "hm" / "articles.csv"
@@ -41,7 +41,6 @@ NEURAL_CHECKPOINTS = {
     "EarlyFusion": "early_fusion.pt",
 }
 BPR_CHECKPOINT = "bpr.npz"  # mảng P (users x d), Q (items x d)
-MODEL_ORDER = [*NEURAL_CHECKPOINTS, "MostPopular", "BPR-MF"]
 ARTICLE_COLUMNS = [
     "article_id", "prod_name", "product_type_name", "product_group_name",
     "colour_group_name", "perceived_colour_master_name", "index_group_name", "garment_group_name",

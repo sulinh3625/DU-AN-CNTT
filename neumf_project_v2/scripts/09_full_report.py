@@ -15,7 +15,7 @@ cấu hình giữa chừng):
                                  (mọi model + baseline, Precision/Recall,
                                  long-tail, cold-start, beyond-accuracy —
                                  TRONG CÙNG 1 lần chạy, không train lại)
-  5. 04_multi_seed.py         --config final --seeds ... (mặc định 5 seed)
+  5. 04_multi_seed.py         --config final --seeds ... (mặc định 6 seed)
                                  xác nhận ý nghĩa thống kê CHO ĐÚNG cấu hình
                                  đã chọn ở bước 2-4, không phải cấu hình mặc
                                  định gốc trong configs/*.yaml
@@ -26,25 +26,19 @@ cấu hình giữa chừng):
  10. 05_evaluate.py           --run-tag <tag>_final -> bảng + biểu đồ chính thức
 
 Số liệu CHÍNH THỨC dùng cho báo cáo PHẢI lấy từ run-tag "<tag>_final" (bước
-4/10) và "<config_name>_seed_*" (bước 5/6) — KHÔNG dùng số liệu ở bước 2
+4/10) và "<tag>_final_seed<N>" (bước 5/6) — KHÔNG dùng số liệu ở bước 2
 (sweep chỉ huấn luyện NeuMF-Scratch, không pretrain, không baseline cổ điển,
 chỉ phục vụ mục đích CHỌN kiến trúc).
 
-Lưu ý hm/hm_subset: cả 2 config đều có dataset.name="hm" bên trong YAML.
-Script này dùng --dataset CLI (dataco/hm/hm_subset) làm tag phân biệt cho
-sweep và cho run-tag final/weighted (không đụng nhau). Multi-seed/aggregate
-(bước 5-6) vẫn theo đúng quy ước sẵn có của 04_multi_seed.py/06_aggregate_seeds.py
-(dựa trên cfg['dataset']['name'] bên trong YAML, không sửa trong lần này) —
-nghĩa là KHÔNG được chạy multi-seed cho cả hm VÀ hm_subset trong cùng một
-outputs/ vì tag sẽ trùng "hm_seed_*". Hiện báo cáo chỉ multi-seed trên
-hm_subset (hm full-scale chưa khả thi, xem README mục 4) nên không phát sinh.
+Tag = tên file config (mặc định configs/hm500k.yaml -> "hm500k"), nên sweep, final,
+weighted và multi-seed của các config khác nhau không bao giờ ghi đè lên nhau.
 
-Chạy (khuyến nghị trên Colab GPU — xem README mục "Chạy trên Colab"):
-    python scripts/09_full_report.py --dataset dataco
-    python scripts/09_full_report.py --dataset hm_subset --seeds 42 2024 2025 2026 3407
+Chạy:
+    python scripts/09_full_report.py
+    python scripts/09_full_report.py --config configs/hm500k.yaml --seeds 42 2024 2025 2026 3407 7
 
-Resume sau khi mất kết nối giữa chừng (Colab hay ngắt phiên):
-    python scripts/09_full_report.py --dataset dataco --skip-audit --skip-sweep
+Resume sau khi mất kết nối giữa chừng:
+    python scripts/09_full_report.py --skip-audit --skip-sweep
 """
 from __future__ import annotations
 
@@ -63,12 +57,8 @@ sys.path.insert(0, str(PROJECT_ROOT))
 
 from src.utils.io import ensure_dir  # noqa: E402
 
-DATASET_CONFIGS = {
-    "dataco": "configs/dataco.yaml",
-    "hm": "configs/hm.yaml",
-    "hm_subset": "configs/hm_subset.yaml",
-}
-DEFAULT_SEEDS = [42, 2024, 2025, 2026, 3407]
+DEFAULT_CONFIG = "configs/hm500k.yaml"
+DEFAULT_SEEDS = [42, 2024, 2025, 2026, 3407, 7]
 
 
 def _run(*args: str) -> None:
@@ -129,7 +119,7 @@ def compare_feedback_variants(final_tag: str, weighted_tag: str, out_name: str) 
 
 def main():
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    ap.add_argument("--dataset", choices=list(DATASET_CONFIGS), required=True)
+    ap.add_argument("--config", default=DEFAULT_CONFIG)
     ap.add_argument("--seeds", nargs="+", type=int, default=DEFAULT_SEEDS)
     ap.add_argument("--sweep-seed", type=int, default=42)
     ap.add_argument("--skip-audit", action="store_true")
@@ -138,8 +128,8 @@ def main():
     ap.add_argument("--skip-weighted", action="store_true", help="Bỏ qua bước 7-9 (biến thể weighted-feedback)")
     args = ap.parse_args()
 
-    tag = args.dataset
-    base_config_path = PROJECT_ROOT / DATASET_CONFIGS[tag]
+    base_config_path = PROJECT_ROOT / args.config
+    tag = base_config_path.stem
     temp_dir = ensure_dir(PROJECT_ROOT / "outputs" / "experiments" / "_temp_configs")
 
     print(f"\n{'#'*70}\n  📦 FULL REPORT PIPELINE — {tag}\n{'#'*70}")
@@ -163,7 +153,7 @@ def main():
     final_cfg = build_final_config(base_config_path, best_config)
     final_cfg_path = temp_dir / f"{tag}_final.yaml"
     dump_yaml(final_cfg, final_cfg_path)
-    config_name = final_cfg["dataset"]["name"]
+    config_name = final_cfg_path.stem  # 04/06 đặt tên run: <config_name>_seed<N>
 
     # BƯỚC 4: Train + eval đầy đủ với cấu hình final (số liệu CHÍNH THỨC)
     final_tag = f"{tag}_final"
@@ -203,7 +193,7 @@ def main():
     print(f"\n{'#'*70}\n  ✅ HOÀN THÀNH FULL REPORT PIPELINE — {tag}\n{'#'*70}")
     print(f"  Số liệu CHÍNH THỨC:         outputs/tables/{final_tag}/, outputs/figures/{final_tag}/")
     if not args.skip_multiseed:
-        print(f"  Multi-seed + Wilcoxon:      outputs/tables/{config_name}/multi_seed_summary_primary.csv, multi_seed_significance_primary.csv")
+        print(f"  Multi-seed + Wilcoxon:      outputs/tables/{config_name}_multiseed/")
     if not args.skip_weighted:
         print(f"  So sánh binary vs weighted: outputs/tables/feedback_comparison_{tag}.csv")
     print(f"  Sweep siêu tham số:         outputs/tables/sweep_{tag}/")

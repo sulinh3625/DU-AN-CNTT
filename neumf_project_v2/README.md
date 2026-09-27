@@ -1,8 +1,11 @@
-﻿# DACNTT — NeuMF Recommendation Project V2
+# DACNTT — NeuMF Recommendation Project V2
 
 **Đề tài:** Xây dựng mô hình khuyến nghị lai kết hợp nhân tử hoá ma trận và mạng lưới thần kinh sâu.
 
-Phiên bản V2 refactor pipeline để tránh data leakage, chuẩn hóa đánh giá full-ranking. Dự án thực nghiệm trên **hai bộ dữ liệu độc lập**: DataCo Supply Chain (chính) và H&M Personalized Fashion Recommendations (đối chứng). Chi tiết phương pháp luận và số liệu đầy đủ trong `Report DACNTT/main.pdf`.
+Pipeline V2 tránh data leakage và đánh giá bằng full ranking. Dữ liệu thực nghiệm mặc định là
+**hm500k**: mẫu khoảng 500k giao dịch H&M Personalized Fashion Recommendations, lấy theo khách hàng
+và trải đủ 2018-09-20 → 2020-09-22 (21.599 khách; sau k-core 10: 7.519 users × 10.345 items,
+220.292 tương tác).
 
 Xem `pham_vi_du_an.md` để hiểu quyết định thiết kế pipeline/evaluation trước khi sửa code.
 
@@ -13,53 +16,47 @@ Xem `pham_vi_du_an.md` để hiểu quyết định thiết kế pipeline/evalua
 ```text
 neumf_project_v2/
 ├── configs/
-│   ├── dataco.yaml          # Config DataCo
-│   ├── hm.yaml              # Config H&M quy mô đầy đủ (89 vạn users — chỉ audit được, chưa train Full Ranking)
-│   └── hm_subset.yaml       # Config H&M lát cắt 100K dòng — đây là config dùng trong báo cáo
+│   └── hm500k.yaml          # Config mặc định
 ├── data/
-│   ├── raw/{dataco,hm}/     # Đặt file CSV gốc tại đây
-│   ├── processed/hm/        # Cache Parquet H&M (sinh bởi scripts/00_prepare_hm_cache.py)
-│   └── splits/{dataco,hm}/
+│   ├── raw/hm/              # transactions_train.csv (+ articles.csv, customers.csv chỉ cho demo) — tải từ Kaggle
+│   └── processed/hm/        # hm500k_transactions.csv (sinh bởi scripts/00_sample_hm.py)
 ├── src/
 │   ├── config.py
-│   ├── data_pipeline/       # adapters, preprocessing, k-core, splitting, negative sampling, dataset, audit
+│   ├── data_pipeline/       # adapter H&M, preprocessing, k-core, splitting, negative sampling, side features
 │   ├── models/              # GMF, MLP, NeuMF, EarlyFusion
-│   ├── baselines/           # ItemKNN, BPR-MF, classical, content_based (CBF), hybrid
+│   ├── baselines/           # Random, MostPopular, BPR-MF, ItemKNN
 │   ├── training/            # trainer.py — vòng lặp huấn luyện, early stopping
 │   ├── evaluation/          # full_ranking, sampled_ranking, metrics, long_tail, cold_start, beyond_accuracy
-│   └── utils/               # seed, io
+│   └── utils/
 ├── scripts/
-│   ├── 00_prepare_hm_cache.py   # Nén CSV H&M 31,8M dòng → Parquet (chạy 1 lần)
-│   ├── 01_data_audit.py         # Audit k-core, mật độ, kiểm tra Disjoint
+│   ├── 00_sample_hm.py          # Tạo hm500k từ transactions_train.csv gốc (chạy 1 lần)
+│   ├── 01_data_audit.py         # Audit k-core, mật độ, kiểm tra split không giao nhau
 │   ├── 02_preprocess.py         # Sinh splits thủ công
 │   ├── 03_run_experiment.py     # Train toàn bộ mô hình + baselines
 │   ├── 04_multi_seed.py         # Lặp lại 03 trên nhiều seed
-│   ├── 05_evaluate.py           # Đánh giá + xuất bảng + 11 biểu đồ
-│   ├── 06_aggregate_seeds.py    # Tổng hợp mean±std + kiểm định Wilcoxon
-│   ├── 07_compare_datasets.py   # Biểu đồ so sánh DataCo vs H&M (Hình 4.1 báo cáo)
-│   └── run_all.py               # Chạy 03 rồi 05 một lệnh duy nhất
-├── demo/
-│   ├── backend/main.py      # FastAPI — inference-only trên checkpoint đã train
-│   └── frontend/index.html  # Giao diện web tĩnh
-├── outputs/
-│   ├── checkpoints/         # Model weights (.pt) theo run_tag
-│   ├── experiments/         # results.json, CSV kết quả, history theo run_tag
-│   ├── figures/             # Biểu đồ PNG
-│   ├── tables/              # Bảng CSV tổng hợp
-│   └── data_audit/          # Kết quả audit
+│   ├── 05_evaluate.py           # Bảng + biểu đồ cho một run
+│   ├── 06_aggregate_seeds.py    # mean ± std + kiểm định Wilcoxon qua các seed
+│   ├── 08_hyperparam_sweep.py   # Sweep siêu tham số trên validation
+│   ├── 09_full_report.py        # audit → sweep → final → multi-seed → evaluate
+│   └── run_all.py               # 03 rồi 05
+├── demo/                    # Web demo (xem demo/README.md)
+├── outputs/{checkpoints,experiments,tables,figures,data_audit}/<run_tag>/
 ├── tests/
-│   ├── test_data_pipeline.py
-│   ├── test_evaluation.py
-│   └── test_models.py
 ├── run.py                   # CLI tổng hợp (python run.py -h)
-├── pham_vi_du_an.md         # Phạm vi + phương pháp luận V2 — đọc trước khi sửa pipeline/eval
-├── data_pipeline_walkthrough.ipynb  # Walkthrough pipeline từng bước
-├── pipeline.drawio.xml      # Sơ đồ kiến trúc pipeline (mở bằng draw.io)
-├── requirements.txt
-├── pytest.ini
-├── Dockerfile
-└── docker-compose.yml
+└── pham_vi_du_an.md
 ```
+
+## Quy ước đặt tên
+
+| Thứ | Tên |
+|---|---|
+| Config | `configs/<tên>.yaml` (mặc định `hm500k`) |
+| Run | `<tên config>_seed<seed>`, vd. `hm500k_seed42` (mặc định của 03 và 04) |
+| Bảng multi-seed | `outputs/tables/<tên config>_multiseed/` |
+| Sweep | `outputs/tables/sweep_<tên config>/` |
+
+Cùng config + cùng seed là cùng một thí nghiệm, nên chạy lại sẽ ghi đè run cũ cùng tên. Muốn giữ cả hai
+thì truyền `--run-tag` khác.
 
 ---
 
@@ -71,91 +68,68 @@ python -m venv .venv
 pip install -r requirements.txt
 ```
 
-> Thực nghiệm gốc chạy hoàn toàn trên CPU. Nếu có GPU, cài PyTorch bản CUDA trước rồi mới cài `requirements.txt`.
+Nếu có GPU, cài PyTorch bản CUDA trước rồi mới cài `requirements.txt`.
 
----
+## 2. Dữ liệu
 
-## 2. Đặt dữ liệu thô
-
-```text
-data/raw/dataco/DataCoSupplyChainDataset.csv
-data/raw/hm/transactions_train.csv   (+ articles.csv, customers.csv)
-```
-
----
-
-## 3. Chạy DataCo (một lệnh)
+Đặt 3 file của cuộc thi Kaggle "H&M Personalized Fashion Recommendations" vào `data/raw/hm/`, rồi:
 
 ```bash
-python run.py all --dataset dataco --run-tag dataco_<tag>
+python run.py sample-hm      # ~1 phút, RAM ~0,5 GB → data/processed/hm/hm500k_transactions.csv
 ```
 
-Tự động chạy: audit → train GMF → MLP → EarlyFusion → NeuMF-Scratch → NeuMF-Pretrained → baselines → evaluate.
-Kết quả: `outputs/tables/<run_tag>/` và `outputs/figures/<run_tag>/`. Mất ~10–15 phút trên CPU.
+Mẫu lấy theo hash `customer_id` nên chạy lại luôn ra đúng cùng một file.
+`customers.csv` đọc được cả bản gốc lẫn bản đã bị Excel lưu lại (phân cách `;`).
+
+## 3. Train + đánh giá một seed
 
 ```bash
-python run.py -h              # xem tất cả lệnh: all, audit, train, evaluate, multi-seed, aggregate, compare, demo
-python run.py <lệnh> -h       # xem tham số của từng lệnh
+python run.py all                 # audit → train → evaluate, run tag hm500k_seed42
+python run.py evaluate --run-tag hm500k_seed42
 ```
 
----
+RAM đỉnh đo được ~4,1 GB trên máy 16 GB. Thời gian mỗi seed đo trước khi gỡ content-based là ~100 phút
+(train 5 mô hình neural chỉ ~14 phút); đã gỡ nên sẽ nhanh hơn, chưa đo lại.
 
-## 4. Chạy H&M
+Kết quả: `outputs/tables/<run_tag>/` (xem `evaluation_report.txt` trước) và `outputs/figures/<run_tag>/`.
 
-H&M gốc có 31,8 triệu dòng — cần cache Parquet trước:
+Mô hình trong bảng đánh giá (đúng phạm vi đề tài: mô hình lai MF + DNN chỉ học từ ma trận tương tác):
+
+| Nhóm | Mô hình |
+|---|---|
+| Mô hình đề tài | NeuMF-Scratch, NeuMF-Pretrained (GMF + MLP ghép ở tầng cuối) |
+| Ablation | GMF (chỉ MF), MLP (chỉ DNN), EarlyFusion (lai ghép sớm) |
+| Baseline truyền thống | Random, MostPopular, BPR-MF |
+
+Các mô hình dùng thuộc tính sản phẩm/khách hàng (ContentBased, Hybrid-NeuMF-CBF, CategoryPopularity,
+AgeGroupPopularity) nằm ngoài phạm vi nên đã gỡ khỏi code. Run cũ vẫn còn số của chúng trong
+`results.json` nên được ẩn khỏi bảng, biểu đồ, demo (`REPORT_HIDDEN_MODELS` trong `scripts/common.py`).
+
+Hai cách chia dữ liệu:
+- `configs/hm500k.yaml`: leave-one-out theo thời gian từng user (protocol của bài NeuMF gốc).
+- `configs/hm500k_global.yaml`: một mốc thời gian chung (train < 2020-07-01 ≤ val < 2020-07-29 ≤ test),
+  mỗi user test có thể có nhiều item đúng — dùng để kiểm chứng, vì leave-one-out rò rỉ tương lai.
+
+## 4. Multi-seed & kiểm định
 
 ```bash
-# Bước 1 — chạy 1 lần duy nhất (~2 phút)
-python scripts/00_prepare_hm_cache.py
-
-# Bước 2 — train trên lát cắt 100K dòng (đúng quy mô dùng trong báo cáo, ~4 phút gồm cả CBF/Hybrid/cold-start)
-python run.py all --dataset hm_subset --run-tag hm_<tag>
+python run.py multi-seed          # seed 42 2024 2025 2026 3407 7 → hm500k_seed<N>
+python run.py aggregate           # → outputs/tables/hm500k_multiseed/
 ```
 
-Config H&M dùng đủ 3 file: `transactions_train.csv` (tương tác), `articles.csv` (thuộc tính sản phẩm →
-ContentBased, CategoryPopularity, Hybrid-NeuMF-CBF) và `customers.csv` (nhóm tuổi → AgeGroupPopularity).
-Ngoài các bảng chung, run H&M sinh thêm `cold_start_results.csv` (cold vs warm) và
-`strict_cold_start_results.csv` (user bị k-core loại — CF thuần ID không chấm được), hình 12–13.
-Tắt/bật trong YAML: `baselines.enabled` (`content_based`, `category_popularity`, `age_popularity`),
-`hybrid.enabled`, `evaluation.strict_cold_start`.
+Cần ≥ 6 seed: với 5 seed, p-value nhỏ nhất của Wilcoxon là 0,0625 nên không bao giờ đạt p < 0,05.
 
-> `configs/hm.yaml` (toàn bộ 889K users × 90K items) chỉ audit được, không thể chạy Full Ranking trên CPU — xem hạn chế mục 5.3 báo cáo.
-
----
-
-## 5. Multi-seed & kiểm định thống kê
+## 5. Demo
 
 ```bash
-python run.py multi-seed --dataset dataco --seeds 42 2024 2025 2026 3407
-python run.py aggregate  --dataset dataco --seeds 42 2024 2025 2026 3407
+python run.py demo                # = python -m demo → http://localhost:8000
 ```
 
-Mỗi seed ~10–15 phút. `aggregate` xuất bảng mean±std và p-value Wilcoxon. Hạ tầng đã sẵn sàng nhưng chưa chạy đủ 5 seed trong báo cáo hiện tại (ghi là hạn chế ở mục 5.2).
+Demo tự dùng run `hm500k_seed*` mới nhất. Chi tiết trong `demo/README.md`.
 
----
-
-## 6. So sánh DataCo vs H&M
+## 6. Test
 
 ```bash
-python scripts/07_compare_datasets.py
-```
-
-Sinh `outputs/figures/comparison/dataco_vs_hm_comparison.png` (Hình 4.1 báo cáo). Script đọc `results_primary.csv` từ 2 run tag — sửa hằng số `dataco_dir` / `hm_dir` trong file nếu dùng run tag khác.
-
----
-
-## 7. Chạy demo
-
-```bash
-python -m uvicorn demo.backend.main:app --port 8000 --host 127.0.0.1
-```
-
-Mở trình duyệt tại **http://localhost:8000**. Yêu cầu đã train xong ít nhất 1 lần (bước 3 hoặc 4). Demo tự động chọn run_tag mới nhất — train run mới xong gọi `POST /api/reload/{dataset}` để cập nhật ngay, không cần restart.
-
----
-
-## 8. Test
-
-```bash
-pytest -q
+pytest -q                 # tests/
+pytest demo/tests -q      # cần đã có run hm500k và file offline của demo
 ```

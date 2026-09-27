@@ -10,6 +10,7 @@ from src.evaluation.metrics import hr_at_k, ndcg_at_k
 from src.evaluation.ranking_utils import deterministic_tie_key, rank_positive
 
 MAX_PAIRS_PER_BATCH = 400_000
+SCORE_KIND = {"MostPopular": "lượt mua train"}
 
 
 @torch.no_grad()
@@ -46,10 +47,16 @@ def eval_record(ctx, u: int):
     return build_full_ranking_records(eval_df, ctx.n_items, ctx.train_val_pos)[0]
 
 
-def rank_from_scores(ctx, u: int, scores_row: np.ndarray, top_k: int, record=None) -> dict:
-    record = record or eval_record(ctx, u)
+def candidate_scores(ctx, model_name: str, u: int, record, all_items_row=None) -> np.ndarray:
+    """Điểm trên record.candidates. all_items_row: hàng điểm mọi item đã tính sẵn (theo lô)."""
+    if all_items_row is None:
+        all_items_row = score_items(ctx, model_name, np.array([u]))[0]
+    return all_items_row[record.candidates]
+
+
+def rank_from_scores(ctx, u: int, scores: np.ndarray, top_k: int, record) -> dict:
+    """scores: điểm trên record.candidates (cùng thứ tự)."""
     cand = record.candidates
-    scores = scores_row[cand]
     rank = rank_positive(scores, cand, record.positive_item, u, ctx.tie_seed)
     tie = deterministic_tie_key(u, cand, ctx.tie_seed)
     order = np.lexsort((tie, -np.asarray(scores, dtype=np.float64)))[:top_k]
@@ -67,8 +74,8 @@ def rank_from_scores(ctx, u: int, scores_row: np.ndarray, top_k: int, record=Non
 
 
 def recommend(ctx, model_name: str, u: int, k: int) -> dict:
-    scores = score_items(ctx, model_name, np.array([u]))[0]
-    res = rank_from_scores(ctx, u, scores, k)
+    record = eval_record(ctx, u)
+    res = rank_from_scores(ctx, u, candidate_scores(ctx, model_name, u, record), k, record)
     test_item = ctx.test_item[u]
     items = [
         {**ctx.item_info(i), "rank": r, "score": s, "is_test_item": i == test_item}
@@ -77,7 +84,7 @@ def recommend(ctx, model_name: str, u: int, k: int) -> dict:
     return {
         "model": model_name,
         "k": k,
-        "score_kind": "số khách mua trong train" if model_name == "MostPopular" else "logit",
+        "score_kind": SCORE_KIND.get(model_name, "logit"),
         "items": items,
         "evaluation": {k_: res[k_] for k_ in ("rank", "n_candidates", "metrics")},
     }

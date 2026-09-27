@@ -11,7 +11,7 @@
     <mxCell id="lane1" value="BUOC 1: THU THAP &amp; TIEN XU LY DU LIEU" style="swimlane;whiteSpace=wrap;html=1;fontSize=14;fontStyle=1;startSize=30;fillColor=#dae8fc;strokeColor=#6c8ebf;swimlaneFillColor=#ffffff;align=center;verticalAlign=top;" vertex="1" parent="1">
       <mxGeometry x="40" y="60" width="1450" height="180" as="geometry" />
     </mxCell>
-    <mxCell id="c1_raw" value="DU LIEU THO + CONFIG&#10;(CSV DataCo / H&amp;M + YAML)&#10;&#10;Output: duong dan file,&#10;k_core, feedback.mode,&#10;model.*, training.*" style="rounded=1;whiteSpace=wrap;html=0;fillColor=#ffffff;strokeColor=#6c8ebf;fontSize=11;align=center;" vertex="1" parent="lane1">
+    <mxCell id="c1_raw" value="DU LIEU THO + CONFIG&#10;(CSV H&amp;M hm500k + YAML)&#10;&#10;Output: duong dan file,&#10;k_core, feedback.mode,&#10;model.*, training.*" style="rounded=1;whiteSpace=wrap;html=0;fillColor=#ffffff;strokeColor=#6c8ebf;fontSize=11;align=center;" vertex="1" parent="lane1">
       <mxGeometry x="35" y="40" width="260" height="120" as="geometry" />
     </mxCell>
     <mxCell id="c1_adapter" value="DATA ADAPTER&#10;adapter.load_events()&#10;&#10;Input: CSV tho&#10;Output: events_df&#10;[user_id, item_id, timestamp, event_type]" style="rounded=1;whiteSpace=wrap;html=0;fillColor=#ffffff;strokeColor=#6c8ebf;fontSize=11;align=center;" vertex="1" parent="lane1">

@@ -22,8 +22,8 @@ Thiết kế:
   03_run_experiment.py.
 
 Chạy:
-    python scripts/08_hyperparam_sweep.py --config configs/dataco.yaml
-    python scripts/08_hyperparam_sweep.py --config configs/hm_subset.yaml --seed 42
+    python scripts/08_hyperparam_sweep.py                      # configs/hm500k.yaml
+    python scripts/08_hyperparam_sweep.py --config configs/hm500k.yaml --seed 42
 
 Kết quả:
     outputs/tables/sweep_<dataset>/sweep_embedding_dim.csv
@@ -131,18 +131,16 @@ def run_trial(cfg, pipeline, embedding_dim, mlp_layers, negative_ratio, device, 
 
 def main():
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    ap.add_argument("--config", default="configs/dataco.yaml")
+    ap.add_argument("--config", default="configs/hm500k.yaml")
     ap.add_argument("--seed", type=int, default=42, help="Seed cố định cho mọi trial (cô lập ảnh hưởng của siêu tham số, không phải của random seed)")
     ap.add_argument(
         "--tag", default=None,
-        help="Tên thư mục output (mặc định: cfg.dataset.name). BẮT BUỘC truyền riêng khi sweep "
-             "'configs/hm.yaml' và 'configs/hm_subset.yaml' trong cùng dự án -- cả hai đều có "
-             "dataset.name='hm' nên sẽ ghi đè lẫn nhau nếu không phân biệt bằng --tag (vd. --tag hm_subset).",
+        help="Tên thư mục output sweep_<tag> (mặc định: tên file config, vd. hm500k).",
     )
     args = ap.parse_args()
 
     cfg, adapter = build_adapter(args.config)
-    tag = args.tag or cfg.dataset.name
+    tag = args.tag or Path(args.config).stem
     device = get_device(cfg.training.device)
 
     base_dim = cfg.model.embedding_dim

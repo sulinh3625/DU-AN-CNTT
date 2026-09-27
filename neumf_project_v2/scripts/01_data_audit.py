@@ -16,7 +16,7 @@ from src.utils.io import ensure_dir, write_json
 
 def main():
     ap = argparse.ArgumentParser()
-    ap.add_argument("--config", default="configs/dataco.yaml")
+    ap.add_argument("--config", default="configs/hm500k.yaml")
     args = ap.parse_args()
 
     cfg, adapter = build_adapter(args.config)

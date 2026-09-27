@@ -14,7 +14,6 @@ Sinh ra:
     10_training_summary.png
     11_heatmap_all_metrics.png
     12_cold_start.png              (nếu có kết quả cold-start)
-    13_strict_cold_start.png       (nếu có cold-start tuyệt đối — H&M)
   outputs/tables/<run_tag>/
     primary_results.csv
     sampled_results.csv
@@ -22,7 +21,6 @@ Sinh ra:
     training_summary.csv
     beyond_accuracy.csv
     cold_start_results.csv         (cold vs warm, nếu có)
-    strict_cold_start_results.csv  (nếu có)
     evaluation_report.txt
 """
 from __future__ import annotations
@@ -44,6 +42,8 @@ import matplotlib.gridspec as gridspec
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(PROJECT_ROOT))
+
+from scripts.common import REPORT_HIDDEN_MODELS  # noqa: E402
 
 # ──────────────────────────────────────────────────────────
 # Global style
@@ -75,24 +75,17 @@ MODEL_COLORS = {
     "EarlyFusion":      "#1abc9c",
     "NeuMF-Scratch":    "#16a085",
     "NeuMF-Pretrained": "#d4ac0d",
-    "AgeGroupPopularity": "#f5b041",
-    "CategoryPopularity": "#a04000",
-    "ContentBased":       "#2e86c1",
-    "Hybrid-NeuMF-CBF":   "#17202a",
 }
 MODEL_MARKERS = {
     "Random": "x", "MostPopular": "s", "ItemKNN": "D",
     "BPR-MF": "^", "GMF": "o", "MLP": "v",
     "EarlyFusion": "h",
     "NeuMF-Scratch": "*", "NeuMF-Pretrained": "P",
-    "AgeGroupPopularity": "<", "CategoryPopularity": ">",
-    "ContentBased": "d", "Hybrid-NeuMF-CBF": "X",
 }
-METHOD_ORDER = [
-    "Random", "MostPopular", "AgeGroupPopularity", "CategoryPopularity", "ContentBased",
-    "ItemKNN", "BPR-MF",
-    "GMF", "MLP", "EarlyFusion", "NeuMF-Scratch", "NeuMF-Pretrained", "Hybrid-NeuMF-CBF",
-]
+METHOD_ORDER = [m for m in [
+    "Random", "MostPopular", "ItemKNN", "BPR-MF",
+    "GMF", "MLP", "EarlyFusion", "NeuMF-Scratch", "NeuMF-Pretrained",
+] if m not in REPORT_HIDDEN_MODELS]
 NEURAL_MODELS = ["GMF", "MLP", "EarlyFusion", "NeuMF-Scratch", "NeuMF-Pretrained"]
 K_SENSITIVITY = [1, 3, 5, 10, 20]
 
@@ -247,8 +240,8 @@ def generate_tables(results, metadata, beyond_df, table_dir: Path):
             "Model": name,
             "Parameters": info.get("n_parameters", "N/A"),
             "Best Epoch": info.get("best_epoch", "N/A"),
-            "Best Val NDCG@10": round(info.get("best_metric", 0), 4) if info.get("best_metric") else "N/A",
-            "Train Time (s)": round(info.get("train_time_s", 0), 1),
+            "Best Val NDCG@10": f"{info['best_metric']:.4f}" if info.get("best_metric") else "N/A",
+            "Train Time (s)": f"{info['train_time_s']:.1f}" if info.get("train_time_s") else "N/A",
         })
     train_df = pd.DataFrame(rows).set_index("Model")
     train_df.to_csv(table_dir / "training_summary.csv")
@@ -256,18 +249,14 @@ def generate_tables(results, metadata, beyond_df, table_dir: Path):
     cold_df = build_cold_start_table(results)
     if not cold_df.empty:
         cold_df.to_csv(table_dir / "cold_start_results.csv")
-    strict_df = pd.DataFrame()
-    if results.get("cold_start_strict"):
-        strict_df = _order(pd.DataFrame.from_dict(results["cold_start_strict"], orient="index"))
-        strict_df.index.name = "Model"
-        strict_df.to_csv(table_dir / "strict_cold_start_results.csv")
 
     # Text report
-    report = _build_report(primary_df, sampled_df, tail_df, beyond_df, train_df, metadata, cold_df, strict_df)
+    hidden = sorted(REPORT_HIDDEN_MODELS & set(results["primary"]))
+    report = _build_report(primary_df, sampled_df, tail_df, beyond_df, train_df, metadata, cold_df, hidden)
     (table_dir / "evaluation_report.txt").write_text(report, encoding="utf-8")
     print(report)
 
-    return primary_df, sampled_df, tail_df, train_df, cold_df, strict_df
+    return primary_df, sampled_df, tail_df, train_df, cold_df
 
 
 def build_cold_start_table(results: dict, metric: str = "NDCG@10") -> pd.DataFrame:
@@ -286,8 +275,18 @@ def build_cold_start_table(results: dict, metric: str = "NDCG@10") -> pd.DataFra
     return pd.DataFrame(rows).set_index("Model") if rows else pd.DataFrame()
 
 
+def _protocol_line(metadata: dict) -> str:
+    split = metadata.get("split") or {"mode": "loo"}
+    if split.get("mode") == "global":
+        return (f"{metadata.get('evaluation_primary')}, chia theo mốc thời gian chung: train < {split['val_start']} "
+                f"≤ val < {split['test_start']} ≤ test; {split.get('n_test_users')} user test, mỗi user có thể "
+                f"nhiều item đúng (trừ item đã có trong train + val)")
+    return (f"{metadata.get('evaluation_primary')}, leave-one-out theo thời gian từng user "
+            "(test item xếp hạng trên mọi item, trừ item đã có trong train + val)")
+
+
 def _build_report(primary_df, sampled_df, tail_df, beyond_df, train_df, metadata,
-                  cold_df=None, strict_df=None):
+                  cold_df=None, hidden=()):
     L = []
     sep = "=" * 70
     sub = "─" * 50
@@ -295,6 +294,9 @@ def _build_report(primary_df, sampled_df, tail_df, beyond_df, train_df, metadata
 
     L += ["📊 THÔNG TIN DATASET", sub]
     for k, v in [
+        ("Run tag", metadata.get("run_tag")),
+        ("Seed", metadata.get("seed")),
+        ("Protocol", _protocol_line(metadata)),
         ("Dataset", metadata.get("dataset")),
         ("Users", f"{metadata.get('n_users',0):,}"),
         ("Items", f"{metadata.get('n_items',0):,}"),
@@ -333,31 +335,14 @@ def _build_report(primary_df, sampled_df, tail_df, beyond_df, train_df, metadata
                  f"Warm test users: {metadata.get('n_warm_test_users')}")
         L.append(cold_df.to_string(float_format="%.4f")); L.append("")
 
-    if strict_df is not None and not strict_df.empty:
-        sm = metadata.get("strict_cold_start", {})
-        L += ["📋 COLD-START (tuyệt đối — user bị k-core loại, CF thuần ID không chấm được)", sub]
-        L.append(f"  Users: {sm.get('n_users')} | Hồ sơ trung bình {sm.get('profile_size_mean', 0):.2f} item "
-                 f"(trung vị {sm.get('profile_size_median', 0):.0f})")
-        L.append(strict_df.to_string(float_format="%.4f")); L.append("")
-
-    content = metadata.get("content") or {}
-    if content:
-        L += ["🧩 CONTENT-BASED & HYBRID", sub]
-        if "n_features" in content:
-            L.append(f"  Số đặc trưng item: {content['n_features']:,} | recency_decay (chọn trên val): "
-                     f"{content.get('recency_decay')}")
-        if "hybrid_alpha" in content:
-            L.append(f"  Hybrid = {content['hybrid_alpha']} × {content.get('hybrid_cf_model')} + "
-                     f"{1 - content['hybrid_alpha']:.1f} × ContentBased (alpha chọn trên val)")
-            by_alpha = content.get("hybrid_val_ndcg10_by_alpha", {})
-            if by_alpha:
-                L.append("  Val NDCG@10 theo alpha: " + ", ".join(f"{float(a):.1f}→{v:.4f}" for a, v in by_alpha.items()))
-        L.append("")
-
     L += ["⏱ TRAINING SUMMARY", sub]
     L.append(train_df.to_string()); L.append("")
 
     L += ["📝 PHÂN TÍCH", sub]
+    L.append(f"  (Seed {metadata.get('seed')}, 1 lần chạy — chênh lệch chưa kiểm định; kết luận thắng/thua cần "
+             "06_aggregate_seeds.py trên ≥ 6 seed hoặc bootstrap theo user.)")
+    if hidden:
+        L.append(f"  (Ẩn khỏi bảng, vẫn lưu trong results.json: {', '.join(hidden)})")
     neural = [m for m in NEURAL_MODELS if m in primary_df.index]
     classical = [m for m in ["MostPopular","ItemKNN","BPR-MF"] if m in primary_df.index]
     if neural and classical:
@@ -379,14 +364,6 @@ def _build_report(primary_df, sampled_df, tail_df, beyond_df, train_df, metadata
         winner = "Late Fusion (NeuMF-Scratch)" if ns >= ef else "Early Fusion"
         diff = abs(ns - ef) / max(ef, 1e-9) * 100
         L.append(f"  Early vs Late Fusion: EarlyFusion={ef:.4f} vs NeuMF-Scratch={ns:.4f} → {winner} wins (+{diff:.2f}%)")
-    for a_name, b_name in (("ContentBased", "MostPopular"), ("Hybrid-NeuMF-CBF", "NeuMF-Pretrained"),
-                           ("Hybrid-NeuMF-CBF", "ContentBased")):
-        if a_name in primary_df.index and b_name in primary_df.index:
-            a, b = primary_df.loc[a_name, "NDCG@10"], primary_df.loc[b_name, "NDCG@10"]
-            L.append(f"  {a_name} vs {b_name}: {a:.4f} vs {b:.4f} → {(a - b) / max(b, 1e-9) * 100:+.2f}%")
-    if strict_df is not None and not strict_df.empty and "NDCG@10" in strict_df.columns:
-        best = strict_df["NDCG@10"].idxmax()
-        L.append(f"  Cold-start tuyệt đối: tốt nhất {best} (NDCG@10 = {strict_df.loc[best, 'NDCG@10']:.4f})")
     L += ["", sep]
     return "\n".join(L)
 
@@ -565,7 +542,7 @@ def plot_beyond_accuracy(beyond_df, fig_dir):
 
 def plot_radar(primary_df, beyond_df, fig_dir):
     """Radar chart so sánh GMF, NeuMF-Scratch, NeuMF-Pretrained, MostPopular."""
-    highlight = [m for m in ["MostPopular","GMF","NeuMF-Pretrained","ContentBased","Hybrid-NeuMF-CBF"]
+    highlight = [m for m in ["MostPopular","GMF","NeuMF-Scratch","NeuMF-Pretrained"]
                  if m in primary_df.index]
     if len(highlight) < 2:
         return
@@ -695,24 +672,6 @@ def plot_cold_start(cold_df, fig_dir):
     fig.tight_layout(); _savefig(fig, fig_dir, "12_cold_start.png")
 
 
-def plot_strict_cold_start(strict_df, metadata, fig_dir):
-    if strict_df.empty or "NDCG@10" not in strict_df.columns:
-        return
-    models = list(strict_df.index)
-    vals = strict_df["NDCG@10"].values
-    fig, ax = plt.subplots(figsize=(10, 5))
-    bars = ax.barh(models, vals, color=[MODEL_COLORS.get(m, "#555") for m in models],
-                   edgecolor="white", height=0.6, alpha=0.9)
-    for bar, v in zip(bars, vals):
-        ax.text(v + max(vals) * 0.01, bar.get_y() + bar.get_height()/2, f"{v:.4f}",
-                va="center", fontweight="bold", fontsize=10)
-    n = metadata.get("strict_cold_start", {}).get("n_users", "?")
-    ax.set_xlabel("NDCG@10")
-    ax.set_title(f"Cold-start tuyệt đối ({n} user mới) — CF thuần ID không áp dụng được")
-    ax.set_xlim(0, max(vals) * 1.15 if max(vals) > 0 else 1); ax.invert_yaxis()
-    fig.tight_layout(); _savefig(fig, fig_dir, "13_strict_cold_start.png")
-
-
 # ──────────────────────────────────────────────────────────
 # Main
 # ──────────────────────────────────────────────────────────
@@ -736,7 +695,7 @@ def run_evaluation(run_tag: str | None = None):
     # Tables
     print("\n📋 Sinh bảng kết quả...")
     table_dir = PROJECT_ROOT / "outputs" / "tables" / tag
-    primary_df, sampled_df, tail_df, train_df, cold_df, strict_df = generate_tables(
+    primary_df, sampled_df, tail_df, train_df, cold_df = generate_tables(
         results, metadata, beyond_df, table_dir
     )
     print(f"\n  → Saved: {table_dir}")
@@ -759,7 +718,6 @@ def run_evaluation(run_tag: str | None = None):
     plot_training_summary(metadata, fig_dir)
     plot_heatmap(primary_df, tail_df, beyond_df, fig_dir)
     plot_cold_start(cold_df, fig_dir)
-    plot_strict_cold_start(strict_df, metadata, fig_dir)
 
     print(f"\n  → Saved: {fig_dir}")
     print("\n" + "═" * 65)

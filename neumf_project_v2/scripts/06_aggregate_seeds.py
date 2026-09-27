@@ -10,6 +10,7 @@ import pandas as pd
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(PROJECT_ROOT))
 
+from scripts.common import REPORT_HIDDEN_MODELS
 from src.evaluation.statistics import summarize, paired_wilcoxon
 from src.utils.io import ensure_dir, write_json
 
@@ -21,11 +22,8 @@ DEFAULT_COMPARISONS = [
     ("NeuMF-Pretrained", "GMF"),
     ("NeuMF-Pretrained", "NeuMF-Scratch"),
     ("NeuMF-Pretrained", "EarlyFusion"),
-    # Content-based / Hybrid (H&M có articles.csv)
-    ("ContentBased", "MostPopular"),
-    ("ContentBased", "NeuMF-Pretrained"),
-    ("Hybrid-NeuMF-CBF", "NeuMF-Pretrained"),
-    ("Hybrid-NeuMF-CBF", "ContentBased"),
+    ("NeuMF-Pretrained", "MostPopular"),
+    ("MLP", "GMF"),
 ]
 
 
@@ -54,7 +52,7 @@ def load_run_results(experiments_dir: Path, run_tags: list[str], split: str = "p
 def build_summary_table(per_seed: dict[str, dict]) -> pd.DataFrame:
     """mean±std cho mọi (method, metric) qua các seed."""
     tags = list(per_seed.keys())
-    methods = list(per_seed[tags[0]].keys())
+    methods = [m for m in per_seed[tags[0]] if m not in REPORT_HIDDEN_MODELS]
     metrics = [m for m in per_seed[tags[0]][methods[0]].keys()]
 
     rows = []
@@ -101,7 +99,7 @@ def build_significance_table(
 
 
 def run(config_name: str, seeds: list[int], experiments_root: Path, output_dir: Path, split: str, primary_metric: str):
-    run_tags = [f"{config_name}_seed_{seed}" for seed in seeds]
+    run_tags = [f"{config_name}_seed{seed}" for seed in seeds]
     per_seed = load_run_results(experiments_root, run_tags, split=split)
 
     summary_df = build_summary_table(per_seed)
@@ -131,16 +129,17 @@ def run(config_name: str, seeds: list[int], experiments_root: Path, output_dir: 
 
 def main():
     ap = argparse.ArgumentParser(description="Tổng hợp kết quả multi-seed: mean±std + Wilcoxon signed-rank.")
-    ap.add_argument("--config-name", required=True, help="Tên dataset trong config, VD 'dataco' — phải khớp run-tag của 04_multi_seed.py")
-    ap.add_argument("--seeds", nargs="+", type=int, default=[42, 2024, 2025, 2026, 3407])
+    ap.add_argument("--config-name", required=True, help="Tên file config không đuôi, VD 'hm500k' — run tag là <config-name>_seed<seed>")
+    ap.add_argument("--seeds", nargs="+", type=int, default=[42, 2024, 2025, 2026, 3407, 7])
     ap.add_argument("--experiments-root", default=str(PROJECT_ROOT / "outputs" / "experiments"))
-    ap.add_argument("--output-dir", default=str(PROJECT_ROOT / "outputs" / "tables"))
-    ap.add_argument("--split", default="primary", choices=["primary", "sampled_99", "long_tail", "cold_start", "warm", "cold_start_strict"])
+    ap.add_argument("--output-dir", default=None, help="Mặc định: outputs/tables/<config-name>_multiseed")
+    ap.add_argument("--split", default="primary", choices=["primary", "sampled_99", "long_tail", "cold_start", "warm"])
     ap.add_argument("--primary-metric", default="NDCG@10")
     args = ap.parse_args()
 
     run(
-        args.config_name, args.seeds, Path(args.experiments_root), Path(args.output_dir),
+        args.config_name, args.seeds, Path(args.experiments_root),
+        Path(args.output_dir) if args.output_dir else PROJECT_ROOT / "outputs" / "tables" / f"{args.config_name}_multiseed",
         args.split, args.primary_metric,
     )
 

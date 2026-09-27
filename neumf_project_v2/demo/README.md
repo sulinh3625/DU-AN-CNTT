@@ -9,7 +9,7 @@ Có ba màn hình:
 | Màn hình | Nội dung |
 |---|---|
 | **Khách hàng mới** | Gợi ý **rule-based** (lọc theo lựa chọn + độ phổ biến trong train). Đây **không phải** mô hình NeuMF và được gắn nhãn rõ trên UI. |
-| **Admin kiểm thử mô hình** | Chọn khách hàng có test item: lịch sử mua (train), Top-K của từng model (so sánh 2 model), rank của test item, Hit@K và NDCG@K. |
+| **Admin kiểm thử mô hình** | Chọn khách hàng có test item: lịch sử mua (train), Top-K của từng model (NeuMF-Pretrained, NeuMF-Scratch, GMF, MLP, EarlyFusion, MostPopular; so sánh 2 model), rank của test item, Hit@K và NDCG@K. |
 | **Dashboard** | Chỉ đọc từ file kết quả đã chạy; file thiếu thì hiện lệnh cần chạy. |
 
 ## 1. Chuẩn bị dữ liệu và huấn luyện
@@ -18,19 +18,23 @@ Từ thư mục `neumf_project_v2/`:
 
 ```bash
 pip install -r requirements.txt
-# data/raw/hm/ cần có: transactions_train.csv, articles.csv, customers.csv (tuỳ chọn, để lọc theo tuổi)
-python scripts/run_all.py --config configs/hm_subset.yaml
+# data/raw/hm/ cần có: transactions_train.csv; articles.csv (tên/loại sản phẩm), customers.csv (lọc tuổi cho khách mới)
+python run.py sample-hm      # tạo data/processed/hm/hm500k_transactions.csv
+python run.py all            # train + evaluate run hm500k_seed42
 ```
 
-Demo dựng lại pipeline theo `configs/hm_subset.yaml` (mặc định) rồi **đối chiếu với
+Demo dựng lại pipeline theo `configs/hm500k.yaml` (mặc định) rồi **đối chiếu với
 `outputs/experiments/<run_tag>/metadata.json`** (số users, items, interactions, train/val/test).
 Nếu lệch thì server báo lỗi thay vì nạp checkpoint sai ID. Vì vậy config phải đúng với config
-đã dùng để train run đó (đặc biệt là `nrows` và `k_core`).
+đã dùng để train run đó (đặc biệt là dữ liệu và `k_core`).
+
+Mô hình lai của đề tài là NeuMF (GMF + MLP). `articles.csv` chỉ dùng để hiển thị tên/loại sản phẩm và cho
+gợi ý rule-based của khách mới — không mô hình nào trong demo học từ thuộc tính sản phẩm.
 
 ## 2. Sinh file offline cho dashboard (khuyến nghị)
 
 ```bash
-python demo/scripts/build_offline_artifacts.py            # hoặc --run-tag hm_xxx
+python demo/scripts/build_offline_artifacts.py            # hoặc --run-tag hm500k_seed42
 ```
 
 Script ghi vào `demo/artifacts/<run_tag>/`:
@@ -44,8 +48,8 @@ Nếu đã có `outputs/tables/<run_tag>/results_per_user.csv`, demo ưu tiên �
 Bảng multi-seed (mean ± std) chỉ hiện khi đã chạy:
 
 ```bash
-python scripts/04_multi_seed.py --config configs/hm_subset.yaml --seeds 42 2024 2025 2026 3407 7
-python scripts/06_aggregate_seeds.py --config-name hm --seeds 42 2024 2025 2026 3407 7
+python run.py multi-seed      # hm500k_seed42, 2024, 2025, 2026, 3407, 7
+python run.py aggregate       # → outputs/tables/hm500k_multiseed/
 ```
 
 ## 3. Ảnh sản phẩm (tuỳ chọn)
@@ -62,7 +66,7 @@ Item không có ảnh sẽ hiển thị placeholder SVG ghi `product_type_name`.
 ## 4. Chạy web
 
 ```bash
-python -m demo
+python run.py demo            # hoặc: python -m demo
 ```
 
 Mở **http://localhost:8000**. Lần gọi đầu mất khoảng 10 giây để dựng lại dữ liệu; sau đó được cache theo run_tag.
@@ -72,8 +76,8 @@ Sau khi train xong run mới, gọi `curl -X POST http://localhost:8000/api/relo
 
 | Biến | Mặc định | Ý nghĩa |
 |---|---|---|
-| `DEMO_CONFIG` | `configs/hm_subset.yaml` | Config dùng để dựng lại dữ liệu và kiến trúc model |
-| `DEMO_RUN_TAG` | run `hm_*` mới nhất có `results.json` và checkpoint | Cố định run muốn demo |
+| `DEMO_CONFIG` | `configs/hm500k.yaml` | Config dùng để dựng lại dữ liệu và kiến trúc model |
+| `DEMO_RUN_TAG` | run `<tên config>_*` mới nhất có `results.json` và checkpoint | Cố định run muốn demo |
 | `HM_IMAGES_DIR` | (không có) | Thư mục `images/` gốc của H&M, dùng cho `copy_images.py` |
 | `DEMO_IMAGES_DIR` | `demo/static/images` | Thư mục ảnh mà server phục vụ |
 
@@ -98,7 +102,7 @@ demo/
     main.py                FastAPI app, phục vụ frontend/
     routes.py              các endpoint /api/*
     data_context.py        nạp dữ liệu, split, ánh xạ ID, checkpoint; đối chiếu metadata của run
-    inference.py           full ranking cho một user (model + MostPopular/BPR)
+    inference.py           full ranking cho một user (neural, MostPopular, BPR)
     onboarding.py          gợi ý rule-based cho khách hàng mới
     onboarding_config.yaml
     metrics_io.py          đọc file kết quả cho dashboard

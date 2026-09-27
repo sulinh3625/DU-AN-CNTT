@@ -8,12 +8,15 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 
-from .data_context import DEMO_ROOT, EXPERIMENTS_DIR, PROJECT_ROOT
+from .data_context import CONFIG_PATH, DEMO_ROOT, EXPERIMENTS_DIR, PROJECT_ROOT
+from scripts.common import REPORT_HIDDEN_MODELS  # noqa: E402  (data_context đã thêm PROJECT_ROOT vào sys.path)
 
 TABLES_DIR = PROJECT_ROOT / "outputs" / "tables"
 ARTIFACTS_DIR = DEMO_ROOT / "artifacts"
 RANK_BIN_EDGES = [1, 2, 3, 5, 11, 21, 51, 101, 201, 501, 1001, 2001, 5001, 10001, 20001]
 OFFLINE_CMD = "python demo/scripts/build_offline_artifacts.py"
+TRAIN_CMD = "python run.py train"
+CONFIG_NAME = Path(CONFIG_PATH).stem
 
 
 def _rel(path: Path) -> str:
@@ -33,6 +36,8 @@ def _first_existing(*paths: Path) -> Path | None:
 
 
 def _records(df: pd.DataFrame) -> list[dict]:
+    if "model" in df.columns:
+        df = df[~df["model"].isin(REPORT_HIDDEN_MODELS)]
     return json.loads(df.to_json(orient="records"))
 
 
@@ -45,19 +50,19 @@ def primary_results(run_tag: str) -> dict:
     path = _first_existing(TABLES_DIR / run_tag / "primary_results.csv",
                            EXPERIMENTS_DIR / run_tag / "results_primary.csv")
     if path is None:
-        return _missing("scripts/03_run_experiment.py --config configs/hm_subset.yaml", run_tag)
+        return _missing(TRAIN_CMD, run_tag)
     df = pd.read_csv(path, index_col=0).rename_axis("model").reset_index()
     return _ok(path, run_tag, _records(df))
 
 
 def multi_seed_summary() -> dict:
-    path = TABLES_DIR / "multi_seed_summary_primary.csv"
-    meta_path = TABLES_DIR / "multi_seed_meta_primary.json"
-    cmd = "scripts/04_multi_seed.py --config configs/hm_subset.yaml rồi scripts/06_aggregate_seeds.py --config-name hm"
+    out_dir = TABLES_DIR / f"{CONFIG_NAME}_multiseed"
+    path, meta_path = out_dir / "multi_seed_summary_primary.csv", out_dir / "multi_seed_meta_primary.json"
+    cmd = "python run.py multi-seed rồi python run.py aggregate"
     if not path.exists() or not meta_path.exists():
         return _missing(cmd)
     meta = json.loads(meta_path.read_text(encoding="utf-8"))
-    if meta.get("config_name") != "hm":
+    if meta.get("config_name") != CONFIG_NAME:
         return _missing(f"{cmd} (file hiện có là của '{meta.get('config_name')}')")
     df = pd.read_csv(path).rename(columns={"method": "model"})
     return _ok(path, None, {"seeds": meta.get("seeds", []), "rows": _records(df)})
@@ -77,9 +82,9 @@ def beyond_accuracy(run_tag: str) -> dict:
         if payload:
             rows = [{"model": m, "coverage": v["catalog_coverage"], "novelty": v["novelty"],
                      "head_rec_rate": v["head_rec_rate"], "avg_rec_popularity": v["avg_rec_popularity"]}
-                    for m, v in payload.items()]
+                    for m, v in payload.items() if m not in REPORT_HIDDEN_MODELS]
             return _ok(results, run_tag, rows)
-    return _missing("scripts/03_run_experiment.py --config configs/hm_subset.yaml", run_tag)
+    return _missing(TRAIN_CMD, run_tag)
 
 
 def rank_distribution(run_tag: str) -> dict:
@@ -91,7 +96,7 @@ def rank_distribution(run_tag: str) -> dict:
     edges.append(int(df["rank"].max()) + 1)
     labels = [str(a) if b - a == 1 else f"{a}–{b - 1}" for a, b in zip(edges[:-1], edges[1:])]
     series = {}
-    for model, g in df.groupby("model", sort=False):
+    for model, g in df[~df["model"].isin(REPORT_HIDDEN_MODELS)].groupby("model", sort=False):
         counts, _ = np.histogram(g["rank"], bins=edges)
         series[model] = {"counts": counts.tolist(), "median_rank": float(g["rank"].median()), "n_users": int(len(g))}
     return _ok(path, run_tag, {"bins": labels, "series": series})
@@ -107,7 +112,7 @@ def popularity_bias(run_tag: str) -> dict:
 def data_stats(run_tag: str) -> dict:
     path = EXPERIMENTS_DIR / run_tag / "metadata.json"
     if not path.exists():
-        return _missing("scripts/03_run_experiment.py --config configs/hm_subset.yaml", run_tag)
+        return _missing(TRAIN_CMD, run_tag)
     meta = json.loads(path.read_text(encoding="utf-8"))
     keys = ["n_users", "n_items", "n_interactions", "train", "validation", "test", "k_core",
             "n_head_items", "n_head_test_users", "n_long_tail_test_users"]

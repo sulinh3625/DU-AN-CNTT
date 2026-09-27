@@ -1,14 +1,11 @@
 """Entry point tổng hợp cho pipeline NeuMF — gom các lệnh trong scripts/ lại một chỗ.
 
-Ví dụ:
-    python run.py all --dataset dataco                  # audit + train + evaluate, trọn gói
-    python run.py all --dataset hm_subset --run-tag hm_v1
-    python run.py audit --dataset hm
-    python run.py train --dataset dataco --run-tag my_tag
-    python run.py multi-seed --dataset dataco --seeds 42 2024 2025
-    python run.py aggregate --dataset dataco
-    python run.py compare
-    python run.py prepare-hm-cache
+Ví dụ (config mặc định: configs/hm500k.yaml, run tag mặc định: hm500k_seed<seed>):
+    python run.py sample-hm                  # tạo data/processed/hm/hm500k_transactions.csv (chạy 1 lần)
+    python run.py all                        # audit + train + evaluate, trọn gói
+    python run.py train --run-tag my_tag
+    python run.py multi-seed --seeds 42 2024 2025 2026 3407 7
+    python run.py aggregate --seeds 42 2024 2025 2026 3407 7
     python run.py demo
 
 Mỗi lệnh chỉ gọi thẳng script tương ứng trong scripts/ (xem README mục 3-8
@@ -31,13 +28,9 @@ _ENV = {**os.environ, "PYTHONIOENCODING": "utf-8"}
 
 ROOT = Path(__file__).resolve().parent
 
-DATASET_CONFIGS = {
-    "dataco": "configs/dataco.yaml",
-    "hm": "configs/hm.yaml",
-    "hm_subset": "configs/hm_subset.yaml",
-}
-# dataset.name bên trong config (dùng cho run-tag/aggregate) — hm và hm_subset dùng chung "hm".
-DATASET_CONFIG_NAME = {"dataco": "dataco", "hm": "hm", "hm_subset": "hm"}
+DEFAULT_CONFIG = "configs/hm500k.yaml"
+# >= 6 seed: Wilcoxon theo seed mới có thể đạt p < 0.05 (5 seed thì p nhỏ nhất = 0.0625).
+DEFAULT_SEEDS = [42, 2024, 2025, 2026, 3407, 7]
 
 
 def _run(script: str, *args: str) -> None:
@@ -46,21 +39,21 @@ def _run(script: str, *args: str) -> None:
     subprocess.run(cmd, cwd=ROOT, env=_ENV, check=True)
 
 
-def cmd_prepare_hm_cache(args):
-    _run("00_prepare_hm_cache.py")
+def cmd_sample_hm(args):
+    _run("00_sample_hm.py")
 
 
 def cmd_audit(args):
-    _run("01_data_audit.py", "--config", DATASET_CONFIGS[args.dataset])
+    _run("01_data_audit.py", "--config", args.config)
 
 
 def cmd_preprocess(args):
-    _run("02_preprocess.py", "--config", DATASET_CONFIGS[args.dataset])
+    _run("02_preprocess.py", "--config", args.config)
 
 
 def cmd_train(args):
     extra = ["--run-tag", args.run_tag] if args.run_tag else []
-    _run("03_run_experiment.py", "--config", DATASET_CONFIGS[args.dataset], *extra)
+    _run("03_run_experiment.py", "--config", args.config, *extra)
 
 
 def cmd_evaluate(args):
@@ -69,29 +62,25 @@ def cmd_evaluate(args):
 
 
 def cmd_multi_seed(args):
-    _run("04_multi_seed.py", "--config", DATASET_CONFIGS[args.dataset], "--seeds", *map(str, args.seeds))
+    _run("04_multi_seed.py", "--config", args.config, "--seeds", *map(str, args.seeds))
 
 
 def cmd_aggregate(args):
-    _run("06_aggregate_seeds.py", "--config-name", DATASET_CONFIG_NAME[args.dataset], "--seeds", *map(str, args.seeds))
-
-
-def cmd_compare(args):
-    _run("07_compare_datasets.py")
+    _run("06_aggregate_seeds.py", "--config-name", Path(args.config).stem, "--seeds", *map(str, args.seeds))
 
 
 def cmd_demo(args):
     subprocess.run(
-        [sys.executable, "-m", "uvicorn", "demo.backend.main:app", "--port", "8000", "--host", "127.0.0.1"],
+        [sys.executable, "-m", "demo"],
         cwd=ROOT, env=_ENV, check=True,
     )
 
 
 def cmd_all(args):
-    """Audit + train + evaluate trọn gói cho một dataset (tương đương README mục 3/4)."""
+    """Audit + train + evaluate trọn gói (tương đương README mục 3)."""
     cmd_audit(args)
     extra = ["--run-tag", args.run_tag] if args.run_tag else []
-    _run("run_all.py", "--config", DATASET_CONFIGS[args.dataset], *extra)
+    _run("run_all.py", "--config", args.config, *extra)
 
 
 def main():
@@ -99,7 +88,7 @@ def main():
     sub = parser.add_subparsers(dest="command", required=True)
 
     def with_dataset(p):
-        p.add_argument("--dataset", choices=list(DATASET_CONFIGS), default="dataco", help="Bộ dữ liệu (mặc định: dataco)")
+        p.add_argument("--config", default=DEFAULT_CONFIG, help=f"File config (mặc định: {DEFAULT_CONFIG})")
         return p
 
     with_dataset(sub.add_parser("all", help="Audit + train + evaluate trọn gói cho 1 dataset")).add_argument("--run-tag", default=None)
@@ -107,11 +96,10 @@ def main():
     with_dataset(sub.add_parser("preprocess", help="Sinh splits độc lập"))
     with_dataset(sub.add_parser("train", help="Chỉ huấn luyện, không vẽ biểu đồ")).add_argument("--run-tag", default=None)
     sub.add_parser("evaluate", help="Đánh giá + xuất biểu đồ cho 1 run-tag").add_argument("--run-tag", default=None, help="Mặc định: run mới nhất")
-    with_dataset(sub.add_parser("multi-seed", help="Lặp lại train trên nhiều seed")).add_argument("--seeds", nargs="+", type=int, default=[42, 2024, 2025, 2026, 3407])
-    with_dataset(sub.add_parser("aggregate", help="Tổng hợp mean/std + Wilcoxon từ multi-seed")).add_argument("--seeds", nargs="+", type=int, default=[42, 2024, 2025, 2026, 3407])
-    sub.add_parser("compare", help="Biểu đồ so sánh DataCo vs H&M")
-    sub.add_parser("prepare-hm-cache", help="Nén CSV H&M gốc thành cache Parquet (chạy 1 lần)")
-    sub.add_parser("demo", help="Chạy giao diện demo (uvicorn, port 8000)")
+    with_dataset(sub.add_parser("multi-seed", help="Lặp lại train trên nhiều seed")).add_argument("--seeds", nargs="+", type=int, default=DEFAULT_SEEDS)
+    with_dataset(sub.add_parser("aggregate", help="Tổng hợp mean/std + Wilcoxon từ multi-seed")).add_argument("--seeds", nargs="+", type=int, default=DEFAULT_SEEDS)
+    sub.add_parser("sample-hm", help="Tạo bộ dữ liệu hm500k từ transactions_train.csv gốc (chạy 1 lần)")
+    sub.add_parser("demo", help="Chạy giao diện demo (http://localhost:8000)")
 
     args = parser.parse_args()
     {
@@ -122,8 +110,7 @@ def main():
         "evaluate": cmd_evaluate,
         "multi-seed": cmd_multi_seed,
         "aggregate": cmd_aggregate,
-        "compare": cmd_compare,
-        "prepare-hm-cache": cmd_prepare_hm_cache,
+        "sample-hm": cmd_sample_hm,
         "demo": cmd_demo,
     }[args.command](args)
 

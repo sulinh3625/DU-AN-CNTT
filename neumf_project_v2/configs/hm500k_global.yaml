@@ -1,0 +1,61 @@
+# Giống hm500k.yaml, chỉ khác cách chia: MỘT mốc thời gian chung cho mọi user (Meng et al. 2020).
+# train < 2020-07-01 <= val (4 tuần) < 2020-07-29 <= test (8 tuần, tới 2020-09-22).
+# Mỗi user test có thể có nhiều item đúng -> báo cáo thêm Recall/Precision. Run tag: hm500k_global_seed<N>.
+dataset:
+  name: hm
+  raw_path: data/processed/hm/hm500k_transactions.csv
+  encoding: utf-8
+  k_core: 10
+  audit_k_values: [3, 5, 10]
+  min_interactions_for_loo: 3
+  split: global
+  val_start: "2020-07-01"
+  test_start: "2020-07-29"
+  nrows: null
+  start_date: null
+  end_date: null
+
+feedback:
+  mode: binary
+  confidence_alpha: 1.0
+
+model:
+  embedding_dim: 32
+  mlp_layers: [64, 32, 16, 8]
+  dropout: 0.2
+  pretrain_alpha: 0.5
+
+training:
+  batch_size: 512
+  negative_ratio: 4
+  pretrain_optimizer: adam
+  pretrain_lr: 0.001
+  finetune_optimizer: adam
+  finetune_lr: 0.001
+  weight_decay: 0.000001
+  max_epochs_pretrain: 20
+  max_epochs_finetune: 20
+  patience: 7
+  monitor: NDCG@10
+  device: auto
+  seed: 42
+
+evaluation:
+  primary: full_ranking
+  k_values: [5, 10]
+  sampled_negatives: 99
+  tie_break_seed: 2026
+  include_redundant_metrics: true
+  head_fraction: 0.10
+  cold_fraction: 0.20
+
+baselines:
+  enabled: [random, popularity, bpr]
+  bpr:
+    embedding_dim: 32
+    epochs: 20
+    lr: 0.03
+    reg: 0.005
+
+paths:
+  outputs_dir: outputs

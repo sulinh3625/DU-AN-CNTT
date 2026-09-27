@@ -23,3 +23,19 @@ def rank_positive(scores: np.ndarray, candidates: np.ndarray, positive_item: int
     if len(pos_idx) != 1:
         raise ValueError("positive_item phải xuất hiện đúng 1 lần trong candidate set")
     return int(pos_idx[0]) + 1
+
+
+def rank_positives(scores: np.ndarray, candidates: np.ndarray, positives, user: int, tie_seed: int) -> np.ndarray:
+    """Rank (1-based) của TỪNG item đúng trong cùng một thứ tự xếp hạng như rank_positive.
+
+    Với 1 item đúng, kết quả bằng đúng [rank_positive(...)].
+    """
+    scores = np.asarray(scores, dtype=np.float64)
+    candidates = np.asarray(candidates, dtype=np.int64)
+    positives = np.asarray(positives, dtype=np.int64)
+    tie = deterministic_tie_key(user, candidates, tie_seed)
+    order = np.lexsort((tie, -scores))
+    ranks = np.flatnonzero(np.isin(candidates[order], positives)) + 1
+    if len(ranks) != len(np.unique(positives)):
+        raise ValueError("Mỗi item đúng phải xuất hiện đúng 1 lần trong candidate set")
+    return ranks

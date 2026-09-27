@@ -4,8 +4,8 @@ from dataclasses import dataclass
 import numpy as np
 import torch
 
-from .metrics import hr_at_k, ndcg_at_k, precision_at_k, recall_at_k
-from .ranking_utils import rank_positive, deterministic_tie_key
+from .metrics import multi_ranking_metrics
+from .ranking_utils import rank_positives, deterministic_tie_key
 
 
 @dataclass
@@ -13,6 +13,14 @@ class EvalRecord:
     user: int
     positive_item: int
     candidates: np.ndarray
+    # Chia theo mốc thời gian chung: user có thể có nhiều item đúng. None = chỉ positive_item.
+    positive_items: np.ndarray | None = None
+
+    @property
+    def positives(self) -> np.ndarray:
+        if self.positive_items is None:
+            return np.array([self.positive_item], dtype=np.int64)
+        return self.positive_items
 
 
 def build_full_ranking_records(eval_df, n_items: int, seen_positive_sets) -> list[EvalRecord]:
@@ -34,6 +42,36 @@ def build_full_ranking_records(eval_df, n_items: int, seen_positive_sets) -> lis
     return records
 
 
+def build_full_ranking_records_multi(eval_df, n_items: int, seen_positive_sets, item_pool=None) -> list[EvalRecord]:
+    """Một record cho mỗi user, gom mọi item đúng của user trong eval_df.
+
+    candidates = item trong item_pool (mặc định: mọi item) trừ item đã thấy (seen);
+    luôn giữ đủ các item đúng.
+    """
+    all_items = np.arange(n_items, dtype=np.int64)
+    pool = np.ones(n_items, dtype=bool)
+    if item_pool is not None:
+        pool[:] = False
+        pool[np.asarray(item_pool, dtype=np.int64)] = True
+    records = []
+    for u, g in eval_df.groupby("user", sort=True):
+        u = int(u)
+        positives = np.unique(g["item"].to_numpy(dtype=np.int64))
+        seen = set(seen_positive_sets[u]) - set(positives.tolist())
+        mask = pool.copy()
+        mask[positives] = True
+        if seen:
+            mask[np.fromiter(seen, dtype=np.int64)] = False
+        records.append(EvalRecord(u, int(positives[0]), all_items[mask], positives))
+    return records
+
+
+def record_metric(scores, record: EvalRecord, k: int, tie_seed: int, metric: str = "NDCG") -> float:
+    """Metric@k của một record (dùng khi tune tham số trên validation)."""
+    ranks = rank_positives(scores, record.candidates, record.positives, record.user, tie_seed)
+    return multi_ranking_metrics(ranks, k)[metric]
+
+
 def _empty_metric_lists(k_values, include_redundant):
     out = {f"HR@{k}": [] for k in k_values}
     out.update({f"NDCG@{k}": [] for k in k_values})
@@ -43,13 +81,14 @@ def _empty_metric_lists(k_values, include_redundant):
     return out
 
 
-def _append(metrics, rank, k_values, include_redundant):
+def _append(metrics, ranks, k_values, include_redundant):
     for k in k_values:
-        metrics[f"HR@{k}"].append(hr_at_k(rank, k))
-        metrics[f"NDCG@{k}"].append(ndcg_at_k(rank, k))
+        m = multi_ranking_metrics(ranks, k)
+        metrics[f"HR@{k}"].append(m["HR"])
+        metrics[f"NDCG@{k}"].append(m["NDCG"])
         if include_redundant:
-            metrics[f"Precision@{k}"].append(precision_at_k(rank, k))
-            metrics[f"Recall@{k}"].append(recall_at_k(rank, k))
+            metrics[f"Precision@{k}"].append(m["Precision"])
+            metrics[f"Recall@{k}"].append(m["Recall"])
 
 
 @torch.no_grad()
@@ -88,8 +127,8 @@ def evaluate_torch_model(model, records, k_values, device="cpu", batch_size=1638
         a, b = int(offsets[idx]), int(offsets[idx + 1])
         cand = items_flat[a:b]
         scores = score_flat[a:b]
-        rank = rank_positive(scores, cand, record.positive_item, record.user, tie_seed)
-        _append(metrics, rank, k_values, include_redundant)
+        ranks = rank_positives(scores, cand, record.positives, record.user, tie_seed)
+        _append(metrics, ranks, k_values, include_redundant)
         if return_topk:
             tie = deterministic_tie_key(record.user, cand, tie_seed)
             order = np.lexsort((tie, -scores))[:max_k]
@@ -112,8 +151,8 @@ def evaluate_score_function(score_fn, records, k_values, tie_seed=2026, include_
             scores = np.asarray(score_items(record.user, cand), dtype=np.float64)
         else:
             scores = np.fromiter((score_fn(record.user, int(i)) for i in cand), dtype=np.float64, count=len(cand))
-        rank = rank_positive(scores, cand, record.positive_item, record.user, tie_seed)
-        _append(metrics, rank, k_values, include_redundant)
+        ranks = rank_positives(scores, cand, record.positives, record.user, tie_seed)
+        _append(metrics, ranks, k_values, include_redundant)
         if return_topk:
             tie = deterministic_tie_key(record.user, cand, tie_seed)
             order = np.lexsort((tie, -scores))[:max_k]

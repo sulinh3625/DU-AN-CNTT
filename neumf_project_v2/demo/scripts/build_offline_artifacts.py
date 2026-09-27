@@ -38,7 +38,8 @@ def per_user_results(ctx: DataContext, top_k: int):
             u = int(u)
             record = inference.eval_record(ctx, u)
             for m in ctx.available_models:
-                r = inference.rank_from_scores(ctx, u, scores[m][j], top_k, record=record)
+                cand_scores = inference.candidate_scores(ctx, m, u, record, scores[m][j])
+                r = inference.rank_from_scores(ctx, u, cand_scores, top_k, record)
                 rows.append({"customer_id": ctx.customer_ids[u], "user_idx": u, "model": m,
                              "test_item": record.positive_item, "rank": r["rank"],
                              "n_candidates": r["n_candidates"], **r["metrics"]})

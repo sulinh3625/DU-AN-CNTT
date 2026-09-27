@@ -67,7 +67,7 @@ class HMAdapter(DatasetAdapter):
         return raw[["user_raw", "item_raw", "timestamp", "value_raw", "source_order"]]
 
     def _load_from_cache(self) -> pd.DataFrame:
-        """Đọc file Parquet đã tiền xử lý sẵn (xem scripts/00_prepare_hm_cache.py).
+        """Đọc file Parquet đã tiền xử lý sẵn (cache ID đã mã hoá int32).
 
         user_raw/item_raw ở đây đã là mã int32 (factorize từ customer_id/article_id
         gốc) thay vì chuỗi hash -- không ảnh hưởng đến kết quả vì build_interactions

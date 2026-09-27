@@ -28,6 +28,28 @@ def temporal_leave_one_out(df: pd.DataFrame, min_interactions: int = 3):
     return train, val, test
 
 
+def global_temporal_split(df: pd.DataFrame, val_start: str, test_start: str):
+    """Chia theo MỘT mốc thời gian chung cho mọi user (Meng et al. 2020; Ji et al. 2023).
+
+    Mỗi cặp user-item được xếp theo lần mua ĐẦU TIÊN (first_timestamp):
+      train < val_start <= val < test_start <= test.
+    Val/test chỉ giữ user và item đã có trong train (CF thuần ID không chấm được user/item mới);
+    mỗi user có thể có nhiều item đúng. Mô hình không thấy tương tác nào sau val_start khi train.
+    """
+    vs, ts = pd.Timestamp(val_start), pd.Timestamp(test_start)
+    if not vs < ts:
+        raise ValueError(f"Cần val_start < test_start, nhận {val_start} / {test_start}")
+    ft = df["first_timestamp"]
+    train = df[ft < vs]
+    val, test = df[(ft >= vs) & (ft < ts)], df[ft >= ts]
+    users, items = set(train["user"]), set(train["item"])
+
+    def warm(x):
+        return x[x["user"].isin(users) & x["item"].isin(items)].reset_index(drop=True)
+
+    return train.reset_index(drop=True), warm(val), warm(test)
+
+
 def user_item_pairs(df: pd.DataFrame) -> set[tuple[int, int]]:
     return set(zip(df["user"].astype(int), df["item"].astype(int)))
 
