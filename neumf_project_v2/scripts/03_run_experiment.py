@@ -372,7 +372,7 @@ def run(config_path: str, run_tag: str | None = None):
 
 def main():
     ap = argparse.ArgumentParser()
-    ap.add_argument("--config", default="configs/dataco.yaml")
+    ap.add_argument("--config", default="configs/hm_subset.yaml")
     ap.add_argument("--run-tag", default=None)
     args = ap.parse_args()
     run(args.config, args.run_tag)

@@ -1,13 +1,11 @@
 """Entry point tổng hợp cho pipeline NeuMF — gom các lệnh trong scripts/ lại một chỗ.
 
 Ví dụ:
-    python run.py all --dataset dataco                  # audit + train + evaluate, trọn gói
-    python run.py all --dataset hm_subset --run-tag hm_v1
+    python run.py all --run-tag hm_v1                   # audit + train + evaluate trên hm_subset, trọn gói
     python run.py audit --dataset hm
-    python run.py train --dataset dataco --run-tag my_tag
-    python run.py multi-seed --dataset dataco --seeds 42 2024 2025
-    python run.py aggregate --dataset dataco
-    python run.py compare
+    python run.py train --run-tag hm_my_tag
+    python run.py multi-seed --seeds 42 2024 2025
+    python run.py aggregate --seeds 42 2024 2025
     python run.py prepare-hm-cache
     python run.py demo
 
@@ -32,12 +30,11 @@ _ENV = {**os.environ, "PYTHONIOENCODING": "utf-8"}
 ROOT = Path(__file__).resolve().parent
 
 DATASET_CONFIGS = {
-    "dataco": "configs/dataco.yaml",
     "hm": "configs/hm.yaml",
     "hm_subset": "configs/hm_subset.yaml",
 }
 # dataset.name bên trong config (dùng cho run-tag/aggregate) — hm và hm_subset dùng chung "hm".
-DATASET_CONFIG_NAME = {"dataco": "dataco", "hm": "hm", "hm_subset": "hm"}
+DATASET_CONFIG_NAME = {"hm": "hm", "hm_subset": "hm"}
 
 
 def _run(script: str, *args: str) -> None:
@@ -76,10 +73,6 @@ def cmd_aggregate(args):
     _run("06_aggregate_seeds.py", "--config-name", DATASET_CONFIG_NAME[args.dataset], "--seeds", *map(str, args.seeds))
 
 
-def cmd_compare(args):
-    _run("07_compare_datasets.py")
-
-
 def cmd_demo(args):
     subprocess.run(
         [sys.executable, "-m", "uvicorn", "demo.backend.main:app", "--port", "8000", "--host", "127.0.0.1"],
@@ -99,7 +92,7 @@ def main():
     sub = parser.add_subparsers(dest="command", required=True)
 
     def with_dataset(p):
-        p.add_argument("--dataset", choices=list(DATASET_CONFIGS), default="dataco", help="Bộ dữ liệu (mặc định: dataco)")
+        p.add_argument("--dataset", choices=list(DATASET_CONFIGS), default="hm_subset", help="Bộ dữ liệu (mặc định: hm_subset)")
         return p
 
     with_dataset(sub.add_parser("all", help="Audit + train + evaluate trọn gói cho 1 dataset")).add_argument("--run-tag", default=None)
@@ -109,7 +102,6 @@ def main():
     sub.add_parser("evaluate", help="Đánh giá + xuất biểu đồ cho 1 run-tag").add_argument("--run-tag", default=None, help="Mặc định: run mới nhất")
     with_dataset(sub.add_parser("multi-seed", help="Lặp lại train trên nhiều seed")).add_argument("--seeds", nargs="+", type=int, default=[42, 2024, 2025, 2026, 3407])
     with_dataset(sub.add_parser("aggregate", help="Tổng hợp mean/std + Wilcoxon từ multi-seed")).add_argument("--seeds", nargs="+", type=int, default=[42, 2024, 2025, 2026, 3407])
-    sub.add_parser("compare", help="Biểu đồ so sánh DataCo vs H&M")
     sub.add_parser("prepare-hm-cache", help="Nén CSV H&M gốc thành cache Parquet (chạy 1 lần)")
     sub.add_parser("demo", help="Chạy giao diện demo (uvicorn, port 8000)")
 
@@ -122,7 +114,6 @@ def main():
         "evaluate": cmd_evaluate,
         "multi-seed": cmd_multi_seed,
         "aggregate": cmd_aggregate,
-        "compare": cmd_compare,
         "prepare-hm-cache": cmd_prepare_hm_cache,
         "demo": cmd_demo,
     }[args.command](args)

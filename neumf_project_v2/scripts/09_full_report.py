@@ -31,7 +31,7 @@ Số liệu CHÍNH THỨC dùng cho báo cáo PHẢI lấy từ run-tag "<tag>_f
 chỉ phục vụ mục đích CHỌN kiến trúc).
 
 Lưu ý hm/hm_subset: cả 2 config đều có dataset.name="hm" bên trong YAML.
-Script này dùng --dataset CLI (dataco/hm/hm_subset) làm tag phân biệt cho
+Script này dùng --dataset CLI (hm/hm_subset) làm tag phân biệt cho
 sweep và cho run-tag final/weighted (không đụng nhau). Multi-seed/aggregate
 (bước 5-6) vẫn theo đúng quy ước sẵn có của 04_multi_seed.py/06_aggregate_seeds.py
 (dựa trên cfg['dataset']['name'] bên trong YAML, không sửa trong lần này) —
@@ -40,11 +40,10 @@ outputs/ vì tag sẽ trùng "hm_seed_*". Hiện báo cáo chỉ multi-seed trê
 hm_subset (hm full-scale chưa khả thi, xem README mục 4) nên không phát sinh.
 
 Chạy (khuyến nghị trên Colab GPU — xem README mục "Chạy trên Colab"):
-    python scripts/09_full_report.py --dataset dataco
     python scripts/09_full_report.py --dataset hm_subset --seeds 42 2024 2025 2026 3407
 
 Resume sau khi mất kết nối giữa chừng (Colab hay ngắt phiên):
-    python scripts/09_full_report.py --dataset dataco --skip-audit --skip-sweep
+    python scripts/09_full_report.py --dataset hm_subset --skip-audit --skip-sweep
 """
 from __future__ import annotations
 
@@ -64,7 +63,6 @@ sys.path.insert(0, str(PROJECT_ROOT))
 from src.utils.io import ensure_dir  # noqa: E402
 
 DATASET_CONFIGS = {
-    "dataco": "configs/dataco.yaml",
     "hm": "configs/hm.yaml",
     "hm_subset": "configs/hm_subset.yaml",
 }

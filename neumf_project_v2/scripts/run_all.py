@@ -40,7 +40,7 @@ def run_pipeline(config_path: str, run_tag: str | None = None, skip_eval: bool =
 
 def main():
     parser = argparse.ArgumentParser(description="Chạy trọn gói Huấn luyện + Đánh giá + Xuất biểu đồ")
-    parser.add_argument("--config", default="configs/dataco.yaml", help="Đường dẫn file config YAML")
+    parser.add_argument("--config", default="configs/hm_subset.yaml", help="Đường dẫn file config YAML")
     parser.add_argument("--run-tag", default=None, help="Tên đặt cho lần chạy này")
     parser.add_argument("--skip-eval", action="store_true", help="Bỏ qua bước vẽ biểu đồ")
     args = parser.parse_args()

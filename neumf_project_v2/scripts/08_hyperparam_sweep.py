@@ -22,8 +22,7 @@ Thiết kế:
   03_run_experiment.py.
 
 Chạy:
-    python scripts/08_hyperparam_sweep.py --config configs/dataco.yaml
-    python scripts/08_hyperparam_sweep.py --config configs/hm_subset.yaml --seed 42
+    python scripts/08_hyperparam_sweep.py --config configs/hm_subset.yaml
 
 Kết quả:
     outputs/tables/sweep_<dataset>/sweep_embedding_dim.csv
@@ -131,7 +130,7 @@ def run_trial(cfg, pipeline, embedding_dim, mlp_layers, negative_ratio, device, 
 
 def main():
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    ap.add_argument("--config", default="configs/dataco.yaml")
+    ap.add_argument("--config", default="configs/hm_subset.yaml")
     ap.add_argument("--seed", type=int, default=42, help="Seed cố định cho mọi trial (cô lập ảnh hưởng của siêu tham số, không phải của random seed)")
     ap.add_argument(
         "--tag", default=None,

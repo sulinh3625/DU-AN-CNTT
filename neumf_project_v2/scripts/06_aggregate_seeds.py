@@ -126,7 +126,7 @@ def run(config_name: str, seeds: list[int], experiments_root: Path, output_dir: 
 
 def main():
     ap = argparse.ArgumentParser(description="Tổng hợp kết quả multi-seed: mean±std + Wilcoxon signed-rank.")
-    ap.add_argument("--config-name", required=True, help="Tên dataset trong config, VD 'dataco' — phải khớp run-tag của 04_multi_seed.py")
+    ap.add_argument("--config-name", required=True, help="Tên dataset trong config, VD 'hm' — phải khớp run-tag của 04_multi_seed.py")
     ap.add_argument("--seeds", nargs="+", type=int, default=[42, 2024, 2025, 2026, 3407])
     ap.add_argument("--experiments-root", default=str(PROJECT_ROOT / "outputs" / "experiments"))
     ap.add_argument("--output-dir", default=str(PROJECT_ROOT / "outputs" / "tables"))

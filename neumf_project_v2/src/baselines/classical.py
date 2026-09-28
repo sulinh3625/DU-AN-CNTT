@@ -28,7 +28,7 @@ class MostPopularBaseline:
 
 
 class ItemKNNBaseline:
-    """Item-based CF cosine. Chỉ nên dùng khi catalog đủ nhỏ (DataCo).
+    """Item-based CF cosine. Chỉ nên dùng khi catalog đủ nhỏ (VD hm_subset).
 
     Similarity matrix là DENSE n_items x n_items (self.sim.toarray()) — với
     catalog lớn (VD H&M, hàng chục nghìn item) việc này cấp phát bộ nhớ
@@ -45,7 +45,7 @@ class ItemKNNBaseline:
             raise ValueError(
                 f"ItemKNNBaseline dùng dense similarity O(n_items^2); "
                 f"n_items={n_items:,} vượt ngưỡng an toàn {self.ITEMKNN_MAX_ITEMS:,}. "
-                f"Dùng trên catalog nhỏ (VD DataCo) hoặc cài bản sparse top-N trước khi chạy trên catalog lớn."
+                f"Dùng trên catalog nhỏ (VD hm_subset) hoặc cài bản sparse top-N trước khi chạy trên catalog lớn."
             )
 
         rows = train_df["user"].to_numpy(dtype=np.int64)

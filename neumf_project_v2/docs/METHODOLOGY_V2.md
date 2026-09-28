@@ -64,8 +64,6 @@ K-core phải đếm degree trên số **item khác nhau/user** và **user khác
 - Long-tail = phần còn lại.
 - Báo cáo số user có **test item thuộc Long-tail**, không gọi họ là “long-tail users” theo nghĩa bản thân user.
 
-## Dataset thứ hai
+## Dataset
 
-- DataCo = dataset chính.
-- H&M = external/scalability validation sau khi DataCo V2 ổn định.
-- Không gộp DataCo + H&M thành một interaction matrix.
+- H&M Personalized Fashion Recommendations là bộ dữ liệu duy nhất (`configs/hm_subset.yaml` cho thực nghiệm, `configs/hm.yaml` cho quy mô đầy đủ).

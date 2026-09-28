@@ -12,7 +12,7 @@ PROJECT_ROOT = Path(__file__).resolve().parents[1]
 
 def main():
     ap = argparse.ArgumentParser()
-    ap.add_argument("--config", default="configs/dataco.yaml")
+    ap.add_argument("--config", default="configs/hm_subset.yaml")
     ap.add_argument("--seeds", nargs="+", type=int, default=[42, 2024, 2025, 2026, 3407])
     args = ap.parse_args()
 
