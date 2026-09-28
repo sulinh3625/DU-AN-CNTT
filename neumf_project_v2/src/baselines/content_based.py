@@ -36,10 +36,9 @@ class CategoryPopularityBaseline:
             if cat is not None:
                 self.user_categories.setdefault(int(u), set()).add(cat)
 
-    def score(self, user: int, item: int) -> float:
-        base = float(self.pop_score[int(item)])
-        cat = self.item_category.get(int(item))
-        known_cats = self.user_categories.get(int(user))
-        if known_cats and cat is not None and cat in known_cats:
-            return base
-        return base * self.off_category_penalty
+    def score(self, user: int, items) -> np.ndarray:
+        items = np.asarray(items, dtype=np.int64)
+        base = self.pop_score[items]
+        known_cats = self.user_categories.get(int(user)) or set()
+        in_cat = np.fromiter((self.item_category.get(int(i)) in known_cats for i in items), dtype=bool, count=len(items))
+        return np.where(in_cat, base, base * self.off_category_penalty)

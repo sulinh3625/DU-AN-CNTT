@@ -1,11 +1,13 @@
 dataset:
   name: hm
-  raw_path: data/raw/hm/transactions_train.csv
+  # ~300k dòng của các khách lấy ngẫu nhiên, đủ lịch sử, trải toàn bộ 2 năm
+  # (sinh bởi scripts/00_sample_hm.py từ data/raw/hm/transactions_train.csv)
+  raw_path: data/processed/hm/hm300k_transactions.csv
   encoding: utf-8
   k_core: 5
   audit_k_values: [3, 5, 10]
   min_interactions_for_loo: 3
-  nrows: 100000
+  nrows: null
   start_date: null
   end_date: null
 

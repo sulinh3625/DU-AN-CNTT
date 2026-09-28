@@ -10,10 +10,10 @@ Phiên bản V2 refactor pipeline để tránh data leakage, chuẩn hóa đánh
 neumf_project_v2/
 ├── configs/
 │   ├── hm.yaml           # Config H&M quy mô ĐẦY ĐỦ (đọc data/processed/hm/*.parquet)
-│   └── hm_subset.yaml    # Config H&M lát cắt thực nghiệm (đọc raw CSV trực tiếp) — dùng để có số liệu trong báo cáo
+│   └── hm_subset.yaml    # Config H&M mẫu ~300k dòng theo khách, trải 2 năm — dùng để có số liệu trong báo cáo
 ├── data/
 │   ├── raw/hm/                   # Đặt file CSV gốc tại đây
-│   ├── processed/hm/             # Cache Parquet của H&M, sinh bởi scripts/00_prepare_hm_cache.py
+│   ├── processed/hm/             # Mẫu hm300k (00_sample_hm.py) và cache Parquet (00_prepare_hm_cache.py)
 │   └── splits/hm/
 ├── docs/                          # METHODOLOGY_V2, IMPLEMENTATION_STATUS (đang dùng)
 │   └── archive/                   # MIGRATION_V1_TO_V2, legacy_v1_pham_vi_du_an (tài liệu lịch sử V1)
@@ -27,7 +27,8 @@ neumf_project_v2/
 │   ├── evaluation/                # Metrics, full/sampled ranking, long-tail, beyond-accuracy, kiểm định thống kê
 │   └── utils/                    # seed, io
 ├── scripts/
-│   ├── 00_prepare_hm_cache.py    # Tiền xử lý 1 lần: CSV H&M gốc (31,8 triệu dòng) -> Parquet gọn nhẹ
+│   ├── 00_sample_hm.py           # Lấy mẫu ~300k dòng theo khách hàng, trải toàn bộ 2 năm (cho hm_subset)
+│   ├── 00_prepare_hm_cache.py    # Tiền xử lý 1 lần: CSV H&M gốc (31,8 triệu dòng) -> Parquet (cho hm)
 │   ├── 01_data_audit.py          # Audit k-core, mật độ, kiểm tra Disjoint — chạy trước khi train
 │   ├── 02_preprocess.py          # Sinh splits (dùng khi cần splits độc lập với run_all)
 │   ├── 03_run_experiment.py      # Huấn luyện toàn bộ mô hình (GMF/MLP/EarlyFusion/NeuMF) + baselines
@@ -56,13 +57,21 @@ python -m venv .venv
 pip install -r requirements.txt
 ```
 
-Nếu cần CUDA, cài PyTorch theo đúng bản CUDA của máy trước khi cài phần còn lại. Thực nghiệm gốc của báo cáo chạy hoàn toàn trên CPU (không có GPU), xem cấu hình máy ở mục 4.1 báo cáo.
+Nếu cần CUDA, cài PyTorch theo đúng bản CUDA của máy trước khi cài phần còn lại. `configs/hm_subset.yaml` đặt `device: auto`: dùng GPU nếu có, không thì CPU. `seed_everything` bật chế độ tất định cho CUDA nên chạy lại cùng seed trên cùng máy cho cùng kết quả; GPU và CPU cho số khác nhau ở các mô hình có dropout, nên mọi số liệu báo cáo phải chạy trên cùng một thiết bị.
 
 ## 2. Đặt dữ liệu thô
 
 ```text
 data/raw/hm/transactions_train.csv
 ```
+
+Sau đó lấy mẫu một lần (~1,5 phút, đọc theo lô nên ít RAM):
+
+```bash
+python scripts/00_sample_hm.py
+```
+
+Script chọn ngẫu nhiên (seed 42) các khách hàng và giữ **toàn bộ lịch sử** của họ cho tới khi đủ ~300.000 dòng, ghi ra `data/processed/hm/hm300k_transactions.csv` với cột/ID gốc. Không lấy ngẫu nhiên theo *dòng*: 300k dòng rải trên 1,36 triệu khách thì mỗi khách chỉ còn ~0,2 giao dịch và lọc k-core=5 xoá sạch dữ liệu. Script cũng in thống kê trùng lặp (dòng trùng hệt nhau = mua nhiều đơn vị, được gộp ở bước tiền xử lý).
 
 ## 3. Huấn luyện H&M (một lệnh)
 
@@ -84,7 +93,7 @@ Muốn chạy tay từng bước hoặc gọi thẳng script gốc thì dùng `s
 
 ## 4. Hai quy mô dữ liệu H&M
 
-> `configs/hm_subset.yaml` đọc trực tiếp `transactions_train.csv` (100.000 dòng đầu) — đây là quy mô thực tế dùng để tạo số liệu trong báo cáo (mục 3.3.3). `configs/hm.yaml` trỏ tới cache Parquet ở quy mô **toàn bộ** (889.062 người dùng, 90.690 sản phẩm sau lọc) — audit chạy được, nhưng **huấn luyện + đánh giá Full Ranking ở quy mô này chưa khả thi** trên CPU phổ thông (ước tính hàng chục tỷ phép tính, xem mục 3.3.3/5.3 báo cáo) — cần chuyển sang giao thức Sampled-99 trước khi chạy, đây là hướng phát triển đã ghi trong báo cáo.
+> `configs/hm_subset.yaml` đọc mẫu `hm300k_transactions.csv` (300.003 dòng của 12.877 khách, 20/09/2018 → 22/09/2020; sau k-core=5 còn 7.402 khách × 15.216 sản phẩm) — đây là quy mô dùng để tạo số liệu trong báo cáo. `configs/hm.yaml` trỏ tới cache Parquet ở quy mô **toàn bộ** (889.062 người dùng, 90.690 sản phẩm sau lọc) — audit chạy được, nhưng **huấn luyện + đánh giá Full Ranking ở quy mô này chưa khả thi** trên CPU phổ thông (ước tính hàng chục tỷ phép tính, xem mục 3.3.3/5.3 báo cáo) — cần chuyển sang giao thức Sampled-99 trước khi chạy, đây là hướng phát triển đã ghi trong báo cáo.
 
 H&M gốc có **31,8 triệu dòng** — quá nặng để đọc lại mỗi lần chạy, nên `hm.yaml` cần tạo cache Parquet một lần trước:
 
@@ -100,7 +109,7 @@ python run.py multi-seed --dataset hm_subset --seeds 42 2024 2025 2026 3407
 python run.py aggregate --dataset hm_subset --seeds 42 2024 2025 2026 3407
 ```
 
-Mỗi seed chạy lại toàn bộ bước 3 — hạ tầng đã sẵn sàng nhưng chưa được chạy đủ 5 seed trong báo cáo hiện tại (ghi rõ là hạn chế ở mục 5.2).
+Mỗi seed chạy lại toàn bộ bước 3.
 
 ## 6. Chạy demo (giao diện thực nghiệm)
 

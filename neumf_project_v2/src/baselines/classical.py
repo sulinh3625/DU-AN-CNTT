@@ -3,17 +3,103 @@ from __future__ import annotations
 import numpy as np
 from tqdm import tqdm
 
-from src.data_pipeline.negative_sampling import available_negatives
+def kth_available(sorted_positives: np.ndarray, k: int) -> int:
+    """Item thứ k (0-based) trong các item KHÔNG thuộc sorted_positives.
+
+    Bằng available_negatives(...)[k] nhưng không cấp phát mảng dài n_items.
+    """
+    shifted = sorted_positives - np.arange(len(sorted_positives))
+    return int(k + np.searchsorted(shifted, k, side="right"))
+
+
+_U32, _U64 = np.uint32, np.uint64
+_M32 = 0xFFFFFFFF
+_PCG_MULT_HI, _PCG_MULT_LO = 0x2360ED051FC65DA4, 0x4385DF649FCCF645
+
+
+def _mul64(a, b):
+    """a*b (uint64) -> (hi, lo) đủ 128 bit."""
+    a0, a1 = a & _U64(_M32), a >> _U64(32)
+    b0, b1 = b & _U64(_M32), b >> _U64(32)
+    p00, p01, p10, p11 = a0 * b0, a0 * b1, a1 * b0, a1 * b1
+    mid = (p00 >> _U64(32)) + (p01 & _U64(_M32)) + (p10 & _U64(_M32))
+    lo = (p00 & _U64(_M32)) | (mid << _U64(32))
+    hi = p11 + (p01 >> _U64(32)) + (p10 >> _U64(32)) + (mid >> _U64(32))
+    return hi, lo
+
+
+def _add128(a_hi, a_lo, b_hi, b_lo):
+    lo = a_lo + b_lo
+    return a_hi + b_hi + (lo < a_lo).astype(_U64), lo
+
+
+def _pcg_step(hi, lo, inc_hi, inc_lo):
+    m_hi, m_lo = _U64(_PCG_MULT_HI), _U64(_PCG_MULT_LO)
+    p_hi, p_lo = _mul64(lo, np.full_like(lo, m_lo))
+    p_hi = p_hi + hi * m_lo + lo * m_hi
+    return _add128(p_hi, p_lo, inc_hi, inc_lo)
+
+
+def first_uniform(seeds) -> np.ndarray:
+    """== np.random.default_rng(s).random() cho từng s trong [0, 2**32), vector hoá.
+
+    Tái hiện SeedSequence -> PCG64 -> random() của numpy để RandomBaseline chấm
+    điểm cả mảng mà vẫn ra đúng số cũ (tạo default_rng cho từng cặp rất chậm).
+    Kiểm chứng bằng tests/test_baselines.py.
+    """
+    seeds = np.asarray(seeds, dtype=np.int64).astype(_U32)
+    hc = [0x43B0D7E5]
+
+    def hashmix(v):
+        v = v ^ _U32(hc[0])
+        hc[0] = (hc[0] * 0x931E8875) & _M32
+        v = v * _U32(hc[0])
+        return v ^ (v >> _U32(16))
+
+    def mix(x, y):
+        r = _U32(0xCA01F9DD) * x - _U32(0x4973F715) * y
+        return r ^ (r >> _U32(16))
+
+    # SeedSequence.mix_entropy: pool 4 từ uint32, entropy = [s]
+    pool = [hashmix(seeds)] + [hashmix(np.zeros_like(seeds)) for _ in range(3)]
+    for i_src in range(4):
+        for i_dst in range(4):
+            if i_src != i_dst:
+                pool[i_dst] = mix(pool[i_dst], hashmix(pool[i_src]))
+
+    # SeedSequence.generate_state(4, uint64)
+    hb, words = 0x8B51F9DD, []
+    for i in range(8):
+        v = pool[i % 4] ^ _U32(hb)
+        hb = (hb * 0x58F38DED) & _M32
+        v = v * _U32(hb)
+        words.append((v ^ (v >> _U32(16))).astype(_U64))
+    s_hi, s_lo, q_hi, q_lo = (words[2 * k] | (words[2 * k + 1] << _U64(32)) for k in range(4))
+
+    # PCG64 srandom: inc = (seq << 1) | 1; state = inc + initstate; step
+    inc_hi = (q_hi << _U64(1)) | (q_lo >> _U64(63))
+    inc_lo = (q_lo << _U64(1)) | _U64(1)
+    hi, lo = _add128(inc_hi, inc_lo, s_hi, s_lo)
+    hi, lo = _pcg_step(hi, lo, inc_hi, inc_lo)
+    # next64: step rồi xuất XSL-RR
+    hi, lo = _pcg_step(hi, lo, inc_hi, inc_lo)
+    x, rot = hi ^ lo, hi >> _U64(58)
+    out = (x >> rot) | (x << ((_U64(64) - rot) & _U64(63)))
+    return (out >> _U64(11)).astype(np.float64) / float(1 << 53)
+
+
+# Mọi baseline: score(user, items) nhận mảng item, trả mảng điểm cùng độ dài.
 
 
 class RandomBaseline:
     def __init__(self, seed: int = 42):
         self.seed = int(seed)
 
-    def score(self, user: int, item: int) -> float:
+    def score(self, user: int, items) -> np.ndarray:
         # Deterministic across processes; không dùng Python built-in hash.
-        s = (self.seed * 1000003 + int(user) * 9176 + int(item) * 6361) & 0xFFFFFFFF
-        return float(np.random.default_rng(s).random())
+        items = np.asarray(items, dtype=np.int64)
+        s = (self.seed * 1000003 + int(user) * 9176 + items * 6361) & 0xFFFFFFFF
+        return first_uniform(s)
 
 
 class MostPopularBaseline:
@@ -23,8 +109,8 @@ class MostPopularBaseline:
         for item, count in counts.items():
             self.pop_score[int(item)] = float(count)
 
-    def score(self, user: int, item: int) -> float:
-        return float(self.pop_score[int(item)])
+    def score(self, user: int, items) -> np.ndarray:
+        return self.pop_score[np.asarray(items, dtype=np.int64)]
 
 
 class ItemKNNBaseline:
@@ -63,11 +149,13 @@ class ItemKNNBaseline:
         self.sim = sim
         self.user_items = ui.tolil().rows
 
-    def score(self, user: int, item: int) -> float:
+    def score(self, user: int, items) -> np.ndarray:
+        items = np.asarray(items, dtype=np.int64)
         interacted = self.user_items[int(user)]
         if not interacted:
-            return 0.0
-        return float(self.sim[int(item), interacted].sum())
+            return np.zeros(len(items), dtype=np.float64)
+        # Cộng float32 theo từng hàng như bản chấm từng cặp -> điểm (và thứ tự hoà) không đổi.
+        return self.sim[np.ix_(items, interacted)].sum(axis=1).astype(np.float64)
 
 
 class BPRMFBaseline:
@@ -88,7 +176,9 @@ class BPRMFBaseline:
         positives = {}
         for u, i in zip(users, items):
             positives.setdefault(int(u), set()).add(int(i))
-        neg_pool = {u: available_negatives(pos, self.n_items) for u, pos in positives.items()}
+        # Chỉ giữ positive đã sắp xếp; item âm thứ k tính bằng kth_available thay
+        # vì giữ sẵn mảng available_negatives dài n_items cho mọi user.
+        sorted_pos = {u: np.array(sorted(pos), dtype=np.int64) for u, pos in positives.items()}
 
         epoch_bar = tqdm(
             range(int(epochs)),
@@ -102,10 +192,12 @@ class BPRMFBaseline:
             n_updates = 0
             for idx in rng.permutation(len(users)):
                 u, i = int(users[idx]), int(items[idx])
-                pool = neg_pool[u]
-                if len(pool) == 0:
+                pos = sorted_pos[u]
+                n_avail = self.n_items - len(pos)
+                if n_avail == 0:
                     continue
-                j = int(rng.choice(pool))
+                # == rng.choice(available_negatives(pos)) — cùng luồng RNG, cùng item.
+                j = kth_available(pos, int(rng.integers(0, n_avail)))
 
                 pu = self.P[u].copy()
                 qi = self.Q[i].copy()
@@ -124,5 +216,5 @@ class BPRMFBaseline:
         epoch_bar.close()
         return self
 
-    def score(self, user: int, item: int) -> float:
-        return float(self.P[int(user)] @ self.Q[int(item)])
+    def score(self, user: int, items) -> np.ndarray:
+        return self.Q[np.asarray(items, dtype=np.int64)] @ self.P[int(user)]

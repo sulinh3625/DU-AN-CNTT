@@ -15,22 +15,32 @@ class EvalRecord:
     candidates: np.ndarray
 
 
-def build_full_ranking_records(eval_df, n_items: int, seen_positive_sets) -> list[EvalRecord]:
-    all_items = np.arange(n_items, dtype=np.int64)
+class FullRankingRecord:
+    """EvalRecord cho Full Ranking, sinh candidates khi cần.
+
+    Chỉ giữ các item đã thấy (vài chục phần tử) thay vì mảng dài n_items cho
+    mỗi user — giữ sẵn mảng đó cho mọi user tốn RAM theo n_users × n_items.
+    """
+
+    __slots__ = ("user", "positive_item", "n_items", "seen")
+
+    def __init__(self, user: int, positive_item: int, n_items: int, seen: np.ndarray):
+        self.user, self.positive_item, self.n_items, self.seen = user, positive_item, n_items, seen
+
+    @property
+    def candidates(self) -> np.ndarray:
+        mask = np.ones(self.n_items, dtype=bool)
+        mask[self.seen] = False
+        mask[self.positive_item] = True
+        return np.flatnonzero(mask).astype(np.int64, copy=False)
+
+
+def build_full_ranking_records(eval_df, n_items: int, seen_positive_sets) -> list[FullRankingRecord]:
     records = []
     for u, pos in zip(eval_df["user"].values, eval_df["item"].values):
         u, pos = int(u), int(pos)
-        seen = set(seen_positive_sets[u])
-        seen.discard(pos)
-        if seen:
-            mask = np.ones(n_items, dtype=bool)
-            mask[np.fromiter(seen, dtype=np.int64)] = False
-            candidates = all_items[mask]
-        else:
-            candidates = all_items.copy()
-        if pos not in candidates:
-            candidates = np.append(candidates, pos)
-        records.append(EvalRecord(u, pos, candidates.astype(np.int64, copy=False)))
+        seen = np.fromiter(seen_positive_sets[u], dtype=np.int64)
+        records.append(FullRankingRecord(u, pos, n_items, seen))
     return records
 
 
@@ -53,11 +63,13 @@ def _append(metrics, rank, k_values, include_redundant):
 
 
 @torch.no_grad()
-def evaluate_torch_model(model, records, k_values, device="cpu", batch_size=16384, tie_seed=2026, include_redundant=False, return_topk=False):
+def evaluate_torch_model(model, records, k_values, device="cpu", batch_size=16384, tie_seed=2026, include_redundant=False, return_topk=False, max_pairs=4_000_000):
     """Evaluate PyTorch model with flattened batched scoring.
 
-    Tránh gọi model một lần cho từng user; toàn bộ candidate pairs được flatten
-    rồi score theo batch lớn, sau đó cắt lại theo offsets để tính rank từng user.
+    Tránh gọi model một lần cho từng user: candidate pairs của một nhóm user
+    được flatten rồi score theo batch lớn, sau đó cắt lại theo offsets để tính
+    rank từng user. Mỗi nhóm giới hạn ~max_pairs cặp nên RAM không tăng theo
+    tổng n_users × n_items.
     """
     model.eval()
     metrics = _empty_metric_lists(k_values, include_redundant)
@@ -67,33 +79,37 @@ def evaluate_torch_model(model, records, k_values, device="cpu", batch_size=1638
         summary = {name: float("nan") for name in metrics}
         return (summary, recommendations) if return_topk else summary
 
-    lengths = np.fromiter((len(r.candidates) for r in records), dtype=np.int64, count=len(records))
-    offsets = np.concatenate(([0], np.cumsum(lengths)))
-    total = int(offsets[-1])
-    users_flat = np.empty(total, dtype=np.int64)
-    items_flat = np.empty(total, dtype=np.int64)
-    for idx, record in enumerate(records):
-        a, b = int(offsets[idx]), int(offsets[idx + 1])
-        users_flat[a:b] = record.user
-        items_flat[a:b] = record.candidates
+    def flush(chunk):
+        lengths = np.fromiter((len(c) for _, c in chunk), dtype=np.int64, count=len(chunk))
+        offsets = np.concatenate(([0], np.cumsum(lengths)))
+        users_flat = np.repeat(np.fromiter((r.user for r, _ in chunk), dtype=np.int64, count=len(chunk)), lengths)
+        items_flat = np.concatenate([c for _, c in chunk])
+        score_flat = np.empty(len(items_flat), dtype=np.float32)
+        for start in range(0, len(items_flat), batch_size):
+            end = start + batch_size
+            users = torch.from_numpy(users_flat[start:end]).to(device)
+            items = torch.from_numpy(items_flat[start:end]).to(device)
+            score_flat[start:end] = model(users, items).detach().cpu().numpy()
 
-    score_flat = np.empty(total, dtype=np.float32)
-    for start in range(0, total, batch_size):
-        end = min(start + batch_size, total)
-        users = torch.from_numpy(users_flat[start:end]).long().to(device)
-        items = torch.from_numpy(items_flat[start:end]).long().to(device)
-        score_flat[start:end] = model(users, items).detach().cpu().numpy()
+        for idx, (record, cand) in enumerate(chunk):
+            scores = score_flat[offsets[idx]:offsets[idx + 1]]
+            rank = rank_positive(scores, cand, record.positive_item, record.user, tie_seed)
+            _append(metrics, rank, k_values, include_redundant)
+            if return_topk:
+                tie = deterministic_tie_key(record.user, cand, tie_seed)
+                order = np.lexsort((tie, -scores))[:max_k]
+                recommendations[record.user] = cand[order].tolist()
 
-    for idx, record in enumerate(records):
-        a, b = int(offsets[idx]), int(offsets[idx + 1])
-        cand = items_flat[a:b]
-        scores = score_flat[a:b]
-        rank = rank_positive(scores, cand, record.positive_item, record.user, tie_seed)
-        _append(metrics, rank, k_values, include_redundant)
-        if return_topk:
-            tie = deterministic_tie_key(record.user, cand, tie_seed)
-            order = np.lexsort((tie, -scores))[:max_k]
-            recommendations[record.user] = cand[order].tolist()
+    chunk, n_pairs = [], 0
+    for record in records:
+        cand = np.asarray(record.candidates, dtype=np.int64)
+        chunk.append((record, cand))
+        n_pairs += len(cand)
+        if n_pairs >= max_pairs:
+            flush(chunk)
+            chunk, n_pairs = [], 0
+    if chunk:
+        flush(chunk)
 
     summary = {name: float(np.mean(vals)) if vals else float("nan") for name, vals in metrics.items()}
     return (summary, recommendations) if return_topk else summary
@@ -104,8 +120,8 @@ def evaluate_score_function(score_fn, records, k_values, tie_seed=2026, include_
     max_k = max(k_values)
     recommendations = {} if return_topk else None
     for record in records:
-        cand = record.candidates
-        scores = np.fromiter((score_fn(record.user, int(i)) for i in cand), dtype=np.float64, count=len(cand))
+        cand = np.asarray(record.candidates, dtype=np.int64)
+        scores = np.asarray(score_fn(record.user, cand), dtype=np.float64)  # score_fn nhận cả mảng item
         rank = rank_positive(scores, cand, record.positive_item, record.user, tie_seed)
         _append(metrics, rank, k_values, include_redundant)
         if return_topk:

@@ -38,6 +38,19 @@ def test_perfect_model_hr_ndcg_one():
     assert result["NDCG@1"] == 1.0
 
 
+def test_chunked_evaluation_matches_single_pass():
+    class Score(torch.nn.Module):
+        def forward(self, u, i):
+            return ((u * 7 + i * 13) % 5).float()  # nhiều điểm hoà để thử tie-break
+
+    eval_df = pd.DataFrame({"user": [0, 1, 2, 3], "item": [4, 0, 9, 2]})
+    seen = [{0, 1, 4}, {3}, set(), {2, 5, 6}]
+    records = build_full_ranking_records(eval_df, 10, seen)
+    one = evaluate_torch_model(Score(), records, [1, 3], return_topk=True, max_pairs=10**9)
+    many = evaluate_torch_model(Score(), records, [1, 3], return_topk=True, max_pairs=1, batch_size=3)
+    assert one == many
+
+
 def test_head_fraction_uses_train_only_counts():
     train = pd.DataFrame({"item": [0] * 10 + [1] * 5 + [2] * 2 + [3]})
     head = define_head_items(train, n_items=4, head_fraction=0.25)
