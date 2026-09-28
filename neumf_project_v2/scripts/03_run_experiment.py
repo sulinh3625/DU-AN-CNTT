@@ -187,7 +187,7 @@ def run(config_path: str, run_tag: str | None = None, final: bool = False, reaso
     torch.save(mlp.state_dict(), ckpt_dir / "mlp.pt")
 
     # 3b) Early Fusion baseline — đối chứng trực tiếp với NeuMF (Late Fusion).
-    # Dùng cùng optimizer/LR/budget với NeuMF-Scratch (finetune_*) để so sánh
+    # EarlyFusion va NeuMF-Scratch hoc tu dau -> pretrain_* (Adam) nhu He et al. 2017; finetune_* chi cho NeuMF-Pretrained.
     # công bằng: chỉ khác nhau ở chỗ kết hợp sớm (concat rồi 1 mạng chung)
     # hay muộn (2 nhánh riêng rồi mới nối ở cuối).
     if cfg.training.train_early_fusion:
@@ -195,8 +195,8 @@ def run(config_path: str, run_tag: str | None = None, final: bool = False, reaso
             data.n_users, data.n_items, cfg.model.embedding_dim, cfg.model.mlp_layers, cfg.model.dropout
         ).to(device)
         opt = make_optimizer(
-            cfg.training.finetune_optimizer, early_fusion.parameters(),
-            cfg.training.finetune_lr, cfg.training.weight_decay
+            cfg.training.pretrain_optimizer, early_fusion.parameters(),
+            cfg.training.pretrain_lr, cfg.training.weight_decay
         )
         early_fusion, hist, meta = train_one_model(
             early_fusion, train_dataset, val_records, eval_torch, opt, device,
@@ -210,7 +210,7 @@ def run(config_path: str, run_tag: str | None = None, final: bool = False, reaso
 
     # 4) Controlled pretraining ablation: same optimizer/LR/budget for scratch & pretrained.
     scratch = NeuMF(data.n_users, data.n_items, cfg.model.embedding_dim, cfg.model.mlp_layers, cfg.model.dropout).to(device)
-    opt = make_optimizer(cfg.training.finetune_optimizer, scratch.parameters(), cfg.training.finetune_lr, cfg.training.weight_decay)
+    opt = make_optimizer(cfg.training.pretrain_optimizer, scratch.parameters(), cfg.training.pretrain_lr, cfg.training.weight_decay)
     scratch, hist, meta = train_one_model(
         scratch, train_dataset, val_records, eval_torch, opt, device,
         cfg.training.max_epochs_finetune, cfg.training.patience, cfg.training.batch_size,

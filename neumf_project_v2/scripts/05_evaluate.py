@@ -316,7 +316,7 @@ def _build_report(primary_df, sampled_df, tail_df, beyond_df, train_df, metadata
     L += ["📋 FULL-RANKING (Primary)", sub]
     L.append(primary_df.to_string(float_format="%.4f")); L.append("")
     best = primary_df["NDCG@10"].idxmax()
-    L.append(f"  🏆 Best: {best} — NDCG@10 = {primary_df.loc[best,'NDCG@10']:.4f}"); L.append("")
+    L.append(f"  NDCG@10 cao nhat trong lan chay nay: {best} = {primary_df.loc[best, 'NDCG@10']:.4f} (1 seed, chua kiem dinh)"); L.append("")
 
     L += ["📋 SAMPLED-99 (Secondary)", sub]
     L.append(sampled_df.to_string(float_format="%.4f")); L.append("")
@@ -345,27 +345,27 @@ def _build_report(primary_df, sampled_df, tail_df, beyond_df, train_df, metadata
              "06_aggregate_seeds.py trên ≥ 6 seed hoặc bootstrap theo user.)")
     if hidden:
         L.append(f"  (Ẩn khỏi bảng, vẫn lưu trong results.json: {', '.join(hidden)})")
+    rnd = primary_df.loc["Random", "NDCG@10"] if "Random" in primary_df.index else None
+    weak = [m for m in NEURAL_MODELS if m in primary_df.index and rnd is not None
+            and primary_df.loc[m, "NDCG@10"] <= 2 * rnd]
+    for m in weak:
+        L.append(f"  CANH BAO: {m} co NDCG@10 <= 2 x Random ({rnd:.4f}) -> co the chua hoc, kiem tra optimizer/LR.")
+
+    def diff_line(label, a, b):
+        if a not in primary_df.index or b not in primary_df.index:
+            return
+        va, vb = primary_df.loc[a, "NDCG@10"], primary_df.loc[b, "NDCG@10"]
+        note = "  (co mo hinh bi canh bao, khong dung de ket luan)" if (a in weak or b in weak) else ""
+        L.append(f"  {label}: {a} {va:.4f} - {b} {vb:.4f} = {va - vb:+.4f} (NDCG@10, tuyet doi){note}")
+
     neural = [m for m in NEURAL_MODELS if m in primary_df.index]
     classical = [m for m in ["MostPopular", "ItemKNN", "BPR-MF"] if m in primary_df.index]
     if neural and classical:
-        bn = primary_df.loc[neural, "NDCG@10"].idxmax()
-        bc = primary_df.loc[classical, "NDCG@10"].idxmax()
-        imp = (primary_df.loc[bn,"NDCG@10"] - primary_df.loc[bc,"NDCG@10"]) / primary_df.loc[bc,"NDCG@10"] * 100
-        L.append(f"  Neural vs Classical: {bn} vs {bc} → {imp:+.2f}%")
-    if "NeuMF-Scratch" in primary_df.index and "NeuMF-Pretrained" in primary_df.index:
-        s = primary_df.loc["NeuMF-Scratch","NDCG@10"]
-        p = primary_df.loc["NeuMF-Pretrained","NDCG@10"]
-        L.append(f"  Pretrained vs Scratch: {(p-s)/s*100:+.2f}% → {'Pretrained' if p>s else 'Scratch'} wins")
-    if "GMF" in primary_df.index and "MLP" in primary_df.index:
-        g = primary_df.loc["GMF","NDCG@10"]; m = primary_df.loc["MLP","NDCG@10"]
-        L.append(f"  GMF vs MLP: {g:.4f} vs {m:.4f} → {'GMF' if g>m else 'MLP'} wins")
-    # Early Fusion vs Late Fusion (NeuMF)
-    if "EarlyFusion" in primary_df.index and "NeuMF-Scratch" in primary_df.index:
-        ef = primary_df.loc["EarlyFusion","NDCG@10"]
-        ns = primary_df.loc["NeuMF-Scratch","NDCG@10"]
-        winner = "Late Fusion (NeuMF-Scratch)" if ns >= ef else "Early Fusion"
-        diff = abs(ns - ef) / max(ef, 1e-9) * 100
-        L.append(f"  Early vs Late Fusion: EarlyFusion={ef:.4f} vs NeuMF-Scratch={ns:.4f} → {winner} wins (+{diff:.2f}%)")
+        diff_line("Neural tot nhat vs Classical tot nhat",
+                  primary_df.loc[neural, "NDCG@10"].idxmax(), primary_df.loc[classical, "NDCG@10"].idxmax())
+    diff_line("Pretrained vs Scratch", "NeuMF-Pretrained", "NeuMF-Scratch")
+    diff_line("MLP vs GMF", "MLP", "GMF")
+    diff_line("Late (NeuMF-Scratch) vs Early Fusion", "NeuMF-Scratch", "EarlyFusion")
     L += ["", sep]
     return "\n".join(L)
 
