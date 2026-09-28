@@ -19,7 +19,7 @@ Trước khi trình bày chi tiết từng thành phần, mục này mô tả ki
         % Tang 1: Du lieu
         \node[stage, fill=gray!12] (data) at (0,0)
             {\textbf{TẦNG 1 -- DỮ LIỆU NGUỒN}\\[2pt]
-             DataCo Smart Supply Chain Dataset \cite{dataco2019} -- hơn 180.000 dòng giao dịch: Customer Id, Product Card Id, Order Item Quantity/Sales, Order Date, Category/Department Name.};
+             H\&M Personalized Fashion Recommendations \cite{hm2022kaggle} -- 31,8 triệu dòng giao dịch (cache hoá thành Parquet; lát cắt thực nghiệm: 100.000 dòng đầu): customer\_id, article\_id, t\_dat, price.};
 
         % Tang 2: Tien xu ly
         \node[stage, fill=blue!8, below=of data] (prep)
@@ -27,7 +27,7 @@ Trước khi trình bày chi tiết từng thành phần, mục này mô tả ki
              (1) Gộp giao dịch trùng lặp theo cặp (User, Item) $\rightarrow$
              (2) Lọc $k$-core ($k=5$) lặp đến hội tụ $\rightarrow$
              (3) Re-indexing ID liên tục $u \in \{0,\dots,M-1\}$, $i \in \{0,\dots,N-1\}$ $\rightarrow$
-             (4) Xây ma trận tương tác ẩn $Y \in \{0,1\}^{M\times N}$ (nhị phân và biến thể có trọng số theo Sales).};
+             (4) Xây ma trận tương tác ẩn $Y \in \{0,1\}^{M\times N}$ (nhị phân và biến thể có trọng số theo giá).};
 
         % Tang 3: Phan chia + sampling
         \node[stage, fill=blue!8, below=of prep] (split)
@@ -46,7 +46,7 @@ Trước khi trình bày chi tiết từng thành phần, mục này mô tả ki
         \node[stage, fill=orange!10, below=of model] (train)
             {\textbf{TẦNG 5 -- HUẤN LUYỆN}\\[2pt]
              Pre-training GMF \& MLP độc lập (Adam) $\rightarrow$ Khởi tạo trọng số NeuMF từ mô hình đã Pre-train $\rightarrow$
-             Fine-tuning toàn mạng (SGD, $\eta{=}0{,}01$) $\rightarrow$ Tối thiểu hóa $\mathcal{L}_{BCE} + \lambda_\Theta\lVert\Theta\rVert_2^2$ với Early Stopping (patience $=10$, theo dõi NDCG@10 trên Validation).};
+             Fine-tuning toàn mạng (SGD, $\eta{=}0{,}01$) $\rightarrow$ Tối thiểu hóa $\mathcal{L}_{BCE} + \lambda_\Theta\lVert\Theta\rVert_2^2$ với Early Stopping (patience $=7$, theo dõi NDCG@10 trên Validation).};
 
         % Tang 6: Danh gia
         \node[stage, fill=red!8, below=of train] (eval)
@@ -58,7 +58,6 @@ Trước khi trình bày chi tiết từng thành phần, mục này mô tả ki
         \node[side, text width=5.0cm, right=1.1cm of train] (baselinebox)
             {\textbf{ĐỐI CHỨNG (BASELINES)}\\[2pt]
              Random, Most Popular\\
-             ItemKNN (mục~\ref{subsec:memory_model_based})\\
              BPR-MF (mục~\ref{subsec:bpr})};
 
         % Arrows chinh
@@ -69,122 +68,27 @@ Trước khi trình bày chi tiết từng thành phần, mục này mô tả ki
         \draw[arrow] (train) -- (eval);
         \draw[arrow] (baselinebox.south) |- (eval.east);
     \end{tikzpicture}}
-    \caption{Kiến trúc tổng thể của hệ thống nghiên cứu, từ dữ liệu thô DataCo đến đánh giá thực nghiệm}
+    \caption{Kiến trúc tổng thể của hệ thống nghiên cứu, từ dữ liệu thô H\&M đến đánh giá thực nghiệm}
     \label{fig:system_architecture}
 \end{figure}
 
-Ba đặc điểm thiết kế xuyên suốt của kiến trúc hệ thống cần nhấn mạnh: \textit{(i)} tầng tiền xử lý và tầng phân chia dữ liệu được tách biệt tường minh khỏi tầng mô hình hóa, cho phép tái sử dụng cùng một bộ dữ liệu đã xử lý cho toàn bộ các mô hình đối chứng lẫn NeuMF, đảm bảo so sánh công bằng; \textit{(ii)} nhánh Baseline (Random, Most Popular, ItemKNN, BPR-MF) vận hành song song, độc lập với quy trình Pre-training/Fine-tuning của NeuMF, nhưng hội tụ về cùng một tầng đánh giá để đối chiếu trực tiếp trên cùng giao thức Full Ranking/Sampled-99; \textit{(iii)} tầng đánh giá tách hai nhóm chỉ số (accuracy và beyond-accuracy) nhằm kiểm chứng đồng thời độ chính xác và mức độ đa dạng/công bằng của gợi ý, tránh kết luận sai lệch chỉ dựa trên HR@K/NDCG@K.
-
-\section{Phân tích và tiền xử lý dữ liệu DataCo Supply Chain}
-\label{sec:dataco_pipeline}
-
-\subsection{Đặc tả bộ dữ liệu DataCo Supply Chain}
-\label{subsec:dataco_description}
-
-Bộ dữ liệu thực nghiệm chính được sử dụng trong dự án là DataCo Smart Supply Chain Dataset \parencite{dataco2019}, phản ánh hoạt động giao dịch thương mại điện tử và chuỗi cung ứng thực tế (bộ dữ liệu đối chứng thứ hai, H\&M, được trình bày ở mục~\ref{sec:hm_pipeline}). Bộ dữ liệu chứa hơn 180.000 dòng giao dịch với các trường thông tin chính phục vụ cho việc xây dựng ma trận tương tác:
-\begin{itemize}
-    \item \textbf{Customer Id:} Mã định danh duy nhất của khách hàng (User ID).
-    \item \textbf{Order Item Cardprod Id / Product Card Id:} Mã định danh duy nhất của sản phẩm (Item ID).
-    \item \textbf{Order Item Quantity \& Sales / Order Item Total:} Số lượng và tổng giá trị thanh toán của từng mặt hàng trong đơn hàng.
-    \item \textbf{Order Date (DateOrders):} Thời gian phát sinh giao dịch, sử dụng để sắp xếp chuỗi thời gian tương tác.
-    \item \textbf{Category Name \& Department Name:} Danh mục và phân loại ngành hàng của sản phẩm.
-\end{itemize}
-
-\subsection{Xây dựng ma trận tương tác và phản hồi ẩn có trọng số}
-\label{subsec:interaction_matrix}
-
-Quy trình xử lý dữ liệu chuyển đổi lịch sử giao dịch thành ma trận tương tác dạng phản hồi ẩn (Implicit Feedback). Một giao dịch mua có thể lặp lại nhiều lần giữa cùng một cặp (User, Item); do đó bước đầu tiên là gộp (aggregate) các giao dịch trùng lặp thành một cặp User--Item duy nhất trước khi áp dụng lọc $k$-core. Thứ tự này có ý nghĩa quan trọng: nếu lọc $k$-core trực tiếp trên các dòng giao dịch thô (chưa gộp), bậc (degree) của một Item có thể bị tính sai lệch do nhiều lượt mua lặp lại từ cùng một User, dẫn đến tập dữ liệu sau lọc không phản ánh đúng số User/Item riêng biệt đã tương tác.
-
-Sau khi gộp, kỹ thuật lọc $k$-core (với $k = 5$) được áp dụng lặp lại đến khi hội tụ (fixed point) để loại bỏ các khách hàng và sản phẩm có dưới $k$ lượt tương tác riêng biệt, nhằm đảm bảo mỗi thực thể còn lại có đủ dữ liệu lịch sử để học vector nhúng.
-
-Toàn bộ ID của người dùng và sản phẩm được tái lập chỉ số (Re-indexing) về chuỗi số nguyên liên tục:
-\begin{equation}
-    u \in \{0, 1, \dots, M-1\}, \quad i \in \{0, 1, \dots, N-1\}
-\end{equation}
-trong đó $M = |\mathcal{U}|$ là tổng số người dùng và $N = |\mathcal{I}|$ là tổng số sản phẩm sau khi lọc. Ma trận tương tác nhị phân $Y \in \{0, 1\}^{M \times N}$ được tạo lập với $y_{ui} = 1$ ghi nhận giao dịch thành công. Đồng thời, nghiên cứu mở rộng khảo sát biến thể tương tác có trọng số theo giá trị đơn hàng (\textit{Sales/Order Item Total}) nhằm phân biệt mức độ quan trọng giữa các giao dịch.
-
-\subsubsection{Quy trình tiền xử lý DataCo theo từng bước cụ thể}
-\label{subsubsec:dataco_steps}
-
-Quy trình gồm năm bước tuần tự, với số liệu thực đo được như sau:
-\begin{enumerate}
-    \item \textbf{Nạp dữ liệu thô:} Đọc tệp giao dịch gốc (mã hoá Latin-1) -- 180.519 dòng giao dịch, trích các trường mã khách hàng, mã sản phẩm, số lượng/giá trị đơn hàng và thời điểm đặt hàng; ghi nhận 20.652 khách hàng và 118 sản phẩm riêng biệt trước khi lọc.
-    \item \textbf{Gộp giao dịch trùng lặp:} Gộp các dòng cùng cặp (User, Item) thành một cạnh duy nhất. Trong 180.519 dòng thô, có 79.323 dòng (43,94\%) là giao dịch lặp lại của một cặp User--Item đã xuất hiện trước đó, thu được 101.196 cặp tương tác duy nhất.
-    \item \textbf{Lọc $k$-core lặp đến hội tụ:} Bảng~\ref{tab:kcore_dataco} khảo sát độ nhạy của tập dữ liệu tại $k \in \{3, 5, 10\}$. Cấu hình chuẩn $k=5$ được chọn cho toàn bộ thực nghiệm.
-    \item \textbf{Tái lập chỉ số (Re-indexing):} Ánh xạ 10.799 mã khách hàng và 100 mã sản phẩm còn lại sau lọc về $u \in \{0,\dots,10798\}$, $i \in \{0,\dots,99\}$.
-    \item \textbf{Kiểm tra tính toàn vẹn:} Xác nhận không còn User/Item nào có bậc dưới $k=5$ sau bước lọc, và tổng số tương tác còn lại (88.088) khớp với số dòng của ma trận $Y$ được tạo lập ở bước kế tiếp.
-\end{enumerate}
-
-\begin{table}[htbp]
-    \centering
-    \caption{Độ nhạy của tập dữ liệu DataCo theo ngưỡng lọc $k$-core}
-    \label{tab:kcore_dataco}
-    \begin{tabular}{|c|c|c|c|c|}
-        \hline
-        \textbf{$k$} & \textbf{Số người dùng} & \textbf{Số sản phẩm} & \textbf{Số tương tác} & \textbf{Mật độ (\%)} \\
-        \hline
-        3 & 11.943 & 100 & 92.230 & 7,72 \\
-        \hline
-        5 & 10.799 & 100 & 88.088 & 8,16 \\
-        \hline
-        10 & 2.736 & 97 & 29.749 & 11,21 \\
-        \hline
-    \end{tabular}
-\end{table}
-
-\subsection{Phân chia dữ liệu theo giao thức Leave-One-Out}
-\label{subsec:split_sampling}
-
-Nhằm đảm bảo tính khách quan và tuân thủ chuẩn đánh giá học thuật của NCF \parencite{he2017ncf}:
-\begin{itemize}
-    \item \textbf{Tập kiểm thử (Test Set):} Với mỗi người dùng $u$, tương tác mới nhất theo mốc thời gian ($i_{u, last}$) được trích xuất làm mẫu kiểm thử.
-    \item \textbf{Tập xác thực (Validation Set):} Tương tác liền kề trước đó ($i_{u, last-1}$) được dùng để theo dõi quá trình huấn luyện và chọn siêu tham số (Early Stopping).
-    \item \textbf{Tập huấn luyện (Training Set):} Toàn bộ các tương tác còn lại trước đó được đưa vào tập huấn luyện của mô hình.
-\end{itemize}
-
-Để đảm bảo không xảy ra rò rỉ thông tin (\textit{data leakage}) giữa các tập, sau khi phân chia, hệ thống thực hiện kiểm tra bắt buộc phần giao (intersection) giữa từng cặp tập ở cấp độ cặp (User, Item):
-\begin{equation}
-    \mathcal{Y}_{train} \cap \mathcal{Y}_{val} = \varnothing, \quad
-    \mathcal{Y}_{train} \cap \mathcal{Y}_{test} = \varnothing, \quad
-    \mathcal{Y}_{val} \cap \mathcal{Y}_{test} = \varnothing
-    \label{eq:disjoint_assert}
-\end{equation}
-Quy trình chỉ tiếp tục khi cả ba điều kiện trên được xác nhận thỏa mãn; đây là bước kiểm chứng tường minh nhằm loại trừ khả năng mô hình học được thông tin của mẫu kiểm thử trong quá trình huấn luyện.
-
-Bảng~\ref{tab:split_dataco} tổng hợp kết quả phân chia dữ liệu DataCo sau lọc $k$-core=5 và kết quả kiểm tra Disjoint.
-
-\begin{table}[htbp]
-    \centering
-    \caption{Kết quả phân chia Leave-One-Out và kiểm tra Disjoint trên DataCo}
-    \label{tab:split_dataco}
-    \begin{tabular}{|l|c|}
-        \hline
-        \textbf{Tập dữ liệu} & \textbf{Số tương tác} \\
-        \hline
-        Huấn luyện (Train) & 66.490 \\
-        \hline
-        Xác thực (Validation) & 10.799 \\
-        \hline
-        Kiểm thử (Test) & 10.799 \\
-        \hline
-        Giao Train $\cap$ Validation & 0 \\
-        \hline
-        Giao Train $\cap$ Test & 0 \\
-        \hline
-        Giao Validation $\cap$ Test & 0 \\
-        \hline
-    \end{tabular}
-\end{table}
+Ba đặc điểm thiết kế xuyên suốt của kiến trúc hệ thống cần nhấn mạnh: \textit{(i)} tầng tiền xử lý và tầng phân chia dữ liệu được tách biệt tường minh khỏi tầng mô hình hóa, cho phép tái sử dụng cùng một bộ dữ liệu đã xử lý cho toàn bộ các mô hình đối chứng lẫn NeuMF, đảm bảo so sánh công bằng; \textit{(ii)} nhánh Baseline (Random, Most Popular, BPR-MF) vận hành song song, độc lập với quy trình Pre-training/Fine-tuning của NeuMF, nhưng hội tụ về cùng một tầng đánh giá để đối chiếu trực tiếp trên cùng giao thức Full Ranking/Sampled-99; \textit{(iii)} tầng đánh giá tách hai nhóm chỉ số (accuracy và beyond-accuracy) nhằm kiểm chứng đồng thời độ chính xác và mức độ đa dạng/công bằng của gợi ý, tránh kết luận sai lệch chỉ dựa trên HR@K/NDCG@K.
 
 \section{Phân tích và tiền xử lý dữ liệu H\&M Personalized Fashion Recommendations}
 \label{sec:hm_pipeline}
 
-Để kiểm chứng khả năng tổng quát hoá của quy trình xử lý dữ liệu và mô hình NeuMF ngoài phạm vi bộ dữ liệu DataCo, dự án áp dụng cùng một pipeline (mục~\ref{sec:system_architecture}) lên bộ dữ liệu thứ hai: H\&M Personalized Fashion Recommendations. Đây là bộ dữ liệu có quy mô lớn hơn nhiều so với DataCo, đặt ra một thách thức kỹ thuật riêng về tiền xử lý mà dự án phải giải quyết bổ sung.
+Bộ dữ liệu thực nghiệm của dự án là H\&M Personalized Fashion Recommendations \parencite{hm2022kaggle}, phản ánh hoạt động mua sắm thời trang thực tế của một chuỗi bán lẻ lớn. Quy mô của bộ dữ liệu đặt ra một thách thức kỹ thuật riêng về tiền xử lý mà dự án phải giải quyết trước khi áp dụng quy trình xử lý chuẩn (mục~\ref{sec:system_architecture}).
 
 \subsection{Đặc tả bộ dữ liệu và thách thức về quy mô}
 \label{subsec:hm_description}
 
-Tệp giao dịch gốc chứa 31.788.324 dòng giao dịch mua hàng thời trang thực tế, ghi nhận 1.362.281 khách hàng và 104.547 sản phẩm riêng biệt -- gấp khoảng 176 lần số dòng của DataCo. Bốn trường dữ liệu được sử dụng để xây dựng sự kiện tương tác: ngày mua, mã khách hàng, mã sản phẩm và giá trị giao dịch.
+Tệp giao dịch gốc chứa 31.788.324 dòng giao dịch mua hàng thời trang thực tế, ghi nhận 1.362.281 khách hàng và 104.547 sản phẩm riêng biệt. Bốn trường dữ liệu được sử dụng để xây dựng sự kiện tương tác:
+\begin{itemize}
+    \item \textbf{customer\_id:} Mã định danh khách hàng (User ID), dạng chuỗi mã băm 64 ký tự.
+    \item \textbf{article\_id:} Mã định danh sản phẩm (Item ID), mã số 10 chữ số.
+    \item \textbf{t\_dat:} Ngày mua, dùng để sắp xếp chuỗi thời gian tương tác (chỉ ở mức ngày, không có giờ).
+    \item \textbf{price:} Giá giao dịch (đã được nhà cung cấp dữ liệu chuẩn hoá), dùng cho biến thể phản hồi có trọng số.
+\end{itemize}
 
 Hai đặc điểm của dữ liệu gốc gây khó khăn cho việc xử lý lặp lại nhiều lần trên phần cứng CPU phổ thông:
 \begin{itemize}
@@ -226,7 +130,39 @@ Bảng~\ref{tab:hm_cache} so sánh hiệu quả trước và sau khi áp dụng 
 
 Nhờ vậy, các lần chạy tiền xử lý/thực nghiệm sau đó chỉ cần đọc lại tệp cache đã nén thay vì phân tích lại toàn bộ tệp CSV gốc mỗi lần, giúp pipeline khả thi trên phần cứng CPU phổ thông.
 
-\subsection{Áp dụng quy trình tiền xử lý chung và lựa chọn quy mô thực nghiệm}
+\subsection{Xây dựng ma trận tương tác và phản hồi ẩn có trọng số}
+\label{subsec:interaction_matrix}
+
+Quy trình xử lý dữ liệu chuyển đổi lịch sử giao dịch thành ma trận tương tác dạng phản hồi ẩn (Implicit Feedback). Một giao dịch mua có thể lặp lại nhiều lần giữa cùng một cặp (User, Item); do đó bước đầu tiên là gộp (aggregate) các giao dịch trùng lặp thành một cặp User--Item duy nhất trước khi áp dụng lọc $k$-core. Thứ tự này có ý nghĩa quan trọng: nếu lọc $k$-core trực tiếp trên các dòng giao dịch thô (chưa gộp), bậc (degree) của một Item có thể bị tính sai lệch do nhiều lượt mua lặp lại từ cùng một User, dẫn đến tập dữ liệu sau lọc không phản ánh đúng số User/Item riêng biệt đã tương tác.
+
+Sau khi gộp, kỹ thuật lọc $k$-core (với $k = 5$) được áp dụng lặp lại đến khi hội tụ (fixed point) để loại bỏ các khách hàng và sản phẩm có dưới $k$ lượt tương tác riêng biệt, nhằm đảm bảo mỗi thực thể còn lại có đủ dữ liệu lịch sử để học vector nhúng.
+
+Toàn bộ ID của người dùng và sản phẩm được tái lập chỉ số (Re-indexing) về chuỗi số nguyên liên tục:
+\begin{equation}
+    u \in \{0, 1, \dots, M-1\}, \quad i \in \{0, 1, \dots, N-1\}
+\end{equation}
+trong đó $M = |\mathcal{U}|$ là tổng số người dùng và $N = |\mathcal{I}|$ là tổng số sản phẩm sau khi lọc. Ma trận tương tác nhị phân $Y \in \{0, 1\}^{M \times N}$ được tạo lập với $y_{ui} = 1$ ghi nhận giao dịch thành công. Ngoài dạng nhị phân mặc định, quy trình hỗ trợ biến thể tương tác có trọng số theo giá trị giao dịch (trường \texttt{price}) nhằm phân biệt mức độ quan trọng giữa các giao dịch; hệ số chuẩn hoá của biến thể này chỉ được ước lượng trên tập huấn luyện để tránh rò rỉ thông tin.
+
+\subsection{Phân chia dữ liệu theo giao thức Leave-One-Out}
+\label{subsec:split_sampling}
+
+Nhằm đảm bảo tính khách quan và tuân thủ chuẩn đánh giá học thuật của NCF \parencite{he2017ncf}:
+\begin{itemize}
+    \item \textbf{Tập kiểm thử (Test Set):} Với mỗi người dùng $u$, tương tác mới nhất theo mốc thời gian ($i_{u, last}$) được trích xuất làm mẫu kiểm thử; khi nhiều tương tác có cùng ngày mua, thứ tự dòng trong tệp gốc được dùng làm tiêu chí phân định (tie-break) tất định.
+    \item \textbf{Tập xác thực (Validation Set):} Tương tác liền kề trước đó ($i_{u, last-1}$) được dùng để theo dõi quá trình huấn luyện và chọn siêu tham số (Early Stopping).
+    \item \textbf{Tập huấn luyện (Training Set):} Toàn bộ các tương tác còn lại trước đó được đưa vào tập huấn luyện của mô hình.
+\end{itemize}
+
+Để đảm bảo không xảy ra rò rỉ thông tin (\textit{data leakage}) giữa các tập, sau khi phân chia, hệ thống thực hiện kiểm tra bắt buộc phần giao (intersection) giữa từng cặp tập ở cấp độ cặp (User, Item):
+\begin{equation}
+    \mathcal{Y}_{train} \cap \mathcal{Y}_{val} = \varnothing, \quad
+    \mathcal{Y}_{train} \cap \mathcal{Y}_{test} = \varnothing, \quad
+    \mathcal{Y}_{val} \cap \mathcal{Y}_{test} = \varnothing
+    \label{eq:disjoint_assert}
+\end{equation}
+Quy trình chỉ tiếp tục khi cả ba điều kiện trên được xác nhận thỏa mãn; đây là bước kiểm chứng tường minh nhằm loại trừ khả năng mô hình học được thông tin của mẫu kiểm thử trong quá trình huấn luyện.
+
+\subsection{Áp dụng quy trình tiền xử lý và lựa chọn quy mô thực nghiệm}
 \label{subsec:hm_apply}
 
 Sau bước cache hoá, dữ liệu H\&M được đưa qua đúng quy trình tiền xử lý chuẩn đã trình bày ở mục~\ref{subsec:interaction_matrix}--\ref{subsec:split_sampling}: gộp giao dịch trùng lặp theo cặp User--Item, lọc $k$-core lặp đến hội tụ, tái lập chỉ số liên tục và phân chia Leave-One-Out kèm kiểm tra Disjoint bắt buộc.
@@ -250,7 +186,16 @@ Sau bước cache hoá, dữ liệu H\&M được đưa qua đúng quy trình ti
     \end{tabular}
 \end{table}
 
-Ở quy mô đầy đủ, tại $k=5$ có 889.062 người dùng và 90.690 sản phẩm sau lọc. Chi phí của giao thức Full Ranking tỉ lệ với tích số người dùng kiểm thử và số sản phẩm trong catalog cho \emph{mỗi} mô hình: với 889.062 người dùng kiểm thử $\times$ 90.690 sản phẩm $\approx 8,06 \times 10^{10}$ (80,6 tỷ) cặp cần tính điểm cho một mô hình duy nhất, nhân thêm với 7--8 mô hình cần đánh giá (Bảng~\ref{tab:results_hm}) -- ước tính vượt xa khả năng xử lý của CPU phổ thông trong thời gian hợp lý của một lần kiểm tra số liệu. Do đó, dự án quyết định giữ phạm vi thực nghiệm định lượng (huấn luyện và đánh giá mô hình) trên lát cắt 100.000 dòng giao dịch đầu tiên của tệp cache, đồng thời báo cáo trung thực quy mô đầy đủ ở Bảng~\ref{tab:kcore_hm_full} thay vì suy đoán; việc mở rộng đánh giá lên toàn bộ dữ liệu -- khả thi nếu chuyển giao thức đánh giá chính sang Sampled-99 (chi phí không phụ thuộc kích thước catalog) và chỉ dùng Full Ranking như một phép đối chiếu trên mẫu con người dùng -- được đề xuất là hướng phát triển (mục~\ref{sec:huongphattrien}). Bảng~\ref{tab:kcore_hm} khảo sát độ nhạy $k$-core trên lát cắt 100.000 dòng thực sự dùng để huấn luyện/đánh giá trong báo cáo này.
+Ở quy mô đầy đủ, tại $k=5$ có 889.062 người dùng và 90.690 sản phẩm sau lọc. Chi phí của giao thức Full Ranking tỉ lệ với tích số người dùng kiểm thử và số sản phẩm trong catalog cho \emph{mỗi} mô hình: với 889.062 người dùng kiểm thử $\times$ 90.690 sản phẩm $\approx 8,06 \times 10^{10}$ (80,6 tỷ) cặp cần tính điểm cho một mô hình duy nhất, nhân thêm với 7--8 mô hình cần đánh giá (Bảng~\ref{tab:results_hm}) -- ước tính vượt xa khả năng xử lý của CPU phổ thông trong thời gian hợp lý của một lần kiểm tra số liệu. Do đó, dự án quyết định giữ phạm vi thực nghiệm định lượng (huấn luyện và đánh giá mô hình) trên lát cắt 100.000 dòng giao dịch đầu tiên của tệp giao dịch gốc, đồng thời báo cáo trung thực quy mô đầy đủ ở Bảng~\ref{tab:kcore_hm_full} thay vì suy đoán; việc mở rộng đánh giá lên toàn bộ dữ liệu -- khả thi nếu chuyển giao thức đánh giá chính sang Sampled-99 (chi phí không phụ thuộc kích thước catalog) và chỉ dùng Full Ranking như một phép đối chiếu trên mẫu con người dùng -- được đề xuất là hướng phát triển (mục~\ref{sec:huongphattrien}).
+
+Trên lát cắt này, quy trình tiền xử lý gồm năm bước tuần tự, với số liệu thực đo được như sau:
+\begin{enumerate}
+    \item \textbf{Nạp dữ liệu thô:} Đọc 100.000 dòng giao dịch đầu tiên, ghi nhận 28.317 khách hàng và 15.581 sản phẩm riêng biệt. Do tệp gốc được sắp xếp theo ngày mua, lát cắt này chỉ phủ 3 ngày giao dịch (20/09/2018 -- 22/09/2018).
+    \item \textbf{Gộp giao dịch trùng lặp:} Trong 100.000 dòng thô, có 10.098 dòng (10,10\%) là giao dịch lặp lại của một cặp User--Item đã xuất hiện trước đó, thu được 89.902 cặp tương tác duy nhất.
+    \item \textbf{Lọc $k$-core lặp đến hội tụ:} Bảng~\ref{tab:kcore_hm} khảo sát độ nhạy của tập dữ liệu tại $k \in \{3, 5, 10\}$. Cấu hình chuẩn $k=5$ được chọn cho toàn bộ thực nghiệm.
+    \item \textbf{Tái lập chỉ số (Re-indexing):} Ánh xạ 1.743 mã khách hàng và 1.080 mã sản phẩm còn lại sau lọc về $u \in \{0,\dots,1742\}$, $i \in \{0,\dots,1079\}$.
+    \item \textbf{Kiểm tra tính toàn vẹn:} Xác nhận không còn User/Item nào có bậc dưới $k=5$ sau bước lọc, và tổng số tương tác còn lại (11.686) khớp với số dòng của ma trận $Y$.
+\end{enumerate}
 
 \begin{table}[htbp]
     \centering
@@ -269,7 +214,7 @@ Sau bước cache hoá, dữ liệu H\&M được đưa qua đúng quy trình ti
     \end{tabular}
 \end{table}
 
-Ở $k=10$, tập dữ liệu H\&M (trên lát cắt 100.000 dòng) không còn User/Item nào thoả điều kiện bậc tối thiểu -- phản ánh đúng đặc trưng cực thưa (extreme sparsity) của bài toán gợi ý thời trang so với DataCo. Bảng~\ref{tab:split_hm} tổng hợp kết quả phân chia Leave-One-Out ở $k=5$.
+Ở $k=10$, tập dữ liệu H\&M (trên lát cắt 100.000 dòng) không còn User/Item nào thoả điều kiện bậc tối thiểu -- phản ánh đúng đặc trưng cực thưa (extreme sparsity) của bài toán gợi ý thời trang: sau lọc $k=5$, mật độ ma trận tương tác chỉ đạt 0,62\%. Bảng~\ref{tab:split_hm} tổng hợp kết quả phân chia Leave-One-Out ở $k=5$.
 
 \begin{table}[htbp]
     \centering
@@ -294,31 +239,6 @@ Sau bước cache hoá, dữ liệu H\&M được đưa qua đúng quy trình ti
     \end{tabular}
 \end{table}
 
-Bảng~\ref{tab:dataco_vs_hm} đối chiếu trực tiếp đặc trưng của hai bộ dữ liệu sau khi tiền xử lý, cho thấy H\&M có mật độ tương tác thấp hơn DataCo khoảng 13 lần ở cùng quy mô lát cắt đang dùng để thực nghiệm -- một yếu tố cần lưu ý khi diễn giải và so sánh kết quả mô hình giữa hai bộ dữ liệu ở Chương~\ref{chap:thucnghiem}.
-
-\begin{table}[htbp]
-    \centering
-    \caption{So sánh đặc trưng dữ liệu sau tiền xử lý: DataCo và H\&M}
-    \label{tab:dataco_vs_hm}
-    \begin{tabular}{|l|c|c|}
-        \hline
-        \textbf{Đặc trưng} & \textbf{DataCo} & \textbf{H\&M (lát cắt)} \\
-        \hline
-        Số dòng giao dịch thô sử dụng & 180.519 & 100.000 \\
-        \hline
-        Tỷ lệ giao dịch lặp cặp User--Item & 43,94\% & 10,10\% \\
-        \hline
-        Số người dùng sau $k$-core=5 & 10.799 & 1.743 \\
-        \hline
-        Số sản phẩm sau $k$-core=5 & 100 & 1.080 \\
-        \hline
-        Số tương tác sau $k$-core=5 & 88.088 & 11.686 \\
-        \hline
-        Mật độ ma trận tương tác & 8,16\% & 0,62\% \\
-        \hline
-    \end{tabular}
-\end{table}
-
 \section{Thiết kế kiến trúc mô hình NeuMF}
 \label{sec:model_design}
 
@@ -330,7 +250,7 @@ Một trong những quyết định thiết kế quan trọng nhất của NeuMF
     \item Bảng Embedding nhánh GMF: $P^G \in \mathbb{R}^{M \times d_G}$ (cho $M$ người dùng) và $Q^G \in \mathbb{R}^{N \times d_G}$ (cho $N$ sản phẩm).
     \item Bảng Embedding nhánh MLP: $P^M \in \mathbb{R}^{M \times d_M}$ và $Q^M \in \mathbb{R}^{N \times d_M}$.
 \end{itemize}
-Trong các thực nghiệm tiêu chuẩn, kích thước số chiều nhúng được thiết lập đồng đều $d_G = d_M = 32 = d$ (Bảng~\ref{tab:hyperparams}); đây là giá trị mặc định phổ biến trong tài liệu NCF gốc, chưa được quét (sweep) qua các giá trị khác trong phạm vi đề tài này (đã ghi nhận là hạn chế ở mục~\ref{subsec:ablation}). Về mặt chi phí bộ nhớ, tổng số tham số Embedding của một mô hình tỉ lệ tuyến tính với $(M+N) \times d$ -- giải thích trực tiếp vì sao số tham số của NeuMF trên H\&M (183.456, Bảng~\ref{tab:training_summary_hm}) nhỏ hơn nhiều so với trên DataCo dù $N$ (số sản phẩm) của H\&M lớn hơn: vì đại lượng chi phối là $M$ (số người dùng), và ở lát cắt H\&M đang dùng $M=1.743$ nhỏ hơn $M=10.799$ của DataCo.
+Trong các thực nghiệm tiêu chuẩn, kích thước số chiều nhúng được thiết lập đồng đều $d_G = d_M = 32 = d$ (Bảng~\ref{tab:hyperparams}); đây là giá trị mặc định phổ biến trong tài liệu NCF gốc, chưa được quét (sweep) qua các giá trị khác trong phạm vi đề tài này (đã ghi nhận là hạn chế ở mục~\ref{subsec:ablation}). Về mặt chi phí bộ nhớ, tổng số tham số Embedding của một mô hình tỉ lệ tuyến tính với $(M+N) \times d$: trên lát cắt H\&M, $(1.743 + 1.080) \times 32 = 90.336$ tham số cho một cặp bảng Embedding -- khớp với số tham số của BPR-MF (Bảng~\ref{tab:training_summary_hm}); NeuMF dùng hai cặp bảng độc lập (GMF và MLP) nên có số tham số xấp xỉ gấp đôi (183.456).
 
 \subsection{Thiết kế nhánh Generalized Matrix Factorization (GMF)}
 \label{subsec:gmf_design}
@@ -352,7 +272,7 @@ Mạng MLP được cấu hình theo kiến trúc tháp thu hẹp dần kích th
 \begin{equation}
     [64 \longrightarrow 32 \longrightarrow 16 \longrightarrow 8]
 \end{equation}
-Mỗi tầng ẩn tích hợp một phép biến đổi tuyến tính, hàm kích hoạt phi tuyến ReLU (để mạng thực sự có khả năng biểu diễn phi tuyến, không suy biến về một phép biến đổi tuyến tính duy nhất) và lớp Dropout ($p = 0{,}2$, tức ngẫu nhiên "tắt" 20\% nơ-ron mỗi lượt huấn luyện) để kiểm soát hiện tượng quá khớp (overfitting) -- một rủi ro thực sự đáng lưu ý với mạng MLP có nhiều tham số hơn GMF trong khi dữ liệu huấn luyện tương đối nhỏ (66.490 tương tác trên DataCo, Bảng~\ref{tab:split_dataco}).
+Mỗi tầng ẩn tích hợp một phép biến đổi tuyến tính, hàm kích hoạt phi tuyến ReLU (để mạng thực sự có khả năng biểu diễn phi tuyến, không suy biến về một phép biến đổi tuyến tính duy nhất) và lớp Dropout ($p = 0{,}2$, tức ngẫu nhiên "tắt" 20\% nơ-ron mỗi lượt huấn luyện) để kiểm soát hiện tượng quá khớp (overfitting) -- một rủi ro thực sự đáng lưu ý với mạng MLP có nhiều tham số hơn GMF trong khi dữ liệu huấn luyện rất nhỏ (chỉ 8.200 tương tác trên lát cắt H\&M, Bảng~\ref{tab:split_hm}).
 
 \subsection{Mô hình đối chứng Early Fusion}
 \label{subsec:early_fusion_design}
@@ -384,7 +304,7 @@ Cách viết tách $h_G^T(\cdot) + h_M^T(\cdot)$ ở vế phải cho thấy rõ 
 \subsection{Kỹ thuật lấy mẫu tiêu cực động (Dynamic Negative Sampling)}
 \label{subsec:dynamic_sampling}
 
-Dữ liệu phản hồi ẩn (mục~\ref{subsec:feedback_types}) chỉ ghi nhận các tương tác \emph{đã xảy ra} ($y_{ui}=1$) -- không có nhãn tương tác âm tường minh nào trong dữ liệu gốc để mô hình học phân biệt "sản phẩm phù hợp" và "sản phẩm không phù hợp". Kỹ thuật lấy mẫu tiêu cực (Negative Sampling) giải quyết vấn đề này bằng cách \emph{giả định} rằng các sản phẩm User chưa từng tương tác nhiều khả năng là tiêu cực (dù trên thực tế, một phần trong số đó có thể chỉ đơn giản là User chưa biết đến, không hẳn là không thích). Cụ thể, trong mỗi epoch huấn luyện, với mỗi tương tác tích cực $(u, i) \in \mathcal{Y}_{train}$, hệ thống lấy mẫu ngẫu nhiên $N_{ratio}$ sản phẩm $j \in \mathcal{I} \setminus \mathcal{I}_u$ (tập sản phẩm User $u$ chưa từng tương tác trong toàn bộ lịch sử, không riêng tập train) và gán nhãn nhị phân $y_{uj} = 0$ cho các cặp này. Với $N_{ratio}=4$ (Bảng~\ref{tab:hyperparams}), mỗi tương tác tích cực sinh ra 4 cặp tiêu cực tương ứng, khiến tỷ lệ nhãn dương/âm trong mỗi epoch huấn luyện là $1{:}4$ -- một tỷ lệ giúp cân bằng giữa việc mô hình học đủ tín hiệu phân biệt và việc không để lớp âm áp đảo hoàn toàn lớp dương (vốn đã là thiểu số tự nhiên trong dữ liệu phản hồi ẩn). Điểm quan trọng cần nhấn mạnh: việc lấy mẫu được thực hiện lại (\textit{re-sample}) hoàn toàn ngẫu nhiên ở \emph{mỗi} epoch (thay vì cố định một tập âm duy nhất cho toàn bộ quá trình huấn luyện) -- gọi là lấy mẫu \emph{động} -- giúp mô hình được "nhìn thấy" nhiều tổ hợp cặp âm khác nhau qua các epoch, mở rộng không gian khám phá và giảm nguy cơ mô hình học vẹt một tập âm cố định.
+Dữ liệu phản hồi ẩn (mục~\ref{subsec:feedback_types}) chỉ ghi nhận các tương tác \emph{đã xảy ra} ($y_{ui}=1$) -- không có nhãn tương tác âm tường minh nào trong dữ liệu gốc để mô hình học phân biệt "sản phẩm phù hợp" và "sản phẩm không phù hợp". Kỹ thuật lấy mẫu tiêu cực (Negative Sampling) giải quyết vấn đề này bằng cách \emph{giả định} rằng các sản phẩm User chưa từng tương tác nhiều khả năng là tiêu cực (dù trên thực tế, một phần trong số đó có thể chỉ đơn giản là User chưa biết đến, không hẳn là không thích). Cụ thể, trong mỗi epoch huấn luyện, với mỗi tương tác tích cực $(u, i) \in \mathcal{Y}_{train}$, hệ thống lấy mẫu ngẫu nhiên $N_{ratio}$ sản phẩm $j \in \mathcal{I} \setminus \mathcal{I}_u^{train}$ (tập sản phẩm User $u$ chưa tương tác trong tập huấn luyện -- chỉ dùng tập huấn luyện để không rò rỉ thông tin của tập xác thực/kiểm thử vào quá trình huấn luyện) và gán nhãn nhị phân $y_{uj} = 0$ cho các cặp này. Với $N_{ratio}=4$ (Bảng~\ref{tab:hyperparams}), mỗi tương tác tích cực sinh ra 4 cặp tiêu cực tương ứng, khiến tỷ lệ nhãn dương/âm trong mỗi epoch huấn luyện là $1{:}4$ -- một tỷ lệ giúp cân bằng giữa việc mô hình học đủ tín hiệu phân biệt và việc không để lớp âm áp đảo hoàn toàn lớp dương (vốn đã là thiểu số tự nhiên trong dữ liệu phản hồi ẩn). Điểm quan trọng cần nhấn mạnh: việc lấy mẫu được thực hiện lại (\textit{re-sample}) hoàn toàn ngẫu nhiên ở \emph{mỗi} epoch (thay vì cố định một tập âm duy nhất cho toàn bộ quá trình huấn luyện) -- gọi là lấy mẫu \emph{động} -- giúp mô hình được "nhìn thấy" nhiều tổ hợp cặp âm khác nhau qua các epoch, mở rộng không gian khám phá và giảm nguy cơ mô hình học vẹt một tập âm cố định.
 
 \subsection{Hàm tổn thất Binary Cross-Entropy (BCE) và Regularization}
 \label{subsec:bce_regularization}
@@ -402,12 +322,12 @@ trong đó $\Theta$ là toàn bộ tập tham số có thể học của mô hì
 \subsection{Chiến lược tiền huấn luyện (Pre-training GMF + MLP)}
 \label{subsec:pretraining_strategy}
 
-Do hàm mất mát của NeuMF (Công thức~\eqref{eq:bce_loss_full}) là một hàm không lồi (non-convex) với không gian tham số rất lớn (700.320 tham số trên DataCo, Bảng~\ref{tab:training_summary_dataco}), việc khởi tạo ngẫu nhiên toàn bộ mạng từ đầu (NeuMF-Scratch) có nguy cơ hội tụ về một điểm cực tiểu cục bộ kém. Chiến lược tiền huấn luyện (Pre-training), được đề xuất trong công trình gốc \parencite{he2017ncf} và cài đặt trong quy trình huấn luyện của đề tài, giải quyết vấn đề này bằng cách chia quá trình tối ưu hóa thành hai giai đoạn tách biệt, thay vì tối ưu đồng thời một bài toán khó ngay từ đầu:
+Do hàm mất mát của NeuMF (Công thức~\eqref{eq:bce_loss_full}) là một hàm không lồi (non-convex) với không gian tham số lớn (183.456 tham số trên lát cắt H\&M, Bảng~\ref{tab:training_summary_hm}), việc khởi tạo ngẫu nhiên toàn bộ mạng từ đầu (NeuMF-Scratch) có nguy cơ hội tụ về một điểm cực tiểu cục bộ kém. Chiến lược tiền huấn luyện (Pre-training), được đề xuất trong công trình gốc \parencite{he2017ncf} và cài đặt trong quy trình huấn luyện của đề tài, giải quyết vấn đề này bằng cách chia quá trình tối ưu hóa thành hai giai đoạn tách biệt, thay vì tối ưu đồng thời một bài toán khó ngay từ đầu:
 \begin{enumerate}
     \item \textbf{Huấn luyện trước (Pre-train):} Huấn luyện độc lập mô hình GMF và mô hình MLP -- mỗi mô hình là một bài toán tối ưu \emph{lồi hơn nhiều} vì không gian tham số nhỏ hơn và cấu trúc đơn giản hơn NeuMF -- bằng thuật toán Adam \parencite{kingma2014adam} (tốc độ học thích ứng theo từng tham số, hội tụ nhanh cho pha khởi tạo) cho đến khi hội tụ, sau đó lưu lại các vector Embedding và trọng số đã tối ưu của từng nhánh.
     \item \textbf{Hợp nhất và Tinh chỉnh (Fine-tune):} Khởi tạo bảng Embedding của NeuMF trực tiếp từ các trọng số GMF/MLP đã tiền huấn luyện ở bước trên (thay vì khởi tạo ngẫu nhiên) -- nghĩa là NeuMF ở giai đoạn tinh chỉnh bắt đầu ngay tại một điểm trong không gian tham số đã biết là "tốt" cho từng nhánh riêng lẻ; khởi tạo vector trọng số đầu ra $h \leftarrow [0{,}5\, h_{GMF}^T, 0{,}5\, h_{MLP}^T]^T$ (gán đóng góp ban đầu bằng nhau cho hai nhánh, để mô hình tự điều chỉnh lại tỷ trọng qua quá trình huấn luyện tiếp theo); sau đó tiếp tục tinh chỉnh (fine-tune) toàn bộ mạng bằng thuật toán SGD với tốc độ học nhỏ hơn ($\eta=0{,}01$, Bảng~\ref{tab:hyperparams}) -- tốc độ học nhỏ ở bước này nhằm tránh phá vỡ các trọng số đã tốt từ bước tiền huấn luyện.
 \end{enumerate}
-Mô hình NeuMF-Pretrained (khởi tạo theo quy trình trên) và NeuMF-Scratch (khởi tạo ngẫu nhiên, bỏ qua bước 1) được huấn luyện và đánh giá song song trong mọi thực nghiệm của đề tài, cho phép định lượng chính xác mức độ đóng góp của riêng chiến lược Pre-training (không lẫn với đóng góp của kiến trúc) -- kết quả định lượng cụ thể được trình bày ở mục~\ref{subsec:ablation}, cho thấy hiệu quả của Pre-training phụ thuộc mạnh vào quy mô và độ thưa của dữ liệu.
+Mô hình NeuMF-Pretrained (khởi tạo theo quy trình trên) và NeuMF-Scratch (khởi tạo ngẫu nhiên, bỏ qua bước 1) được huấn luyện và đánh giá song song trong mọi thực nghiệm của đề tài, cho phép định lượng chính xác mức độ đóng góp của riêng chiến lược Pre-training (không lẫn với đóng góp của kiến trúc) -- kết quả định lượng cụ thể được trình bày ở mục~\ref{subsec:ablation}, cho thấy Pre-training đặc biệt quan trọng trên dữ liệu thưa như H\&M.
 
 \subsection{Bảng thiết lập siêu tham số và kỹ thuật dừng sớm (Early Stopping)}
 \label{subsec:hyperparameters_setup}
@@ -422,7 +342,7 @@ Bảng~\ref{tab:hyperparams} tổng hợp các siêu tham số tiêu chuẩn đ�
         \hline
         \textbf{Siêu tham số} & \textbf{Ký hiệu} & \textbf{Giá trị thiết lập} \\
         \hline
-        Kích thước lô (Batch Size) & $B$ & $256$ \\
+        Kích thước lô (Batch Size) & $B$ & $512$ \\
         \hline
         Tốc độ học (Learning Rate) & $\eta$ & $0{,}001$ (Adam) / $0{,}01$ (SGD) \\
         \hline
@@ -436,9 +356,9 @@ Bảng~\ref{tab:hyperparams} tổng hợp các siêu tham số tiêu chuẩn đ�
         \hline
         Hệ số điều chuẩn $L_2$ (Weight Decay) & $\lambda$ & $10^{-6}$ \\
         \hline
-        Số epoch tối đa & -- & $50$ \\
+        Số epoch tối đa (mỗi pha Pre-train / Fine-tune) & -- & $20$ \\
         \hline
-        Độ kiên nhẫn dừng sớm (Early Stopping Patience) & -- & $10$ \\
+        Độ kiên nhẫn dừng sớm (Early Stopping Patience) & -- & $7$ \\
         \hline
     \end{tabularx}
 \end{table}
@@ -497,11 +417,11 @@ Bảng~\ref{tab:demo_api} đặc tả các chức năng chính của Tầng 2.
         \hline
         Kiểm tra tình trạng dịch vụ & Xác nhận dịch vụ đang chạy và mô hình đã nạp thành công, phục vụ giám sát khi triển khai. \\
         \hline
-        Gợi ý Top-K cho khách hàng & Trả về danh sách $K$ sản phẩm gợi ý cho một khách hàng đã có trong dữ liệu huấn luyện, cho phép chọn số lượng gợi ý, bộ dữ liệu và mô hình cụ thể trong số các mô hình đã huấn luyện. \\
+        Gợi ý Top-K cho khách hàng & Trả về danh sách $K$ sản phẩm gợi ý cho một khách hàng đã có trong dữ liệu huấn luyện, cho phép chọn số lượng gợi ý và mô hình cụ thể trong số các mô hình đã huấn luyện. \\
         \hline
         Sản phẩm tương tự & Trả về các sản phẩm có vector Embedding GMF gần nhất với sản phẩm cho trước (minh họa trực quan không gian Embedding đã học, mục~\ref{subsec:embedding_design}). \\
         \hline
-        Liệt kê mô hình khả dụng & Liệt kê các mô hình đã huấn luyện kèm số liệu tóm tắt từ Bảng~\ref{tab:results}/\ref{tab:results_hm}, giúp người dùng demo hiểu sự khác biệt hiệu năng trước khi chọn mô hình. \\
+        Liệt kê mô hình khả dụng & Liệt kê các mô hình đã huấn luyện kèm số liệu tóm tắt từ Bảng~\ref{tab:results_hm}, giúp người dùng demo hiểu sự khác biệt hiệu năng trước khi chọn mô hình. \\
         \hline
     \end{tabularx}
 \end{table}
@@ -518,19 +438,12 @@ Luồng xử lý cụ thể của chức năng gợi ý Top-K -- chức năng tr
 \subsection{Lựa chọn mô hình triển khai và mục tiêu phi chức năng}
 \label{subsec:demo_model_choice}
 
-Việc chọn mô hình nào làm mặc định cho demo dựa trực tiếp trên số liệu định lượng đã có, không phải quyết định chủ quan: NeuMF (pre-trained) được chọn làm lựa chọn mặc định vì cân bằng tốt giữa độ chính xác và độ ổn định trên cả hai bộ dữ liệu (Bảng~\ref{tab:results}, \ref{tab:results_hm}); demo vẫn cho phép người dùng chuyển sang GMF/MLP/Early Fusion để tự mình đối chiếu trực quan với kết luận Ablation Study ở mục~\ref{subsec:ablation}. Về mục tiêu phi chức năng: vì Tầng 2+3 chỉ thực hiện một lượt suy diễn thuận (không lan truyền ngược, không cập nhật trọng số) trên một mô hình có tối đa 700.320 tham số (Bảng~\ref{tab:training_summary_dataco}), thời gian phản hồi mỗi yêu cầu gợi ý được đặt mục tiêu thiết kế ở mức mili-giây trên CPU -- đây là mục tiêu thiết kế (design target) cần đo đạc và xác nhận khi triển khai thực tế, chưa phải số liệu đã đo trong phạm vi báo cáo này.
+Việc chọn mô hình nào làm mặc định cho demo dựa trực tiếp trên số liệu định lượng đã có, không phải quyết định chủ quan: NeuMF (pre-trained) được chọn làm lựa chọn mặc định vì thuộc nhóm có NDCG@10 cao nhất (Bảng~\ref{tab:results_hm}) và là đối tượng nghiên cứu chính của đề tài; demo vẫn cho phép người dùng chuyển sang GMF/MLP/Early Fusion để tự mình đối chiếu trực quan với kết luận Ablation Study ở mục~\ref{subsec:ablation}. Về mục tiêu phi chức năng: vì Tầng 2+3 chỉ thực hiện một lượt suy diễn thuận (không lan truyền ngược, không cập nhật trọng số) trên một mô hình có tối đa 183.456 tham số (Bảng~\ref{tab:training_summary_hm}), thời gian phản hồi mỗi yêu cầu gợi ý được đặt mục tiêu thiết kế ở mức mili-giây trên CPU -- đây là mục tiêu thiết kế (design target) cần đo đạc và xác nhận khi triển khai thực tế, chưa phải số liệu đã đo trong phạm vi báo cáo này.
 
 \subsection{Minh họa hệ thống demo đã cài đặt}
 \label{subsec:demo_screenshots}
 
-Thiết kế ở mục~\ref{subsec:demo_architecture}--\ref{subsec:demo_model_choice} đã được cài đặt thành hệ thống chạy được và kiểm thử thành công, đúng đặc tả chức năng ở Bảng~\ref{tab:demo_api}. Hình~\ref{fig:demo_screenshot_dataco} và~\ref{fig:demo_screenshot_hm} chụp lại giao diện thực tế khi truy vấn gợi ý cho một khách hàng cụ thể trên từng bộ dữ liệu -- danh sách Top-10 sản phẩm, tên sản phẩm thật (tra cứu từ dữ liệu thô) và điểm dự đoán $\hat{y}_{ui}$ đều là kết quả suy diễn trực tiếp từ mô hình NeuMF (pre-trained) đã huấn luyện, không phải dữ liệu minh họa.
-
-\begin{figure}[htbp]
-    \centering
-    \includegraphics[width=\textwidth]{figures/demo/demo_dataco.png}
-    \caption{Giao diện demo -- gợi ý Top-10 cho một khách hàng DataCo bằng NeuMF (pre-trained)}
-    \label{fig:demo_screenshot_dataco}
-\end{figure}
+Thiết kế ở mục~\ref{subsec:demo_architecture}--\ref{subsec:demo_model_choice} đã được cài đặt thành hệ thống chạy được và kiểm thử thành công, đúng đặc tả chức năng ở Bảng~\ref{tab:demo_api}. Hình~\ref{fig:demo_screenshot_hm} chụp lại giao diện thực tế khi truy vấn gợi ý cho một khách hàng H\&M cụ thể -- danh sách Top-10 sản phẩm, tên sản phẩm thật (tra cứu từ dữ liệu thô) và điểm dự đoán $\hat{y}_{ui}$ đều là kết quả suy diễn trực tiếp từ mô hình NeuMF (pre-trained) đã huấn luyện, không phải dữ liệu minh họa.
 
 \begin{figure}[htbp]
     \centering
