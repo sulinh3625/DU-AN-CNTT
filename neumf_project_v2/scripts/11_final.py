@@ -1,9 +1,9 @@
-"""Đánh giá cuối trên TEST (PREREG mục 5): cấu hình tốt nhất trên val (docs/audit/best_configs.json), 3 seed.
+"""Đánh giá cuối trên TEST (PREREG mục 5): cấu hình tốt nhất trên val (audit/best_configs.json), 3 seed.
 
     python scripts/11_final.py --reason "P4b: đánh giá cuối theo PREREG"
 
-Khoá test: từ chối nếu docs/audit/PREREG.md chưa commit, thiếu --reason, hoặc working tree có file đã theo dõi bị sửa.
-Mỗi seed ghi 1 dòng docs/audit/test_access_log.csv TRƯỚC khi chấm test. Mỗi mô hình train trên train, early stopping
+Khoá test: từ chối nếu audit/PREREG.md chưa commit, thiếu --reason, hoặc working tree có file đã theo dõi bị sửa.
+Mỗi seed ghi 1 dòng audit/test_access_log.csv TRƯỚC khi chấm test. Mỗi mô hình train trên train, early stopping
 trên val (giống tuning), rồi chấm test. Ra: outputs/final/seed<N>/{results.json, results_per_user.csv, topk.json, *.pt}.
 """
 from __future__ import annotations
@@ -105,7 +105,7 @@ def main():
     ap.add_argument("--out", default=str(PROJECT_ROOT / "outputs" / "final"))
     args = ap.parse_args()
     if not prereg_committed(AUDIT_DIR / "PREREG.md"):
-        raise SystemExit("Khoá test: docs/audit/PREREG.md chưa commit.")
+        raise SystemExit("Khoá test: audit/PREREG.md chưa commit.")
     if not args.reason.strip():
         raise SystemExit("Khoá test: cần --reason (ghi vào test_access_log.csv).")
     cfg, D = tune.load_data(args.config, with_test=True)

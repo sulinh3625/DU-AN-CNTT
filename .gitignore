@@ -1,0 +1,18 @@
+# File build LaTeX (sinh lại khi biên dịch Report DACNTT/)
+*.aux
+*.bbl
+*.bcf
+*.blg
+*.lof
+*.lot
+*.out
+*.toc
+*.run.xml
+*.synctex.gz
+*.fls
+*.fdb_latexmk
+*.xdv
+Report DACNTT/*.log
+texput.log
+
+.claude/

@@ -96,7 +96,7 @@ def main():
         return p
 
     def with_final(p):
-        p.add_argument("--final", action="store_true", help="Đánh giá trên TEST (cần docs/audit/PREREG.md đã commit)")
+        p.add_argument("--final", action="store_true", help="Đánh giá trên TEST (cần audit/PREREG.md đã commit)")
         p.add_argument("--reason", default="", help="Lý do đánh giá test (ghi vào test_access_log.csv)")
         return p
 

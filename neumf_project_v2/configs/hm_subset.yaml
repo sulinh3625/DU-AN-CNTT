@@ -1,6 +1,6 @@
 # Config phu: H&M ~300k dong lay mau theo khach, leave-one-out, k-core 5.
 # Tao du lieu: python scripts/00_sample_hm300k.py
-# Config chinh cua de tai la hm500k_global.yaml (xem docs/audit/PREREG.md).
+# Config chinh cua de tai la hm500k_global.yaml (xem audit/PREREG.md).
 dataset:
   name: hm
   raw_path: data/processed/hm/hm300k_transactions.csv

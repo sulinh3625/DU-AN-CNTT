@@ -22,7 +22,7 @@ from matplotlib.ticker import FuncFormatter
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 FINAL = PROJECT_ROOT / "outputs" / "final"
 FIG = PROJECT_ROOT / "outputs" / "figures"
-BEST = PROJECT_ROOT.parent / "docs" / "audit" / "best_configs.json"
+BEST = PROJECT_ROOT / "audit" / "best_configs.json"
 
 # Bảng màu tham chiếu (skill dataviz), 3 slot đầu — đã chạy validate_palette.js --pairs all: PASS.
 GROUP = {"Mô hình đề tài (NeuMF)": "#2a78d6", "Ablation (GMF, MLP)": "#eb6834", "Baseline": "#1baf7a"}

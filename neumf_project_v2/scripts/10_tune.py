@@ -1,9 +1,9 @@
-"""Tuning CHỈ trên validation theo docs/audit/PREREG.md mục 4 (script nhẹ, không dựng test records).
+"""Tuning CHỈ trên validation theo audit/PREREG.md mục 4 (script nhẹ, không dựng test records).
 
     python scripts/10_tune.py --model all          # hoặc: bpr | gmf | ... (xem ORDER)
 
-Mỗi cấu hình ghi 1 dòng vào docs/audit/tuning_log.csv (config hash, git commit, val metrics, thời gian).
-Cấu hình tốt nhất theo val NDCG@10 ghi vào docs/audit/best_configs.json; checkpoint ở outputs/tuning/.
+Mỗi cấu hình ghi 1 dòng vào audit/tuning_log.csv (config hash, git commit, val metrics, thời gian).
+Cấu hình tốt nhất theo val NDCG@10 ghi vào audit/best_configs.json; checkpoint ở outputs/tuning/.
 """
 from __future__ import annotations
 
@@ -42,7 +42,7 @@ from src.training.trainer import get_device, make_optimizer, train_one_model
 from src.utils.io import ensure_dir, run_provenance
 from src.utils.seed import seed_everything
 
-AUDIT_DIR = PROJECT_ROOT.parent / "docs" / "audit"
+AUDIT_DIR = PROJECT_ROOT / "audit"
 SEED, GRID_SEED, MAX_EPOCHS, PATIENCE = 42, 0, 20, 5
 METRICS = ["NDCG@10", "Recall@10", "HR@10", "Precision@10", "NDCG@5"]
 

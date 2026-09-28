@@ -36,7 +36,7 @@ from src.training.trainer import train_one_model, make_optimizer, get_device
 from src.utils.seed import seed_everything
 from src.utils.io import ensure_dir, log_test_access, prereg_committed, run_provenance, write_json
 
-AUDIT_DIR = PROJECT_ROOT.parent / "docs" / "audit"
+AUDIT_DIR = PROJECT_ROOT / "audit"
 PREREG_PATH = AUDIT_DIR / "PREREG.md"
 TEST_ACCESS_LOG = AUDIT_DIR / "test_access_log.csv"
 
@@ -81,10 +81,10 @@ def build_eval_records(cfg, val_df, test_df, train_df, full_df, n_users, n_items
 
 def run(config_path: str, run_tag: str | None = None, final: bool = False, reason: str = ""):
     """final=False: mọi bảng kết quả tính trên VALIDATION (tuning). final=True: tính trên TEST,
-    chỉ được phép khi docs/audit/PREREG.md đã commit, và mỗi lần ghi 1 dòng test_access_log.csv."""
+    chỉ được phép khi audit/PREREG.md đã commit, và mỗi lần ghi 1 dòng test_access_log.csv."""
     experiment_start = time.perf_counter()
     if final and not prereg_committed(PREREG_PATH):
-        raise SystemExit(f"--final bị khoá: chưa commit {PREREG_PATH} (khoá tập test, xem docs/audit/LOOP_PROMPT.md).")
+        raise SystemExit(f"--final bị khoá: chưa commit {PREREG_PATH} (khoá tập test, xem pham_vi_du_an.md mục 7).")
     if final and not reason.strip():
         raise SystemExit("--final cần --reason (ghi vào test_access_log.csv).")
     cfg, adapter = build_adapter(config_path)
