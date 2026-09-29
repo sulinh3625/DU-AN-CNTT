@@ -1,0 +1,84 @@
+{
+  "run_tag": "hm500k_seed42",
+  "provenance": {
+    "config_path": "configs/hm500k.yaml",
+    "config_hash": "e2f8df07d7eeb511",
+    "git_commit": "ee2f5f5abe395c60d8fd46236e12046660ebf39a",
+    "git_dirty": true
+  },
+  "evaluated_on": "validation",
+  "dataset": "hm",
+  "seed": 42,
+  "n_users": 7519,
+  "n_items": 10345,
+  "n_interactions": 220292,
+  "train": 205254,
+  "validation": 7519,
+  "test": 7519,
+  "split": {
+    "mode": "loo",
+    "val_start": null,
+    "test_start": null,
+    "n_val_users": 7519,
+    "n_test_users": 7519
+  },
+  "k_core": 10,
+  "feedback": {
+    "mode": "binary"
+  },
+  "evaluation_primary": "full_ranking",
+  "head_fraction": 0.1,
+  "n_head_items": 1035,
+  "n_head_test_users": 1967,
+  "n_long_tail_test_users": 5552,
+  "n_candidates_eval": {
+    "min": 10037,
+    "mean": 10317.701955047214,
+    "max": 10337
+  },
+  "cold_fraction": 0.2,
+  "n_cold_users": 1504,
+  "n_cold_test_users": 1504,
+  "n_warm_test_users": 6015,
+  "training": {
+    "GMF": {
+      "best_metric": 0.008844077585612566,
+      "best_epoch": 8,
+      "train_time_s": 177.2277092000004,
+      "n_parameters": 571680,
+      "model_name": "GMF"
+    },
+    "MLP": {
+      "best_metric": 0.008324372914194812,
+      "best_epoch": 10,
+      "train_time_s": 273.375048599999,
+      "n_parameters": 574400,
+      "model_name": "MLP"
+    },
+    "EarlyFusion": {
+      "best_metric": 0.008914234610820623,
+      "best_epoch": 8,
+      "train_time_s": 242.6209717000056,
+      "n_parameters": 574400,
+      "model_name": "EarlyFusion"
+    },
+    "NeuMF-Scratch": {
+      "best_metric": 0.009654354536124048,
+      "best_epoch": 3,
+      "train_time_s": 180.5538527999979,
+      "n_parameters": 1146080,
+      "model_name": "NeuMF-Scratch"
+    },
+    "NeuMF-Pretrained": {
+      "best_metric": 0.008051942059998587,
+      "best_epoch": 1,
+      "train_time_s": 144.34537709999677,
+      "n_parameters": 1146080,
+      "model_name": "NeuMF-Pretrained"
+    },
+    "BPR-MF": {
+      "train_time_s": 117.08011810000062,
+      "n_parameters": 571648
+    }
+  }
+}

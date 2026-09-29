@@ -1,0 +1,46 @@
+{
+  "raw_rows": 500269,
+  "raw_users": 21599,
+  "raw_items": 59483,
+  "unique_user_item_pairs": 429964,
+  "repeat_transaction_rows": 70305,
+  "repeat_row_rate": 0.1405343924968367,
+  "kcore": {
+    "3": {
+      "users": 16377,
+      "items": 33620,
+      "interactions": 387733,
+      "density": 0.0007042075992226152
+    },
+    "5": {
+      "users": 12900,
+      "items": 23067,
+      "interactions": 340267,
+      "density": 0.001143507470486211
+    },
+    "10": {
+      "users": 7519,
+      "items": 10345,
+      "interactions": 220292,
+      "density": 0.0028320971438169427
+    }
+  },
+  "selected_k": 10,
+  "selected_dataset": {
+    "users": 7519,
+    "items": 10345,
+    "interactions": 220292,
+    "density": 0.0028320971438169427
+  },
+  "splits": {
+    "train_interactions": 205254,
+    "validation_interactions": 7519,
+    "test_interactions": 7519,
+    "train_val_overlap": 0,
+    "train_test_overlap": 0,
+    "val_test_overlap": 0
+  },
+  "feedback": {
+    "mode": "binary"
+  }
+}

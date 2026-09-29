@@ -1,0 +1,158 @@
+{
+  "seed": 2024,
+  "evaluated_on": "test",
+  "provenance": {
+    "config_path": "configs/hm500k_global.yaml",
+    "config_hash": "a81194c60a2ad79d",
+    "git_commit": "c559c8685075ebf7bd575c5525be2f1b80205353",
+    "git_dirty": false
+  },
+  "n_test_users": 2996,
+  "n_candidate_items": 10216,
+  "results": {
+    "Random": {
+      "HR@5": 0.002336448598130841,
+      "HR@10": 0.003671562082777036,
+      "NDCG@5": 0.0008076869074319092,
+      "NDCG@10": 0.0009551885596616335,
+      "Precision@5": 0.00046728971962616824,
+      "Precision@10": 0.0003671562082777036,
+      "Recall@5": 0.0008511348464619492,
+      "Recall@10": 0.001176966113548223
+    },
+    "MostPopular": {
+      "HR@5": 0.02903871829105474,
+      "HR@10": 0.043391188251001335,
+      "NDCG@5": 0.007526796056348864,
+      "NDCG@10": 0.009174575774414627,
+      "Precision@5": 0.006074766355140188,
+      "Precision@10": 0.004706275033377837,
+      "Recall@5": 0.0080510849798822,
+      "Recall@10": 0.012971545256012781
+    },
+    "BPR-MF": {
+      "HR@5": 0.030040053404539385,
+      "HR@10": 0.04773030707610147,
+      "NDCG@5": 0.008326810303669186,
+      "NDCG@10": 0.010530225247932736,
+      "Precision@5": 0.006408544726301735,
+      "Precision@10": 0.00527369826435247,
+      "Recall@5": 0.008981690867096898,
+      "Recall@10": 0.015511128966324127
+    },
+    "GMF": {
+      "HR@5": 0.028037383177570093,
+      "HR@10": 0.04506008010680908,
+      "NDCG@5": 0.0077493528595903305,
+      "NDCG@10": 0.009900894469036485,
+      "Precision@5": 0.0059412550066755675,
+      "Precision@10": 0.005006675567423231,
+      "Recall@5": 0.007967162122457417,
+      "Recall@10": 0.014493991342043646
+    },
+    "MLP": {
+      "HR@5": 0.019692923898531375,
+      "HR@10": 0.038050734312416554,
+      "NDCG@5": 0.005789655565365777,
+      "NDCG@10": 0.007932782602648812,
+      "Precision@5": 0.0041388518024032045,
+      "Precision@10": 0.004072096128170894,
+      "Recall@5": 0.007330332983900486,
+      "Recall@10": 0.012424950675131103
+    },
+    "NeuMF-Scratch": {
+      "HR@5": 0.02336448598130841,
+      "HR@10": 0.03638184245660881,
+      "NDCG@5": 0.007480822634963356,
+      "NDCG@10": 0.008961728929601075,
+      "Precision@5": 0.005073431241655541,
+      "Precision@10": 0.004005340453938585,
+      "Recall@5": 0.008067446245212679,
+      "Recall@10": 0.012375795513508543
+    },
+    "NeuMF-Pretrained": {
+      "HR@5": 0.030040053404539385,
+      "HR@10": 0.048397863818424564,
+      "NDCG@5": 0.008015113930614673,
+      "NDCG@10": 0.010119955553725786,
+      "Precision@5": 0.006341789052069426,
+      "Precision@10": 0.005307076101468625,
+      "Recall@5": 0.00867358775525547,
+      "Recall@10": 0.014648496290440452
+    }
+  },
+  "train_meta": {
+    "BPR-MF": {
+      "train_time_s": 122.83706259999599
+    },
+    "GMF": {
+      "best_metric": 0.0076688689872762795,
+      "best_epoch": 3,
+      "train_time_s": 82.92039749999094,
+      "n_parameters": 1143360,
+      "model_name": "gmf",
+      "refit_train_time_s": 32.13145319999603
+    },
+    "MLP": {
+      "best_metric": 0.007982959450907798,
+      "best_epoch": 1,
+      "train_time_s": 114.29943670000648,
+      "n_parameters": 574400,
+      "model_name": "mlp",
+      "refit_train_time_s": 19.98348619999888
+    },
+    "NeuMF-Scratch": {
+      "best_metric": 0.010934482916567238,
+      "best_epoch": 9,
+      "train_time_s": 220.71727870000177,
+      "n_parameters": 2297536,
+      "model_name": "neumf_scratch",
+      "refit_train_time_s": 144.10621219999302
+    },
+    "NeuMF-Pretrained": {
+      "best_metric": 0.007678012050247288,
+      "best_epoch": 5,
+      "train_time_s": 208.835590900002,
+      "n_parameters": 1717760,
+      "model_name": "neumf_pretrained",
+      "refit_train_time_s": 108.63073079999594
+    }
+  },
+  "configs": {
+    "GMF": {
+      "lr": 0.0005,
+      "negative_ratio": 4,
+      "embedding_dim": 64,
+      "weight_decay": 0.0
+    },
+    "MLP": {
+      "lr": 0.001,
+      "negative_ratio": 8,
+      "embedding_dim": 32,
+      "weight_decay": 0.0,
+      "dropout": 0.2
+    },
+    "NeuMF-Scratch": {
+      "lr": 0.0005,
+      "negative_ratio": 4,
+      "embedding_dim": 64,
+      "weight_decay": 1e-06,
+      "dropout": 0.2
+    },
+    "NeuMF-Pretrained": {
+      "embedding_dim": 32,
+      "gmf_dim": 64,
+      "dropout": 0.2,
+      "negative_ratio": 8,
+      "weight_decay": 0.0,
+      "lr": 0.0001,
+      "alpha": 0.3
+    },
+    "BPR-MF": {
+      "embedding_dim": 32,
+      "lr": 0.03,
+      "reg": 0.005,
+      "epochs": 20
+    }
+  }
+}
