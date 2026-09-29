@@ -72,8 +72,9 @@ def plot_metrics(per: pd.DataFrame, order: list[str]):
     handles = [Patch(color=c, label=g) for g, c in GROUP.items()]
     handles.append(Line2D([], [], marker="o", color=INK, linestyle="none", markersize=4, label="Từng seed"))
     fig.legend(handles=handles, loc="upper center", ncol=4, frameon=False, fontsize=9, bbox_to_anchor=(0.5, 1.0))
-    fig.suptitle("Kết quả trên tập test — trung bình ± độ lệch chuẩn qua 3 seed (Full Ranking, 2.893 user)",
-                 fontsize=12, color=INK, y=1.08)
+    n_users = f"{per['user'].nunique():,}".replace(",", ".")
+    fig.suptitle(f"Kết quả trên tập test — trung bình ± độ lệch chuẩn qua {per['seed'].nunique()} seed "
+                 f"(Full Ranking, {n_users} user)", fontsize=12, color=INK, y=1.08)
     fig.savefig(FIG / "final_metrics.png", dpi=200, bbox_inches="tight", facecolor=SURFACE)
     plt.close(fig)
 

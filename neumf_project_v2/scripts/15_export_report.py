@@ -168,8 +168,8 @@ def export_secondary(m: Macros) -> list[tuple[str, str]]:
             m.add("strat", "n", sub, f"{n:,}".replace(",", "."))
         rows = [[x, *[vn(st.loc[(x, sub), "NDCG@10"]) for sub in subsets]] for x in models]
         out.append(("tab_stratified.tex", table(
-            "tab:stratified", "NDCG@10 theo nhóm item (head = 10\\% item phổ biến nhất trong train) và nhóm user "
-            "(cold = 20\\% user ít tương tác train nhất); trung bình 3 seed", "lrrrrr",
+            "tab:stratified", "NDCG@10 theo nhóm item (head = 10\\% item phổ biến nhất trong train $\\cup$ val) và "
+            "nhóm user (cold = 20\\% user ít tương tác train $\\cup$ val nhất); trung bình 3 seed", "lrrrrr",
             ["Mô hình", f"Tất cả ({n_users['all']})", f"Head ({n_users['head']})", f"Tail ({n_users['tail']})",
              f"Cold ({n_users['cold']})", f"Warm ({n_users['warm']})"], rows,
             "Số trong ngoặc: số user test của nhóm. User có item đúng ở cả head lẫn tail được tính ở cả hai nhóm, "
