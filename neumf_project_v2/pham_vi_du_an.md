@@ -236,11 +236,20 @@ Mỗi cặp (user, item) xếp theo **lần mua đầu tiên**:
 train < 2020-07-01 ≤ val < 2020-07-29 ≤ test   (test đến 2020-09-22)
 ```
 
-- Val/test chỉ giữ user và item đã xuất hiện trong train (CF thuần ID không chấm được user/item mới).
+- **Tuning / chọn số epoch:** train trên train, early stopping và chọn cấu hình trên val.
+- **Chấm test:** train lại từ đầu trên **train ∪ val** (mọi cặp trước 2020-07-29) với cấu hình tốt nhất, chạy đúng
+  `best_epoch` tìm được ở bước trên (không còn val để dừng sớm; test không được dùng để dừng). MostPopular, BPR-MF
+  cũng fit trên train ∪ val. Như vậy mô hình khi chấm test đã thấy toàn bộ quá khứ, như lúc triển khai thật.
+- CF thuần ID không chấm được user/item mới: val chỉ giữ user/item có trong train; test chỉ giữ user/item có trong
+  train ∪ val.
 - Mỗi user có thể có **nhiều item đúng** → cần Recall/Precision thật, không chỉ HR.
 - Item user đã mua trước đó không là đích: chỉ dự đoán món **mới** với user.
-- Kích thước: train 201.801 cặp (7.506 user, 10.145 item); val 7.057 cặp / 2.275 user; test 8.493 cặp / 2.893 user
-  (trung bình 2,94 item đúng mỗi user test).
+- Kích thước: train 201.801 cặp (7.506 user, 10.145 item); val 7.057 cặp / 2.275 user; train ∪ val 209.212 cặp
+  (10.216 item); test 9.229 cặp / 2.996 user (trung bình 3,08 item đúng mỗi user test).
+
+Lý do train lại trước khi chấm test: nếu chỉ train trên train thì mô hình bỏ lỡ 4 tuần sát kỳ test. Đo trên cửa sổ
+val (không đụng test), cùng user/item đích/pool, bỏ trống 4 tuần sát ngày chấm làm NDCG@10 giảm 16,8% (MostPopular,
+0,00853 → 0,00710) và 18,9% (BPR-MF, 0,01016 → 0,00824) — lớn hơn chênh lệch giữa các mô hình.
 
 Lý do chọn làm chính (Meng et al., 2020): leave-one-out để **rò rỉ tương lai** — trung bình 11,2% tương tác train xảy ra
 **sau** ngày của item test, 60,9% user có val/test cùng ngày. Mốc chung đảm bảo mô hình chỉ thấy quá khứ.
@@ -270,8 +279,9 @@ mô hình **đổi** giữa hai cách chia (ví dụ NeuMF-Pretrained đứng đ
 
 ### 6.1 Full Ranking (chính)
 
-Với mỗi user test: candidate = **toàn bộ item có trong train** (10.145 trên 10.345 item sau k-core), loại item user đã có trong train (khi chấm val)
-hoặc train ∪ val (khi chấm test); item đúng vẫn nằm trong candidate. Chấm điểm mọi candidate, xếp hạng, lấy top-K.
+Với mỗi user: candidate = **toàn bộ item mô hình đã được train** — item trong train khi chấm val (10.145), trong
+train ∪ val khi chấm test (10.216) — loại item user đã có trong train (khi chấm val) hoặc train ∪ val (khi chấm test);
+item đúng vẫn nằm trong candidate. Chấm điểm mọi candidate, xếp hạng, lấy top-K.
 Tie-break **tất định** (seed 2026). Số candidate thực tế mỗi user được ghi lại (min 9.863, max 10.144 ở val).
 
 ### 6.2 Sampled-99 (chỉ đối chiếu)
@@ -460,7 +470,7 @@ Web mô phỏng shop H&M (`demo/`), không train lại: nạp checkpoint, dựng
 | Chỉ dùng mẫu H&M | ~1,6% dữ liệu (500k/31,8M dòng), lấy theo khách hàng, giữ đủ lịch sử |
 | k-core = 10 | Thiên về khách mua nhiều; k = 5 vượt RAM 16 GB khi Full Ranking |
 | Dữ liệu thưa | 201.801 cặp train, 7.519 user; mô hình neural quá khớp sau 1–9 epoch |
-| Khoảng cách train–test | Test cách train 4 tuần (val nằm giữa, không đưa vào train) |
+| Số epoch khi train lại | Lấy best_epoch chọn trên train (ít hơn 3,5% dữ liệu so với train ∪ val) |
 | k-core lọc trên toàn bộ dữ liệu | Kể cả giai đoạn val/test — rò rỉ nhỏ, áp dụng như nhau cho mọi mô hình |
 | Timestamp theo ngày | Item test có thể mua cùng ngày (cùng giỏ) với item trong train — như nhau cho mọi mô hình |
 | Leave-one-out rò rỉ tương lai | Lý do protocol chính là mốc thời gian chung (mục 5.1) |

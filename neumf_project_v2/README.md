@@ -134,12 +134,18 @@ Muốn thử lại mà không đụng bằng chứng: thêm `--log-dir outputs/t
 ```bash
 git status                       # working tree phải sạch, nếu không script từ chối chạy
 python scripts/11_final.py --reason "Lý do chấm test"      # mặc định seed 42 2024 2025
+# hoặc cả chuỗi 5.2 → 5.4 bằng một lệnh:
+python run.py final --reason "Lý do chấm test"
 ```
+
+Mỗi mô hình: train trên train + early stopping trên val để lấy `best_epoch`, rồi **train lại từ đầu trên train ∪ val**
+đúng `best_epoch` epoch và chấm test (MostPopular, BPR-MF cũng fit trên train ∪ val) — `pham_vi_du_an.md` mục 5.1.
 
 Khoá test: script chỉ chạy khi `audit/PREREG.md` đã commit, có `--reason` và tree sạch. Mỗi seed ghi 1 dòng
 vào `audit/test_access_log.csv` **trước** khi chấm. Chạy một lần cho cả 3 seed (sau seed đầu file log đã đổi
 nên không chạy tách được). Chạy xong nên commit dòng log mới. Ra: `outputs/final/seed<N>/` (`results.json`,
-`results_per_user.csv`, `topk.json`, checkpoint). Thời gian gốc: 65 phút trên RTX 3050.
+`results_per_user.csv`, `topk.json`, checkpoint). Thời gian: khoảng 1,5 giờ trên RTX 3050 (65 phút trước khi
+thêm bước train lại).
 
 ### 5.3 Kiểm định và biểu đồ
 
@@ -167,8 +173,9 @@ số trong báo cáo tự cập nhật. Bảng/hình chưa có số liệu sẽ 
 
 ## 6. Chạy nhanh bằng `run.py` (khám phá, protocol phụ, demo)
 
-`run.py` chạy `03_run_experiment.py` với cấu hình mặc định (không phải cấu hình đã tune). Mặc định mọi bảng tính
-trên **validation**; chấm test cần `--final --reason "..."` (cùng khoá test như trên).
+`run.py all/train/multi-seed` chạy `03_run_experiment.py` với cấu hình mặc định (không phải cấu hình đã tune),
+mọi bảng tính trên **validation** — dùng để khám phá, **không** ra số liệu báo cáo. `--final` chỉ còn cho protocol phụ
+leave-one-out; protocol chính (`hm500k_global.yaml`) chấm test bằng `python run.py final --reason "..."` (mục 5).
 
 ```bash
 python run.py -h

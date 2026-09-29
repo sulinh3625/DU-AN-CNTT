@@ -24,7 +24,6 @@ from pathlib import Path
 from types import SimpleNamespace
 
 import numpy as np
-import pandas as pd
 import torch
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
@@ -35,7 +34,7 @@ from src.baselines import BPRMFBaseline
 from src.data_pipeline.dataset import TrainDataset
 from src.data_pipeline.negative_sampling import build_user_positive_sets
 from src.data_pipeline.preprocessing import apply_feedback_weights, build_interactions
-from src.data_pipeline.splitting import assert_disjoint_splits, global_temporal_split
+from src.data_pipeline.splitting import assert_disjoint_splits, global_temporal_split, refit_data
 from src.evaluation.full_ranking import build_full_ranking_records_multi, evaluate_score_function, evaluate_torch_model
 from src.models.neumf import GMF, MLP, NeuMF
 from src.training.trainer import get_device, make_optimizer, train_one_model
@@ -111,8 +110,12 @@ def load_data(config_path: str, with_test: bool = False):
     val = build_full_ranking_records_multi(va, data.n_items, train_pos, pool)
     D = SimpleNamespace(tr=tr, n_users=data.n_users, n_items=data.n_items, train_pos=train_pos, val=val, pool=pool)
     if with_test:  # chỉ scripts/11_final.py, 14_secondary.py (đã qua khoá test); tuning không bao giờ dựng test records
-        seen = build_user_positive_sets(pd.concat([tr, va], ignore_index=True), data.n_users)
-        D.test = build_full_ranking_records_multi(te, data.n_items, seen, pool)
+        # Chấm test sau khi train lại trên train ∪ val: pool, item đã mua và thống kê đều lấy từ trva.
+        trva, _, _, _ = apply_feedback_weights(refit_data(data.df, cfg.dataset.test_start), va, te,
+                                               cfg.feedback.mode, cfg.feedback.confidence_alpha)
+        D.trva, D.trva_pos = trva, build_user_positive_sets(trva, data.n_users)
+        D.test_pool = np.unique(trva["item"].to_numpy())
+        D.test = build_full_ranking_records_multi(te, data.n_items, D.trva_pos, D.test_pool)
         D.va, D.te = va, te
     return cfg, D
 

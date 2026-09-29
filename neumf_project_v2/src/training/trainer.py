@@ -126,6 +126,12 @@ def train_one_model(
 
         epoch_time = time.perf_counter() - t0
         total_train_time += epoch_time
+        if val_records is None:  # refit: chạy đúng max_epochs, không có val để chọn -> giữ trọng số epoch cuối
+            avg_loss = total_loss / max(n_batches, 1)
+            history.append({"epoch": epoch, "loss": avg_loss, "epoch_time_s": epoch_time})
+            best_epoch = epoch
+            epoch_bar.set_postfix_str(f"loss={avg_loss:.4f} | {epoch_time:.1f}s{_gpu_mem_str()}")
+            continue
         val_metrics = eval_model_fn(model, val_records)
         if monitor not in val_metrics:
             raise KeyError(f"Metric early stopping '{monitor}' không có trong evaluator: {sorted(val_metrics)}")
@@ -164,20 +170,19 @@ def train_one_model(
             )
             break
     else:
-        tqdm.write(
-            f"  ✓ Hoàn thành {max_epochs} epochs. "
-            f"Best: {monitor}={best_metric:.4f} @ epoch {best_epoch}"
-        )
+        tqdm.write(f"  ✓ Hoàn thành {max_epochs} epochs.")
 
     epoch_bar.close()
 
     print(f"  ⏱ Tổng thời gian train {model_name}: {total_train_time:.1f}s")
-    print(f"  🏆 Best {monitor}: {best_metric:.4f} @ epoch {best_epoch}")
+    if val_records is not None:
+        print(f"  🏆 Best {monitor}: {best_metric:.4f} @ epoch {best_epoch}")
     print()
 
-    model.load_state_dict(best_state)
+    if val_records is not None:
+        model.load_state_dict(best_state)
     return model, history, {
-        "best_metric": float(best_metric),
+        "best_metric": float(best_metric) if val_records is not None else None,
         "best_epoch": int(best_epoch),
         "train_time_s": float(total_train_time),
         "n_parameters": int(n_params),

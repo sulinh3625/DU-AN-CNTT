@@ -86,3 +86,8 @@ ItemKNN không chạy (10.345 item > ngưỡng dense 5.000) — ghi là hạn ch
 - **Loop 14:** đánh giá cuối chạy bằng `scripts/11_final.py` (thay 03 --final): cùng khoá test (PREREG đã commit,
   --reason, test_access_log.csv, từ chối khi working tree bẩn), cho phép mỗi mô hình dùng cấu hình tốt nhất riêng;
   train trên train, early stopping trên val như lúc tuning, chấm test với candidate = item train, loại train ∪ val.
+- **29/09/2026 (SAU khi đã xem test 27/09):** trước khi chấm test, mỗi mô hình được train lại từ đầu trên
+  train ∪ val (mọi cặp < 2020-07-29) đúng best_epoch chọn trên val; MostPopular/BPR-MF fit trên train ∪ val; test giữ
+  user/item có trong train ∪ val, candidate = item train ∪ val (2.996 user, 10.216 item thay vì 2.893 / 10.145).
+  Lý do dựa trên thí nghiệm chỉ-trên-val: bỏ trống 4 tuần sát ngày chấm làm NDCG@10 giảm 17–19% (MostPopular,
+  BPR-MF). Cấu hình (best_configs.json), metric, họ so sánh, tiêu chí giữ nguyên. Số test chạy lại thay số cũ.

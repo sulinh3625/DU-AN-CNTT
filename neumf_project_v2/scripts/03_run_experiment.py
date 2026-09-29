@@ -88,6 +88,9 @@ def run(config_path: str, run_tag: str | None = None, final: bool = False, reaso
     if final and not reason.strip():
         raise SystemExit("--final cần --reason (ghi vào test_access_log.csv).")
     cfg, adapter = build_adapter(config_path)
+    if final and cfg.dataset.split == "global":
+        raise SystemExit("--final với split global: dùng `python run.py final --reason \"...\"` "
+                         "(scripts/11_final.py train lại trên train ∪ val trước khi chấm test).")
     seed_everything(cfg.training.seed)
 
     print("\n" + "═"*60)
@@ -242,7 +245,7 @@ def run(config_path: str, run_tag: str | None = None, final: bool = False, reaso
     if "random" in enabled:
         print("  → Random baseline...")
         random_bl = RandomBaseline(cfg.training.seed)
-        score_fns["Random"] = random_bl.score
+        score_fns["Random"] = random_bl
         print("    ✓ Random baseline ready")
     if "popularity" in enabled:
         print("  → MostPopular baseline...")

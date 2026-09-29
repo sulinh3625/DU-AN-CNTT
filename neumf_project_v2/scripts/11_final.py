@@ -4,7 +4,8 @@
 
 Khoá test: từ chối nếu audit/PREREG.md chưa commit, thiếu --reason, hoặc working tree có file đã theo dõi bị sửa.
 Mỗi seed ghi 1 dòng audit/test_access_log.csv TRƯỚC khi chấm test. Mỗi mô hình train trên train, early stopping
-trên val (giống tuning), rồi chấm test. Ra: outputs/final/seed<N>/{results.json, results_per_user.csv, topk.json, *.pt}.
+trên val (giống tuning) để lấy best_epoch, rồi train lại từ đầu trên train ∪ val đúng best_epoch epoch và chấm test
+(MostPopular, BPR-MF cũng fit trên train ∪ val). Ra: outputs/final/seed<N>/{results.json, results_per_user.csv, topk.json, *.pt}.
 """
 from __future__ import annotations
 
@@ -58,41 +59,51 @@ def run_seed(seed, cfg, D, best, device, out_root, prov, reason):
         rows.extend({"model": name, "seed": seed, **r} for r in per)
         print(f"[seed {seed}] {name:17s} test NDCG@10 {res['NDCG@10']:.5f}  Recall@10 {res['Recall@10']:.5f}", flush=True)
 
-    def train_net(name, init=None):
-        key = TORCH_KEYS[name]
-        p = best[key]["params"]
+    def fit(key, p, data, pos, records, epochs, patience, init):
         seed_everything(seed)
         net = tune.build_net(key, p, D)
         if init is not None:
             net.load_pretrained(*init, alpha=p["alpha"])
         net = net.to(device)
-        ds = TrainDataset(D.tr, D.n_items, D.train_pos, p["negative_ratio"], seed=seed)
+        ds = TrainDataset(data, D.n_items, pos, p["negative_ratio"], seed=seed)
         opt = make_optimizer("adam", net.parameters(), p["lr"], p["weight_decay"])
-        net, _, meta = train_one_model(
-            net, ds, D.val, lambda m, r: evaluate_torch_model(m, r, device=device, **kw), opt, device,
-            tune.MAX_EPOCHS, tune.PATIENCE, cfg.training.batch_size, "NDCG@10", seed, key)
-        train_meta[name] = meta
-        torch.save(net.state_dict(), out / f"{key}.pt")
-        return net
+        return train_one_model(
+            net, ds, records, lambda m, r: evaluate_torch_model(m, r, device=device, **kw), opt, device,
+            epochs, patience, cfg.training.batch_size, "NDCG@10", seed, key)
 
-    score("Random", RandomBaseline(seed=seed).score)
-    score("MostPopular", MostPopularBaseline(D.tr, D.n_items))
+    def train_net(name, init=None):
+        """B1: train trên train, early stopping trên val -> best_epoch (như tuning).
+        B2: train lại từ đầu trên train ∪ val đúng best_epoch epoch (không còn val để dừng; test không được
+        dùng để dừng) -> mô hình chấm test. NeuMF-Pretrained: B1 nạp GMF/MLP của B1, B2 nạp GMF/MLP của B2."""
+        key = TORCH_KEYS[name]
+        p = best[key]["params"]
+        sel_init, refit_init = init or (None, None)
+        sel, _, meta = fit(key, p, D.tr, D.train_pos, D.val, tune.MAX_EPOCHS, tune.PATIENCE, sel_init)
+        net, _, refit = fit(key, p, D.trva, D.trva_pos, None, meta["best_epoch"], meta["best_epoch"], refit_init)
+        train_meta[name] = {**meta, "refit_train_time_s": refit["train_time_s"]}
+        torch.save(net.state_dict(), out / f"{key}.pt")
+        return sel, net
+
+    score("Random", RandomBaseline(seed=seed))
+    score("MostPopular", MostPopularBaseline(D.trva, D.n_items))
     p = best["bpr"]["params"]
     t0 = time.perf_counter()
     bpr = BPRMFBaseline(D.n_users, D.n_items, p["embedding_dim"], seed=seed)
-    bpr.fit(D.tr, epochs=p["epochs"], lr=p["lr"], reg=p["reg"], seed=seed)
+    bpr.fit(D.trva, epochs=p["epochs"], lr=p["lr"], reg=p["reg"], seed=seed)
     train_meta["BPR-MF"] = {"train_time_s": time.perf_counter() - t0}
     bpr.save(out / "bpr.npz")
     score("BPR-MF", bpr)
-    nets = {name: train_net(name) for name in ("GMF", "MLP", "NeuMF-Scratch")}
-    nets["NeuMF-Pretrained"] = train_net("NeuMF-Pretrained", init=(nets["GMF"], nets["MLP"]))
-    for name, net in nets.items():
+    pairs = {name: train_net(name) for name in ("GMF", "MLP", "NeuMF-Scratch")}
+    (g_sel, g_net), (m_sel, m_net) = pairs["GMF"], pairs["MLP"]
+    pairs["NeuMF-Pretrained"] = train_net("NeuMF-Pretrained", init=((g_sel, m_sel), (g_net, m_net)))
+    for name, (_, net) in pairs.items():
         score(name, net)
 
     pd.DataFrame(rows).to_csv(out / "results_per_user.csv", index=False)
     (out / "topk.json").write_text(json.dumps(topk), encoding="utf-8")
     (out / "results.json").write_text(json.dumps(dict(
-        seed=seed, evaluated_on="test", provenance=prov, n_test_users=len(D.test), results=results,
+        seed=seed, evaluated_on="test", provenance=prov, n_test_users=len(D.test),
+        n_candidate_items=len(D.test_pool), results=results,
         train_meta=train_meta, configs={m: best[k]["params"] for m, k in {**TORCH_KEYS, "BPR-MF": "bpr"}.items()},
     ), indent=2, ensure_ascii=False), encoding="utf-8")
 

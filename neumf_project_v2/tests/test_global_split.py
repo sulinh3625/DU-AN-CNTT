@@ -6,7 +6,7 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from src.data_pipeline.splitting import assert_disjoint_splits, global_temporal_split
+from src.data_pipeline.splitting import assert_disjoint_splits, global_temporal_split, refit_data
 from src.evaluation.full_ranking import EvalRecord, build_full_ranking_records_multi, evaluate_score_function
 from src.evaluation.long_tail import split_records_head_tail
 from src.evaluation.metrics import hr_at_k, multi_ranking_metrics, ndcg_at_k, precision_at_k, recall_at_k
@@ -47,13 +47,17 @@ def test_global_split_uses_one_cutoff_and_keeps_only_warm_users_items():
                             t("2020-02-10"),                                                   # val
                             t("2020-03-01"),                                                   # test
                             t("2020-03-02"),   # user 2 không có lịch sử train -> bỏ
-                            t("2020-03-03"),   # item 9 chưa từng bán trong train -> bỏ
-                            t("2020-02-15")],  # item 3 chưa có trong train -> bỏ
+                            t("2020-03-03"),   # item 9 chưa từng bán trước test -> bỏ
+                            t("2020-02-15")],  # item 3 chưa có trong train -> bỏ khỏi val
     })
+    df = pd.concat([df, pd.DataFrame({"user": [0], "item": [3], "first_timestamp": [t("2020-03-04")]})],
+                   ignore_index=True)  # item 3 mới có từ val -> test vẫn giữ (mô hình train lại trên train ∪ val)
     train, val, test = global_temporal_split(df, "2020-02-01", "2020-02-28")
     assert set(zip(train.user, train.item)) == {(0, 0), (0, 1), (1, 0), (1, 2)}
     assert set(zip(val.user, val.item)) == {(0, 2)}
-    assert set(zip(test.user, test.item)) == {(1, 1)}
+    assert set(zip(test.user, test.item)) == {(1, 1), (0, 3)}
+    refit = refit_data(df, "2020-02-28")
+    assert set(zip(refit.user, refit.item)) == {(0, 0), (0, 1), (1, 0), (1, 2), (0, 2), (1, 3)}
     assert_disjoint_splits(train, val, test)
     assert train["first_timestamp"].max() < pd.Timestamp("2020-02-01") <= val["first_timestamp"].min()
     with pytest.raises(ValueError):

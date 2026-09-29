@@ -11,9 +11,20 @@ class RandomBaseline:
         self.seed = int(seed)
 
     def score(self, user: int, item: int) -> float:
+        return float(self.score_items(user, [item])[0])
+
+    __call__ = score
+
+    def score_items(self, user: int, items) -> np.ndarray:
         # Deterministic across processes; không dùng Python built-in hash.
-        s = (self.seed * 1000003 + int(user) * 9176 + int(item) * 6361) & 0xFFFFFFFF
-        return float(np.random.default_rng(s).random())
+        # Hash splitmix64 vector hoá — tạo default_rng cho từng item thì full ranking mất hàng giờ.
+        with np.errstate(over="ignore"):
+            x = (np.uint64(self.seed) * np.uint64(1000003) + np.uint64(int(user)) * np.uint64(9176)
+                 + np.asarray(items, dtype=np.uint64) * np.uint64(6361))
+            x = (x ^ (x >> np.uint64(30))) * np.uint64(0xBF58476D1CE4E5B9)
+            x = (x ^ (x >> np.uint64(27))) * np.uint64(0x94D049BB133111EB)
+            x ^= x >> np.uint64(31)
+        return (x >> np.uint64(11)).astype(np.float64) / float(1 << 53)
 
 
 class MostPopularBaseline:

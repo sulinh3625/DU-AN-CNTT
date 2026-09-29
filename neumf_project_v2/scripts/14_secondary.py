@@ -73,7 +73,7 @@ def dirty_code_files() -> set[str]:
 def load_models(seed_dir: Path, D, device):
     """Nạp lại đúng các mô hình mà 11_final.py đã lưu cho seed này."""
     configs = json.loads((seed_dir / "results.json").read_text(encoding="utf-8"))["configs"]
-    models = {"MostPopular": MostPopularBaseline(D.tr, D.n_items), "BPR-MF": BPRMFBaseline.load(seed_dir / "bpr.npz")}
+    models = {"MostPopular": MostPopularBaseline(D.trva, D.n_items), "BPR-MF": BPRMFBaseline.load(seed_dir / "bpr.npz")}
     for name, key in TORCH_KEYS.items():
         net = tune.build_net(key, configs[name], D)
         net.load_state_dict(torch.load(seed_dir / f"{key}.pt", map_location="cpu"))
@@ -89,11 +89,11 @@ def evaluate(model, records, device, per_user=None, topk=False):
 
 
 def sampled_records(D, n_neg: int) -> list[EvalRecord]:
-    """Mỗi cặp (user, item) test: 1 item đúng + n_neg item âm lấy từ pool (item có trong train),
-    loại mọi item user đã có ở train ∪ val ∪ test."""
-    known = build_user_positive_sets(pd.concat([D.tr, D.va, D.te], ignore_index=True), D.n_users)
+    """Mỗi cặp (user, item) test: 1 item đúng + n_neg item âm lấy từ pool (item có trong train ∪ val),
+    loại mọi item user đã có trước test (train ∪ val) và trong test."""
+    known = build_user_positive_sets(pd.concat([D.trva, D.te], ignore_index=True), D.n_users)
     rng = np.random.default_rng(SAMPLED_SEED)
-    pool = np.asarray(D.pool, dtype=np.int64)
+    pool = np.asarray(D.test_pool, dtype=np.int64)
     records = []
     for u, i in zip(D.te["user"].to_numpy(), D.te["item"].to_numpy()):
         u, i = int(u), int(i)
@@ -158,10 +158,10 @@ def main():
     log_test_access(AUDIT_DIR / "test_access_log.csv", "secondary", prov, MODELS, args.reason)
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
-    head = define_head_items(D.tr, D.n_items, cfg.evaluation.head_fraction)
-    cold = define_cold_users(D.tr, D.n_users, cfg.evaluation.cold_fraction)
+    head = define_head_items(D.trva, D.n_items, cfg.evaluation.head_fraction)
+    cold = define_cold_users(D.trva, D.n_users, cfg.evaluation.cold_fraction)
     head_recs, tail_recs = split_records_head_tail(D.test, head)
-    item_counts = D.tr["item"].value_counts().to_dict()
+    item_counts = D.trva["item"].value_counts().to_dict()
     sampled = sampled_records(D, cfg.evaluation.sampled_negatives)
     print(f"test users {len(D.test)} (head {len(head_recs)}, tail {len(tail_recs)}) | cold users "
           f"{sum(r.user in cold for r in D.test)} | sampled cases {len(sampled)} | device {device}", flush=True)
@@ -189,8 +189,8 @@ def main():
             for label, df in subsets.items():
                 strat.append(dict(model=name, seed=seed, subset=label, n_users=len(df), **df[METRICS].mean().to_dict()))
             recs10 = {u: items[:K] for u, items in top.items()}
-            beyond.append(dict(model=name, seed=seed, coverage=catalog_coverage(recs10, len(D.pool)),
-                               novelty=novelty_score(recs10, item_counts, len(D.tr)),
+            beyond.append(dict(model=name, seed=seed, coverage=catalog_coverage(recs10, len(D.test_pool)),
+                               novelty=novelty_score(recs10, item_counts, len(D.trva)),
                                ARP=average_recommendation_popularity(recs10, item_counts),
                                HRR=head_recommendation_rate(recs10, head)))
             s = evaluate(model, sampled, device)

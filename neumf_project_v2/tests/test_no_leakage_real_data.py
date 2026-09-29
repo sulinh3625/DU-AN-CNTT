@@ -8,7 +8,8 @@ import pytest
 
 from scripts.common import build_adapter
 from src.data_pipeline.preprocessing import build_interactions
-from src.data_pipeline.splitting import assert_disjoint_splits, global_temporal_split, temporal_leave_one_out
+from src.data_pipeline.splitting import (assert_disjoint_splits, global_temporal_split, refit_data,
+                                         temporal_leave_one_out)
 
 
 @lru_cache(maxsize=None)
@@ -26,9 +27,11 @@ def test_global_split_respects_one_timeline():
     vs, ts = pd.Timestamp(cfg.dataset.val_start), pd.Timestamp(cfg.dataset.test_start)
     assert train["first_timestamp"].max() < vs <= val["first_timestamp"].min()
     assert val["first_timestamp"].max() < ts <= test["first_timestamp"].min()
-    # Mô hình chỉ thấy train: mọi user/item trong val/test phải có mặt trong train.
-    assert set(val["user"]) | set(test["user"]) <= set(train["user"])
-    assert set(val["item"]) | set(test["item"]) <= set(train["item"])
+    # Val chấm mô hình train trên train; test chấm mô hình train lại trên mọi cặp < test_start.
+    assert set(val["user"]) <= set(train["user"]) and set(val["item"]) <= set(train["item"])
+    known = refit_data(data.df, cfg.dataset.test_start)
+    assert known["first_timestamp"].max() < ts
+    assert set(test["user"]) <= set(known["user"]) and set(test["item"]) <= set(known["item"])
     assert len(val) and len(test)
 
 

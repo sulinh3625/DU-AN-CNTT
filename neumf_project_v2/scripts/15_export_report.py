@@ -125,8 +125,11 @@ def export_final(m: Macros) -> str:
             m.add("sd", KEY[x], mkey(metric), vn(s.loc[x, f"{metric}_std"]))
     rows = [[x, *[f"{cols[mt][x]} $\\pm$ {vn(s.loc[x, f'{mt}_std'])}" for mt in METRICS]]
             for x in s.index if x in ORDER]
-    return table("tab:final", "Kết quả trên tập test: trung bình $\\pm$ độ lệch chuẩn qua 3 seed "
-                 "(Full Ranking, protocol mốc thời gian chung, 2.893 user, 10.145 item candidate)", "lrrrrr",
+    r = json.loads(next(FINAL.glob("seed*/results.json")).read_text(encoding="utf-8"))
+    n = lambda x: f"{x:,}".replace(",", ".")
+    return table("tab:final", "Kết quả trên tập test: trung bình $\\pm$ độ lệch chuẩn qua 3 seed (Full Ranking, "
+                 "protocol mốc thời gian chung, train lại trên train $\\cup$ val; "
+                 f"{n(r['n_test_users'])} user, {n(r['n_candidate_items'])} item candidate)", "lrrrrr",
                  ["Mô hình", *METRICS], rows, "In đậm: giá trị trung bình cao nhất mỗi cột.")
 
 
