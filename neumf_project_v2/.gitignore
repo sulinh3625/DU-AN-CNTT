@@ -14,14 +14,6 @@ data/processed/**/*
 data/splits/**/*
 !data/splits/**/.gitkeep
 
-outputs/checkpoints/**/*
-outputs/experiments/**/*
-outputs/data_audit/**/*
-outputs/tables/**/*
-outputs/figures/**/*
-!outputs/**/.gitkeep
-
-# Checkpoint của đánh giá cuối và tuning (lớn, sinh lại được); giữ results*.csv/json để truy vết
-outputs/final/seed*/*.pt
-outputs/final/seed*/*.npz
-outputs/tuning/
+# Kết quả và checkpoint (*.pt, *.npz — mỗi file < 5 MB) đều được push để chạy lại demo/phân tích không cần train.
+# Chỉ bỏ config tạm của multi-seed.
+outputs/experiments/_temp_configs/
