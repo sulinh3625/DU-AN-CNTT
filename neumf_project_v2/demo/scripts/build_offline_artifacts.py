@@ -1,6 +1,6 @@
 """Tính offline cho dashboard demo, ghi vào demo/artifacts/<run_tag>/:
 
-- results_per_user.csv : rank của test item theo từng model (full ranking, loại train ∪ val).
+- results_per_user.csv : rank của item đích theo từng model — cùng tập run đã chấm (validation, hoặc test nếu --final).
 - popularity_bias.csv  : top 20 item được gợi ý nhiều nhất trong top-K của toàn bộ test user.
 
 Cuối cùng so sánh trung bình per-user với results_primary.csv của run (do
@@ -30,7 +30,7 @@ TOLERANCE = 1e-6
 
 def per_user_results(ctx: DataContext, top_k: int):
     rows, top_lists = [], {m: [] for m in ctx.available_models}
-    users = ctx.test_users
+    users = ctx.target_users
     for s in range(0, len(users), USER_CHUNK):
         chunk = users[s:s + USER_CHUNK]
         scores = {m: inference.score_items(ctx, m, chunk) for m in ctx.available_models}
@@ -41,7 +41,7 @@ def per_user_results(ctx: DataContext, top_k: int):
                 cand_scores = inference.candidate_scores(ctx, m, u, record, scores[m][j])
                 r = inference.rank_from_scores(ctx, u, cand_scores, top_k, record)
                 rows.append({"customer_id": ctx.customer_ids[u], "user_idx": u, "model": m,
-                             "test_item": record.positive_item, "rank": r["rank"],
+                             "target_item": record.positive_item, "rank": r["rank"],
                              "n_candidates": r["n_candidates"], **r["metrics"]})
                 top_lists[m].append(r["top_items"])
         print(f"  {min(s + USER_CHUNK, len(users))}/{len(users)} users", end="\r")
@@ -59,7 +59,7 @@ def popularity_bias(ctx: DataContext, top_lists: dict, top_k: int) -> pd.DataFra
             out.append({
                 "model": m, "position": pos, "item_idx": int(item), "article_id": info["article_id"],
                 "prod_name": info["prod_name"], "product_type_name": info["product_type_name"],
-                "n_users_recommended": int(n), "share_of_test_users": n / len(lists),
+                "n_users_recommended": int(n), "share_of_users": n / len(lists),
                 "train_count": info["train_count"], "train_popularity_rank": int(pop_rank[int(item)]),
                 "is_head": info["is_head"], "top_k": top_k,
             })

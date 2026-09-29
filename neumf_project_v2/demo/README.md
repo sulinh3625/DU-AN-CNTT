@@ -9,7 +9,7 @@ Có ba màn hình:
 | Màn hình | Nội dung |
 |---|---|
 | **Khách hàng mới** | Gợi ý **rule-based** (lọc theo lựa chọn + độ phổ biến trong train). Đây **không phải** mô hình NeuMF và được gắn nhãn rõ trên UI. |
-| **Admin kiểm thử mô hình** | Chọn khách hàng có test item: lịch sử mua (train), Top-K của từng model (NeuMF-Pretrained, NeuMF-Scratch, GMF, MLP, EarlyFusion, MostPopular; so sánh 2 model), rank của test item, Hit@K và NDCG@K. |
+| **Admin kiểm thử mô hình** | Chọn khách hàng có item đích (validation hoặc test, theo run): lịch sử mua (train), Top-K của từng model (NeuMF-Pretrained, NeuMF-Scratch, GMF, MLP, EarlyFusion, MostPopular, BPR-MF; so sánh 2 model), rank của item đích, Hit@K và NDCG@K. |
 | **Dashboard** | Chỉ đọc từ file kết quả đã chạy; file thiếu thì hiện lệnh cần chạy. |
 
 ## 1. Chuẩn bị dữ liệu và huấn luyện
@@ -39,7 +39,7 @@ python demo/scripts/build_offline_artifacts.py            # hoặc --run-tag hm5
 
 Script ghi vào `demo/artifacts/<run_tag>/`:
 
-- `results_per_user.csv`: rank của test item cho từng user và từng model, dùng cho biểu đồ phân phối rank và cho test.
+- `results_per_user.csv`: rank của item đích cho từng user và từng model, dùng cho biểu đồ phân phối rank và cho test.
 - `popularity_bias.csv`: top 20 item được gợi ý nhiều nhất trong top-K của toàn bộ test user, kèm độ phổ biến trong train.
 
 Cuối script, trung bình per-user được so với `results_primary.csv` của run; nếu lệch quá 1e-6 thì script dừng với lỗi.
@@ -87,12 +87,16 @@ Mapping khu vực mua sắm → `index_group_name`, cửa sổ độ phổ biế
 ## Cách chấm (khớp protocol huấn luyện)
 
 - Split: temporal leave-one-out (`src/data_pipeline/splitting.py`), có kiểm tra `assert_disjoint_splits`.
-- Candidates của test item: toàn bộ item trừ các item user đã có trong train ∪ validation, tạo bằng chính
-  `build_full_ranking_records` (`src/evaluation/full_ranking.py`). Rank dùng `rank_positive` với cùng tie-break seed.
+- **Item đích** = đúng tập mà bảng kết quả của run dùng (`evaluated_on` trong `metadata.json`): item **validation** nếu
+  run chưa `--final` (khoá test — demo không để lộ test item), item **test** nếu run đã `--final`. Run cũ không ghi
+  `evaluated_on` được coi là đã chấm test. Vì vậy số của demo khớp `results_primary.csv` của run (có test tự động).
+- Candidates: toàn bộ item trừ các item user đã có trong train (khi chấm validation) hoặc train ∪ validation (khi chấm
+  test), tạo bằng chính `build_full_ranking_records` (`src/evaluation/full_ranking.py`). Rank dùng `rank_positive`
+  với cùng tie-break seed.
 - Model neural được xếp hạng bằng logit (không qua sigmoid, vì sigmoid float32 bão hoà sẽ tạo tie giả).
 - `HR@K = 1[rank ≤ K]`, `NDCG@K = 1/log2(rank+1)` nếu rank ≤ K; K chỉ được chọn trong `evaluation.k_values`.
-- MostPopular = số user mua item trong train. **BPR-MF bị ẩn** vì `scripts/03_run_experiment.py` chưa lưu
-  checkpoint BPR. Nếu sau này có `outputs/checkpoints/<run_tag>/bpr.npz` (mảng `P`, `Q`) thì demo tự hiện.
+- MostPopular = số user mua item trong train. BPR-MF nạp từ `outputs/checkpoints/<run_tag>/bpr.npz` (mảng `P`, `Q`,
+  do `scripts/03_run_experiment.py` lưu); run cũ không có file này thì BPR-MF bị ẩn kèm lý do.
 
 ## Cấu trúc
 
@@ -118,10 +122,10 @@ demo/
 | `GET /api/context` | Dataset, lát cắt, run_tag, số users/items, k_values, model khả dụng và model bị ẩn kèm lý do |
 | `POST /api/reload` | Xoá cache, nạp run mới nhất |
 | `GET /api/users/buckets` | Ngưỡng nhóm ít / trung bình / nhiều giao dịch train |
-| `GET /api/users/search?q=&bucket=&limit=` | Tìm user có test item theo tiền tố customer_id |
-| `GET /api/users/random?bucket=` | User ngẫu nhiên có test item |
+| `GET /api/users/search?q=&bucket=&limit=` | Tìm user có item đích theo tiền tố customer_id |
+| `GET /api/users/random?bucket=` | User ngẫu nhiên có item đích |
 | `GET /api/users/{customer_id}/history` | Item trong train kèm ngày mua, sắp theo thời gian |
-| `GET /api/users/{customer_id}/recommend?model=&k=` | Top-K, rank test item, số candidates, Hit/NDCG@K |
+| `GET /api/users/{customer_id}/recommend?model=&k=` | Top-K, rank item đích, số candidates, Hit/NDCG@K |
 | `GET /api/onboarding/options` | Lựa chọn lấy từ articles.csv (theo catalog sau k-core) |
 | `POST /api/onboarding/recommend` | Gợi ý rule-based cho khách hàng mới |
 | `GET /api/dashboard` | Mọi khối dashboard, kèm file nguồn và run_tag |

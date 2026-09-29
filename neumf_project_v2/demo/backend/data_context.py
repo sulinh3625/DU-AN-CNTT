@@ -104,15 +104,19 @@ class DataContext:
         for article_id, idx in data.item2idx.items():
             self.article_ids[idx] = str(article_id)
 
-        # Tập loại trừ đúng như src/evaluation/full_ranking.py (test dùng train ∪ val).
+        # Chấm đúng tập mà bảng kết quả của run dùng: 03 không --final chấm validation (khoá test) -> demo cũng
+        # chấm item validation và không lộ test. Run cũ (trước khi có khoá test) không ghi evaluated_on -> test.
+        # Tập loại trừ đúng như 03: validation loại item train; test loại train ∪ val.
+        self.evaluated_on = self.run_metadata.get("evaluated_on", "test")
         self.train_pos = build_user_positive_sets(train_df, self.n_users)
         self.train_val_pos = build_user_positive_sets(pd.concat([train_df, val_df], ignore_index=True), self.n_users)
-        self.test_item = dict(zip(test_df["user"].astype(int), test_df["item"].astype(int)))
+        target_df, self.seen_pos = (test_df, self.train_val_pos) if self.evaluated_on == "test" else (val_df, self.train_pos)
+        self.target_item = dict(zip(target_df["user"].astype(int), target_df["item"].astype(int)))
         self.val_item = dict(zip(val_df["user"].astype(int), val_df["item"].astype(int)))
         self.head_items = define_head_items(train_df, self.n_items, cfg.evaluation.head_fraction)
         self.train_item_counts = np.bincount(train_df["item"].to_numpy(), minlength=self.n_items)
         self.train_user_counts = np.bincount(train_df["user"].to_numpy(), minlength=self.n_users)
-        self.test_users = np.array(sorted(self.test_item), dtype=np.int64)
+        self.target_users = np.array(sorted(self.target_item), dtype=np.int64)
 
         self.articles = self._load_articles()
         self.user_age = self._load_ages() if load_customers else pd.Series(dtype=float)
@@ -136,6 +140,9 @@ class DataContext:
         return meta
 
     def _load_articles(self) -> pd.DataFrame:
+        if not ARTICLES_PATH.exists():
+            raise FileNotFoundError(f"Thiếu {ARTICLES_PATH} — chép articles.csv (và customers.csv) của bộ H&M "
+                                    "vào data/raw/hm/ cạnh transactions_train.csv (demo/README.md mục 1).")
         arts = pd.read_csv(ARTICLES_PATH, dtype={"article_id": "string"}, usecols=ARTICLE_COLUMNS)
         arts["article_id"] = arts["article_id"].str.zfill(10)
         arts = arts.drop_duplicates("article_id").set_index("article_id")
@@ -224,6 +231,7 @@ class DataContext:
             "date_min": self.data_df["last_timestamp"].min().date().isoformat(),
             "date_max": self.data_df["last_timestamp"].max().date().isoformat(),
             "run_tag": self.run_tag,
+            "evaluated_on": self.evaluated_on,
             "n_users": self.n_users,
             "n_items": self.n_items,
             "n_interactions": int(len(self.data_df)),

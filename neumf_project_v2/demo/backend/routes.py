@@ -40,13 +40,13 @@ def _user(c: DataContext, customer_id: str) -> int:
         u = c.resolve_user(customer_id)
     except KeyError:
         raise HTTPException(404, f"Không tìm thấy customer_id '{customer_id}' trong dữ liệu sau k-core.")
-    if u not in c.test_item:
-        raise HTTPException(404, f"User '{customer_id}' không có test item trong split.")
+    if u not in c.target_item:
+        raise HTTPException(404, f"User '{customer_id}' không có item {c.evaluated_on} trong split.")
     return u
 
 
 def _thresholds(c: DataContext) -> tuple[float, float]:
-    counts = c.train_user_counts[c.test_users]
+    counts = c.train_user_counts[c.target_users]
     return float(np.quantile(counts, 1 / 3)), float(np.quantile(counts, 2 / 3))
 
 
@@ -81,12 +81,12 @@ def reload():
 def user_buckets():
     c = ctx()
     t = _thresholds(c)
-    counts = c.train_user_counts[c.test_users]
+    counts = c.train_user_counts[c.target_users]
     sizes = {b: int(sum(_bucket(int(n), t) == b for n in counts)) for b in BUCKET_LABELS}
     return {
         "thresholds": t,
         "buckets": [{"key": b, "label": l, "n_users": sizes[b]} for b, l in BUCKET_LABELS.items()],
-        "note": "Chia theo tam phân vị số tương tác train của các user có test item.",
+        "note": f"Chia theo tam phân vị số tương tác train của các user có item {c.evaluated_on}.",
     }
 
 
@@ -95,7 +95,7 @@ def search_users(q: str = "", bucket: str | None = None, limit: int = 20):
     c, q = ctx(), q.strip().lower()
     t = _thresholds(c)
     out = []
-    for u in c.test_users:
+    for u in c.target_users:
         row = _user_row(c, int(u), t)
         if row["customer_id"].startswith(q) and (bucket is None or row["bucket"] == bucket):
             out.append(row)
@@ -108,7 +108,7 @@ def search_users(q: str = "", bucket: str | None = None, limit: int = 20):
 def random_user(bucket: str | None = None):
     c = ctx()
     t = _thresholds(c)
-    pool = [int(u) for u in c.test_users if bucket is None or _bucket(int(c.train_user_counts[u]), t) == bucket]
+    pool = [int(u) for u in c.target_users if bucket is None or _bucket(int(c.train_user_counts[u]), t) == bucket]
     if not pool:
         raise HTTPException(404, "Không có user nào trong nhóm này.")
     return _user_row(c, random.choice(pool), t)
@@ -131,8 +131,9 @@ def recommend(customer_id: str, model: str = "NeuMF-Pretrained", k: int = 10):
         raise HTTPException(404, f"Model '{model}' không khả dụng: {reason}")
     u = _user(c, customer_id)
     out = inference.recommend(c, model, u, k)
-    out["test_item"] = c.item_info(c.test_item[u])
-    out["val_item"] = c.item_info(c.val_item[u]) if u in c.val_item else None
+    out["target_item"] = c.item_info(c.target_item[u])
+    # Chỉ khi chấm test mới hiện thêm item validation (cũng bị loại khỏi candidates); chấm validation thì test giữ kín.
+    out["val_item"] = c.item_info(c.val_item[u]) if c.evaluated_on == "test" and u in c.val_item else None
     return out
 
 

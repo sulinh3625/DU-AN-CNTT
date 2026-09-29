@@ -42,9 +42,9 @@ def score_items(ctx, model_name: str, users: np.ndarray) -> np.ndarray:
 
 
 def eval_record(ctx, u: int):
-    """EvalRecord của test item, tạo bằng chính build_full_ranking_records (loại train ∪ val)."""
-    eval_df = pd.DataFrame({"user": [u], "item": [ctx.test_item[u]]})
-    return build_full_ranking_records(eval_df, ctx.n_items, ctx.train_val_pos)[0]
+    """EvalRecord của item đích (validation hoặc test, theo run), tạo bằng chính build_full_ranking_records."""
+    eval_df = pd.DataFrame({"user": [u], "item": [ctx.target_item[u]]})
+    return build_full_ranking_records(eval_df, ctx.n_items, ctx.seen_pos)[0]
 
 
 def candidate_scores(ctx, model_name: str, u: int, record, all_items_row=None) -> np.ndarray:
@@ -76,9 +76,9 @@ def rank_from_scores(ctx, u: int, scores: np.ndarray, top_k: int, record) -> dic
 def recommend(ctx, model_name: str, u: int, k: int) -> dict:
     record = eval_record(ctx, u)
     res = rank_from_scores(ctx, u, candidate_scores(ctx, model_name, u, record), k, record)
-    test_item = ctx.test_item[u]
+    target = ctx.target_item[u]
     items = [
-        {**ctx.item_info(i), "rank": r, "score": s, "is_test_item": i == test_item}
+        {**ctx.item_info(i), "rank": r, "score": s, "is_target": i == target}
         for r, (i, s) in enumerate(zip(res["top_items"], res["top_scores"]), start=1)
     ]
     return {

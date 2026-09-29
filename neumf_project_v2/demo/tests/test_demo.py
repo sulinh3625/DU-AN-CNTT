@@ -28,25 +28,33 @@ def test_splits_disjoint_and_one_item_per_user(ctx):
     assert ctx.test_df["user"].is_unique and ctx.val_df["user"].is_unique
 
 
-def test_test_item_not_in_history(ctx):
-    for u, item in ctx.test_item.items():
+def test_target_follows_run_evaluated_on(ctx):
+    """Demo chấm đúng tập của bảng kết quả run: validation (khoá test) hoặc test (--final)."""
+    assert ctx.evaluated_on == ctx.run_metadata.get("evaluated_on", "test")
+    target_df = ctx.test_df if ctx.evaluated_on == "test" else ctx.val_df
+    assert ctx.target_item == dict(zip(target_df["user"].astype(int), target_df["item"].astype(int)))
+    assert ctx.seen_pos is (ctx.train_val_pos if ctx.evaluated_on == "test" else ctx.train_pos)
+
+
+def test_target_item_not_in_history(ctx):
+    for u, item in ctx.target_item.items():
         assert item not in ctx.train_pos[u]
-    for u in ctx.test_users[:300]:
+    for u in ctx.target_users[:300]:
         hist = ctx.history(int(u))
         ids = {h["item_idx"] for h in hist}
-        assert ctx.test_item[int(u)] not in ids
+        assert ctx.target_item[int(u)] not in ids
         assert ids == ctx.train_pos[int(u)]
         dates = [h["t_dat"] for h in hist]
         assert dates == sorted(dates)
 
 
 def test_candidates_follow_protocol(ctx):
-    u = int(ctx.test_users[0])
+    u = int(ctx.target_users[0])
     rec = inference.eval_record(ctx, u)
     cand = set(rec.candidates.tolist())
-    assert ctx.test_item[u] in cand
-    assert not (ctx.train_val_pos[u] - {ctx.test_item[u]}) & cand
-    assert len(cand) == ctx.n_items - len(ctx.train_val_pos[u] - {ctx.test_item[u]})
+    assert ctx.target_item[u] in cand
+    assert not (ctx.seen_pos[u] - {ctx.target_item[u]}) & cand
+    assert len(cand) == ctx.n_items - len(ctx.seen_pos[u] - {ctx.target_item[u]})
 
 
 # --------------------------------------------------- per-user vs file
@@ -56,7 +64,7 @@ def test_demo_metrics_match_results_per_user(ctx):
         pytest.skip("Chưa có results_per_user.csv — chạy python demo/scripts/build_offline_artifacts.py")
     ref = pd.read_csv(path, dtype={"customer_id": str}).set_index(["model", "customer_id"])
     rng = np.random.default_rng(0)
-    users = rng.choice(ctx.test_users, size=100, replace=False)
+    users = rng.choice(ctx.target_users, size=100, replace=False)
     k = max(ctx.k_values)
     for m in ctx.available_models:
         for u in users:

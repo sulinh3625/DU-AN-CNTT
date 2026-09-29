@@ -98,7 +98,8 @@
         <div class="protocol">
           <b>Protocol đánh giá</b><br>
           • <b>Temporal leave-one-out</b>: với mỗi khách, giao dịch cuối theo thời gian là <i>test item</i>, giao dịch áp chót là <i>validation item</i>, phần còn lại là train. Test item bị giấu khỏi train.<br>
-          • <b>Full ranking</b>: mô hình chấm điểm toàn bộ item trong catalog, trừ các item khách đã mua trong train và validation; test item được xếp hạng trong tập candidates đó.<br>
+          • <b>Full ranking</b>: mô hình chấm điểm toàn bộ item trong catalog, trừ các item khách đã mua trong train và validation; item đích được xếp hạng trong tập candidates đó.<br>
+          • <b>Item đích</b> = đúng tập mà run đã chấm: <i>validation item</i> nếu run chưa <code>--final</code> (khoá test — test item được giữ kín), <i>test item</i> nếu run đã chấm test.<br>
           • <code>HR@K = 1[rank ≤ K]</code><br>
           • <code>NDCG@K = 1/log2(rank+1)</code> nếu rank ≤ K, ngược lại 0.<br>
           • Sampled-99 (test item + 99 item ngẫu nhiên) chỉ để đối chiếu, không phải protocol chính.
