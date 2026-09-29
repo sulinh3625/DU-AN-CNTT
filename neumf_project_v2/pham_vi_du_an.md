@@ -186,6 +186,44 @@ Lý do lấy mẫu theo khách (không theo dòng): lấy theo dòng sẽ cắt 
 Chọn **k = 10** (lệch khỏi chuẩn k = 5 vì RAM; RAM đỉnh đo thực tế khi train một seed 4,1 GB). Hệ quả: dữ liệu thiên
 về khách mua nhiều — ghi là hạn chế.
 
+### 4.4 Các phương án dữ liệu đã thử và bỏ
+
+Trước khi chốt hm500k, dự án đã thử ba phương án khác. Code của chúng đã gỡ khỏi repo (notebook `colab_hm_subset.ipynb`,
+`configs/hm.yaml`, `configs/hm_subset.yaml`, `scripts/00_prepare_hm_cache.py`, `scripts/00_sample_hm300k.py`);
+số liệu đo được giữ lại dưới đây vì là lý do cho các quyết định ở mục 4.2–4.3.
+
+**(a) Toàn bộ H&M + cache Parquet** (`hm.yaml`). Đọc thẳng CSV 31,8 triệu dòng tốn nhiều; cache một lần sang Parquet
+(đọc theo lô 2 triệu dòng, mã hoá `customer_id`/`article_id` thành int32, hạ kiểu số, ghi streaming) giảm đáng kể:
+
+| Tiêu chí | CSV gốc | Cache Parquet |
+|---|---|---|
+| Kích thước | 3.488 MB | 323 MB (≈ 10,8 lần nhỏ hơn) |
+| Thời gian nạp lại | ≈ 33 giây | ≈ 1,8 giây |
+| RAM khi nạp | ≈ 7.851 MB | ≈ 890 MB |
+
+Nhưng nạp nhanh không giải quyết được chi phí đánh giá. Độ nhạy k-core trên **toàn bộ** dữ liệu:
+
+| k | Users | Items | Tương tác | Mật độ |
+|--:|--:|--:|--:|--:|
+| 3 | 1.074.388 | 96.264 | 26.873.935 | 0,0260% |
+| 5 | 889.062 | 90.690 | 26.215.294 | 0,0325% |
+| 10 | 633.130 | 80.265 | 24.426.258 | 0,0481% |
+
+Ở k = 5, Full Ranking cần ≈ 889.062 × 90.690 ≈ 8,06·10¹⁰ cặp điểm cho **mỗi** mô hình → không khả thi với GPU 4 GB,
+RAM 16 GB. Bỏ.
+
+**(b) Lát cắt 100.000 dòng đầu tệp** (bản báo cáo cũ). Tệp gốc sắp theo ngày nên 100k dòng đầu chỉ phủ **3 ngày**
+(20–22/09/2018): sau k = 5 còn 1.743 user × 1.080 item (8.200 cặp train); k = 10 thì sụp về 0. Không có chiều thời
+gian, catalog quá nhỏ và mọi kết luận chỉ đúng cho 3 ngày. Bỏ.
+
+**(c) Lấy mẫu ngẫu nhiên theo dòng.** 300k dòng rải trên 1,36 triệu khách → trung bình ≈ 0,2 giao dịch/khách; đã đo:
+lấy ngẫu nhiên theo dòng hay cách đều theo dòng đều còn **0 tương tác sau k-core = 5**. Đây là lý do mọi mẫu về sau
+đều lấy **theo khách hàng**, giữ trọn lịch sử.
+
+**(d) hm_subset ≈ 300k dòng theo khách, k = 5, leave-one-out** (`hm_subset.yaml`, chạy bằng `run.py all` với cấu hình
+mặc định, 1 seed). Đúng hướng lấy mẫu nhưng chưa tinh chỉnh, chưa khoá test, protocol leave-one-out rò rỉ tương lai
+(mục 5.2). Được thay bằng hm500k + chia theo mốc thời gian chung + quy trình ở mục 7–8.
+
 ---
 
 ## 5. Chia Dữ Liệu

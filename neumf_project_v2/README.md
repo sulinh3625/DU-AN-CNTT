@@ -19,8 +19,7 @@ thời gian chung.
 neumf_project_v2/
 ├── configs/
 │   ├── hm500k_global.yaml   # Protocol CHÍNH: một mốc thời gian chung (dùng cho tuning + đánh giá cuối)
-│   ├── hm500k.yaml          # Protocol phụ: leave-one-out theo thời gian từng user (mặc định của run.py)
-│   └── hm.yaml, hm_subset.yaml   # Cấu hình cũ (H&M đầy đủ / mẫu 300k), không dùng cho kết quả chính
+│   └── hm500k.yaml          # Protocol phụ: leave-one-out theo thời gian từng user (mặc định của run.py)
 ├── data/
 │   ├── raw/hm/              # transactions_train.csv (+ articles.csv, customers.csv chỉ cho demo) — tải từ Kaggle
 │   └── processed/hm/        # hm500k_transactions.csv (sinh bởi scripts/00_sample_hm.py)
@@ -51,8 +50,7 @@ neumf_project_v2/
 │   └── run_all.py               # 03 rồi 05
 ├── audit/                   # Bằng chứng thực nghiệm: PREREG.md, tuning_log.csv, best_configs.json, test_access_log.csv
 ├── notebooks/
-│   ├── colab_final.ipynb    # Notebook Colab chạy lại kết quả cuối (mục 7)
-│   └── colab_hm_subset.ipynb   # Notebook Colab cũ (run.py all trên mẫu 300k)
+│   └── colab_final.ipynb    # Notebook Colab chạy lại kết quả cuối (mục 7)
 ├── demo/                    # Web demo (xem demo/README.md)
 ├── outputs/
 │   ├── final/               # Kết quả cuối (summary.csv, significance.csv, seed*/)
@@ -266,7 +264,5 @@ nhận xét cho số liệu phân tích phụ (không viết trước được v
   nhẹ (cuDNN không tất định). Kết luận thống kê mới là thứ cần giữ.
 - Colab ngắt giữa chừng: chạy lại từ ô 2 (mỗi lần chạy lại vẫn được ghi vào nhật ký test).
 
-### 7.5 Notebook cũ `colab_hm_subset.ipynb`
-
-Chạy `run.py all` trên mẫu ~300k (`configs/hm_subset.yaml`), đọc `transactions_train.csv` từ `My Drive/data/`,
-lưu kết quả vào `My Drive/result/<thời điểm>/`. Không phải pipeline của kết quả chính — chỉ giữ để tham khảo.
+Các phương án dữ liệu cũ (toàn bộ H&M + cache Parquet, lát cắt 100k dòng, mẫu 300k) đã gỡ khỏi repo; lý do và số
+liệu đo được ghi ở `pham_vi_du_an.md` mục 4.4.
