@@ -46,6 +46,8 @@ neumf_project_v2/
 │   ├── 11_final.py              # Đánh giá cuối trên TEST, 3 seed (có khoá test)
 │   ├── 12_significance.py       # Wilcoxon + bootstrap CI + Holm → outputs/final/summary.csv, significance.csv
 │   ├── 13_plot_final.py         # Biểu đồ kết quả cuối → outputs/figures/final_*.png
+│   ├── 14_secondary.py          # Phân tích phụ trên test: head/tail, cold/warm, beyond-accuracy, Sampled-99, độ trễ
+│   ├── 15_export_report.py      # Xuất bảng .tex + macro số liệu + hình sang Report DACNTT/
 │   └── run_all.py               # 03 rồi 05
 ├── audit/                   # Bằng chứng thực nghiệm: PREREG.md, tuning_log.csv, best_configs.json, test_access_log.csv
 ├── notebooks/
@@ -150,6 +152,21 @@ python scripts/13_plot_final.py       # → outputs/figures/final_metrics.png, f
 
 `13_plot_final.py` cần `outputs/final/seed*/results_per_user.csv` (chỉ có sau khi chạy 11).
 
+### 5.4 Phân tích phụ và xuất sang báo cáo
+
+```bash
+python scripts/14_secondary.py --reason "Phân tích phụ trên test"   # nạp checkpoint của 11, không train lại
+python scripts/15_export_report.py                                 # → ../Report DACNTT/content/tables/, media/figures/final/
+```
+
+`14_secondary.py` cần checkpoint trong `outputs/final/seed*/` và là một lần chấm test (ghi 1 dòng nhật ký); chỉ đòi
+code/cấu hình không bị sửa (cho phép `outputs/` và `audit/test_access_log.csv`). Ra `outputs/final/{stratified,
+beyond_accuracy,sampled99,latency}.csv` (khoảng 10–15 phút trên GPU).
+
+`15_export_report.py` sinh bảng `.tex`, file macro `results_macros.tex` và chép hình `final_*.png` vào báo cáo. Chương 4,
+5 và phần tóm tắt đọc số qua macro (`\Res{Pre}{NDCG10}`, `\Sig{PreBPR}{pholm}`…), nên chạy lại script rồi biên dịch là
+số trong báo cáo tự cập nhật. Bảng/hình chưa có số liệu sẽ hiện khung "Chưa có số liệu" thay vì lỗi biên dịch.
+
 ## 6. Chạy nhanh bằng `run.py` (khám phá, protocol phụ, demo)
 
 `run.py` chạy `03_run_experiment.py` với cấu hình mặc định (không phải cấu hình đã tune). Mặc định mọi bảng tính
@@ -182,8 +199,9 @@ Demo bằng Docker (chỉ inference, dữ liệu và `outputs/` mount qua volume
 
 ## 7. Chạy trên Google Colab
 
-Notebook chính: **`colab_final.ipynb`** — chạy lại đúng pipeline mục 5.2–5.3 (dữ liệu → khám phá từng bước →
-11_final 3 seed → kiểm định → biểu đồ), dùng `best_configs.json` đã tune, **không tune lại**.
+Notebook chính: **`notebooks/colab_final.ipynb`** — chạy lại đúng pipeline mục 5.2–5.4 (dữ liệu → khám phá từng bước →
+11_final 3 seed → kiểm định → biểu đồ → phân tích phụ → xuất bảng/hình cho báo cáo), dùng `best_configs.json` đã tune,
+**không tune lại**.
 
 Notebook **clone code từ GitHub** (`sulinh3625/DU-AN-CNTT`, nhánh `main`), nên mọi thay đổi ở máy local phải
 **commit + push** trước khi chạy.
@@ -219,17 +237,31 @@ Chọn một trong hai cách:
 | 2 | Mount Drive, cấu hình | Sửa `REASON` (ghi vào nhật ký test), `SEEDS`, `DRIVE_DIR` nếu cần |
 | 3 | Clone repo + `pip install` | Nếu pip đổi phiên bản numpy/pandas: `Runtime → Restart session`, chạy lại ô 2 và `%cd /content/DU-AN-CNTT/neumf_project_v2` |
 | 4 | Dữ liệu hm500k | Dùng bản trên Drive nếu có; không thì tải Kaggle + lấy mẫu (10–20 phút) rồi lưu lên Drive |
-| 5 | Khám phá pipeline từng bước | Kiểm tra khớp lần chạy gốc (201.801 cặp train, 10.345 item) — lệch thì **dừng** |
+| 5 | Khám phá pipeline từng bước | Kiểm tra khớp lần chạy gốc (201.801 cặp train, 10.145 item trong train) — lệch thì **dừng** |
 | 6 | pytest + kiểm tra tree sạch | Tree bẩn thì 11_final từ chối chạy |
 | 7 | `11_final.py` 3 seed | 65 phút – 2 giờ; log ghi song song lên Drive. Giữ tab mở để Colab không ngắt |
 | 8 | Kiểm định + biểu đồ | Báo lỗi nếu seed nào chưa chạy xong |
-| 9 | Lưu Drive + tải zip về máy | `My Drive/neumf_colab/results_<thời điểm>/` (không kèm checkpoint) |
-| 10 | Xem nhanh kết quả | Đối chiếu với số gốc ở cuối notebook |
+| 9 | `14_secondary.py` | 10–15 phút; sửa `REASON_SECONDARY` ở ô 2 nếu muốn. Độ trễ đo trên CPU của Colab |
+| 10 | `15_export_report.py` | Sinh bảng/macro/hình cho báo cáo trong bản clone |
+| 11 | Lưu Drive + tải zip về máy | `My Drive/neumf_colab/results_<thời điểm>/` (không kèm checkpoint) |
+| 12 | Xem nhanh kết quả | Đối chiếu với số gốc ở cuối notebook |
 
 ### 7.4 Sau khi chạy
 
-- Chép các dòng mới trong `test_access_log.csv` (có trong zip / thư mục Drive) vào `audit/test_access_log.csv`
-  ở repo local rồi commit — để nhật ký truy cập test đầy đủ.
+Giải nén zip và chép về repo (bảng này cũng có ở cuối mục 11 của notebook):
+
+| Trong zip | Chép vào repo |
+|---|---|
+| `final/` | `neumf_project_v2/outputs/final/` |
+| `figures/final_*.png` | `neumf_project_v2/outputs/figures/` |
+| `test_access_log.csv` | `neumf_project_v2/audit/test_access_log.csv` (ghi đè — đã gồm dòng cũ + dòng mới) |
+| `report/` | `Report DACNTT/` (ghi đè `content/tables/`, `media/figures/final/`) |
+
+Rồi commit và biên dịch lại báo cáo (`Report DACNTT/compile.bat`). Tìm `[TODO:` trong PDF: mục 4.4.4 cần 2–3 câu
+nhận xét cho số liệu phân tích phụ (không viết trước được vì phụ thuộc kết quả).
+
+- Nếu số so sánh "tốt hơn" trong bảng kiểm định khác 0/8, các câu kết luận chữ trong chương 4, 5 và tóm tắt phải sửa
+  theo (số liệu trong câu thì tự cập nhật, nhưng câu "không so sánh nào có ý nghĩa" là chữ).
 - Random và MostPopular phải ra giống hệt số gốc; BPR-MF gần như giống hệt; GMF/MLP/NeuMF trên GPU T4 có thể lệch
   nhẹ (cuDNN không tất định). Kết luận thống kê mới là thứ cần giữ.
 - Colab ngắt giữa chừng: chạy lại từ ô 2 (mỗi lần chạy lại vẫn được ghi vào nhật ký test).

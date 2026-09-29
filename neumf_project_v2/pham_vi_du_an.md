@@ -201,7 +201,8 @@ train < 2020-07-01 ≤ val < 2020-07-29 ≤ test   (test đến 2020-09-22)
 - Val/test chỉ giữ user và item đã xuất hiện trong train (CF thuần ID không chấm được user/item mới).
 - Mỗi user có thể có **nhiều item đúng** → cần Recall/Precision thật, không chỉ HR.
 - Item user đã mua trước đó không là đích: chỉ dự đoán món **mới** với user.
-- Kích thước: train 201.801 cặp; 2.275 user validation; 2.893 user test.
+- Kích thước: train 201.801 cặp (7.506 user, 10.145 item); val 7.057 cặp / 2.275 user; test 8.493 cặp / 2.893 user
+  (trung bình 2,94 item đúng mỗi user test).
 
 Lý do chọn làm chính (Meng et al., 2020): leave-one-out để **rò rỉ tương lai** — trung bình 11,2% tương tác train xảy ra
 **sau** ngày của item test, 60,9% user có val/test cùng ngày. Mốc chung đảm bảo mô hình chỉ thấy quá khứ.
@@ -231,7 +232,7 @@ mô hình **đổi** giữa hai cách chia (ví dụ NeuMF-Pretrained đứng đ
 
 ### 6.1 Full Ranking (chính)
 
-Với mỗi user test: candidate = **toàn bộ item có trong train** (10.345), loại item user đã có trong train (khi chấm val)
+Với mỗi user test: candidate = **toàn bộ item có trong train** (10.145 trên 10.345 item sau k-core), loại item user đã có trong train (khi chấm val)
 hoặc train ∪ val (khi chấm test); item đúng vẫn nằm trong candidate. Chấm điểm mọi candidate, xếp hạng, lấy top-K.
 Tie-break **tất định** (seed 2026). Số candidate thực tế mỗi user được ghi lại (min 9.863, max 10.144 ở val).
 
@@ -338,7 +339,7 @@ giúp trên dữ liệu này (Pretrained < Scratch trên val).
 
 ## 9. Kết Quả Cuối Trên Test
 
-Protocol mốc thời gian chung, hm500k, 3 seed (42, 2024, 2025), commit `7805907`, 2.893 user test, 10.345 item candidate.
+Protocol mốc thời gian chung, hm500k, 3 seed (42, 2024, 2025), commit `7805907`, 2.893 user test, 10.145 item trong train làm candidate.
 Thời gian 64,8 phút trên RTX 3050. Số liệu: `outputs/final/summary.csv`, `outputs/final/significance.csv`.
 
 ### 9.1 Mean ± std qua 3 seed
@@ -428,7 +429,7 @@ Web mô phỏng shop H&M (`demo/`), không train lại: nạp checkpoint, dựng
 | Full Ranking trên H&M đầy đủ | Không khả thi trên CPU/GPU 4 GB |
 | ItemKNN không chạy | 10.345 item > ngưỡng ma trận dày 5.000 |
 | GPU không tất định | cuDNN trên GPU khác có thể lệch nhẹ số GMF/MLP/NeuMF; kết luận thống kê mới là thứ cần giữ |
-| Độ trễ Top-K chưa đo (R7) | Có demo FastAPI, chưa có số p50/p95 → chưa khẳng định khả năng triển khai |
+| Độ trễ Top-K (R7) | Đo bằng `scripts/14_secondary.py` (p50/p95 trên CPU, cùng lượt với phân tích phụ head/tail, cold/warm, beyond-accuracy, Sampled-99); chưa có số cho tới khi chạy notebook Colab |
 
 ---
 

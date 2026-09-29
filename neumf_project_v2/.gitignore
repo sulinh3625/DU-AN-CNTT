@@ -20,3 +20,8 @@ outputs/data_audit/**/*
 outputs/tables/**/*
 outputs/figures/**/*
 !outputs/**/.gitkeep
+
+# Checkpoint của đánh giá cuối và tuning (lớn, sinh lại được); giữ results*.csv/json để truy vết
+outputs/final/seed*/*.pt
+outputs/final/seed*/*.npz
+outputs/tuning/

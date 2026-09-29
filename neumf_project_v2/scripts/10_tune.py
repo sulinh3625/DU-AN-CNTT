@@ -109,10 +109,11 @@ def load_data(config_path: str, with_test: bool = False):
     train_pos = build_user_positive_sets(tr, data.n_users)
     pool = np.unique(tr["item"].to_numpy())
     val = build_full_ranking_records_multi(va, data.n_items, train_pos, pool)
-    D = SimpleNamespace(tr=tr, n_users=data.n_users, n_items=data.n_items, train_pos=train_pos, val=val)
-    if with_test:  # chỉ scripts/11_final.py (đã qua khoá test); tuning không bao giờ dựng test records
+    D = SimpleNamespace(tr=tr, n_users=data.n_users, n_items=data.n_items, train_pos=train_pos, val=val, pool=pool)
+    if with_test:  # chỉ scripts/11_final.py, 14_secondary.py (đã qua khoá test); tuning không bao giờ dựng test records
         seen = build_user_positive_sets(pd.concat([tr, va], ignore_index=True), data.n_users)
         D.test = build_full_ranking_records_multi(te, data.n_items, seen, pool)
+        D.va, D.te = va, te
     return cfg, D
 
 

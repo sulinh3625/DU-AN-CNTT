@@ -46,7 +46,7 @@ Phụ lục này liệt kê từng luận điểm lý thuyết và phương phá
 2.3.4 & Chiến lược kết hợp Early Fusion và Late Fusion &
 \textcite{he2017ncf} \\
 \hline
-3.6 & Thuật toán tối ưu hóa thích ứng Adam (Pre-training GMF/MLP) &
+3.5.1 & Thuật toán tối ưu hóa thích ứng Adam (Pre-training và tinh chỉnh) &
 \textcite{kingma2014adam} \\
 \hline
 2.4.1 & Mô hình Wide \& Deep và DeepFM trong gợi ý (Feature-rich Deep CTR) &
@@ -78,8 +78,20 @@ Phụ lục này liệt kê từng luận điểm lý thuyết và phương phá
 2.5 & Giao thức đánh giá hiệu năng xếp hạng Top-N Recommendation &
 \textcite{cremonesi2010performance}; \textcite{he2017ncf} \\
 \hline
-4.1 & Vấn đề đánh giá bằng mẫu âm lấy mẫu con (Sampled Metrics) &
+2.5, 4.4.5 & Vấn đề đánh giá bằng mẫu âm lấy mẫu con (Sampled Metrics); chọn Full Ranking &
 \textcite{krichene2020sampled} \\
+\hline
+3.2.5 & Chia dữ liệu theo một mốc thời gian chung thay vì Leave-One-Out &
+\textcite{meng2020splitting} \\
+\hline
+3.6, 4.6 & Baseline phải được tinh chỉnh cùng ngân sách; không chọn mô hình trên tập test; MF được tune kỹ vượt NeuMF &
+\textcite{dacrema2019progress}; \textcite{rendle2020ncfmf} \\
+\hline
+3.6, 4.3 & iALS được tinh chỉnh là baseline MF mạnh &
+\textcite{rendle2022ials} \\
+\hline
+3.6 & Kiểm định Wilcoxon signed-rank, paired bootstrap, hiệu chỉnh Holm &
+\textcite{wilcoxon1945}; \textcite{efron1993bootstrap}; \textcite{holm1979} \\
 \hline
 1.3 & Nền tảng và thư viện tính toán học sâu PyTorch &
 \textcite{paszke2019pytorch} \\
@@ -94,3 +106,20 @@ Phụ lục này liệt kê từng luận điểm lý thuyết và phương phá
 
 \vspace{0.5\baselineskip}
 \noindent\textbf{Ghi chú.} Các thông số cấu hình và thiết kế hệ thống trình bày trong Chương~\ref{chap:thietke_trienkhai} và kết quả thực nghiệm trong Chương~\ref{chap:thucnghiem} do nhóm tác giả tự triển khai và tính toán từ mã nguồn thực nghiệm của dự án.
+
+\chapter*{PHỤ LỤC B. TÁI LẬP KẾT QUẢ THỰC NGHIỆM}
+\addcontentsline{toc}{chapter}{PHỤ LỤC B. TÁI LẬP KẾT QUẢ THỰC NGHIỆM}
+\label{app:taolap}
+
+Mã nguồn nằm trong thư mục \texttt{neumf\_project\_v2/} của kho mã dự án; hướng dẫn chi tiết (máy cá nhân và Google Colab) ở tệp \texttt{README.md}. Các bước tạo ra toàn bộ số liệu của Chương~\ref{chap:thucnghiem}:
+
+\begin{enumerate}
+    \item \textbf{Dữ liệu:} đặt \texttt{transactions\_train.csv} của cuộc thi H\&M vào \texttt{data/raw/hm/}, chạy \texttt{python run.py sample-hm} để tạo mẫu hm500k (tất định, khoảng 70 giây).
+    \item \textbf{Tinh chỉnh (chỉ tập xác thực):} \texttt{python scripts/10\_tune.py --model all}; mỗi cấu hình ghi một dòng vào \texttt{audit/tuning\_log.csv}, cấu hình tốt nhất vào \texttt{audit/best\_configs.json}.
+    \item \textbf{Đánh giá cuối trên tập kiểm thử:} \texttt{python scripts/11\_final.py --reason "..."} (3 seed). Kịch bản từ chối chạy nếu \texttt{audit/PREREG.md} chưa được lưu vào git, thiếu lý do hoặc mã nguồn có thay đổi chưa lưu; mỗi lần chấm ghi một dòng vào \texttt{audit/test\_access\_log.csv}.
+    \item \textbf{Kiểm định và biểu đồ:} \texttt{python scripts/12\_significance.py} rồi \texttt{python scripts/13\_plot\_final.py}.
+    \item \textbf{Phân tích phụ:} \texttt{python scripts/14\_secondary.py --reason "..."} (phân tầng, beyond-accuracy, Sampled-99, độ trễ; nạp lại trọng số, không huấn luyện lại).
+    \item \textbf{Xuất sang báo cáo:} \texttt{python scripts/15\_export\_report.py} sinh các bảng \texttt{content/tables/*.tex}, macro số liệu và chép hình vào \texttt{media/figures/final/}; biên dịch lại báo cáo.
+\end{enumerate}
+
+Notebook \texttt{notebooks/colab\_final.ipynb} chạy tuần tự các bước 1 và 3--6 trên Google Colab (GPU T4) với cấu hình đã tinh chỉnh. Nhật ký \texttt{audit/test\_access\_log.csv} liệt kê mọi lần tập kiểm thử được chấm, kèm phiên bản mã nguồn và mã băm cấu hình tương ứng.

@@ -39,15 +39,15 @@ Về nguyên tắc, phản hồi của User có thể là phản hồi hiện (E
     \end{cases}
     \label{eq:implicit_binary}
 \end{equation}
-Hệ quả trực tiếp của cách xây dựng nhãn này -- $y_{ui}=1$ chỉ xác nhận \emph{đã mua}, không xác nhận \emph{hài lòng}, và $y_{ui}=0$ có thể là "chưa từng biết đến sản phẩm" chứ không hẳn "không thích" \parencite{he2017ncf} -- là lý do trực tiếp khiến kỹ thuật lấy mẫu tiêu cực (Negative Sampling, mục~\ref{subsec:dynamic_sampling}) phải được thiết kế cẩn thận thay vì coi mọi cặp chưa tương tác là nhãn âm chắc chắn đúng.
+Hệ quả trực tiếp của cách xây dựng nhãn này -- $y_{ui}=1$ chỉ xác nhận \emph{đã mua}, không xác nhận \emph{hài lòng}, và $y_{ui}=0$ có thể là ``chưa từng biết đến sản phẩm'' chứ không hẳn ``không thích'' \parencite{he2017ncf} -- là lý do trực tiếp khiến kỹ thuật lấy mẫu tiêu cực (Negative Sampling, mục~\ref{subsec:dynamic_sampling}) phải được thiết kế cẩn thận thay vì coi mọi cặp chưa tương tác là nhãn âm chắc chắn đúng.
 
 \subsection{Độ thưa dữ liệu và Cold-Start: hai giới hạn định hình phạm vi đề tài}
 \label{subsec:thachthuc_sparsity}
 
 Hai thách thức kinh điển của Collaborative Filtering không chỉ là lý thuyết trừu tượng trong phạm vi đề tài này -- chúng trực tiếp định hình các quyết định về phạm vi thực nghiệm ở mục~\ref{subsec:phamvi}:
 \begin{itemize}
-    \item \textbf{Độ thưa dữ liệu (Data Sparsity):} Số cặp User--Item thực sự có tương tác chỉ chiếm một phần rất nhỏ trong toàn bộ ma trận $M \times N$ \parencite{koren2009matrix}. Số liệu đo được cụ thể trên dữ liệu của đề tài (Bảng~\ref{tab:kcore_hm}, Bảng~\ref{tab:kcore_hm_full}) minh họa rõ mức độ thưa này: ngay cả sau khi lọc $k$-core, mật độ chỉ đạt 0,62\% trên lát cắt H\&M dùng để thực nghiệm, và giảm xuống còn 0,03\% nếu tính trên toàn bộ 889.062 người dùng ở quy mô đầy đủ.
-    \item \textbf{Vấn đề khởi đầu lạnh (Cold-Start):} Xảy ra khi một User hoặc Item hoàn toàn mới chưa có lịch sử tương tác nào, khiến mô hình không có dữ liệu để học vector biểu diễn cho thực thể đó. Đây chính là lý do kỹ thuật (không phải lựa chọn tùy ý) khiến bước lọc $k$-core (mục~\ref{subsec:interaction_matrix}) là bắt buộc trước khi huấn luyện: mọi User/Item còn lại sau lọc đảm bảo có ít nhất $k=5$ tương tác, tức đã "ra khỏi" vùng Cold-Start theo định nghĩa trên; ngược lại, nhóm User/Item bị loại bởi $k$-core chính là nhóm Cold-Start mà đề tài xác định rõ là nằm ngoài phạm vi đánh giá định lượng (mục~\ref{subsec:phamvi}, mục~\ref{sec:pham_vi_thuc_nghiem}).
+    \item \textbf{Độ thưa dữ liệu (Data Sparsity):} Số cặp User--Item thực sự có tương tác chỉ chiếm một phần rất nhỏ trong toàn bộ ma trận $M \times N$ \parencite{koren2009matrix}. Số liệu đo được cụ thể trên dữ liệu của đề tài (Bảng~\ref{tab:kcore_hm}, Bảng~\ref{tab:kcore_hm_full}) minh họa rõ mức độ thưa này: ngay cả sau khi lọc $k$-core, mật độ chỉ đạt 0,28\% trên mẫu hm500k dùng để thực nghiệm ($k=10$), và chỉ 0,03\% nếu tính trên toàn bộ 889.062 người dùng ở quy mô đầy đủ ($k=5$).
+    \item \textbf{Vấn đề khởi đầu lạnh (Cold-Start):} Xảy ra khi một User hoặc Item hoàn toàn mới chưa có lịch sử tương tác nào, khiến mô hình không có dữ liệu để học vector biểu diễn cho thực thể đó. Đây chính là lý do kỹ thuật (không phải lựa chọn tùy ý) khiến bước lọc $k$-core (mục~\ref{subsec:interaction_matrix}) là bắt buộc trước khi huấn luyện: mọi User/Item còn lại sau lọc đảm bảo có ít nhất $k$ tương tác ($k=10$ trong thực nghiệm), tức đã ``ra khỏi'' vùng Cold-Start theo định nghĩa trên; ngược lại, nhóm User/Item bị loại bởi $k$-core chính là nhóm Cold-Start mà đề tài xác định rõ là nằm ngoài phạm vi đánh giá định lượng (mục~\ref{subsec:phamvi}, mục~\ref{sec:pham_vi_thuc_nghiem}).
 \end{itemize}
 
 \section{Cơ sở lý thuyết về Lọc cộng tác và Nhân tử hóa ma trận}
@@ -211,7 +211,7 @@ Trong các kiến trúc lai kết hợp nhiều nguồn biểu diễn, thời đ
     \item \textbf{Late Fusion:} Mỗi nhánh (GMF, MLP) xử lý biểu diễn độc lập với bảng Embedding riêng, chỉ hợp nhất kết quả ở lớp gần cuối cùng -- đây chính là cơ chế của kiến trúc NeuMF trình bày ở mục~\ref{subsec:neumf_arch}.
 \end{itemize}
 
-Việc thực nghiệm cả hai chiến lược (Chương~\ref{chap:thietke_trienkhai} và~\ref{chap:thucnghiem}) giúp trả lời câu hỏi nghiên cứu: hợp nhất sớm hay muộn phù hợp hơn với bài toán gợi ý từ tín hiệu phản hồi ẩn dạng ID trên dữ liệu H\&M.
+Cần lưu ý rằng khi chỉ có ID (không có đặc trưng phụ), công thức~\eqref{eq:early_fusion} trùng hoàn toàn với nhánh MLP đứng riêng của NCF (mục~\ref{subsec:mlp}): cùng một cặp bảng Embedding, cùng phép nối và cùng tháp MLP. Vì vậy trong đề tài, MLP đơn lẻ đóng vai trò mô hình Early Fusion và so sánh NeuMF với MLP chính là so sánh hợp nhất muộn với hợp nhất sớm (mục~\ref{subsec:early_fusion_design}).
 
 \subsection{Lấy mẫu tiêu cực (Negative Sampling) và hàm tổn thất Binary Cross-Entropy}
 \label{subsec:negative_sampling_loss}
@@ -281,22 +281,31 @@ Trong phạm vi đề tài, NeuMF được lựa chọn làm kiến trúc trọn
 \section{Các chỉ số đánh giá hệ thống gợi ý Top-K}
 \label{sec:metrics}
 
+Với mỗi người dùng kiểm thử $u$, mô hình xếp hạng tập ứng viên $\mathcal{C}_u$ và trả về danh sách $\text{Rec}_K(u)$ gồm $K$ sản phẩm đầu. Gọi $T_u$ là tập sản phẩm đúng của $u$ (với giao thức Leave-One-Out $|T_u| = 1$; với giao thức chia theo mốc thời gian chung, một người dùng có thể có nhiều sản phẩm đúng) và $\text{hits}_u = |T_u \cap \text{Rec}_K(u)|$. Mọi chỉ số được tính cho từng người dùng rồi lấy trung bình trên $\mathcal{U}_{test}$.
+
 \begin{itemize}
-    \item \textbf{Hit Ratio at K (HR@K):} Đo tỷ lệ mẫu kiểm thử tích cực xuất hiện trong danh sách Top-$K$ gợi ý, theo giao thức Leave-One-Out của He và cộng sự \parencite{he2017ncf}:
+    \item \textbf{Hit Ratio at K (HR@K):} người dùng được tính là ``trúng'' nếu có ít nhất một sản phẩm đúng trong top-$K$ \parencite{he2017ncf}:
     \begin{equation}
-        \text{HR@K} = \frac{1}{|\mathcal{U}_{test}|} \sum_{u \in \mathcal{U}_{test}} \mathbb{I}\left( \text{Rank}(u, i_{test}) \le K \right)
+        \text{HR@K} = \frac{1}{|\mathcal{U}_{test}|} \sum_{u \in \mathcal{U}_{test}} \mathbb{I}\left( \text{hits}_u \ge 1 \right)
         \label{eq:hr_k}
     \end{equation}
 
-    \item \textbf{Normalized Discounted Cumulative Gain at K (NDCG@K):} Đánh giá vị trí thứ tự xuất hiện của sản phẩm kiểm thử, theo định nghĩa gốc của Järvelin và Kekäläinen \parencite{jarvelin2002}:
+    \item \textbf{Precision@K và Recall@K:} tỉ lệ gợi ý đúng trong $K$ sản phẩm, và tỉ lệ sản phẩm đúng tìm lại được:
     \begin{equation}
-        \text{NDCG@K} = \frac{\text{DCG@K}}{\text{IDCG@K}}, \quad \text{với } \text{DCG@K} = \sum_{j=1}^{K} \frac{2^{rel_j} - 1}{\log_2(j + 1)}
+        \text{Precision@K}(u) = \frac{\text{hits}_u}{K}, \qquad \text{Recall@K}(u) = \frac{\text{hits}_u}{|T_u|}
+        \label{eq:precision_recall}
+    \end{equation}
+    Khi $|T_u| = 1$, Recall@K trùng HR@K và Precision@K $=$ HR@K$/K$ -- lý do các chỉ số này chỉ mang thông tin riêng khi người dùng có nhiều sản phẩm đúng.
+
+    \item \textbf{Normalized Discounted Cumulative Gain at K (NDCG@K):} thưởng nhiều hơn khi sản phẩm đúng nằm ở vị trí cao, theo định nghĩa của Järvelin và Kekäläinen \parencite{jarvelin2002} với mức liên quan nhị phân:
+    \begin{equation}
+        \text{NDCG@K}(u) = \frac{\text{DCG@K}(u)}{\text{IDCG@K}(u)}, \quad \text{DCG@K}(u) = \sum_{j=1}^{K} \frac{\mathbb{I}(\text{Rec}_K(u)_j \in T_u)}{\log_2(j + 1)}, \quad \text{IDCG@K}(u) = \sum_{j=1}^{\min(|T_u|, K)} \frac{1}{\log_2(j + 1)}
         \label{eq:ndcg_k}
     \end{equation}
-    trong đó $rel_j \in \{0, 1\}$ là mức độ liên quan tại vị trí $j$, và $\text{IDCG@K}$ là giá trị DCG lý tưởng nhất.
-
-    \item \textbf{Precision@K và Recall@K:} Precision@K đo tỷ lệ gợi ý đúng trong $K$ sản phẩm; Recall@K đo tỷ lệ tìm lại được các sản phẩm tích cực của người dùng.
+    IDCG là giá trị DCG khi mọi sản phẩm đúng xếp ở đầu danh sách, nên NDCG@K $\in [0, 1]$. Với $|T_u| = 1$ và sản phẩm đúng ở hạng $r$: NDCG@K $= 1/\log_2(r+1)$ nếu $r \le K$, ngược lại bằng 0.
 \end{itemize}
+
+\paragraph{Full Ranking và Sampled Ranking.} Giao thức của bài NCF gốc xếp sản phẩm đúng giữa 100 ứng viên (1 đúng + 99 âm lấy mẫu). \textcite{krichene2020sampled} chứng minh chỉ số trên tập ứng viên lấy mẫu không nhất quán với chỉ số trên toàn bộ catalog -- có thể đảo ngược kết luận ``A tốt hơn B'' -- và khuyến nghị tránh lấy mẫu. Đề tài vì vậy dùng \textbf{Full Ranking} (xếp hạng toàn bộ catalog trừ sản phẩm đã mua) làm giao thức chính, Sampled-99 chỉ để đối chiếu.
 
 \subsection{Các chỉ số đánh giá ngoài độ chính xác (Beyond-Accuracy Metrics)}
 \label{subsec:beyond_accuracy}
@@ -355,11 +364,15 @@ Bảng~\ref{tab:related_work} tổng hợp các công trình nền tảng liên 
     \hline
     \textbf{Wei \& Fang (2025)} \cite{wei2025diffusion} & Khảo sát Diffusion Models cho Recommendation & Tổng hợp đa miền & Hệ thống hóa hướng sinh (generative) dựa trên mô hình khuếch tán cho gợi ý. \textit{Hạn chế:} còn rất mới, chưa kiểm chứng rộng rãi trên dữ liệu giao dịch dạng bảng. \\
     \hline
-    \textbf{Dự án đề xuất (2026)} & Mô hình lai NeuMF (Early/Late Fusion) & H\&M Personalized Fashion Recommendations & Xây dựng và đánh giá NeuMF, Early Fusion trên dữ liệu giao dịch thời trang cực thưa, Ablation Study, đánh giá Popular/Long-tail, đối chiếu Full Ranking và Sampled-99. \\
+    \textbf{Ferrari Dacrema et al. (2019)} \cite{dacrema2019progress} & Tái lập 18 mô hình gợi ý học sâu & MovieLens, Pinterest, Netflix, \ldots & Phần lớn mô hình học sâu không vượt baseline đơn giản được tune tốt (ItemKNN, SLIM); mã NCF gốc chọn số epoch trên tập test. \textit{Hạn chế:} chủ yếu dùng giao thức lấy mẫu của các bài gốc. \\
+    \hline
+    \textbf{Rendle et al. (2020)} \cite{rendle2020ncfmf} & MF tích vô hướng so với NeuMF & MovieLens 1M, Pinterest & MF được tune kỹ vượt NeuMF trên chính dữ liệu và giao thức của bài NCF; MLP khó học được tích vô hướng và không phù hợp truy hồi nhanh. \textit{Hạn chế:} vẫn dùng giao thức Leave-One-Out lấy mẫu của bài gốc. \\
+    \hline
+    \textbf{Dự án đề xuất (2026)} & NeuMF (GMF + MLP, Scratch và Pretrained) so với baseline được tune cùng ngân sách & H\&M Personalized Fashion Recommendations (mẫu hm500k) & Đánh giá NeuMF trên dữ liệu giao dịch thời trang cực thưa với chia theo thời gian không rò rỉ, Full Ranking, khoá tập test, 3 seed và kiểm định cặp có hiệu chỉnh Holm; Ablation Study, phân tầng head/tail và cold/warm, đối chiếu Sampled-99, đo độ trễ. \\
     \hline
 \end{xltabular}
 
 \section{Khoảng trống nghiên cứu}
 \label{sec:khoangtrong_nghiencuu}
 
-Các nghiên cứu nền tảng về NCF/NeuMF \parencite{he2017ncf} chủ yếu được đánh giá trên dữ liệu điện ảnh (MovieLens) hoặc mạng xã hội hình ảnh (Pinterest), với tín hiệu tương tác nhị phân đơn giản. Trong khi đó, các hướng nghiên cứu hiện đại hơn (mục~\ref{sec:modern_trends}) như Graph-based CF \parencite{wang2019ngcf, he2020lightgcn}, Sequential Recommendation \parencite{kang2018self, sun2019bert4rec} hay LLM-based Recommendation \parencite{wu2023survey_llm4rec, rajput2023tiger} đòi hỏi cấu trúc dữ liệu đặc thù (đồ thị tương tác đủ dày, chuỗi phiên có mốc thời gian rõ ràng, hoặc văn bản/ngữ cảnh phong phú) hoặc tài nguyên tính toán vượt phạm vi của đề tài. Việc ứng dụng và đánh giá kiến trúc NeuMF -- vẫn là một baseline Model-based CF vững chắc và có khả năng diễn giải cao -- trên dữ liệu giao dịch thời trang thực tế, cực thưa (H\&M Personalized Fashion Recommendations), đối chiếu với baseline Pairwise (BPR-MF, mục~\ref{subsec:bpr}) cùng việc phân tích bóc tách các thành phần mô hình và đánh giá đa chiều (accuracy lẫn beyond-accuracy, mục~\ref{subsec:beyond_accuracy}), chính là khoảng trống nghiên cứu mà dự án này tập trung giải quyết, đồng thời tạo nền tảng thực nghiệm vững chắc để mở rộng sang Graph-based CF trong tương lai (Chương~\ref{chap:ketluan}).
+Các nghiên cứu nền tảng về NCF/NeuMF \parencite{he2017ncf} chủ yếu được đánh giá trên dữ liệu điện ảnh (MovieLens) hoặc mạng xã hội hình ảnh (Pinterest), với tín hiệu tương tác nhị phân đơn giản. Trong khi đó, các hướng nghiên cứu hiện đại hơn (mục~\ref{sec:modern_trends}) như Graph-based CF \parencite{wang2019ngcf, he2020lightgcn}, Sequential Recommendation \parencite{kang2018self, sun2019bert4rec} hay LLM-based Recommendation \parencite{wu2023survey_llm4rec, rajput2023tiger} đòi hỏi cấu trúc dữ liệu đặc thù (đồ thị tương tác đủ dày, chuỗi phiên có mốc thời gian rõ ràng, hoặc văn bản/ngữ cảnh phong phú) hoặc tài nguyên tính toán vượt phạm vi của đề tài. Việc ứng dụng và đánh giá kiến trúc NeuMF -- vẫn là một baseline Model-based CF vững chắc và có khả năng diễn giải cao -- trên dữ liệu giao dịch thời trang thực tế, cực thưa (H\&M Personalized Fashion Recommendations), đối chiếu với baseline Pairwise (BPR-MF, mục~\ref{subsec:bpr}) được tinh chỉnh cùng ngân sách, theo một giao thức tránh được các lỗi mà \textcite{dacrema2019progress} và \textcite{rendle2020ncfmf} đã chỉ ra (chọn mô hình trên tập test, baseline tune sơ sài, chỉ số lấy mẫu), cùng việc phân tích bóc tách các thành phần mô hình và đánh giá đa chiều (accuracy lẫn beyond-accuracy, mục~\ref{subsec:beyond_accuracy}), chính là khoảng trống nghiên cứu mà dự án này tập trung giải quyết, đồng thời tạo nền tảng thực nghiệm vững chắc để mở rộng sang Graph-based CF trong tương lai (Chương~\ref{chap:ketluan}).
