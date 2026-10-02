@@ -23,7 +23,8 @@ Nguồn đối chiếu:
 
 - **Luận án của GVHD:** Hồ Thị Linh (2023), *Multi-Source Integration for Recommendation Systems*, luận án tiến sĩ,
   ĐH Tôn Đức Thắng (`tai_lieu/10. Hồ Thị Linh - Toàn văn LATS.pdf`). Số trang dưới đây là số trang in trong luận án.
-- **Đề cương sơ bộ và đề cương chi tiết** (`tai_lieu/`).
+- **Đề cương sơ bộ và đề cương chi tiết** — đã xóa khỏi `tai_lieu/`; nội dung đề cương được trích dẫn trực tiếp trong
+  báo cáo và trong file này.
 - **Tài liệu gốc** mà luận án trích: K. Liu et al. (2018), Atrey et al. (2010), Burke (2002). Ba nguồn này và chính luận
   án đã được thêm vào danh mục tài liệu tham khảo của báo cáo.
 
