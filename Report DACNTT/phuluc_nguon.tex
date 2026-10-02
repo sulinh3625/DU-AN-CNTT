@@ -43,8 +43,8 @@ Phụ lục này liệt kê từng luận điểm lý thuyết và phương phá
 2.3 & Khung làm việc NCF và kiến trúc mô hình lai NeuMF (GMF + MLP) &
 \textcite{he2017ncf} \\
 \hline
-2.3.4 & Chiến lược kết hợp Early Fusion và Late Fusion &
-\textcite{he2017ncf} \\
+2.3.4 & Chiến lược hợp nhất Early Fusion và Late Fusion; kiểu lai weighted &
+\textcite{atrey2010multimodal}; \textcite{liu2018combine}; \textcite{holinh2023multisource}; \textcite{burke2002hybrid} \\
 \hline
 3.5.1 & Thuật toán tối ưu hóa thích ứng Adam (Pre-training và tinh chỉnh) &
 \textcite{kingma2014adam} \\
@@ -111,7 +111,7 @@ Phụ lục này liệt kê từng luận điểm lý thuyết và phương phá
 \addcontentsline{toc}{chapter}{PHỤ LỤC B. TÁI LẬP KẾT QUẢ THỰC NGHIỆM}
 \label{app:taolap}
 
-Mã nguồn nằm trong thư mục \texttt{neumf\_project\_v2/} của kho mã dự án; hướng dẫn chi tiết (máy cá nhân và Google Colab) ở tệp \texttt{README.md}. Các bước tạo ra toàn bộ số liệu của Chương~\ref{chap:thucnghiem}:
+Mã nguồn nằm trong thư mục \texttt{neumf\_project/} của kho mã dự án; hướng dẫn chi tiết (máy cá nhân và Google Colab) ở tệp \texttt{README.md}. Các bước tạo ra toàn bộ số liệu của Chương~\ref{chap:thucnghiem}:
 
 \begin{enumerate}
     \item \textbf{Dữ liệu:} đặt \texttt{transactions\_train.csv} của cuộc thi H\&M vào \texttt{data/raw/hm/}, chạy \texttt{python run.py sample-hm} để tạo mẫu hm500k (tất định, khoảng 70 giây).

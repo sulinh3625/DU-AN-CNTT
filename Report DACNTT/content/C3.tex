@@ -45,6 +45,7 @@ Trước khi trình bày chi tiết từng thành phần, mục này mô tả ki
 
         \node[stage, fill=red!8, below=of train] (eval)
             {\textbf{TẦNG 6 -- ĐÁNH GIÁ CUỐI TRÊN TEST (khoá tập test)}\\[2pt]
+             Huấn luyện lại trên Train $\cup$ Validation đúng số epoch tốt nhất $\rightarrow$
              Full Ranking, 3 seed $\rightarrow$ NDCG@10 (chính), Recall@10, HR@10, Precision@10, NDCG@5 $\rightarrow$
              kiểm định cặp theo user (Wilcoxon, bootstrap, Holm) $\rightarrow$ phân tích phụ: Long-tail, Cold/Warm, Beyond-accuracy, Sampled-99, độ trễ.};
 
@@ -64,7 +65,7 @@ Trước khi trình bày chi tiết từng thành phần, mục này mô tả ki
     \label{fig:system_architecture}
 \end{figure}
 
-Ba đặc điểm thiết kế xuyên suốt cần nhấn mạnh: \textit{(i)} tầng tiền xử lý và tầng phân chia dữ liệu tách biệt khỏi tầng mô hình hóa, nên mọi mô hình -- NeuMF lẫn baseline -- dùng đúng một bộ dữ liệu, một tập ứng viên và một quy tắc loại sản phẩm đã mua, đảm bảo so sánh công bằng; \textit{(ii)} mọi quyết định chọn mô hình và siêu tham số chỉ dựa trên tập xác thực, tập kiểm thử chỉ được dùng một lần ở tầng 6 qua một đường chạy duy nhất có ghi nhật ký (mục~\ref{sec:protocol}); \textit{(iii)} baseline BPR-MF được tinh chỉnh với cùng ngân sách như NeuMF, vì các nghiên cứu đối chứng gần đây cho thấy lợi thế của mô hình học sâu thường biến mất khi baseline được tune đúng cách \parencite{rendle2020ncfmf, dacrema2019progress}.
+Ba đặc điểm thiết kế xuyên suốt cần nhấn mạnh: \textit{(i)} tầng tiền xử lý và tầng phân chia dữ liệu tách biệt khỏi tầng mô hình hóa, nên mọi mô hình -- NeuMF lẫn baseline -- dùng đúng một bộ dữ liệu, một tập ứng viên và một quy tắc loại sản phẩm đã mua, đảm bảo so sánh công bằng; \textit{(ii)} mọi quyết định chọn mô hình và siêu tham số chỉ dựa trên tập xác thực, tập kiểm thử chỉ được dùng ở tầng 6, qua kịch bản có khoá và ghi nhật ký mọi lần truy cập (mục~\ref{sec:protocol}); \textit{(iii)} baseline BPR-MF được tinh chỉnh với cùng ngân sách như NeuMF, vì các nghiên cứu đối chứng gần đây cho thấy lợi thế của mô hình học sâu thường biến mất khi baseline được tune đúng cách \parencite{rendle2020ncfmf, dacrema2019progress}.
 
 \section{Phân tích và tiền xử lý dữ liệu H\&M Personalized Fashion Recommendations}
 \label{sec:hm_pipeline}
@@ -154,7 +155,9 @@ Bảng~\ref{tab:kcore_hm} khảo sát độ nhạy của hm500k theo ngưỡng $
     \text{Train} < \text{01/07/2020} \le \text{Validation} < \text{29/07/2020} \le \text{Test} \;\text{(đến 22/09/2020)}
     \label{eq:global_split}
 \end{equation}
-Tập xác thực phủ 4 tuần, tập kiểm thử phủ 8 tuần. Tập xác thực và kiểm thử chỉ giữ người dùng và sản phẩm đã xuất hiện trong tập huấn luyện (mô hình lọc cộng tác thuần ID không thể chấm điểm cho thực thể chưa từng thấy). Mỗi người dùng có thể có \emph{nhiều} sản phẩm đúng, và sản phẩm người dùng đã mua trước đó không được tính là đích -- mô hình dự đoán những món \emph{mới} đối với người dùng. Cách chia này bảo đảm mô hình không thấy bất kỳ tương tác nào xảy ra sau mốc 01/07/2020 khi huấn luyện, đúng với tình huống triển khai thật \parencite{meng2020splitting}.
+Tập xác thực phủ 4 tuần, tập kiểm thử phủ 8 tuần. Tập xác thực chỉ giữ người dùng và sản phẩm đã xuất hiện trong tập huấn luyện; tập kiểm thử chỉ giữ người dùng và sản phẩm đã xuất hiện trong tập huấn luyện $\cup$ xác thực (mô hình lọc cộng tác thuần ID không thể chấm điểm cho thực thể chưa từng thấy). Mỗi người dùng có thể có \emph{nhiều} sản phẩm đúng, và sản phẩm người dùng đã mua trước đó không được tính là đích -- mô hình dự đoán những món \emph{mới} đối với người dùng. Cách chia này bảo đảm mô hình không bao giờ thấy tương tác xảy ra sau thời điểm cần dự đoán: khi tinh chỉnh, mô hình chỉ học từ dữ liệu trước 01/07/2020; khi chấm kiểm thử, chỉ học từ dữ liệu trước 29/07/2020 -- đúng với tình huống triển khai thật \parencite{meng2020splitting}.
+
+\paragraph{Huấn luyện lại trước khi chấm kiểm thử.} Tập xác thực chỉ dùng để chọn cấu hình và số epoch. Trước khi chấm tập kiểm thử, mỗi mô hình được huấn luyện lại từ đầu trên tập huấn luyện $\cup$ xác thực (mọi cặp trước 29/07/2020) với cấu hình tốt nhất, chạy đúng số epoch tốt nhất đã chọn trên tập xác thực; lúc này không còn tập xác thực để dừng sớm, và tập kiểm thử không được dùng để dừng. Most Popular và BPR-MF cũng được khớp trên tập huấn luyện $\cup$ xác thực. Nhờ vậy, khi chấm kiểm thử mô hình đã thấy toàn bộ quá khứ như lúc triển khai thật, thay vì bỏ trống 4 tuần sát kỳ dự đoán -- một kiểm tra chỉ trên tập xác thực cho thấy bỏ trống 4 tuần như vậy làm NDCG@10 của Most Popular và BPR-MF giảm khoảng 17--19\%, lớn hơn chênh lệch giữa các mô hình. Bước này được bổ sung \emph{sau} lần chấm kiểm thử đầu tiên và được ghi nhận là lệch kế hoạch (mục~\ref{sec:protocol}).
 
 \paragraph{Giao thức phụ -- Leave-One-Out theo thời gian.} Theo đúng NCF gốc \parencite{he2017ncf}: với mỗi người dùng, sản phẩm mua cuối cùng làm tập kiểm thử, sản phẩm áp chót làm tập xác thực, phần còn lại làm tập huấn luyện. Giao thức này được giữ để đối chiếu với tài liệu, \emph{không} dùng để chọn mô hình, vì nó rò rỉ tương lai: đo trên hm500k, tính trung bình theo người dùng, 11,2\% tương tác trong tập huấn luyện (của toàn bộ người dùng) xảy ra \emph{sau} ngày mua sản phẩm kiểm thử của người dùng đó -- tức mô hình được học từ những gì xảy ra sau thời điểm cần dự đoán; ngoài ra 60,9\% người dùng có sản phẩm xác thực và kiểm thử được mua cùng một ngày.
 
@@ -165,12 +168,13 @@ Tập xác thực phủ 4 tuần, tập kiểm thử phủ 8 tuần. Tập xác 
     \mathcal{Y}_{val} \cap \mathcal{Y}_{test} = \varnothing
     \label{eq:disjoint_assert}
 \end{equation}
-Quy trình chỉ tiếp tục khi cả ba điều kiện thỏa mãn. Ngoài ra, một bộ kiểm thử tự động chạy trên dữ liệu thật xác nhận thứ tự thời gian train $<$ validation $<$ test và việc người dùng/sản phẩm của tập xác thực, kiểm thử là tập con của tập huấn luyện. Bảng~\ref{tab:split_hm} tổng hợp kết quả phân chia theo giao thức chính.
+Quy trình chỉ tiếp tục khi cả ba điều kiện thỏa mãn. Ngoài ra, một bộ kiểm thử tự động chạy trên dữ liệu thật xác nhận thứ tự thời gian train $<$ validation $<$ test, người dùng/sản phẩm của tập xác thực là tập con của tập huấn luyện, và người dùng/sản phẩm của tập kiểm thử là tập con của tập huấn luyện $\cup$ xác thực. Bảng~\ref{tab:split_hm} tổng hợp kết quả phân chia theo giao thức chính.
 
 \begin{table}[htbp]
     \centering
     \caption{Kết quả phân chia theo mốc thời gian chung trên hm500k ($k=10$)}
     \label{tab:split_hm}
+    \resizebox{\textwidth}{!}{%
     \begin{tabular}{|l|c|c|c|c|}
         \hline
         \textbf{Tập} & \textbf{Khoảng thời gian} & \textbf{Số cặp} & \textbf{Số người dùng} & \textbf{Số sản phẩm} \\
@@ -179,14 +183,17 @@ Quy trình chỉ tiếp tục khi cả ba điều kiện thỏa mãn. Ngoài ra,
         \hline
         Xác thực & 01/07/2020 -- 28/07/2020 & 7.057 & 2.275 & 2.642 \\
         \hline
-        Kiểm thử & 29/07/2020 -- 22/09/2020 & 8.493 & 2.893 & 2.698 \\
+        Kiểm thử & 29/07/2020 -- 22/09/2020 & 9.229 & 2.996 & 2.772 \\
+        \hline
+        Huấn luyện $\cup$ xác thực$^{*}$ & 20/09/2018 -- 28/07/2020 & 209.212 & 7.515 & 10.216 \\
         \hline
         \multicolumn{5}{|l|}{Giao nhau Train $\cap$ Val $=$ Train $\cap$ Test $=$ Val $\cap$ Test $= 0$ cặp} \\
         \hline
-    \end{tabular}
+    \end{tabular}}
+    \par\smallskip{\footnotesize $^{*}$Dữ liệu huấn luyện lại trước khi chấm kiểm thử: mọi cặp trước 29/07/2020, gồm cả 354 cặp của người dùng/sản phẩm mới xuất hiện trong giai đoạn xác thực (không được chấm ở tập xác thực vì chưa có trong tập huấn luyện).}
 \end{table}
 
-Mỗi người dùng trong tập huấn luyện có trung bình 26,9 cặp tương tác (trung vị 20); mỗi người dùng kiểm thử có trung bình 2,94 sản phẩm đúng. Tập ứng viên khi đánh giá là 10.145 sản phẩm đã xuất hiện trong tập huấn luyện, trừ đi những sản phẩm người dùng đã mua trong tập huấn luyện (khi chấm validation) hoặc tập huấn luyện $\cup$ xác thực (khi chấm test).
+Mỗi người dùng trong tập huấn luyện có trung bình 26,9 cặp tương tác (trung vị 20); mỗi người dùng kiểm thử có trung bình 3,08 sản phẩm đúng. Khi chấm validation, tập ứng viên là 10.145 sản phẩm của tập huấn luyện, trừ những sản phẩm người dùng đã mua trong tập huấn luyện; khi chấm test, tập ứng viên là 10.216 sản phẩm của tập huấn luyện $\cup$ xác thực, trừ những sản phẩm người dùng đã mua trong tập này.
 
 \section{Thiết kế kiến trúc mô hình NeuMF}
 \label{sec:model_design}
@@ -223,21 +230,21 @@ Mạng MLP có kiến trúc tháp giảm một nửa qua mỗi tầng ẩn, theo
 \end{equation}
 Mỗi tầng ẩn gồm một phép biến đổi tuyến tính, hàm kích hoạt ReLU và lớp Dropout (tỉ lệ được tinh chỉnh trong $\{0;\, 0{,}2\}$) để hạn chế quá khớp -- rủi ro thực sự khi dữ liệu huấn luyện chỉ có 201.801 cặp dương.
 
-\subsection{MLP đơn lẻ chính là mô hình Early Fusion}
+\subsection{Nhánh MLP đứng riêng: mô hình DNN thuần, không phải mô hình hợp nhất}
 \label{subsec:early_fusion_design}
 
-Theo định nghĩa ở mục~\ref{subsec:early_late_fusion}, Early Fusion nối biểu diễn User và Item ngay từ đầu vào rồi đưa qua \emph{một} mạng chung:
+Khi đứng riêng, nhánh MLP nối Embedding của User và Item ngay ở đầu vào rồi đưa qua một tháp nơ-ron:
 \begin{equation}
-    z_1^{EF} = \begin{bmatrix} p_u \\ q_i \end{bmatrix} \in \mathbb{R}^{2d}, \qquad
-    \hat{y}_{ui}^{EF} = \sigma\left(h^T \cdot \text{MLP}(z_1^{EF})\right)
-    \label{eq:early_fusion_design}
+    z_1 = \begin{bmatrix} p_u \\ q_i \end{bmatrix} \in \mathbb{R}^{2d}, \qquad
+    \hat{y}_{ui}^{MLP} = \sigma\left(h^T \cdot \text{MLP}(z_1)\right)
+    \label{eq:mlp_standalone}
 \end{equation}
-Đối chiếu với mục~\ref{subsec:mlp_design} cho thấy công thức này \emph{trùng hoàn toàn} với nhánh MLP khi đứng riêng: cùng một cặp bảng Embedding, cùng phép nối, cùng tháp MLP và lớp đầu ra. Dự án đã kiểm chứng điều này bằng thực nghiệm (hai mô hình cho NDCG@10 trên validation giống hệt nhau với cùng seed) và bằng một bài kiểm thử tự động so sánh kiến trúc. Vì vậy trong toàn bộ báo cáo, \textbf{mô hình MLP đơn lẻ đóng vai trò đối chứng Early Fusion}, còn NeuMF là Late Fusion; không huấn luyện một mô hình Early Fusion riêng (việc này đã được đăng ký trong kế hoạch thực nghiệm trước khi chạy tập test, mục~\ref{sec:protocol}).
+Mô hình này chỉ có view phi tuyến, không có thành phần MF nào, nên trong đề tài nó là \textbf{đối chứng DNN thuần} (tương đương bỏ nhánh MF khỏi NeuMF), không phải một mô hình hợp nhất theo nghĩa ở mục~\ref{subsec:early_late_fusion}. Trong mã nguồn, nhóm từng cài đặt riêng một lớp \texttt{EarlyFusionModel} theo cách hiểu ``nối biểu diễn User--Item ngay ở đầu vào''; đối chiếu với mục~\ref{subsec:mlp_design} cho thấy lớp này \emph{trùng hoàn toàn} với MLP đứng riêng (cùng cặp bảng Embedding, cùng phép nối, cùng tháp và lớp đầu ra). Điều này được kiểm chứng bằng thực nghiệm (NDCG@10 trên validation giống hệt nhau với cùng seed) và bằng một bài kiểm thử tự động so sánh kiến trúc, nên lớp này không được tinh chỉnh hay đánh giá riêng (đã ghi trong kế hoạch thực nghiệm trước khi chấm test, mục~\ref{sec:protocol}). Phép hợp nhất MF với DNN của đề tài nằm ở tầng kết hợp của NeuMF (mục~\ref{subsec:neumf_output}).
 
 \subsection{Tầng kết hợp NeuMF và lớp dự đoán đầu ra}
 \label{subsec:neumf_output}
 
-Đây là bước Late Fusion: đầu ra của GMF ($\phi^{GMF}$, tương tác tuyến tính) và của MLP ($\phi_L^{MLP}$, tương tác phi tuyến) được ghép nối thành một vector hợp nhất:
+Đây là bước hợp nhất của mô hình lai -- Early Fusion ở mức biểu diễn theo phân loại ở mục~\ref{subsec:early_late_fusion}: vector của nhánh GMF ($\phi^{GMF}$, tương tác tuyến tính) và của nhánh MLP ($\phi_L^{MLP}$, tương tác phi tuyến) được ghép nối thành một vector hợp nhất:
 \begin{equation}
     \phi^{NeuMF} = \begin{bmatrix} p_u^G \odot q_i^G \\ \phi_L^{MLP} \end{bmatrix}
 \end{equation}
@@ -245,7 +252,7 @@ Vector này qua một tầng tuyến tính cuối với trọng số $h = [h_G^T
 \begin{equation}
     \hat{y}_{ui} = \sigma \left( h^T \phi^{NeuMF} \right) = \sigma \left( h_G^T (p_u^G \odot q_i^G) + h_M^T \phi_L^{MLP} \right)
 \end{equation}
-Điểm dự đoán là một tổ hợp tuyến tính có trọng số học được giữa ``quan điểm'' của nhánh tuyến tính và nhánh phi tuyến. Khi xếp hạng, hệ thống dùng trực tiếp giá trị trước Sigmoid (logit): Sigmoid là hàm đơn điệu nên không đổi thứ tự, nhưng ở độ chính xác float32 nó bão hòa về đúng 1,0 với điểm lớn và tạo ra các giá trị bằng nhau giả.
+Điểm dự đoán là một tổ hợp tuyến tính có trọng số học được giữa ``quan điểm'' của nhánh tuyến tính và nhánh phi tuyến. Với NeuMF-Pretrained, lúc khởi tạo $h = [\alpha\, h_{GMF};\, (1-\alpha)\, h_{MLP}]$ nên logit ban đầu đúng bằng $\alpha$ lần logit của GMF cộng $(1-\alpha)$ lần logit của MLP -- giống một phép trộn điểm; điểm khác với Late Fusion là sau đó toàn bộ mạng, kể cả hai nhánh, được tinh chỉnh chung thay vì giữ nguyên hai mô hình thành phần. Khi xếp hạng, hệ thống dùng trực tiếp giá trị trước Sigmoid (logit): Sigmoid là hàm đơn điệu nên không đổi thứ tự, nhưng ở độ chính xác float32 nó bão hòa về đúng 1,0 với điểm lớn và tạo ra các giá trị bằng nhau giả.
 
 \section{Kỹ thuật lấy mẫu tiêu cực và hàm mục tiêu huấn luyện}
 \label{sec:sampling_loss}
@@ -287,7 +294,7 @@ Bảng~\ref{tab:hyperparams} liệt kê cấu hình mặc định và không gia
     \centering
     \caption{Siêu tham số: giá trị mặc định và không gian tinh chỉnh}
     \label{tab:hyperparams}
-    \begin{tabularx}{\textwidth}{|X|c|c|}
+    \begin{tabularx}{\textwidth}{|>{\raggedright\arraybackslash}X|c|c|}
         \hline
         \textbf{Siêu tham số} & \textbf{Mặc định} & \textbf{Không gian tinh chỉnh} \\
         \hline
@@ -315,7 +322,13 @@ Bảng~\ref{tab:hyperparams} liệt kê cấu hình mặc định và không gia
         \hline
         Early Stopping: theo dõi / kiên nhẫn & NDCG@10 val / 5 & cố định \\
         \hline
-        BPR-MF: $d$ / tốc độ học / điều chuẩn / epoch & $32$ / $0{,}03$ / $0{,}005$ / $20$ & $\{32,64,128\}$ / $\{0{,}01; 0{,}03; 0{,}05\}$ / $\{0{,}001; 0{,}005; 0{,}01\}$ / $\{20, 40\}$ \\
+        BPR-MF: kích thước $d$ & $32$ & $\{32, 64, 128\}$ \\
+        \hline
+        BPR-MF: tốc độ học & $0{,}03$ & $\{0{,}01;\; 0{,}03;\; 0{,}05\}$ \\
+        \hline
+        BPR-MF: hệ số điều chuẩn & $0{,}005$ & $\{0{,}001;\; 0{,}005;\; 0{,}01\}$ \\
+        \hline
+        BPR-MF: số epoch & $20$ & $\{20, 40\}$ \\
         \hline
     \end{tabularx}
 \end{table}
@@ -327,14 +340,18 @@ Early Stopping: sau mỗi epoch, mô hình được chấm NDCG@10 theo Full Ran
 
 Ferrari Dacrema và cộng sự \parencite{dacrema2019progress} chỉ ra mã nguồn gốc của NCF chọn số epoch dựa trên chính tập kiểm thử, và các baseline trong nhiều bài báo học sâu được tinh chỉnh sơ sài; Rendle và cộng sự \parencite{rendle2020ncfmf} cho thấy MF được tune kỹ vượt NeuMF trên chính dữ liệu của bài gốc. Để kết luận của đề tài không mắc các lỗi này, quy trình thực nghiệm áp dụng năm nguyên tắc:
 \begin{enumerate}
-    \item \textbf{Khoá tập kiểm thử.} Mọi lựa chọn mô hình và siêu tham số chỉ dựa trên tập xác thực. Tập kiểm thử chỉ được chấm qua một kịch bản đánh giá cuối duy nhất; kịch bản này từ chối chạy nếu kế hoạch thực nghiệm chưa được lưu vào hệ thống quản lý phiên bản, nếu thiếu lý do chạy, hoặc nếu mã nguồn có thay đổi chưa lưu. Mỗi lần chấm test ghi một dòng vào nhật ký truy cập (thời gian, phiên bản mã nguồn, mã băm cấu hình, lý do).
+    \item \textbf{Khoá tập kiểm thử.} Mọi lựa chọn mô hình và siêu tham số chỉ dựa trên tập xác thực. Tập kiểm thử chỉ được chấm qua kịch bản đánh giá cuối (và kịch bản phân tích phụ, vốn chỉ nạp lại đúng các trọng số của kịch bản đó); các kịch bản này từ chối chạy nếu kế hoạch thực nghiệm chưa được lưu vào hệ thống quản lý phiên bản, nếu thiếu lý do chạy, hoặc nếu mã nguồn có thay đổi chưa lưu. Mỗi lần chấm test ghi một dòng vào nhật ký truy cập (thời gian, phiên bản mã nguồn, mã băm cấu hình, lý do).
     \item \textbf{Đăng ký trước (pre-registration).} Độ đo chính, lưới tinh chỉnh, số seed, họ so sánh và tiêu chí kết luận được cố định và lưu lại \emph{trước} lần chấm test đầu tiên. Mọi thay đổi sau đó được ghi vào mục ``lệch kế hoạch'' kèm thời điểm (trước hay sau khi xem test).
     \item \textbf{Cùng ngân sách tinh chỉnh.} Mỗi mô hình có siêu tham số được thử đúng \textbf{6 cấu hình}, lấy bằng một lần rút ngẫu nhiên cố định từ lưới của mô hình đó (Bảng~\ref{tab:hyperparams}), cấu hình mặc định luôn nằm trong 6. Mỗi cấu hình ghi một dòng nhật ký (mã băm cấu hình, phiên bản mã nguồn, chỉ số trên validation, thời gian). NeuMF-Pretrained được nạp từ GMF và MLP tốt nhất.
     \item \textbf{Chọn mô hình lai trên validation.} Trong hai biến thể NeuMF, mô hình có NDCG@10 validation cao nhất được xem là ``mô hình lai được chọn''; tập test chỉ để báo cáo, không để chọn lại.
-    \item \textbf{Kiểm định thống kê và tiêu chí kết luận cố định.} Mỗi mô hình (với cấu hình tốt nhất) được huấn luyện lại với 3 seed (42, 2024, 2025) và chấm trên test. NDCG@10 của từng người dùng được lấy trung bình qua 3 seed, rồi so sánh từng cặp mô hình bằng kiểm định Wilcoxon signed-rank theo người dùng \parencite{wilcoxon1945} và khoảng tin cậy 95\% bằng paired bootstrap (10.000 lần lấy mẫu lại) \parencite{efron1993bootstrap}; giá trị $p$ được hiệu chỉnh Holm \parencite{holm1979} trên họ 8 so sánh cố định (NeuMF-Pretrained so với BPR-MF, Most Popular, GMF, MLP, NeuMF-Scratch; NeuMF-Scratch so với BPR-MF, GMF, MLP). Chỉ viết ``A tốt hơn B'' khi đồng thời: $p_{Holm} < 0{,}05$, khoảng tin cậy không chứa 0, và chênh lệch tương đối NDCG@10 $\ge 5\%$; ngược lại kết luận ``không khác biệt có ý nghĩa''. Không dùng Wilcoxon theo seed vì với 3 seed, giá trị $p$ nhỏ nhất có thể đạt là $2/2^3 = 0{,}25$.
+    \item \textbf{Kiểm định thống kê và tiêu chí kết luận cố định.} Mỗi mô hình (với cấu hình tốt nhất) được chạy với 3 seed (42, 2024, 2025); với mỗi seed, mô hình được huấn luyện trên tập huấn luyện để chọn số epoch theo validation, rồi huấn luyện lại trên tập huấn luyện $\cup$ xác thực đúng số epoch đó và chấm trên test (mục~\ref{subsec:split_sampling}). NDCG@10 của từng người dùng được lấy trung bình qua 3 seed, rồi so sánh từng cặp mô hình bằng kiểm định Wilcoxon signed-rank theo người dùng \parencite{wilcoxon1945} và khoảng tin cậy 95\% bằng paired bootstrap (10.000 lần lấy mẫu lại) \parencite{efron1993bootstrap}; giá trị $p$ được hiệu chỉnh Holm \parencite{holm1979} trên họ 8 so sánh cố định (NeuMF-Pretrained so với BPR-MF, Most Popular, GMF, MLP, NeuMF-Scratch; NeuMF-Scratch so với BPR-MF, GMF, MLP). Chỉ viết ``A tốt hơn B'' khi đồng thời: $p_{Holm} < 0{,}05$, khoảng tin cậy không chứa 0, và chênh lệch tương đối NDCG@10 $\ge 5\%$; ngược lại kết luận ``không khác biệt có ý nghĩa''. Không dùng Wilcoxon theo seed vì với 3 seed, giá trị $p$ nhỏ nhất có thể đạt là $2/2^3 = 0{,}25$.
 \end{enumerate}
 
-\paragraph{Lệch kế hoạch (đều trước lần chấm test đầu tiên).} Kế hoạch ban đầu có thêm các ứng viên iALS \parencite{rendle2022ials}, Most Popular theo cửa sổ thời gian gần, DeepCF/CFNet và một mô hình trộn điểm iALS + NeuMF; tất cả đã được tinh chỉnh trên validation nhưng sau đó bị loại khỏi phạm vi theo quyết định của nhóm (đã quá nhiều baseline), \emph{trước} khi xem bất kỳ số liệu test nào. Kết quả validation của chúng vẫn được giữ trong nhật ký tinh chỉnh để minh bạch và được nhắc lại ở mục~\ref{sec:discussion}. Early Fusion bị loại vì trùng kiến trúc MLP (mục~\ref{subsec:early_fusion_design}). ItemKNN không được chạy vì ma trận tương đồng dày $N \times N$ với $N = 10.345$ vượt ngưỡng an toàn bộ nhớ của cài đặt.
+\paragraph{Lệch kế hoạch trước lần chấm test đầu tiên.} Kế hoạch ban đầu có thêm các ứng viên iALS \parencite{rendle2022ials}, Most Popular theo cửa sổ thời gian gần, DeepCF/CFNet và một mô hình trộn điểm iALS + NeuMF-Scratch (trộn một mô hình MF với mô hình lai NeuMF); tất cả đã được tinh chỉnh trên validation nhưng sau đó bị loại khỏi phạm vi theo quyết định của nhóm (đã quá nhiều baseline), \emph{trước} khi xem bất kỳ số liệu test nào. Kết quả validation của chúng vẫn được giữ trong nhật ký tinh chỉnh để minh bạch và được nhắc lại ở mục~\ref{sec:discussion}. Lớp \texttt{EarlyFusionModel} (nối Embedding ngay ở đầu vào) bị loại vì trùng kiến trúc MLP (mục~\ref{subsec:early_fusion_design}). ItemKNN không được chạy vì ma trận tương đồng dày $N \times N$ với $N = 10.345$ vượt ngưỡng an toàn bộ nhớ của cài đặt.
+
+\paragraph{Lệch kế hoạch sau lần chấm test đầu tiên.} Lần chấm đầu (27/09/2026) huấn luyện các mô hình chỉ trên tập huấn luyện rồi chấm thẳng tập kiểm thử, bỏ trống 4 tuần của giai đoạn xác thực. Sau đó nhóm bổ sung bước huấn luyện lại trên tập huấn luyện $\cup$ xác thực (mục~\ref{subsec:split_sampling}) và chấm lại toàn bộ (29/09/2026); cấu hình, độ đo, họ so sánh và tiêu chí kết luận giữ nguyên. Vì thay đổi này được quyết định \emph{sau} khi đã xem số liệu test, số liệu ở Chương~\ref{chap:thucnghiem} -- lấy từ lần chấm thứ hai -- cần được hiểu là kết quả sau khi đã xem test một lần. Kết luận không đổi giữa hai lần chấm: ở lần đầu, BPR-MF cũng có NDCG@10 trung bình cao nhất (0,01062, so với 0,01001 của NeuMF-Pretrained và 0,00958 của NeuMF-Scratch) và cũng 0/8 so sánh đạt tiêu chí ``tốt hơn''. Nhật ký truy cập ghi đủ cả hai lần chấm; số liệu của lần đầu được giữ trong lịch sử phiên bản của kho mã.
+
+\paragraph{Mở rộng sau khi xem test.} Để trả lời câu hỏi Early Fusion hay Late Fusion phù hợp hơn và bổ sung baseline láng giềng mà đề cương đặt ra, đề tài bổ sung bốn mô hình: Late Fusion GMF + MLP và Late Fusion BPR-MF + MLP (trộn điểm đã chuẩn hóa của hai mô hình huấn luyện riêng, mục~\ref{subsec:early_late_fusion}), ItemKNN và UserKNN (láng giềng top-$k$ theo cosine, mục~\ref{subsec:memory_model_based}). Tham số của chúng (trọng số $w$; $k$ và hệ số co) được chọn chỉ trên tập xác thực với cùng ngân sách, ghi vào mục ``mở rộng'' của kế hoạch đăng ký trước \emph{trước} khi chấm test, rồi chấm test một lần với 3 seed. Kiểm định dùng một họ so sánh riêng có hiệu chỉnh Holm riêng, nên không ảnh hưởng tới họ 8 so sánh chính. Vì phần này được thêm sau khi đã xem số liệu test, kết quả của nó được báo cáo là kết quả mở rộng, không thay thế kết luận chính.
 
 \section{Thiết kế hệ thống giao diện thực nghiệm (Demo)}
 \label{sec:demo_design}
@@ -413,7 +430,7 @@ Luồng xử lý của chức năng gợi ý Top-$K$ gồm 5 bước, dùng lạ
 \subsection{Lựa chọn mô hình triển khai và yêu cầu phi chức năng}
 \label{subsec:demo_model_choice}
 
-Demo cho phép chọn và so sánh song song hai mô hình bất kỳ trong số NeuMF-Pretrained, NeuMF-Scratch, GMF, MLP, BPR-MF và Most Popular, để người xem tự đối chiếu với kết luận của Chương~\ref{chap:thucnghiem}; demo không khẳng định mô hình nào ``tốt nhất'' ngoài những gì kiểm định thống kê cho phép. Về yêu cầu phi chức năng, mỗi yêu cầu gợi ý chỉ là một lượt suy diễn thuận trên khoảng 10.000 ứng viên, nên mục tiêu thiết kế là độ trễ mức mili giây trên CPU; độ trễ thực đo (trung vị và phân vị 95) được báo cáo ở mục~\ref{subsec:latency}.
+Demo cho phép chọn và so sánh song song hai mô hình bất kỳ trong số NeuMF-Pretrained, NeuMF-Scratch, GMF, MLP, BPR-MF và Most Popular, để người xem tự đối chiếu với kết luận của Chương~\ref{chap:thucnghiem}; demo không khẳng định mô hình nào ``tốt nhất'' ngoài những gì kiểm định thống kê cho phép. Phiên bản demo hiện tại nạp trọng số của một lần chạy khám phá theo giao thức phụ Leave-One-Out với cấu hình mặc định (sản phẩm đích lấy từ tập xác thực để không làm lộ tập kiểm thử), không phải trọng số của đánh giá cuối; vì vậy số liệu hiển thị trong demo không trùng với các bảng của Chương~\ref{chap:thucnghiem}. Về yêu cầu phi chức năng, mỗi yêu cầu gợi ý chỉ là một lượt suy diễn thuận trên khoảng 10.000 ứng viên, nên mục tiêu thiết kế là độ trễ mức mili giây trên CPU; độ trễ thực đo (trung vị và phân vị 95) được báo cáo ở mục~\ref{subsec:latency}.
 
 \subsection{Minh họa hệ thống demo đã cài đặt}
 \label{subsec:demo_screenshots}

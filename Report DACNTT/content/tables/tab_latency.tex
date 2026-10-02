@@ -1,0 +1,20 @@
+% Sinh tự động bởi scripts/15_export_report.py — KHÔNG sửa tay.
+\begin{table}[htbp]
+    \centering
+    \caption{Độ trễ phục vụ một yêu cầu gợi ý top-10 trên CPU (chấm toàn bộ candidate của một user rồi lấy top-10), mili giây}
+    \label{tab:latency}
+    \resizebox{\textwidth}{!}{%
+    \begin{tabular}{lrrr}
+        \toprule
+        Mô hình & p50 & p95 & Trung bình \\
+        \midrule
+        NeuMF-Pretrained & 1{,}1 & 1{,}6 & 1{,}2 \\
+        NeuMF-Scratch & 2{,}0 & 2{,}6 & 2{,}1 \\
+        GMF & 0{,}3 & 0{,}4 & 0{,}3 \\
+        MLP & 0{,}7 & 1{,}1 & 0{,}8 \\
+        BPR-MF & 0{,}6 & 0{,}8 & 0{,}6 \\
+        MostPopular & 0{,}0 & 0{,}1 & 0{,}0 \\
+        \bottomrule
+    \end{tabular}}
+    \par\smallskip{\footnotesize 200 yêu cầu, user chọn ngẫu nhiên trong tập test, trung bình 10.182 candidate/yêu cầu; CPU: AMD64 Family 25 Model 68 Stepping 1, AuthenticAMD, 8 luồng PyTorch.}
+\end{table}

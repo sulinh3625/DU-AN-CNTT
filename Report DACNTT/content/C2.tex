@@ -7,7 +7,7 @@
 \subsection{Vì sao đề tài chọn nhánh Lọc cộng tác thay vì Lọc nội dung}
 \label{subsec:khainiem_rs}
 
-Ba hướng tiếp cận chính của một hệ thống gợi ý -- Lọc dựa trên nội dung (Content-Based, dựa trên đặc tính sản phẩm và hồ sơ sở thích quá khứ của User \parencite{schafer2001commerce}), Lọc cộng tác (Collaborative Filtering -- CF, dựa trên lịch sử tương tác chung giữa nhiều User/Item \parencite{koren2009matrix, sarwar2001item}), và Lọc lai (Hybrid, kết hợp cả hai \parencite{cheng2016wide, guo2017deepfm}) -- không cạnh tranh ngang hàng trong phạm vi đề tài này, vì lựa chọn thực chất bị quyết định bởi chính \emph{những gì dữ liệu có}. Bộ dữ liệu H\&M (mục~\ref{subsec:hm_description}) có kèm thông tin mô tả và hình ảnh sản phẩm, nhưng đề tài chủ động chỉ sử dụng tệp giao dịch (mã khách hàng, mã sản phẩm, ngày mua, giá) để đo đúng năng lực của Lọc cộng tác thuần túy dựa trên ID -- việc khai thác nội dung sản phẩm theo hướng Content-Based hay Hybrid được để lại cho hướng phát triển (Chương~\ref{chap:ketluan}). Nhánh Collaborative Filtering -- vốn chỉ cần ma trận tương tác User--Item mà không đòi hỏi đặc trưng mô tả đối tượng \parencite{su2009survey} -- vì vậy là trọng tâm, và toàn bộ phần lý thuyết còn lại của chương này tập trung vào nhánh này.
+Ba hướng tiếp cận chính của một hệ thống gợi ý -- Lọc dựa trên nội dung (Content-Based, dựa trên đặc tính sản phẩm và hồ sơ sở thích quá khứ của User \parencite{schafer2001commerce}), Lọc cộng tác (Collaborative Filtering -- CF, dựa trên lịch sử tương tác chung giữa nhiều User/Item \parencite{koren2009matrix, sarwar2001item}), và Lọc lai (Hybrid, kết hợp nhiều kỹ thuật gợi ý -- thường gặp nhất là kết hợp nội dung với cộng tác \parencite{burke2002hybrid, cheng2016wide, guo2017deepfm}) -- không cạnh tranh ngang hàng trong phạm vi đề tài này, vì lựa chọn thực chất bị quyết định bởi chính \emph{những gì dữ liệu có}. Bộ dữ liệu H\&M (mục~\ref{subsec:hm_description}) có kèm thông tin mô tả và hình ảnh sản phẩm, nhưng đề tài chủ động chỉ sử dụng mã khách hàng, mã sản phẩm và ngày mua trong tệp giao dịch để đo đúng năng lực của Lọc cộng tác thuần túy dựa trên ID -- việc khai thác nội dung sản phẩm theo hướng Content-Based hay Hybrid được để lại cho hướng phát triển (Chương~\ref{chap:ketluan}). Nhánh Collaborative Filtering -- vốn chỉ cần ma trận tương tác User--Item mà không đòi hỏi đặc trưng mô tả đối tượng \parencite{su2009survey} -- vì vậy là trọng tâm, và toàn bộ phần lý thuyết còn lại của chương này tập trung vào nhánh này.
 
 \subsection{Lọc cộng tác dựa trên bộ nhớ (Memory-based) và dựa trên mô hình (Model-based)}
 \label{subsec:memory_model_based}
@@ -24,7 +24,7 @@ Xét theo cách khai thác dữ liệu tương tác, các phương pháp Lọc c
     \hat{y}_{ui} = \frac{\sum_{j \in \mathcal{N}_k(i)} \text{sim}(i, j) \cdot y_{uj}}{\sum_{j \in \mathcal{N}_k(i)} |\text{sim}(i, j)|}
     \label{eq:itemcf_predict}
 \end{equation}
-Phương pháp này được sử dụng làm baseline ItemKNN trong thực nghiệm (Chương~\ref{chap:thucnghiem}). Ưu điểm là đơn giản, dễ diễn giải và không cần huấn luyện lại toàn bộ khi có tương tác mới; tuy nhiên độ phức tạp tính toán độ tương đồng theo cặp Item tăng bậc hai theo số lượng sản phẩm ($O(N^2)$), đồng thời chất lượng dự đoán suy giảm mạnh khi ma trận tương tác thưa.
+Phương pháp này (ItemKNN) không được đưa vào thực nghiệm của đề tài vì ma trận tương đồng dày vượt giới hạn bộ nhớ của cài đặt (mục~\ref{sec:baselines}). Ưu điểm là đơn giản, dễ diễn giải và không cần huấn luyện lại toàn bộ khi có tương tác mới; tuy nhiên độ phức tạp tính toán độ tương đồng theo cặp Item tăng bậc hai theo số lượng sản phẩm ($O(N^2)$), đồng thời chất lượng dự đoán suy giảm mạnh khi ma trận tương tác thưa.
 
 \textbf{Lọc cộng tác dựa trên mô hình (Model-based CF)} không tính tương đồng trực tiếp mà học một hàm tham số hóa (Nhân tử hóa ma trận, mạng nơ-ron) để nén thông tin tương tác thành các vector biểu diễn ẩn có số chiều thấp, cho phép tổng quát hóa tốt hơn trên dữ liệu thưa và mở rộng quy mô tuyến tính theo số lượng tương tác thay vì bậc hai theo số Item \parencite{koren2009matrix, su2009survey}. Toàn bộ các mô hình MF, GMF, MLP và NeuMF trình bày từ mục~\ref{sec:cf_mf} trở đi thuộc nhánh Model-based, là hướng tiếp cận chính của đề tài.
 
@@ -130,6 +130,7 @@ Mô hình lai NeuMF kết hợp song song hai luồng biểu diễn tuyến tín
     \hat{y}_{ui} = \sigma \left( h^T \begin{bmatrix} p_u^G \odot q_i^G \\ \phi_L^{MLP} \end{bmatrix} \right)
     \label{eq:neumf_prediction}
 \end{equation}
+Chữ ``lai'' trong tên đề tài chỉ việc kết hợp hai cách mô hình hóa tương tác -- nhân tử hóa ma trận (tuyến tính) và mạng nơ-ron sâu (phi tuyến) -- trong cùng một mô hình, đúng như NeuMF được \textcite{he2017ncf} xây dựng bằng cách hợp nhất GMF với MLP. Đây là nghĩa hẹp hơn ``hệ gợi ý lai'' của \textcite{burke2002hybrid}, vốn thường kết hợp các kỹ thuật dựa trên những nguồn tri thức khác nhau (như lọc cộng tác với lọc nội dung); đề tài không lai với Lọc dựa trên nội dung. Theo phân loại cách hợp nhất ở mục~\ref{subsec:early_late_fusion}, NeuMF là một mô hình Early Fusion ở mức biểu diễn.
 
 \begin{figure}[htbp]
     \centering
@@ -195,23 +196,28 @@ Mô hình lai NeuMF kết hợp song song hai luồng biểu diễn tuyến tín
     \label{fig:neumf_architecture}
 \end{figure}
 
-\subsection{Chiến lược kết hợp: Early Fusion và Late Fusion}
+\subsection{Chiến lược hợp nhất: Early Fusion và Late Fusion}
 \label{subsec:early_late_fusion}
 
-Trong các kiến trúc lai kết hợp nhiều nguồn biểu diễn, thời điểm hợp nhất (fusion) các biểu diễn quyết định cách mô hình học tương tác giữa chúng \parencite{he2017ncf}.
+Khi một hệ gợi ý kết hợp nhiều nguồn thông tin hoặc nhiều góc nhìn (view) về người dùng và sản phẩm, có hai cách hợp nhất cơ bản, phân biệt theo \emph{mức} diễn ra phép hợp nhất \parencite{atrey2010multimodal, liu2018combine, holinh2023multisource}:
 
 \begin{itemize}
-    \item \textbf{Early Fusion:} Các vector biểu diễn User và Item được nối (concatenate) ngay từ đầu vào, sau đó toàn bộ được đưa qua \emph{một} mạng nơ-ron chung duy nhất để học tương tác:
+    \item \textbf{Early Fusion (hợp nhất ở mức đặc trưng/biểu diễn):} các vector đặc trưng $v_1, \dots, v_m$ của từng view được nối thành một biểu diễn chung, rồi \emph{một} mô hình $h$ duy nhất học tương tác giữa chúng và đưa ra dự đoán:
     \begin{equation}
-        \hat{y}_{ui}^{EF} = \sigma\!\left(h^T \cdot \text{MLP}\!\left(\begin{bmatrix} p_u \\ q_i \end{bmatrix}\right)\right)
+        p = h\big([v_1;\, v_2;\, \dots;\, v_m]\big)
         \label{eq:early_fusion}
     \end{equation}
-    trong đó $p_u, q_i$ được chia sẻ từ \emph{một} bảng Embedding chung duy nhất, khác với NeuMF ở chỗ không có nhánh nhân Element-wise tách biệt.
 
-    \item \textbf{Late Fusion:} Mỗi nhánh (GMF, MLP) xử lý biểu diễn độc lập với bảng Embedding riêng, chỉ hợp nhất kết quả ở lớp gần cuối cùng -- đây chính là cơ chế của kiến trúc NeuMF trình bày ở mục~\ref{subsec:neumf_arch}.
+    \item \textbf{Late Fusion (hợp nhất ở mức quyết định/điểm dự đoán):} mỗi view được xử lý bởi một mô hình riêng $h_j$ cho ra dự đoán độc lập, rồi các dự đoán được kết hợp bằng một cơ chế $F$ -- lấy trung bình, bỏ phiếu, trọng số cố định hoặc một mô hình học:
+    \begin{equation}
+        p = F\big(h_1(v_1),\, h_2(v_2),\, \dots,\, h_m(v_m)\big)
+        \label{eq:late_fusion}
+    \end{equation}
+    Khi $F$ là tổng có trọng số, đây chính là kiểu lai \emph{weighted} trong phân loại hệ gợi ý lai của \textcite{burke2002hybrid}.
 \end{itemize}
+Ngoài hai cách trên còn có \emph{hybrid fusion}, kết hợp cả mức đặc trưng lẫn mức quyết định \parencite{atrey2010multimodal}. Early Fusion học được tương tác giữa các view nhưng đòi hỏi một mô hình phù hợp với mọi view; Late Fusion linh hoạt hơn nhưng không nắm bắt được tương tác ở mức tín hiệu giữa các view, vì chỉ làm việc trên kết quả dự đoán \parencite{holinh2023multisource}.
 
-Cần lưu ý rằng khi chỉ có ID (không có đặc trưng phụ), công thức~\eqref{eq:early_fusion} trùng hoàn toàn với nhánh MLP đứng riêng của NCF (mục~\ref{subsec:mlp}): cùng một cặp bảng Embedding, cùng phép nối và cùng tháp MLP. Vì vậy trong đề tài, MLP đơn lẻ đóng vai trò mô hình Early Fusion và so sánh NeuMF với MLP chính là so sánh hợp nhất muộn với hợp nhất sớm (mục~\ref{subsec:early_fusion_design}).
+\textbf{Vị trí của các mô hình trong đề tài.} Hai view ở đây là hai cách mô hình hóa tương tác trên cùng ma trận tương tác (Utility Matrix): view tuyến tính của nhánh MF (vector $p_u^G \odot q_i^G$ của GMF) và view phi tuyến của nhánh DNN (vector cuối $\phi_L^{MLP}$ của MLP). NeuMF nối hai vector này rồi đưa qua một lớp dự đoán chung (công thức~\eqref{eq:neumf_concat}--\eqref{eq:neumf_prediction}), nên là một mô hình \textbf{Early Fusion ở mức biểu diễn}, được huấn luyện chung từ đầu đến cuối. Late Fusion tương ứng là trộn điểm của các mô hình MF và DNN được huấn luyện \emph{riêng}, chẳng hạn $\hat{y}_{ui} = w\,\tilde{y}^{MF}_{ui} + (1-w)\,\tilde{y}^{DNN}_{ui}$ với điểm đã chuẩn hóa; để so sánh công bằng với NeuMF, hai thành phần nên chính là GMF và MLP. Phép trộn điểm duy nhất đề tài đã thử -- iALS với NeuMF-Scratch, chỉ trên tập xác thực (mục~\ref{sec:protocol}) -- trộn một mô hình MF với chính mô hình lai NeuMF, nên \emph{không} phải Late Fusion thuần MF + DNN; Late Fusion GMF + MLP chưa được thực hiện. Riêng nhánh MLP khi đứng một mình chỉ nối Embedding User và Item ở đầu vào: đó là mô hình DNN thuần, không phải phép hợp nhất MF với DNN (mục~\ref{subsec:early_fusion_design}).
 
 \subsection{Lấy mẫu tiêu cực (Negative Sampling) và hàm tổn thất Binary Cross-Entropy}
 \label{subsec:negative_sampling_loss}
@@ -299,7 +305,11 @@ Với mỗi người dùng kiểm thử $u$, mô hình xếp hạng tập ứng 
 
     \item \textbf{Normalized Discounted Cumulative Gain at K (NDCG@K):} thưởng nhiều hơn khi sản phẩm đúng nằm ở vị trí cao, theo định nghĩa của Järvelin và Kekäläinen \parencite{jarvelin2002} với mức liên quan nhị phân:
     \begin{equation}
-        \text{NDCG@K}(u) = \frac{\text{DCG@K}(u)}{\text{IDCG@K}(u)}, \quad \text{DCG@K}(u) = \sum_{j=1}^{K} \frac{\mathbb{I}(\text{Rec}_K(u)_j \in T_u)}{\log_2(j + 1)}, \quad \text{IDCG@K}(u) = \sum_{j=1}^{\min(|T_u|, K)} \frac{1}{\log_2(j + 1)}
+        \begin{aligned}
+            \text{NDCG@K}(u) &= \frac{\text{DCG@K}(u)}{\text{IDCG@K}(u)}, \\
+            \text{DCG@K}(u) &= \sum_{j=1}^{K} \frac{\mathbb{I}(\text{Rec}_K(u)_j \in T_u)}{\log_2(j + 1)}, \\
+            \text{IDCG@K}(u) &= \sum_{j=1}^{\min(|T_u|, K)} \frac{1}{\log_2(j + 1)}
+        \end{aligned}
         \label{eq:ndcg_k}
     \end{equation}
     IDCG là giá trị DCG khi mọi sản phẩm đúng xếp ở đầu danh sách, nên NDCG@K $\in [0, 1]$. Với $|T_u| = 1$ và sản phẩm đúng ở hạng $r$: NDCG@K $= 1/\log_2(r+1)$ nếu $r \le K$, ngược lại bằng 0.

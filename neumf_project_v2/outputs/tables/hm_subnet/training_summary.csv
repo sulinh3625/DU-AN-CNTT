@@ -1,9 +1,0 @@
-Model,Parameters,Best Epoch,Best Val NDCG@10,Train Time (s)
-Random,N/A,N/A,N/A,0.0
-MostPopular,N/A,N/A,N/A,0.0
-BPR-MF,90336,N/A,N/A,3.8
-GMF,90368,3,0.0386,3.3
-MLP,93088,14,0.0398,8.9
-EarlyFusion,93088,20,0.0264,8.3
-NeuMF-Scratch,183456,1,0.0044,3.7
-NeuMF-Pretrained,183456,1,0.0401,3.7

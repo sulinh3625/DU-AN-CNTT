@@ -215,7 +215,7 @@
 % XOÁ lệnh \todo{...} này và thay bằng nội dung thật trước khi nộp báo cáo.
 \newcommand{\todo}[1]{\textbf{[TODO: #1]}}
 % --- SỐ LIỆU THỰC NGHIỆM SINH TỰ ĐỘNG ---
-% Bảng/hình/macro số liệu do neumf_project_v2/scripts/15_export_report.py sinh vào content/tables/ và
+% Bảng/hình/macro số liệu do neumf_project/scripts/15_export_report.py sinh vào content/tables/ và
 % media/figures/final/. Không gõ tay số liệu kết quả: dùng \Res{Pre}{NDCG10}, \Sig{PreBPR}{pholm}, ...
 % Mô hình: Pre, Scr, GMF, MLP, BPR, MostPop, Random. File chưa có thì hiện khung "Chưa có số liệu".
 \providecommand{\resultmacro}[3]{\ifcsname #1-#2-#3\endcsname\csname #1-#2-#3\endcsname\else\textbf{[chưa có]}\fi}
@@ -227,6 +227,9 @@
 \providecommand{\Samp}[2]{\resultmacro{samp}{#1}{#2}}
 \providecommand{\Lat}[2]{\resultmacro{lat}{#1}{#2}}
 \providecommand{\Val}[2]{\resultmacro{val}{#1}{#2}}
+\providecommand{\Kx}[2]{\resultmacro{kx}{#1}{#2}}
+\providecommand{\Ext}[2]{\resultmacro{ext}{#1}{#2}}
+\providecommand{\Esig}[2]{\resultmacro{esig}{#1}{#2}}
 \InputIfFileExists{content/tables/results_macros.tex}{}{}
 \newcommand{\chuaco}[1]{\begin{center}\fbox{\parbox{0.92\textwidth}{\raggedright\small\textit{Chưa có số liệu: #1}}}\end{center}}
 % \bangketqua{tên file}{lệnh sinh ra file}: chèn bảng sinh tự động, hoặc khung nhắc nếu chưa có.

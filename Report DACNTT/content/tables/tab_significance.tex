@@ -8,14 +8,14 @@
         \toprule
         A & B & NDCG@10 A & NDCG@10 B & Chênh & CI 95\% (A$-$B) & p Wilcoxon & p Holm & Kết luận \\
         \midrule
-        NeuMF-Pretrained & BPR-MF & 0{,}01001 & 0{,}01062 & $-$5{,}8\% & [$-$0{,}00172; 0{,}00055] & 0{,}021 & 0{,}168 & không khác biệt có ý nghĩa \\
-        NeuMF-Pretrained & MostPopular & 0{,}01001 & 0{,}00998 & +0{,}2\% & [$-$0{,}00088; 0{,}00095] & 0{,}701 & 1{,}000 & không khác biệt có ý nghĩa \\
-        NeuMF-Pretrained & GMF & 0{,}01001 & 0{,}00945 & +5{,}9\% & [$-$0{,}00005; 0{,}00119] & 0{,}112 & 0{,}787 & không khác biệt có ý nghĩa \\
-        NeuMF-Pretrained & MLP & 0{,}01001 & 0{,}00959 & +4{,}3\% & [$-$0{,}00067; 0{,}00152] & 0{,}325 & 1{,}000 & không khác biệt có ý nghĩa \\
-        NeuMF-Pretrained & NeuMF-Scratch & 0{,}01001 & 0{,}00958 & +4{,}4\% & [$-$0{,}00108; 0{,}00195] & 0{,}739 & 1{,}000 & không khác biệt có ý nghĩa \\
-        NeuMF-Scratch & BPR-MF & 0{,}00958 & 0{,}01062 & $-$9{,}8\% & [$-$0{,}00278; 0{,}00070] & 0{,}227 & 1{,}000 & không khác biệt có ý nghĩa \\
-        NeuMF-Scratch & GMF & 0{,}00958 & 0{,}00945 & +1{,}4\% & [$-$0{,}00138; 0{,}00164] & 0{,}539 & 1{,}000 & không khác biệt có ý nghĩa \\
-        NeuMF-Scratch & MLP & 0{,}00958 & 0{,}00959 & $-$0{,}1\% & [$-$0{,}00184; 0{,}00181] & 0{,}721 & 1{,}000 & không khác biệt có ý nghĩa \\
+        NeuMF-Pretrained & BPR-MF & 0{,}00957 & 0{,}01007 & $-$5{,}0\% & [$-$0{,}00146; 0{,}00046] & 0{,}128 & 0{,}893 & không khác biệt có ý nghĩa \\
+        NeuMF-Pretrained & MostPopular & 0{,}00957 & 0{,}00917 & +4{,}3\% & [$-$0{,}00043; 0{,}00124] & 0{,}381 & 1{,}000 & không khác biệt có ý nghĩa \\
+        NeuMF-Pretrained & GMF & 0{,}00957 & 0{,}00907 & +5{,}5\% & [$-$0{,}00004; 0{,}00105] & 0{,}043 & 0{,}342 & không khác biệt có ý nghĩa \\
+        NeuMF-Pretrained & MLP & 0{,}00957 & 0{,}00931 & +2{,}7\% & [$-$0{,}00071; 0{,}00122] & 0{,}397 & 1{,}000 & không khác biệt có ý nghĩa \\
+        NeuMF-Pretrained & NeuMF-Scratch & 0{,}00957 & 0{,}00910 & +5{,}1\% & [$-$0{,}00113; 0{,}00206] & 0{,}811 & 1{,}000 & không khác biệt có ý nghĩa \\
+        NeuMF-Scratch & BPR-MF & 0{,}00910 & 0{,}01007 & $-$9{,}6\% & [$-$0{,}00263; 0{,}00067] & 0{,}305 & 1{,}000 & không khác biệt có ý nghĩa \\
+        NeuMF-Scratch & GMF & 0{,}00910 & 0{,}00907 & +0{,}4\% & [$-$0{,}00152; 0{,}00159] & 0{,}775 & 1{,}000 & không khác biệt có ý nghĩa \\
+        NeuMF-Scratch & MLP & 0{,}00910 & 0{,}00931 & $-$2{,}2\% & [$-$0{,}00187; 0{,}00144] & 0{,}819 & 1{,}000 & không khác biệt có ý nghĩa \\
         \bottomrule
     \end{tabular}}
     \par\smallskip{\footnotesize ``A tốt hơn B'' chỉ khi đồng thời p Holm $<$ 0,05, CI không chứa 0 và chênh lệch tương đối $\geq$ 5\%.}
