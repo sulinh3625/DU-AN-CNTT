@@ -26,6 +26,22 @@
 \expandafter\def\csname val-BPR-NDCG10\endcsname{0{,}00912}
 \expandafter\def\csname val-BPR-Recall10\endcsname{0{,}01386}
 \expandafter\def\csname val-BPR-HR10\endcsname{0{,}03824}
+\expandafter\def\csname val-LFGM-NDCG10\endcsname{0{,}01005}
+\expandafter\def\csname val-LFGM-Recall10\endcsname{0{,}01531}
+\expandafter\def\csname val-LFGM-HR10\endcsname{0{,}04088}
+\expandafter\def\csname val-LFBM-NDCG10\endcsname{0{,}00972}
+\expandafter\def\csname val-LFBM-Recall10\endcsname{0{,}01561}
+\expandafter\def\csname val-LFBM-HR10\endcsname{0{,}04044}
+\expandafter\def\csname val-IKNN-NDCG10\endcsname{0{,}01217}
+\expandafter\def\csname val-IKNN-Recall10\endcsname{0{,}01729}
+\expandafter\def\csname val-IKNN-HR10\endcsname{0{,}04088}
+\expandafter\def\csname val-UKNN-NDCG10\endcsname{0{,}01340}
+\expandafter\def\csname val-UKNN-Recall10\endcsname{0{,}01910}
+\expandafter\def\csname val-UKNN-HR10\endcsname{0{,}04527}
+\expandafter\def\csname val-LFGM-parta\endcsname{0{,}00843}
+\expandafter\def\csname val-LFGM-partb\endcsname{0{,}00922}
+\expandafter\def\csname val-LFBM-parta\endcsname{0{,}00911}
+\expandafter\def\csname val-LFBM-partb\endcsname{0{,}00922}
 \expandafter\def\csname res-Pre-NDCG10\endcsname{0{,}00957}
 \expandafter\def\csname sd-Pre-NDCG10\endcsname{0{,}00081}
 \expandafter\def\csname res-Scr-NDCG10\endcsname{0{,}00910}
@@ -96,48 +112,67 @@
 \expandafter\def\csname sd-MostPop-NDCG5\endcsname{0{,}00000}
 \expandafter\def\csname res-Random-NDCG5\endcsname{0{,}00049}
 \expandafter\def\csname sd-Random-NDCG5\endcsname{0{,}00028}
+\expandafter\def\csname res-Pre-rank\endcsname{thứ hai}
+\expandafter\def\csname res-Scr-rank\endcsname{thứ năm}
+\expandafter\def\csname res-GMF-rank\endcsname{thứ sáu}
+\expandafter\def\csname res-MLP-rank\endcsname{thứ ba}
+\expandafter\def\csname res-BPR-rank\endcsname{thứ nhất}
+\expandafter\def\csname res-MostPop-rank\endcsname{thứ tư}
+\expandafter\def\csname res-Random-rank\endcsname{thứ bảy}
+\expandafter\def\csname res-all-best\endcsname{BPR-MF}
+\expandafter\def\csname res-all-runinfo\endcsname{số liệu dưới đây là lần chấm test thứ hai (29/09/2026), sau khi bổ sung bước huấn luyện lại; lần chấm đầu cho cùng kết luận (mục~\ref{sec:protocol}, phần lệch kế hoạch).}
 \expandafter\def\csname sig-PreBPR-rel\endcsname{$-$5{,}0\%}
 \expandafter\def\csname sig-PreBPR-pw\endcsname{0{,}128}
 \expandafter\def\csname sig-PreBPR-pholm\endcsname{0{,}893}
 \expandafter\def\csname sig-PreBPR-cilo\endcsname{$-$0{,}00146}
 \expandafter\def\csname sig-PreBPR-cihi\endcsname{0{,}00046}
+\expandafter\def\csname sig-PreBPR-verdict\endcsname{không khác biệt có ý nghĩa}
 \expandafter\def\csname sig-PreMostPop-rel\endcsname{+4{,}3\%}
 \expandafter\def\csname sig-PreMostPop-pw\endcsname{0{,}381}
 \expandafter\def\csname sig-PreMostPop-pholm\endcsname{1{,}000}
 \expandafter\def\csname sig-PreMostPop-cilo\endcsname{$-$0{,}00043}
 \expandafter\def\csname sig-PreMostPop-cihi\endcsname{0{,}00124}
+\expandafter\def\csname sig-PreMostPop-verdict\endcsname{không khác biệt có ý nghĩa}
 \expandafter\def\csname sig-PreGMF-rel\endcsname{+5{,}5\%}
 \expandafter\def\csname sig-PreGMF-pw\endcsname{0{,}043}
 \expandafter\def\csname sig-PreGMF-pholm\endcsname{0{,}342}
 \expandafter\def\csname sig-PreGMF-cilo\endcsname{$-$0{,}00004}
 \expandafter\def\csname sig-PreGMF-cihi\endcsname{0{,}00105}
+\expandafter\def\csname sig-PreGMF-verdict\endcsname{không khác biệt có ý nghĩa}
 \expandafter\def\csname sig-PreMLP-rel\endcsname{+2{,}7\%}
 \expandafter\def\csname sig-PreMLP-pw\endcsname{0{,}397}
 \expandafter\def\csname sig-PreMLP-pholm\endcsname{1{,}000}
 \expandafter\def\csname sig-PreMLP-cilo\endcsname{$-$0{,}00071}
 \expandafter\def\csname sig-PreMLP-cihi\endcsname{0{,}00122}
+\expandafter\def\csname sig-PreMLP-verdict\endcsname{không khác biệt có ý nghĩa}
 \expandafter\def\csname sig-PreScr-rel\endcsname{+5{,}1\%}
 \expandafter\def\csname sig-PreScr-pw\endcsname{0{,}811}
 \expandafter\def\csname sig-PreScr-pholm\endcsname{1{,}000}
 \expandafter\def\csname sig-PreScr-cilo\endcsname{$-$0{,}00113}
 \expandafter\def\csname sig-PreScr-cihi\endcsname{0{,}00206}
+\expandafter\def\csname sig-PreScr-verdict\endcsname{không khác biệt có ý nghĩa}
 \expandafter\def\csname sig-ScrBPR-rel\endcsname{$-$9{,}6\%}
 \expandafter\def\csname sig-ScrBPR-pw\endcsname{0{,}305}
 \expandafter\def\csname sig-ScrBPR-pholm\endcsname{1{,}000}
 \expandafter\def\csname sig-ScrBPR-cilo\endcsname{$-$0{,}00263}
 \expandafter\def\csname sig-ScrBPR-cihi\endcsname{0{,}00067}
+\expandafter\def\csname sig-ScrBPR-verdict\endcsname{không khác biệt có ý nghĩa}
 \expandafter\def\csname sig-ScrGMF-rel\endcsname{+0{,}4\%}
 \expandafter\def\csname sig-ScrGMF-pw\endcsname{0{,}775}
 \expandafter\def\csname sig-ScrGMF-pholm\endcsname{1{,}000}
 \expandafter\def\csname sig-ScrGMF-cilo\endcsname{$-$0{,}00152}
 \expandafter\def\csname sig-ScrGMF-cihi\endcsname{0{,}00159}
+\expandafter\def\csname sig-ScrGMF-verdict\endcsname{không khác biệt có ý nghĩa}
 \expandafter\def\csname sig-ScrMLP-rel\endcsname{$-$2{,}2\%}
 \expandafter\def\csname sig-ScrMLP-pw\endcsname{0{,}819}
 \expandafter\def\csname sig-ScrMLP-pholm\endcsname{1{,}000}
 \expandafter\def\csname sig-ScrMLP-cilo\endcsname{$-$0{,}00187}
 \expandafter\def\csname sig-ScrMLP-cihi\endcsname{0{,}00144}
+\expandafter\def\csname sig-ScrMLP-verdict\endcsname{không khác biệt có ý nghĩa}
 \expandafter\def\csname sig-all-nbetter\endcsname{0}
 \expandafter\def\csname sig-all-n\endcsname{8}
+\expandafter\def\csname sig-all-summary\endcsname{Không so sánh nào trong 8 so sánh của họ so sánh chính đạt tiêu chí ``tốt hơn''.}
+\expandafter\def\csname sig-all-summaryen\endcsname{none of the 8 comparisons meets the pre-specified criterion}
 \expandafter\def\csname sig-all-nusers\endcsname{2.996}
 \expandafter\def\csname strat-Pre-all\endcsname{0{,}00957}
 \expandafter\def\csname strat-Pre-head\endcsname{0{,}02892}

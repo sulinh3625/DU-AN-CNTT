@@ -36,7 +36,8 @@ Trước khi trình bày chi tiết từng thành phần, mục này mô tả ki
         \node[stage, fill=green!8, below=of split] (model)
             {\textbf{TẦNG 4 -- MÔ HÌNH HÓA}\\[2pt]
              \textbf{GMF} (tuyến tính, Công thức~\eqref{eq:gmf_predict}) và \textbf{MLP} (phi tuyến, tháp $[2d{\to}d{\to}d/2{\to}d/4]$) $\rightarrow$
-             hợp nhất thành \textbf{NeuMF} ở lớp gần cuối; hai biến thể NeuMF-Scratch (khởi tạo ngẫu nhiên) và NeuMF-Pretrained (khởi tạo từ GMF, MLP đã huấn luyện).};
+             hợp nhất thành \textbf{NeuMF} ở lớp gần cuối (Early Fusion); hai biến thể NeuMF-Scratch (khởi tạo ngẫu nhiên) và NeuMF-Pretrained (khởi tạo từ GMF, MLP đã huấn luyện).
+             Mở rộng: \textbf{Late Fusion} -- trộn điểm GMF + MLP (và BPR-MF + MLP) huấn luyện riêng.};
 
         \node[stage, fill=orange!10, below=of model] (train)
             {\textbf{TẦNG 5 -- HUẤN LUYỆN \& TINH CHỈNH (chỉ dùng Validation)}\\[2pt]
@@ -52,7 +53,8 @@ Trước khi trình bày chi tiết từng thành phần, mục này mô tả ki
         \node[side, text width=5.0cm, right=1.1cm of train] (baselinebox)
             {\textbf{ĐỐI CHỨNG (BASELINES)}\\[2pt]
              Random, Most Popular\\
-             BPR-MF (mục~\ref{subsec:bpr}), tune cùng ngân sách};
+             BPR-MF (mục~\ref{subsec:bpr}), tune cùng ngân sách\\[2pt]
+             \textit{Mở rộng:} ItemKNN, UserKNN (mục~\ref{subsec:memory_model_based})};
 
         \draw[arrow] (data) -- (prep);
         \draw[arrow] (prep) -- (split);
@@ -123,7 +125,7 @@ Sau khi gộp, lọc $k$-core được áp dụng lặp đến khi hội tụ (l
 \end{equation}
 và ma trận tương tác nhị phân $Y \in \{0, 1\}^{M \times N}$ được tạo với $y_{ui} = 1$ nếu User $u$ đã mua Item $i$. Phản hồi nhị phân là thiết lập duy nhất dùng cho kết quả; mọi thống kê phụ thuộc dữ liệu (độ phổ biến, nhóm head/tail, nhóm người dùng ít tương tác, tập mẫu âm) đều chỉ tính trên tập huấn luyện.
 
-\subsection{Lựa chọn ngưỡng lọc $k$-core}
+\subsection{Lựa chọn ngưỡng lọc \texorpdfstring{$k$}{k}-core}
 \label{subsec:hm_apply}
 
 Bảng~\ref{tab:kcore_hm} khảo sát độ nhạy của hm500k theo ngưỡng $k$. Ngưỡng chuẩn trong tài liệu là $k=5$, nhưng khi đó catalog còn 23.067 sản phẩm và đánh giá Full Ranking ước tính cần khoảng 10,7 GB RAM -- vượt giới hạn của máy thực nghiệm (16 GB, đã tính hệ điều hành và dữ liệu huấn luyện). Dự án vì vậy chọn $\mathbf{k=10}$: 7.519 người dùng, 10.345 sản phẩm, 220.292 cặp tương tác, mật độ 0,283\%; RAM đỉnh đo thực tế khi huấn luyện và đánh giá một seed là 4,1 GB. Cái giá của lựa chọn này là dữ liệu thiên về khách mua nhiều -- được ghi nhận là một hạn chế (mục~\ref{sec:hanche}).
@@ -206,7 +208,7 @@ Một quyết định thiết kế quan trọng của NeuMF là \emph{không} d�
     \item Bảng Embedding nhánh GMF: $P^G \in \mathbb{R}^{M \times d_G}$ và $Q^G \in \mathbb{R}^{N \times d_G}$.
     \item Bảng Embedding nhánh MLP: $P^M \in \mathbb{R}^{M \times d_M}$ và $Q^M \in \mathbb{R}^{N \times d_M}$.
 \end{itemize}
-Việc tách hai bảng còn cho phép hai nhánh có số chiều khác nhau ($d_G \ne d_M$), như He và cộng sự cho phép trong công trình gốc -- điều cần thiết khi GMF và MLP tốt nhất sau tinh chỉnh có kích thước khác nhau (mục~\ref{sec:protocol}). Bảng Embedding được khởi tạo theo phân phối chuẩn $\mathcal{N}(0; 0{,}01)$, các tầng tuyến tính theo Xavier. Số tham số chủ yếu nằm ở Embedding, tỉ lệ với $(M+N)\times d$: với cấu hình tốt nhất, GMF ($d=64$) có 1.143.360 tham số, MLP ($d=32$) có 574.400, NeuMF-Scratch ($d=64$) có 2.297.536 và NeuMF-Pretrained ($d_G=64$, $d_M=32$) có 1.717.760; BPR-MF ($d=32$) có 571.648.
+Việc tách hai bảng còn cho phép hai nhánh có số chiều khác nhau ($d_G \ne d_M$), như He và cộng sự cho phép trong công trình gốc -- điều cần thiết khi GMF và MLP tốt nhất sau tinh chỉnh có kích thước khác nhau (mục~\ref{sec:protocol}). Như công trình gốc, bảng Embedding được khởi tạo theo phân phối chuẩn có trung bình 0 và độ lệch chuẩn 0,01, tức $\mathcal{N}(0;\, 0{,}01^2)$; các tầng tuyến tính khởi tạo theo Xavier; lớp đầu ra $h$ không có hệ số chệch (bias), đúng với công thức $\sigma(h^T\phi)$. Số tham số chủ yếu nằm ở Embedding, tỉ lệ với $(M+N)\times d$: với cấu hình tốt nhất, GMF ($d=64$) có 1.143.360 tham số, MLP ($d=32$) có 574.400, NeuMF-Scratch ($d=64$) có 2.297.536 và NeuMF-Pretrained ($d_G=64$, $d_M=32$) có 1.717.760; BPR-MF ($d=32$) có 571.648.
 
 \subsection{Thiết kế nhánh Generalized Matrix Factorization (GMF)}
 \label{subsec:gmf_design}
@@ -347,11 +349,13 @@ Ferrari Dacrema và cộng sự \parencite{dacrema2019progress} chỉ ra mã ngu
     \item \textbf{Kiểm định thống kê và tiêu chí kết luận cố định.} Mỗi mô hình (với cấu hình tốt nhất) được chạy với 3 seed (42, 2024, 2025); với mỗi seed, mô hình được huấn luyện trên tập huấn luyện để chọn số epoch theo validation, rồi huấn luyện lại trên tập huấn luyện $\cup$ xác thực đúng số epoch đó và chấm trên test (mục~\ref{subsec:split_sampling}). NDCG@10 của từng người dùng được lấy trung bình qua 3 seed, rồi so sánh từng cặp mô hình bằng kiểm định Wilcoxon signed-rank theo người dùng \parencite{wilcoxon1945} và khoảng tin cậy 95\% bằng paired bootstrap (10.000 lần lấy mẫu lại) \parencite{efron1993bootstrap}; giá trị $p$ được hiệu chỉnh Holm \parencite{holm1979} trên họ 8 so sánh cố định (NeuMF-Pretrained so với BPR-MF, Most Popular, GMF, MLP, NeuMF-Scratch; NeuMF-Scratch so với BPR-MF, GMF, MLP). Chỉ viết ``A tốt hơn B'' khi đồng thời: $p_{Holm} < 0{,}05$, khoảng tin cậy không chứa 0, và chênh lệch tương đối NDCG@10 $\ge 5\%$; ngược lại kết luận ``không khác biệt có ý nghĩa''. Không dùng Wilcoxon theo seed vì với 3 seed, giá trị $p$ nhỏ nhất có thể đạt là $2/2^3 = 0{,}25$.
 \end{enumerate}
 
-\paragraph{Lệch kế hoạch trước lần chấm test đầu tiên.} Kế hoạch ban đầu có thêm các ứng viên iALS \parencite{rendle2022ials}, Most Popular theo cửa sổ thời gian gần, DeepCF/CFNet và một mô hình trộn điểm iALS + NeuMF-Scratch (trộn một mô hình MF với mô hình lai NeuMF); tất cả đã được tinh chỉnh trên validation nhưng sau đó bị loại khỏi phạm vi theo quyết định của nhóm (đã quá nhiều baseline), \emph{trước} khi xem bất kỳ số liệu test nào. Kết quả validation của chúng vẫn được giữ trong nhật ký tinh chỉnh để minh bạch và được nhắc lại ở mục~\ref{sec:discussion}. Lớp \texttt{EarlyFusionModel} (nối Embedding ngay ở đầu vào) bị loại vì trùng kiến trúc MLP (mục~\ref{subsec:early_fusion_design}). ItemKNN không được chạy vì ma trận tương đồng dày $N \times N$ với $N = 10.345$ vượt ngưỡng an toàn bộ nhớ của cài đặt.
+\paragraph{Lệch kế hoạch trước lần chấm test đầu tiên.} Kế hoạch ban đầu có thêm các ứng viên iALS \parencite{rendle2022ials}, Most Popular theo cửa sổ thời gian gần, DeepCF/CFNet và một mô hình trộn điểm iALS + NeuMF-Scratch (trộn một mô hình MF với mô hình lai NeuMF); tất cả đã được tinh chỉnh trên validation nhưng sau đó bị loại khỏi phạm vi theo quyết định của nhóm (đã quá nhiều baseline), \emph{trước} khi xem bất kỳ số liệu test nào. Kết quả validation của chúng vẫn được giữ trong nhật ký tinh chỉnh để minh bạch và được nhắc lại ở mục~\ref{sec:discussion}. Lớp \texttt{EarlyFusionModel} (nối Embedding ngay ở đầu vào) bị loại vì trùng kiến trúc MLP (mục~\ref{subsec:early_fusion_design}). Bản ItemKNN đầu tiên dùng ma trận tương đồng dày $N \times N$ và bị chặn ở 5.000 sản phẩm, nên không chạy được với $N = 10.345$; bản thưa top-$k$ được bổ sung ở phần mở rộng dưới đây.
 
 \paragraph{Lệch kế hoạch sau lần chấm test đầu tiên.} Lần chấm đầu (27/09/2026) huấn luyện các mô hình chỉ trên tập huấn luyện rồi chấm thẳng tập kiểm thử, bỏ trống 4 tuần của giai đoạn xác thực. Sau đó nhóm bổ sung bước huấn luyện lại trên tập huấn luyện $\cup$ xác thực (mục~\ref{subsec:split_sampling}) và chấm lại toàn bộ (29/09/2026); cấu hình, độ đo, họ so sánh và tiêu chí kết luận giữ nguyên. Vì thay đổi này được quyết định \emph{sau} khi đã xem số liệu test, số liệu ở Chương~\ref{chap:thucnghiem} -- lấy từ lần chấm thứ hai -- cần được hiểu là kết quả sau khi đã xem test một lần. Kết luận không đổi giữa hai lần chấm: ở lần đầu, BPR-MF cũng có NDCG@10 trung bình cao nhất (0,01062, so với 0,01001 của NeuMF-Pretrained và 0,00958 của NeuMF-Scratch) và cũng 0/8 so sánh đạt tiêu chí ``tốt hơn''. Nhật ký truy cập ghi đủ cả hai lần chấm; số liệu của lần đầu được giữ trong lịch sử phiên bản của kho mã.
 
-\paragraph{Mở rộng sau khi xem test.} Để trả lời câu hỏi Early Fusion hay Late Fusion phù hợp hơn và bổ sung baseline láng giềng mà đề cương đặt ra, đề tài bổ sung bốn mô hình: Late Fusion GMF + MLP và Late Fusion BPR-MF + MLP (trộn điểm đã chuẩn hóa của hai mô hình huấn luyện riêng, mục~\ref{subsec:early_late_fusion}), ItemKNN và UserKNN (láng giềng top-$k$ theo cosine, mục~\ref{subsec:memory_model_based}). Tham số của chúng (trọng số $w$; $k$ và hệ số co) được chọn chỉ trên tập xác thực với cùng ngân sách, ghi vào mục ``mở rộng'' của kế hoạch đăng ký trước \emph{trước} khi chấm test, rồi chấm test một lần với 3 seed. Kiểm định dùng một họ so sánh riêng có hiệu chỉnh Holm riêng, nên không ảnh hưởng tới họ 8 so sánh chính. Vì phần này được thêm sau khi đã xem số liệu test, kết quả của nó được báo cáo là kết quả mở rộng, không thay thế kết luận chính.
+\paragraph{Mở rộng sau khi xem test.} Để trả lời câu hỏi Early Fusion hay Late Fusion phù hợp hơn và bổ sung baseline láng giềng mà đề cương đặt ra, đề tài bổ sung bốn mô hình: Late Fusion GMF + MLP và Late Fusion BPR-MF + MLP (trộn điểm đã chuẩn hóa của hai mô hình huấn luyện riêng, công thức~\eqref{eq:late_fusion_mfdnn}), ItemKNN và UserKNN (láng giềng top-$k$ theo cosine, mục~\ref{subsec:memory_model_based}). Tham số được chọn chỉ trên tập xác thực: ItemKNN và UserKNN thử 6 cấu hình như mọi mô hình; Late Fusion quét đủ 11 giá trị $w \in \{0;\, 0{,}1;\, \dots;\, 1\}$ (một tham số, không huấn luyện thêm mạng nào). Lựa chọn được ghi vào mục ``mở rộng'' của kế hoạch đăng ký trước \emph{trước} khi chấm test, kèm một lần chạy lại kiểm tra cho đúng cùng số trên cả 34 cấu hình. Khi chấm test, Late Fusion dùng đúng các mô hình GMF, MLP, BPR-MF đã huấn luyện lại trên tập huấn luyện $\cup$ xác thực của từng seed (không huấn luyện thêm), còn ItemKNN, UserKNN tính trên tập huấn luyện $\cup$ xác thực. Kiểm định dùng một họ 7 so sánh riêng có hiệu chỉnh Holm riêng (Late Fusion GMF + MLP so với NeuMF-Scratch, NeuMF-Pretrained, GMF, MLP; Late Fusion BPR-MF + MLP so với BPR-MF; ItemKNN và UserKNN so với NeuMF-Scratch), nên không ảnh hưởng tới họ 8 so sánh chính. Vì phần này được thêm sau khi đã xem số liệu test, kết quả của nó được báo cáo là kết quả mở rộng, không thay thế kết luận chính.
+
+\paragraph{Chạy lại toàn bộ trên phiên bản mã nguồn cuối.} Kết quả lần chấm thứ hai được sinh ở một phiên bản mã nguồn cũ hơn; sau đó thư mục mã được đổi tên và phần mở rộng được thêm vào. Để mọi số liệu trong báo cáo truy vết về \emph{cùng một} phiên bản, toàn bộ chuỗi đánh giá cuối được chạy lại một lần trên phiên bản cuối (đăng ký trước trong kế hoạch, cùng cấu hình, seed, độ đo, họ so sánh và tiêu chí; không tinh chỉnh lại). Vì huấn luyện chạy ở chế độ GPU tất định và mã huấn luyện, đánh giá của bảy mô hình chính không đổi, lần chạy lại trên cùng máy được kỳ vọng ra đúng cùng số -- đây đồng thời là một kiểm tra tái lập; kết quả đối chiếu được ghi ở mục~\ref{sec:exp_config}. Nhật ký truy cập ghi đủ mọi lần chấm.
 
 \section{Thiết kế hệ thống giao diện thực nghiệm (Demo)}
 \label{sec:demo_design}
@@ -379,7 +383,7 @@ Mục này trình bày hệ thống demo minh họa mô hình đã huấn luyệ
 
         \node[stage, fill=green!8, below=of api] (model)
             {\textbf{TẦNG 3 -- MÔ HÌNH \& DỮ LIỆU TRA CỨU}\\[2pt]
-             Dựng lại dữ liệu theo đúng cấu hình của lần chạy, đối chiếu với metadata đã lưu (số người dùng, sản phẩm, tương tác, kích thước các tập) rồi mới nạp trọng số GMF/MLP/NeuMF và BPR-MF; bảng ánh xạ ID gốc $\leftrightarrow$ mã nội bộ.};
+             Dựng lại dữ liệu theo đúng cấu hình của đánh giá cuối, đối chiếu với tệp kết quả đã lưu (số người dùng kiểm thử, số sản phẩm ứng viên) rồi mới nạp trọng số GMF/MLP/NeuMF và BPR-MF với cấu hình riêng của từng mô hình; dựng ItemKNN/UserKNN và Late Fusion của phần mở rộng; bảng ánh xạ ID gốc $\leftrightarrow$ mã nội bộ.};
 
         \draw[arrow] (client) -- node[right, font=\scriptsize] {HTTP/JSON} (api);
         \draw[arrow] (api) -- node[right, font=\scriptsize] {nạp 1 lần, lưu cache} (model);
@@ -388,7 +392,7 @@ Mục này trình bày hệ thống demo minh họa mô hình đã huấn luyệ
     \label{fig:demo_architecture}
 \end{figure}
 
-Hai nguyên tắc thiết kế quan trọng nhất: \textit{(i)} tách suy diễn khỏi huấn luyện, nên thời gian phản hồi không phụ thuộc chi phí huấn luyện và tầng 2+3 có thể đóng gói thành một container độc lập; \textit{(ii)} demo \emph{tự kiểm tra} rằng dữ liệu dựng lại khớp với lần chạy đã huấn luyện -- nếu lệch (ví dụ sai tệp dữ liệu hoặc sai ngưỡng $k$), máy chủ báo lỗi thay vì nạp trọng số với ánh xạ ID sai. Trung bình Hit@K/NDCG@K theo người dùng mà demo tính lại khớp với kết quả của lần chạy tới sai số $10^{-6}$.
+Hai nguyên tắc thiết kế quan trọng nhất: \textit{(i)} tách suy diễn khỏi huấn luyện, nên thời gian phản hồi không phụ thuộc chi phí huấn luyện và tầng 2+3 có thể đóng gói thành một container độc lập; \textit{(ii)} demo \emph{tự kiểm tra} rằng dữ liệu dựng lại khớp với lần chạy đã huấn luyện -- nếu lệch (ví dụ sai tệp dữ liệu hoặc sai ngưỡng $k$), máy chủ báo lỗi thay vì nạp trọng số với ánh xạ ID sai. Bộ kiểm thử tự động của demo xác nhận tập ứng viên trùng với tập ứng viên của đánh giá cuối và các chỉ số theo người dùng mà demo tính lại khớp tệp kết quả theo người dùng của Chương~\ref{chap:thucnghiem}; chỉ vài cặp sản phẩm gần như hoà điểm ở hạng rất sâu (trên 100) có thể đổi chỗ vì logit được tính lại trên CPU thay vì GPU, không ảnh hưởng chỉ số @K.
 
 \subsection{Thiết kế API suy diễn}
 \label{subsec:demo_api}
@@ -407,7 +411,9 @@ Hai nguyên tắc thiết kế quan trọng nhất: \textit{(i)} tách suy diễ
         \hline
         \texttt{GET /api/users/\{id\}/history} & Lịch sử mua trong tập huấn luyện, sắp theo thời gian. \\
         \hline
-        \texttt{GET /api/users/\{id\}/recommend} & Top-$K$ của một mô hình, hạng của sản phẩm kiểm thử, số ứng viên, Hit@$K$ và NDCG@$K$ của khách đó. \\
+        \texttt{GET /api/users/\{id\}/recommend} & Top-$K$ của một mô hình, hạng của từng sản phẩm đích, số ứng viên, HR@$K$, NDCG@$K$, Recall@$K$ của khách đó. \\
+        \hline
+        \texttt{GET /api/users/\{id\}/neighbors} & Top-$K$ khách tương đồng nhất theo UserKNN: độ tương đồng, số sản phẩm mua chung, láng giềng nào đã mua sản phẩm đích của khách. \\
         \hline
         \texttt{POST /api/onboarding/recommend} & Gợi ý cho khách hàng mới theo luật (lọc theo lựa chọn + độ phổ biến trong train) -- được gắn nhãn rõ \emph{không phải mô hình NeuMF}. \\
         \hline
@@ -421,7 +427,7 @@ Hai nguyên tắc thiết kế quan trọng nhất: \textit{(i)} tách suy diễ
 Luồng xử lý của chức năng gợi ý Top-$K$ gồm 5 bước, dùng lại đúng các hàm của pipeline đánh giá:
 \begin{enumerate}
     \item Tra định danh khách hàng để lấy mã nội bộ. Khách chưa có trong dữ liệu huấn luyện là tình huống Cold-start tuyệt đối, nằm ngoài khả năng của mô hình (mục~\ref{sec:pham_vi_thuc_nghiem}); demo chuyển sang màn hình Khách hàng mới với gợi ý theo luật thay vì suy diễn một kết quả không đáng tin cậy.
-    \item Xác định tập ứng viên: toàn bộ sản phẩm trừ những sản phẩm khách đã mua -- cùng hàm dựng tập ứng viên của đánh giá Full Ranking.
+    \item Xác định tập ứng viên: toàn bộ sản phẩm có trong dữ liệu huấn luyện trừ những sản phẩm khách đã mua -- cùng quy tắc dựng tập ứng viên của đánh giá Full Ranking.
     \item Tính điểm cho toàn bộ tập ứng viên theo lô (vector hoá), dùng logit với mô hình nơ-ron.
     \item Sắp xếp giảm dần với cùng quy tắc phá hòa tất định như lúc đánh giá, lấy $K$ phần tử đầu.
     \item Ánh xạ ngược mã nội bộ về \texttt{article\_id}, kèm tên và loại sản phẩm, trả về Tầng 1.
@@ -430,11 +436,13 @@ Luồng xử lý của chức năng gợi ý Top-$K$ gồm 5 bước, dùng lạ
 \subsection{Lựa chọn mô hình triển khai và yêu cầu phi chức năng}
 \label{subsec:demo_model_choice}
 
-Demo cho phép chọn và so sánh song song hai mô hình bất kỳ trong số NeuMF-Pretrained, NeuMF-Scratch, GMF, MLP, BPR-MF và Most Popular, để người xem tự đối chiếu với kết luận của Chương~\ref{chap:thucnghiem}; demo không khẳng định mô hình nào ``tốt nhất'' ngoài những gì kiểm định thống kê cho phép. Phiên bản demo hiện tại nạp trọng số của một lần chạy khám phá theo giao thức phụ Leave-One-Out với cấu hình mặc định (sản phẩm đích lấy từ tập xác thực để không làm lộ tập kiểm thử), không phải trọng số của đánh giá cuối; vì vậy số liệu hiển thị trong demo không trùng với các bảng của Chương~\ref{chap:thucnghiem}. Về yêu cầu phi chức năng, mỗi yêu cầu gợi ý chỉ là một lượt suy diễn thuận trên khoảng 10.000 ứng viên, nên mục tiêu thiết kế là độ trễ mức mili giây trên CPU; độ trễ thực đo (trung vị và phân vị 95) được báo cáo ở mục~\ref{subsec:latency}.
+Demo cho phép chọn và so sánh song song hai mô hình bất kỳ trong số NeuMF-Pretrained, NeuMF-Scratch, GMF, MLP, BPR-MF, Most Popular và bốn mô hình của phần mở rộng, để người xem tự đối chiếu với kết luận của Chương~\ref{chap:thucnghiem}; demo không khẳng định mô hình nào ``tốt nhất'' ngoài những gì kiểm định thống kê cho phép. Demo nạp đúng các trọng số của đánh giá cuối (seed 42): mô hình đã huấn luyện lại trên tập huấn luyện $\cup$ xác thực, lịch sử hiển thị là đúng dữ liệu mô hình đã học, và sản phẩm đích là các món khách mua lần đầu trong giai đoạn kiểm thử -- nên số liệu trên demo là hiển thị lại kết quả của Chương~\ref{chap:thucnghiem}, không phải một lần chấm mới. Màn hình Admin còn hiện 10 khách tương đồng nhất theo UserKNN để minh họa trực tiếp cách lọc cộng tác dựa trên láng giềng chọn ra gợi ý (mục~\ref{subsec:memory_model_based}). Chế độ khám phá cũ (lần chạy Leave-One-Out với cấu hình mặc định) vẫn được giữ để đối chiếu. Về yêu cầu phi chức năng, mỗi yêu cầu gợi ý chỉ là một lượt suy diễn thuận trên khoảng 10.000 ứng viên, nên mục tiêu thiết kế là độ trễ mức mili giây trên CPU; độ trễ thực đo (trung vị và phân vị 95) được báo cáo ở mục~\ref{subsec:latency}.
 
 \subsection{Minh họa hệ thống demo đã cài đặt}
 \label{subsec:demo_screenshots}
 
-Hệ thống đã được cài đặt và có bộ kiểm thử tự động riêng (kiểm tra khớp số liệu với lần chạy, đúng quy tắc tập ứng viên, đúng định dạng API). Hình~\ref{fig:demo_screenshot_hm} minh họa màn hình Admin kiểm thử mô hình.
+Hệ thống đã được cài đặt và có bộ kiểm thử tự động riêng (kiểm tra khớp số liệu với đánh giá cuối, đúng quy tắc tập ứng viên, đúng định dạng API). Hình~\ref{fig:demo_screenshot_hm} minh họa màn hình Admin kiểm thử mô hình và Hình~\ref{fig:demo_neighbors} là bảng khách tương đồng của cùng khách hàng.
 
-\hinhketqua{media/figures/demo/demo_final.png}{\textwidth}{Giao diện demo -- màn hình Admin kiểm thử mô hình: lịch sử mua, Top-10 của từng mô hình và hạng của sản phẩm kiểm thử}{fig:demo_screenshot_hm}{chụp màn hình demo (\texttt{python run.py demo}) và lưu thành \texttt{media/figures/demo/demo\_final.png}}
+\hinhketqua{media/figures/demo/demo_final.png}{\textwidth}{Giao diện demo -- màn hình Admin kiểm thử mô hình với mô hình của đánh giá cuối: lịch sử mua, Top-10 của NeuMF-Pretrained và BPR-MF, hạng của từng sản phẩm đích trong tập kiểm thử}{fig:demo_screenshot_hm}{chụp màn hình demo (\texttt{python run.py demo}) và lưu thành \texttt{media/figures/demo/demo\_final.png}}
+
+\hinhketqua{media/figures/demo/demo_neighbors.png}{\textwidth}{Giao diện demo -- 10 khách hàng tương đồng nhất theo UserKNN: độ tương đồng cosine, số sản phẩm mua chung và láng giềng đã mua sản phẩm đích nào của khách}{fig:demo_neighbors}{chụp màn hình demo và lưu thành \texttt{media/figures/demo/demo\_neighbors.png}}

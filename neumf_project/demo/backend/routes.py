@@ -10,7 +10,7 @@ from fastapi.responses import FileResponse, Response
 from pydantic import BaseModel
 
 from . import inference, metrics_io
-from .data_context import DEMO_ROOT, DataContext, resolve_latest_run_tag
+from .data_context import DEMO_ROOT, DataContext, resolve_mode, resolve_run_tag
 from .onboarding import Onboarding, load_onboarding_config
 
 IMAGES_DIR = os.environ.get("DEMO_IMAGES_DIR", str(DEMO_ROOT / "static" / "images"))
@@ -22,9 +22,10 @@ _onboarding: dict[str, Onboarding] = {}
 
 
 def ctx() -> DataContext:
-    tag = os.environ.get("DEMO_RUN_TAG") or resolve_latest_run_tag()
+    mode = resolve_mode()
+    tag = resolve_run_tag(mode)
     if tag not in _cache:
-        _cache[tag] = DataContext(tag)
+        _cache[tag] = DataContext(tag, mode=mode)
     return _cache[tag]
 
 
@@ -40,7 +41,7 @@ def _user(c: DataContext, customer_id: str) -> int:
         u = c.resolve_user(customer_id)
     except KeyError:
         raise HTTPException(404, f"Không tìm thấy customer_id '{customer_id}' trong dữ liệu sau k-core.")
-    if u not in c.target_item:
+    if u not in c.target_items:
         raise HTTPException(404, f"User '{customer_id}' không có item {c.evaluated_on} trong split.")
     return u
 
@@ -132,9 +133,22 @@ def recommend(customer_id: str, model: str = "NeuMF-Pretrained", k: int = 10):
     u = _user(c, customer_id)
     out = inference.recommend(c, model, u, k)
     out["target_item"] = c.item_info(c.target_item[u])
-    # Chỉ khi chấm test mới hiện thêm item validation (cũng bị loại khỏi candidates); chấm validation thì test giữ kín.
+    # Chế độ explore: chỉ khi chấm test mới hiện thêm item validation (cũng bị loại khỏi candidates); chấm validation
+    # thì test giữ kín. Chế độ final: validation đã gộp vào dữ liệu huấn luyện lại nên không có val_item riêng.
     out["val_item"] = c.item_info(c.val_item[u]) if c.evaluated_on == "test" and u in c.val_item else None
     return out
+
+
+@router.get("/users/{customer_id}/neighbors")
+def neighbors(customer_id: str, k: int = 10):
+    """Top-K khách tương đồng nhất theo UserKNN (cosine trên lịch sử mua), kèm sản phẩm mua chung."""
+    c = ctx()
+    u = _user(c, customer_id)
+    rows = c.neighbors(u, max(1, min(int(k), 50)))
+    if rows is None:
+        raise HTTPException(404, "UserKNN không khả dụng ở chế độ này (cần chế độ final và tham số mở rộng).")
+    return {"customer_id": customer_id, "k": len(rows), "params": getattr(c, "extension_params", {}).get("UserKNN"),
+            "neighbors": rows}
 
 
 class OnboardingRequest(BaseModel):
@@ -166,7 +180,8 @@ def onboarding_recommend(req: OnboardingRequest):
 
 @router.get("/dashboard")
 def dashboard():
-    return metrics_io.dashboard(ctx().run_tag)
+    c = ctx()
+    return metrics_io.final_dashboard(c) if c.mode == "final" else metrics_io.dashboard(c.run_tag)
 
 
 @router.get("/image/{article_id}")

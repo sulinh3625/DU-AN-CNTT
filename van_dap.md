@@ -10,6 +10,11 @@ Tài liệu trả lời 17 điểm góp ý của giảng viên trong buổi họ
 Số liệu lấy từ `neumf_project/outputs/final/` (lần chấm test 29/09/2026, sau khi huấn luyện lại trên train ∪ val) và
 `neumf_project/audit/`. Số hình, bảng, mục theo bản `Report DACNTT/main.pdf` hiện tại.
 
+> **Trước khi vấn đáp:** toàn bộ số liệu sẽ được chạy lại một lần trên commit cuối (`python run.py final`, đăng ký
+> trước ở PREREG mục 8, ngày 02/10/2026), kèm phần mở rộng late fusion + ItemKNN/UserKNN (PREREG mục 9). Chạy xong,
+> `python run.py check-report` liệt kê dòng nào trong file này còn ghi số cũ. Chạy trên đúng máy RTX 3050 đã dùng
+> ngày 29/09 thì số của 7 mô hình chính kỳ vọng **trùng hoàn toàn**.
+
 > **Thông điệp xuyên suốt:** dữ liệu đúng → đánh giá đúng → rồi mới so sánh mô hình. Đề tài đã làm theo đúng thứ tự
 > này: chia theo thời gian, không đưa nhãn test vào huấn luyện, khoá tập test, cùng ngân sách tinh chỉnh cho mọi mô
 > hình. Kết quả: mô hình lai NeuMF **không** tốt hơn có ý nghĩa thống kê so với MF đã tinh chỉnh — và đề tài báo cáo
@@ -33,27 +38,27 @@ Nguồn đối chiếu:
 | Vấn đề | Luận án GVHD | Đề tài dùng |
 |---|---|---|
 | Early fusion | Mục 1.1.2.2 (tr. 15) và 5.3 (tr. 103): nối đặc trưng/biểu diễn của các view rồi **một** mô hình dự đoán, p = h([v₁; …; v_m]). Chương 4: vector MF từ Utility Matrix + vector BERT/TF-IDF → nối → MLP | **NeuMF** (cả Scratch và Pretrained): nối vector nhánh MF (GMF, p ⊙ q) với vector nhánh DNN (MLP) → lớp dự đoán chung, học chung |
-| Late fusion | Mục 1.1.2.2 (tr. 16): mỗi view một mô hình dự đoán riêng, gộp đầu ra bằng F (trung bình, bỏ phiếu, mô hình học), p = F(h₁(v₁), …, h_m(v_m)). Chương 3: gộp điểm của content-based, UserKNN, ItemKNN bằng max/min/trung bình hoặc MLP | **Chưa làm.** Đúng định nghĩa, với cùng thành phần như NeuMF, phải là trộn điểm **GMF + MLP** huấn luyện riêng. Mô hình B (iALS + NeuMF-Scratch, chỉ có số validation) trộn MF với *chính mô hình lai NeuMF* — **không** được gọi là late fusion MF + DNN |
+| Late fusion | Mục 1.1.2.2 (tr. 16): mỗi view một mô hình dự đoán riêng, gộp đầu ra bằng F (trung bình, bỏ phiếu, mô hình học), p = F(h₁(v₁), …, h_m(v_m)). Chương 3: gộp điểm của content-based, UserKNN, ItemKNN bằng max/min/trung bình hoặc MLP | **Late Fusion GMF + MLP**: w·minmax(GMF) + (1−w)·minmax(MLP), hai mô hình huấn luyện riêng, w chọn trên val (w = 0,1); thêm biến thể BPR-MF + MLP (w = 0,3). Báo cáo mục 2.3.4 (công thức 2.15, Hình 2.2) và mục 4.5. Mô hình B (iALS + NeuMF-Scratch, chỉ có số validation) trộn MF với *chính mô hình lai NeuMF* — **không** được gọi là late fusion MF + DNN |
 | Không phải fusion | — | **MLP đứng riêng** = mô hình DNN thuần (đối chứng bỏ nhánh MF). Lớp `EarlyFusionModel` trong code trùng MLP, không gọi là early fusion |
 | "Mô hình lai" | Tr. 11, theo Burke (2002): kết hợp nhiều kỹ thuật gợi ý; 7 kiểu (weighted, switching, mixed, feature combination, feature augmentation, cascade, meta-level). Chương 3 gọi "hybrid" là **gộp điểm của nhiều mô hình riêng** (tức late fusion) | Chữ "lai" của đề tài dựa vào **tên đề tài** và **NeuMF của He et al. (2017)**: kết hợp MF với DNN trong một mô hình (đề cương sơ bộ: "mô hình lai Matrix Factorization và Deep Neural Network (NeuMF)"). **Không** viện dẫn Burke cho NeuMF; nghĩa "hybrid" của Burke và chương 3 tương ứng với phía late fusion |
 | Ma trận user–item | "Utility Matrix" (tr. 1, 36–37); MF phân rã R ≈ P·Qᵀ, r̂ = p_u · q_i (tr. 37) | "Ma trận tương tác (Utility Matrix)" |
-| Lọc cộng tác | Tr. 10, 55–58: memory-based (UserKNN — Algorithm 3, ItemKNN — Algorithm 4) và model-based (MF) | Đề tài là model-based; câu hỏi "Top-K láng giềng" trả lời theo Algorithm 3 (mục 3) |
+| Lọc cộng tác | Tr. 10, 55–58: memory-based (UserKNN — Algorithm 3, ItemKNN — Algorithm 4) và model-based (MF) | Mô hình chính là model-based; memory-based có **UserKNN, ItemKNN** (bản thưa top-k, báo cáo mục 2.1.2, công thức 2.2–2.3) làm baseline mở rộng; demo hiện "10 khách tương đồng nhất" theo UserKNN (Hình 3.4) — mục 3 dưới đây |
 | Độ đo | Mục 2.1.2 (tr. 34–36): MAE/RMSE/NMAE cho rating; Precision/Recall/F1; top-N: Hit rate (leave-one-out, top 10) và ARHR. **Không có NDCG** | Dữ liệu là phản hồi ẩn, không có rating → không dùng MAE/RMSE. Dùng HR@K (= hit rate), Precision/Recall@K (đúng định nghĩa tp/fp/fn), NDCG@K (cùng tinh thần ARHR — mục 6) |
 | Chia dữ liệu | Ngẫu nhiên 80/20, lấy 20% train làm validation (tr. 63, 86); hit rate theo leave-one-out (tr. 36) | Mốc thời gian chung (chặt hơn, không rò rỉ tương lai); leave-one-out giữ làm giao thức phụ |
-| Transformer, BERT (gợi ý ở buổi họp) | Chương 5: Transformer encoder hợp nhất nhiều view theo kiểu early fusion (không phải mô hình chuỗi); BERT trích vector từ review/mô tả sản phẩm | Ngoài phạm vi CF thuần. H&M có mô tả sản phẩm (`articles.csv`) nên đây là hướng mở rộng tự nhiên, đã ghi ở báo cáo mục 5.3 (mục 10 dưới đây) |
+| Transformer, BERT (gợi ý ở buổi họp) | Chương 5: Transformer encoder hợp nhất nhiều view theo kiểu early fusion (không phải mô hình chuỗi); BERT trích vector từ review/mô tả sản phẩm | Ngoài phạm vi CF thuần. H&M có mô tả sản phẩm (`articles.csv`) nên đây là hướng mở rộng tự nhiên, đã ghi ở báo cáo mục 2.4.2 và 5.3 (mục 10 dưới đây) |
 
 **Lệch so với đề cương — phải nói được nếu bị hỏi:**
 
 | Đề cương hứa | Thực tế | Cách trả lời |
 |---|---|---|
 | Dữ liệu DataCo (ghi là "nguồn tham khảo đề xuất") | H&M | Dữ liệu giao dịch thật, rất thưa, có thời gian; lý do ở báo cáo mục 1.1.1 |
-| Chia leave-one-out | Mốc thời gian chung; leave-one-out chỉ làm giao thức phụ | Leave-one-out rò rỉ tương lai (mục 1.7, Meng et al. 2020) |
-| Baseline Item-based CF, ALS | ItemKNN không chạy (ma trận dày 10.345 × 10.345 vượt bộ nhớ); iALS chỉ có số validation (bị loại trước khi chấm test); thay bằng BPR-MF tune cùng ngân sách | **Thừa nhận** là thiếu so với đề cương; nếu được yêu cầu thì bổ sung và ghi là lệch kế hoạch |
+| Chia leave-one-out | Mốc thời gian chung; leave-one-out chỉ làm giao thức phụ | Leave-one-out rò rỉ tương lai (báo cáo mục 3.2.5, Meng et al. 2020) |
+| Baseline Item-based CF, ALS | ItemKNN bản dày cũ không chạy (ma trận 10.345 × 10.345 vượt bộ nhớ) → đã viết lại bản thưa top-k, thêm UserKNN; tune trên val (ItemKNN 0,01217, UserKNN 0,01340 — **cao hơn** NeuMF-Scratch 0,01107) và chấm test trong lần chạy lại (PREREG mục 9, báo cáo mục 4.5). iALS chỉ có số validation (bị loại trước khi chấm test) | **Thừa nhận** bổ sung sau khi đã xem test: đăng ký trước khi chấm, họ kiểm định riêng, báo cáo là kết quả mở rộng |
 | Ablation: bỏ GMF, bỏ MLP, số chiều embedding, số lớp MLP, tỉ lệ negative | Có: bỏ từng nhánh (GMF, MLP), số chiều embedding và tỉ lệ negative (qua tinh chỉnh). **Chưa có:** số lớp MLP | Đã ghi hạn chế ở báo cáo mục 4.4.3 và 5.2 |
-| K = 5/10/20 | K = 5, 10 | NDCG@10 là chỉ số chính đã đăng ký trước; K = 20 chưa báo cáo |
+| K = 5/10/20 | K = 5, 10; K = 20 bổ sung (Bảng 4.3) | NDCG@10 là chỉ số chính đã đăng ký trước; K = 20 tính lại từ hạng đã lưu, chỉ mô tả |
 | Cold-start: đo nhóm ít tương tác; thử thêm đặc trưng Category/Department | Có đo cold/warm và head/tail; **chưa** thử đặc trưng nội dung | Ngoài phạm vi CF thuần; hướng phát triển ở mục 5.3 |
 | Biến thể phản hồi có trọng số (theo doanh thu) | Chưa làm (code có chế độ `weighted_confidence` nhưng chưa báo cáo) | Hướng mở rộng |
-| Demo FastAPI + Streamlit + Docker | FastAPI + giao diện HTML; Docker chưa kiểm tra đầy đủ | Chức năng tương đương; Docker đã ghi ở mục 5.4 |
+| Demo FastAPI + Streamlit + Docker | FastAPI + giao diện HTML, dùng đúng mô hình của đánh giá cuối; Docker chưa kiểm tra đầy đủ | Chức năng tương đương; Docker đã ghi ở mục 5.3, 5.4 |
 | Báo cáo 6 chương | 5 chương | Chương "cài đặt và thực nghiệm" và chương "kết quả và đánh giá" được gộp thành Chương 4 |
 | Kỳ vọng NeuMF tốt hơn các thành phần | Kết quả âm (0/8 so sánh có ý nghĩa) | Đề cương sơ bộ (mục 6) đã dự liệu: "không tự ý chỉnh sửa số liệu… phân tích nguyên nhân khách quan cũng là một đóng góp học thuật" |
 
@@ -70,7 +75,8 @@ Nguồn đối chiếu:
 | Train / Val / Test | 201.801 / 7.057 / 9.229 cặp; test có 2.996 user, trung bình 3,08 món đúng mỗi user |
 | Dữ liệu huấn luyện lại trước khi chấm test | train ∪ val: 209.212 cặp, 7.515 user, 10.216 item (= tập ứng viên khi chấm test) |
 | Mô hình | Random, Most Popular, BPR-MF (baseline); GMF (chỉ MF), MLP (chỉ DNN); NeuMF-Scratch, NeuMF-Pretrained (lai MF + DNN, early fusion) |
-| Tinh chỉnh | 6 cấu hình mỗi mô hình, chỉ trên validation; tổng 57 cấu hình, 1,9 giờ GPU |
+| Tinh chỉnh | 6 cấu hình mỗi mô hình, chỉ trên validation; 57 cấu hình chính (1,9 giờ GPU) + 34 cấu hình mở rộng (ItemKNN, UserKNN 6 mỗi mô hình; late fusion quét 11 giá trị w mỗi biến thể) |
+| Mở rộng trên validation (NDCG@10) | UserKNN 0,01340 · ItemKNN 0,01217 · NeuMF-Scratch 0,01107 · Late Fusion GMF + MLP 0,01005 · BPR-MF + MLP 0,00972 |
 | NDCG@10 trên test (TB 3 seed) | BPR-MF 0,01007 · NeuMF-Pretrained 0,00957 · MLP 0,00931 · Most Popular 0,00917 · NeuMF-Scratch 0,00910 · GMF 0,00907 · Random 0,00065 |
 | HR@10 trên test | BPR-MF 4,65% · NeuMF-Pretrained 4,35% · Most Popular 4,34% · Random 0,31% |
 | Kiểm định | 0/8 so sánh đạt "tốt hơn"; gần ngưỡng nhất: NeuMF-Pretrained vs GMF, p = 0,043 trước hiệu chỉnh, p Holm = 0,342 |
@@ -91,11 +97,11 @@ hơn ngẫu nhiên khoảng 15 lần, không phải hàng trăm lần.
 Nếu số "cao" thầy/cô thấy trước đây là:
 
 - **Sampled-99** — xếp 1 món đúng giữa 100 ứng viên (giao thức của bài NCF gốc): NDCG@10 ≈ 0,15, HR@10 ≈ 0,26
-  (Bảng 4.6). Đề tài chỉ dùng để đối chiếu, không dùng để kết luận.
+  (Bảng 4.7). Đề tài chỉ dùng để đối chiếu, không dùng để kết luận.
 - **Lát cắt 100k dòng cũ** — chỉ 3 ngày dữ liệu, 1.743 user × 1.080 item, NDCG@10 khoảng 0,04. Phương án này đã bỏ
   (`neumf_project/pham_vi_du_an.md` mục 4.4).
 
-**Bằng chứng:** Bảng 4.2, 4.6; `outputs/final/summary.csv`, `outputs/final/sampled99.csv`.
+**Bằng chứng:** Bảng 4.2, 4.7; `outputs/final/summary.csv`, `outputs/final/sampled99.csv`.
 
 ### 1.2 Train/Test được chia thế nào?
 
@@ -115,10 +121,10 @@ không chấm điểm được thực thể chưa từng thấy). Một user có
 1. `assert_disjoint_splits`: train ∩ val = train ∩ test = val ∩ test = ∅ ở cấp cặp (user, item), chạy mỗi lần chia.
 2. Test tự động trên dữ liệu thật (`tests/test_no_leakage_real_data.py`): ngày lớn nhất của train nhỏ hơn mốc val,
    ngày lớn nhất của val nhỏ hơn mốc test; user/item của val thuộc train, của test thuộc train ∪ val.
-3. **Khoá tập test:** chỉ `scripts/11_final.py` và `scripts/14_secondary.py` được chấm test. Script từ chối chạy nếu
-   `audit/PREREG.md` chưa commit, thiếu `--reason` hoặc code có thay đổi chưa commit; mỗi lần chấm ghi một dòng vào
-   `audit/test_access_log.csv`. Mọi lựa chọn siêu tham số chỉ dựa trên validation (`audit/tuning_log.csv`: 57 dòng,
-   toàn bộ là số validation).
+3. **Khoá tập test:** chỉ `scripts/11_final.py`, `scripts/14_secondary.py` và `scripts/17_extension.py` được chấm
+   test. Script từ chối chạy nếu `audit/PREREG.md` chưa commit, thiếu `--reason` hoặc code có thay đổi chưa commit
+   (17 còn đòi PREREG có mục 9); mỗi lần chấm ghi một dòng vào `audit/test_access_log.csv`. Mọi lựa chọn siêu tham số
+   chỉ dựa trên validation (`audit/tuning_log.csv`: 91 dòng = 57 chính + 34 mở rộng, toàn bộ là số validation).
 
 ### 1.4 Preprocessing có dùng thông tin của toàn dataset không?
 
@@ -133,7 +139,7 @@ Mọi thống kê khác chỉ tính trên dữ liệu huấn luyện của bư�
 **Bằng chứng:** `src/data_pipeline/preprocessing.py` (`build_interactions`: gộp → k-core → re-index, trước khi chia);
 các test `tests/test_pure_cf.py::test_popularity_statistics_in_03_use_train_df`,
 `tests/test_pure_cf.py::test_confidence_weight_scale_fitted_on_train_only`,
-`tests/test_evaluation.py::test_head_fraction_uses_train_only_counts`; báo cáo mục 4.5, ý (v).
+`tests/test_evaluation.py::test_head_fraction_uses_train_only_counts`; báo cáo mục 4.6, ý (v).
 
 **Phải thừa nhận:** muốn loại hẳn rò rỉ này thì phải chạy k-core chỉ trên dữ liệu trước mốc test. Việc đó làm thay đổi
 tập dữ liệu nên chưa làm.
@@ -153,10 +159,12 @@ khoảng 17–19%.
 
 **Phải thừa nhận:** bước train lại được thêm **sau** lần chấm test đầu tiên (27/09). Việc này đã được ghi là lệch kế
 hoạch (PREREG mục 8; báo cáo mục 3.6 và phần tóm tắt). Lần chấm đầu cho cùng kết luận: BPR-MF cao nhất, 0/8 so sánh có
-ý nghĩa.
+ý nghĩa. Sau đó còn một lần chạy lại toàn bộ trên commit cuối (đăng ký trước ngày 02/10, cùng cấu hình — để mọi số
+truy vết về một commit; kỳ vọng ra đúng cùng số vì huấn luyện ở chế độ GPU tất định).
 
 **Bằng chứng:** `scripts/11_final.py`; `outputs/final/seed*/results.json` (trường `best_epoch`, `refit_train_time_s`);
-`audit/test_access_log.csv` (7 dòng: 3 seed ngày 27/09, 3 seed ngày 29/09, 1 lần phân tích phụ).
+`audit/test_access_log.csv` (trước lần chạy lại có 7 dòng: 3 seed ngày 27/09, 3 seed ngày 29/09, 1 lần phân tích phụ;
+lần chạy lại thêm 5 dòng: 3 seed, phần mở rộng, phân tích phụ).
 
 ### 1.6 Positive/negative samples được tạo thế nào?
 
@@ -207,11 +215,12 @@ chung (Meng et al., 2020).
 Kết quả từng user được lưu ở `outputs/final/seed*/results_per_user.csv`, nhờ đó làm được kiểm định theo cặp (cùng một
 user, hai mô hình).
 
-**Đã có trên bộ test này:** Baseline (Random, Most Popular), MF (BPR-MF, GMF), DL (MLP), Hybrid (NeuMF-Scratch,
-NeuMF-Pretrained).
+**Đã có trên bộ test này:** Baseline (Random, Most Popular), MF (BPR-MF, GMF), DL (MLP), Hybrid early fusion
+(NeuMF-Scratch, NeuMF-Pretrained). **Mở rộng** (cùng bộ test, chấm trong lần chạy lại): late fusion GMF + MLP và BPR-MF +
+MLP (dùng đúng GMF, MLP, BPR-MF đã huấn luyện lại của từng seed), ItemKNN, UserKNN — Bảng 4.9–4.10, mục 4.5.
 
-**Phải thừa nhận:** late fusion thuần MF + DNN (GMF + MLP) chưa làm; phép trộn điểm iALS + NeuMF mới chỉ có số trên
-validation (mục 12–13).
+**Phải thừa nhận:** bốn mô hình mở rộng được thêm **sau** khi đã xem test (đăng ký trước khi chấm, họ 7 so sánh với
+Holm riêng, không thay kết luận chính); phép trộn điểm iALS + NeuMF chỉ có số trên validation (mục 12–13).
 
 ---
 
@@ -227,15 +236,22 @@ validation (mục 12–13).
   láng giềng**. Độ tương đồng giữa các user nằm ngầm trong vector ẩn: hai user mua nhiều món giống nhau sẽ được huấn
   luyện để chấm cao cùng các món đó, nên vector của họ gần nhau và danh sách gợi ý giống nhau.
 - Top-K láng giềng thuộc về **CF dựa trên bộ nhớ** (UserKNN/ItemKNN) — đúng như Algorithm 3 (UserKNN) và Algorithm 4
-  (ItemKNN) trong luận án của cô (tr. 58); báo cáo trình bày ở mục 2.1.2:
-  - Độ tương đồng tính từ các món mua chung, ví dụ cosine trên vector mua nhị phân:
-    sim(a, b) = (số món cả a và b đều mua) / √(số món a mua × số món b mua).
-  - K láng giềng chọn theo validation.
-  - Điểm của món i cho A = tổng độ tương đồng của các láng giềng đã mua i.
+  (ItemKNN) trong luận án của cô (tr. 58). Đề tài **đã cài đặt cả hai** (`src/baselines/neighborhood.py`, báo cáo mục
+  2.1.2, công thức 2.2–2.3):
+  - Độ tương đồng cosine trên vector mua nhị phân, có hệ số co: sim(a, b) = |món chung| / (√(|món của a| · |món của b|)
+    + shrink).
+  - Mỗi user giữ k láng giềng gần nhất (ma trận thưa); k và shrink chọn trên validation: **UserKNN k = 200, shrink = 0**.
+  - Điểm của món i cho A = tổng độ tương đồng của các láng giềng đã mua i; xếp hạng → Top-K sản phẩm.
+- **Minh hoạ trực tiếp "10 user tương đồng nhất của A"**: demo, màn hình Admin, thẻ cuối (Hình 3.4 trong báo cáo;
+  API `GET /api/users/{id}/neighbors`) — mỗi láng giềng có độ tương đồng, số món mua chung, ví dụ món chung và láng
+  giềng đó đã mua sản phẩm đích (test) nào của A, tức là vì sao UserKNN gợi ý món đó.
+- Trên validation, UserKNN đạt NDCG@10 = 0,01340 — **cao nhất** trong mọi mô hình đã tinh chỉnh (NeuMF-Scratch 0,01107);
+  số test có trong lần chạy lại (báo cáo mục 4.5).
 
-**Phải thừa nhận:** đề tài không có baseline UserKNN. ItemKNN đã được dự kiến nhưng không chạy, vì ma trận tương đồng
-10.345 × 10.345 vượt ngưỡng bộ nhớ của cài đặt. Nếu được yêu cầu minh hoạ "10 user tương đồng nhất", có thể tính cosine
-giữa các vector user của BPR-MF/GMF đã lưu rồi liệt kê món mua chung — tính năng này chưa có trong demo.
+**Phải thừa nhận:** UserKNN/ItemKNN được thêm sau khi đã xem test của 7 mô hình chính (bản ItemKNN dày cũ không chạy
+được vì ma trận 10.345 × 10.345), nên kết quả của chúng là kết quả mở rộng với họ kiểm định riêng. Nếu chúng tốt hơn
+NeuMF trên test, đó là thêm một bằng chứng cho kết luận "baseline đơn giản được tune tốt không thua mô hình học sâu"
+(Ferrari Dacrema et al., 2019).
 
 ---
 
@@ -268,7 +284,7 @@ dùng lịch sử mới nhất.
 **Trả lời:**
 
 - **Phạm vi:** mô hình chính chỉ áp dụng cho user/item đã có lịch sử (sau k-core 10, mỗi user có ít nhất 10 món khác
-  nhau trong toàn bộ dữ liệu). Cold-start tuyệt đối nằm ngoài phạm vi, đã ghi rõ ở mục 1.2.1, 4.5 và 5.2 của báo cáo.
+  nhau trong toàn bộ dữ liệu). Cold-start tuyệt đối nằm ngoài phạm vi, đã ghi rõ ở mục 1.2.1, 4.6 và 5.2 của báo cáo.
   Đề tài **không** khẳng định đã giải quyết cold-start.
 - **Demo:** khách mới nhận gợi ý theo luật — lọc theo lựa chọn của khách (khu vực mua sắm, nhóm tuổi…) rồi xếp theo độ
   phổ biến — và giao diện ghi rõ "không phải mô hình NeuMF". Đúng hướng thầy/cô gợi ý: dùng sản phẩm phổ biến trước,
@@ -277,7 +293,7 @@ dùng lịch sử mới nhất.
   nhất (0,01053), cao hơn mọi mô hình cá nhân hoá. Đây là bằng chứng cho chiến lược "người ít lịch sử thì dùng độ phổ
   biến" (phân tích mô tả, chưa kiểm định).
 
-**Bằng chứng:** `neumf_project/demo/backend/onboarding.py`, `onboarding_config.yaml`; Bảng 4.4.
+**Bằng chứng:** `neumf_project/demo/backend/onboarding.py`, `onboarding_config.yaml`; Bảng 4.5.
 
 ---
 
@@ -354,18 +370,18 @@ Luận án của cô (mục 2.1.2, tr. 34–36) dùng MAE/RMSE cho dự đoán r
 - Các bài nền tảng (NCF — He et al., 2017; Rendle et al., 2020) ghi HR@10, NDCG@10 dạng **số thập phân** trong [0, 1].
   Một số bài khác ghi dạng % nhưng **ghi rõ đơn vị ở tiêu đề cột**.
 - Báo cáo dùng số thập phân 5 chữ số, trung bình ± độ lệch chuẩn qua seed, in đậm giá trị cao nhất mỗi cột, kèm một bảng
-  kiểm định riêng (Bảng 4.2, 4.3).
+  kiểm định riêng (Bảng 4.2, 4.4; phần mở rộng Bảng 4.9, 4.10).
 - NDCG không phải tỉ lệ phần trăm. Nếu muốn nhân 100 thì phải ghi "NDCG@10 (×100)". HR, Recall, Precision là tỉ lệ nên
   có thể ghi % (HR@10 = 4,65%).
 - **Khoảng giá trị phụ thuộc giao thức:**
   - Bài NCF gốc dùng leave-one-out + lấy mẫu âm nên HR@10 ≈ 0,7 trên MovieLens.
   - Với Full Ranking trên dữ liệu thương mại điện tử thưa, NDCG thường chỉ vài phần trăm. Ví dụ LightGCN (2020) báo
     NDCG@20 ≈ 0,03 trên Amazon-Book và ≈ 0,15 trên Gowalla — kiểm tra lại số trong bài gốc trước khi trích.
-  - Chính đề tài cho thấy điều này: cùng mô hình, Sampled-99 cho NDCG@10 ≈ 0,15, Full Ranking chỉ ≈ 0,01 (Bảng 4.6).
+  - Chính đề tài cho thấy điều này: cùng mô hình, Sampled-99 cho NDCG@10 ≈ 0,15, Full Ranking chỉ ≈ 0,01 (Bảng 4.7).
 - Vì vậy không đặt số của đề tài cạnh số của các bài dùng giao thức khác, cũng không so với điểm Kaggle H&M (MAP@12,
   cửa sổ 7 ngày, có dùng metadata).
 
-**Bằng chứng:** Bảng 4.2, 4.3, 4.6; Krichene & Rendle (2020).
+**Bằng chứng:** Bảng 4.2, 4.4, 4.7; Krichene & Rendle (2020).
 
 ---
 
@@ -413,7 +429,7 @@ Luận án của cô (mục 2.1.2, tr. 34–36) dùng MAE/RMSE cho dự đoán r
 Dacrema et al. (2019). Giá trị của đề tài là một quy trình đo đáng tin cậy và một câu trả lời có bằng chứng cho câu hỏi
 "lai có giúp trên dữ liệu thời trang thưa không".
 
-**Bằng chứng:** `src/models/neumf.py` (`NeuMF.forward`, `NeuMF.load_pretrained`); Hình 2.1; Bảng 4.2–4.3; mục 4.4.3.
+**Bằng chứng:** `src/models/neumf.py` (`NeuMF.forward`, `NeuMF.load_pretrained`); Hình 2.1; Bảng 4.2, 4.4; mục 4.4.3.
 
 ---
 
@@ -467,44 +483,49 @@ Thầy/cô đã ghi rõ phần này **không bắt buộc**; mô hình cuối ph
 ## 12–13. Early Fusion và Late Fusion
 
 **Thuật ngữ đã chốt** theo luận án của cô (mục 1.1.2.2, 5.3) và các nguồn gốc (K. Liu et al. 2018; Atrey et al. 2010).
-Báo cáo mục 2.3.4 đã viết lại theo đúng định nghĩa này:
+Báo cáo mục 2.3.4 đã viết lại theo đúng định nghĩa này, kèm **Hình 2.2** so sánh hai cách hợp nhất:
 
 | Kiểu hợp nhất | Định nghĩa | Trong đề tài | Có số test? |
 |---|---|---|---|
 | **Early fusion** | Nối vector của các view → **một** mô hình dự đoán: p = h([v₁; …; v_m]) | **NeuMF** (Scratch, Pretrained): nối vector nhánh MF (GMF, p ⊙ q) với vector cuối nhánh DNN (MLP) → lớp dự đoán chung, học chung từ đầu đến cuối | Có (3 seed) |
-| **Late fusion** | Mỗi view một mô hình dự đoán riêng → gộp đầu ra: p = F(h₁(v₁), …, h_m(v_m)); với tổng có trọng số là kiểu lai *weighted* (Burke, 2002) | Với cùng thành phần như NeuMF: w·điểm(GMF) + (1−w)·điểm(MLP), hai mô hình huấn luyện riêng | **Chưa làm** |
-| Trộn điểm MF + mô hình lai | Không phải late fusion MF + DNN (một thành phần đã là mô hình lai) | **Mô hình B**: w·minmax(điểm iALS) + (1−w)·minmax(điểm NeuMF-Scratch), chuẩn hoá trên ứng viên của từng user | Chỉ validation |
+| **Late fusion** | Mỗi view một mô hình dự đoán riêng → gộp đầu ra: p = F(h₁(v₁), …, h_m(v_m)); với tổng có trọng số là kiểu lai *weighted* (Burke, 2002) | **Late Fusion GMF + MLP**: w·minmax(điểm GMF) + (1−w)·minmax(điểm MLP), min–max trên tập ứng viên của từng user, hai mô hình huấn luyện riêng, w = 0,1 chọn trên val (công thức 2.15). Biến thể **BPR-MF + MLP** (w = 0,3) | Có — phần mở rộng, chấm trong lần chạy lại (mục 4.5) |
+| Trộn điểm MF + mô hình lai | Không phải late fusion MF + DNN (một thành phần đã là mô hình lai) | **Mô hình B**: w·minmax(điểm iALS) + (1−w)·minmax(điểm NeuMF-Scratch) | Chỉ validation |
 | Không phải fusion | — | **MLP đứng riêng** (nối embedding user–item ở đầu vào) = DNN thuần. Lớp `EarlyFusionModel` trong code trùng hệt MLP (có test chứng minh) | Có (dưới tên MLP) |
 
 **Nếu bị hỏi sâu:** lớp đầu ra của NeuMF tuyến tính, nên điểm của NeuMF bằng tổng đóng góp của hai nhánh. Với
 NeuMF-Pretrained, lúc khởi tạo h = [α·h_GMF ; (1−α)·h_MLP], nên logit ban đầu đúng bằng α·logit(GMF) + (1−α)·logit(MLP)
 — giống trộn điểm. Điểm khác với late fusion: sau đó toàn bộ mạng được tinh chỉnh **chung**, hai nhánh không còn là hai
-mô hình độc lập. Báo cáo đã viết điều này ở mục 3.3.5.
+mô hình độc lập. Late fusion thì giữ nguyên hai mô hình, chỉ trộn điểm đã chuẩn hoá. Báo cáo viết ở mục 3.3.5 và 2.3.4.
+
+**Kết quả trên validation** (phần dưới Bảng 4.1): Late Fusion GMF + MLP với w = 0,1 đạt NDCG@10 = 0,01005, cao hơn cả
+hai thành phần đứng riêng (w = 1 chỉ còn GMF: 0,00843; w = 0 chỉ còn MLP: 0,00922) nhưng **thấp hơn NeuMF-Scratch**
+(0,01107). Late Fusion BPR-MF + MLP (w = 0,3) đạt 0,00972 so với 0,00911 của BPR-MF đứng riêng. (MLP thành phần là bản
+huấn luyện lại ở chế độ GPU tất định nên val 0,00922 khác 0,00837 lúc tuning — PREREG mục 8.)
+
+**Kết quả trên test:** báo cáo mục 4.5, Bảng 4.9 (11 mô hình) và Bảng 4.10 (họ 7 so sánh, Holm riêng). Câu kết luận
+trong báo cáo được sinh tự động từ `outputs/final/extension/significance.csv` sau lần chạy lại — khi vấn đáp, đọc đúng
+dòng "Late Fusion GMF + MLP vs NeuMF-Scratch" (late vs early fusion) và "vs GMF", "vs MLP" (sau lai vs trước lai).
 
 **Kết quả của mô hình B trên validation** (trộn MF với mô hình lai, không phải late fusion MF + DNN): với w = 0,6, B đạt
-NDCG@10 = 0,01260 — cao hơn NeuMF-Scratch đứng riêng (0,01107, ứng với w = 0) 13,8% và iALS đứng riêng (0,01141, ứng với
-w = 1) 10,5%. Đây là cấu hình tốt nhất trong toàn bộ quá trình tinh chỉnh, gợi ý rằng NeuMF mang tín hiệu **bổ sung** cho
-MF khi trộn ở mức điểm.
+NDCG@10 = 0,01260 — cao hơn NeuMF-Scratch đứng riêng (0,01107) 13,8% và iALS đứng riêng (0,01141) 10,5%, gợi ý NeuMF mang
+tín hiệu **bổ sung** cho MF khi trộn ở mức điểm.
 
 **Phải thừa nhận:**
 
-- **Late fusion thuần MF + DNN (GMF + MLP) chưa làm**, nên đề tài chưa trả lời được "early hay late fusion phù hợp hơn".
-- Mô hình B đã bị loại khỏi phạm vi trước khi chấm test (lý do: quá nhiều mô hình), nên chưa có số test. Code trộn điểm hiện
-  chỉ còn trong lịch sử git (commit `7219ec6`, `scripts/10_tune.py`).
-- Đây là hướng phát triển số 1 ở báo cáo mục 5.3.
+- Late fusion (và ItemKNN, UserKNN) được thêm **sau** khi đã xem test của 7 mô hình chính. Đã đăng ký trước khi chấm
+  (PREREG mục 9), kiểm định trong họ 7 so sánh riêng có Holm riêng, báo cáo là kết quả mở rộng, không thay kết luận chính.
+- Trọng số w cố định, chọn trên validation; chưa thử trộn bằng mô hình học (như cách kết hợp bằng MLP trong luận án của
+  cô) — đã ghi ở hướng phát triển (mục 5.3).
+- Mô hình B bị loại khỏi phạm vi trước khi chấm test (lý do: quá nhiều mô hình), nên chỉ có số validation.
 
-**Cách bổ sung đúng (nếu thầy/cô yêu cầu):**
+**Đã làm đúng cách bổ sung đã nêu ở buổi trước:** (1) dùng đúng hai thành phần của NeuMF là GMF và MLP, huấn luyện
+riêng; thêm biến thể BPR-MF + MLP; (2) w chỉ chọn trên validation (quét 11 giá trị 0; 0,1; …; 1); (3) ghi vào PREREG
+mục 9 **trước** khi chấm test, kèm kiểm tra tuning chạy lại ra đúng cùng số; (4) chấm test bằng `17_extension.py`,
+dùng đúng GMF, MLP, BPR-MF đã huấn luyện lại của từng seed trong `outputs/final/seed*/` — không huấn luyện thêm.
 
-1. Late fusion **GMF + MLP**: dùng đúng hai thành phần của NeuMF, huấn luyện riêng, rồi trộn điểm theo trọng số w. Có thể
-   thêm biến thể BPR-MF + MLP. Đây là phép so sánh sạch: *trước khi lai* (GMF, MLP) — *late fusion* — *early fusion*
-   (NeuMF).
-2. Chọn w chỉ trên validation.
-3. Ghi vào mục lệch kế hoạch của PREREG.
-4. Chấm test một lần qua `11_final.py`, ghi rõ là làm sau khi đã xem test. GMF và MLP đã huấn luyện cho từng seed có sẵn
-   trong `outputs/final/seed*/`, nên phần chấm test không cần huấn luyện lại.
-
-**Bằng chứng:** `audit/tuning_log.csv` (11 dòng `fusion_b`, w = 0 … 1), `audit/best_configs.json`, `audit/PREREG.md`
-mục 8; `tests/test_tuning.py::test_early_fusion_is_architecturally_identical_to_mlp`.
+**Bằng chứng:** `src/models/late_fusion.py`, `scripts/10_tune.py --model extension`, `scripts/17_extension.py`,
+`audit/tuning_log.csv` (11 dòng mỗi biến thể late fusion, 11 dòng `fusion_b`), `audit/best_configs.json`,
+`audit/PREREG.md` mục 8–9; `tests/test_extension.py`, `tests/test_tuning.py::test_early_fusion_is_architecturally_identical_to_mlp`.
 
 ---
 
@@ -514,21 +535,23 @@ mục 8; `tests/test_tuning.py::test_early_fusion_is_architecturally_identical_t
 |---|---|---|
 | Baseline đơn giản | Random, Most Popular | Cận dưới; Most Popular rất mạnh với dữ liệu thời trang |
 | Matrix Factorization | BPR-MF (tune cùng ngân sách), GMF | MF thuần |
+| Láng giềng (memory-based) | ItemKNN, UserKNN (bản thưa top-k) | Baseline của đề cương — phần mở rộng |
 | Deep Learning | MLP | DNN thuần |
 | MF + DL, early fusion | NeuMF-Scratch, NeuMF-Pretrained | Mô hình lai của đề tài |
-| MF + DL, late fusion | Trộn điểm GMF + MLP | **Chưa làm** |
+| MF + DL, late fusion | Late Fusion GMF + MLP; BPR-MF + MLP | Phần mở rộng (họ so sánh riêng) |
 | MF + mô hình lai (trộn điểm) | B: iALS + NeuMF-Scratch | Chỉ có số validation |
 
-**Trả lời câu hỏi chính:** Không. Trên test, NeuMF không vượt BPR-MF (NeuMF-Pretrained −5,0%, NeuMF-Scratch −9,6%),
-không vượt Most Popular, và không vượt các nhánh GMF, MLP của chính nó. Có 0/8 so sánh đạt tiêu chí "tốt hơn" — cần
-**đồng thời** p Holm < 0,05, khoảng tin cậy 95% không chứa 0 và chênh lệch ≥ 5%. Tiêu chí này được đăng ký trước khi
-xem test.
+**Trả lời câu hỏi chính:** Ở mức biểu diễn (NeuMF): không. Trên test, NeuMF không vượt BPR-MF (NeuMF-Pretrained −5,0%,
+NeuMF-Scratch −9,6%), không vượt Most Popular, và không vượt các nhánh GMF, MLP của chính nó. Có 0/8 so sánh đạt tiêu chí
+"tốt hơn" — cần **đồng thời** p Holm < 0,05, khoảng tin cậy 95% không chứa 0 và chênh lệch ≥ 5%. Tiêu chí này được đăng
+ký trước khi xem test. Ở mức điểm (late fusion): xem kết quả mở rộng, mục 12–13 ở trên.
 
 **Vì sao vẫn có giá trị:**
 
-- Đề tài đo đúng câu hỏi bằng một quy trình chống thiên lệch.
-- Kết quả âm nhất quán với các nghiên cứu đối chứng uy tín.
-- Đề tài chỉ ra một hướng có tín hiệu tích cực: trộn điểm MF với NeuMF (mô hình B) trên validation.
+- Đề tài đo đúng câu hỏi bằng một quy trình chống thiên lệch, và so sánh trực tiếp hai cách hợp nhất của **cùng** hai
+  thành phần.
+- Kết quả âm nhất quán với các nghiên cứu đối chứng uy tín (Rendle et al., 2020; Ferrari Dacrema et al., 2019).
+- Đề tài chỉ ra các hướng có tín hiệu tích cực trên validation (trộn điểm MF với NeuMF, baseline láng giềng).
 
 ---
 
@@ -537,27 +560,29 @@ xem test.
 **Đã có trong báo cáo:**
 
 - **Hình 2.1** — kiến trúc chi tiết NeuMF: hai nhánh GMF/MLP, embedding riêng, lớp hợp nhất.
+- **Hình 2.2** — so sánh hợp nhất ở mức biểu diễn (NeuMF, một mô hình học chung) với hợp nhất ở mức điểm (Late Fusion
+  GMF + MLP, hai mô hình huấn luyện riêng, min–max rồi trộn với trọng số w).
 - **Hình 3.1** — luồng toàn hệ thống: dữ liệu H&M → tiền xử lý (gộp, k-core, re-index, ma trận nhị phân) → chia theo
-  thời gian và negative sampling → GMF/MLP → NeuMF → huấn luyện và tinh chỉnh (chỉ validation) → huấn luyện lại trên
-  train ∪ val → Full Ranking, kiểm định, phân tích phụ; nhánh baseline chạy song song.
-- **Hình 3.2** — kiến trúc ba tầng của demo.
+  thời gian và negative sampling → GMF/MLP → NeuMF (và late fusion ở phần mở rộng) → huấn luyện và tinh chỉnh (chỉ
+  validation) → huấn luyện lại trên train ∪ val → Full Ranking, kiểm định, phân tích phụ; nhánh baseline (cả ItemKNN,
+  UserKNN) chạy song song.
+- **Hình 3.2** — kiến trúc ba tầng của demo; **Hình 3.3–3.4** — màn hình demo và bảng 10 khách tương đồng (UserKNN).
 
 Luồng thầy/cô gợi ý (Interaction → Preprocessing → Split → User–Item Matrix → MF → vectors → DL → Fusion → Score →
-Ranking → Top-K) được Hình 3.1 và Hình 2.1 phủ đủ.
-
-**Còn thiếu:** một sơ đồ riêng so sánh hợp nhất ở mức biểu diễn (NeuMF) với hợp nhất ở mức điểm (late fusion). Nên vẽ
-thêm nếu đưa late fusion vào.
+Ranking → Top-K) được Hình 3.1, 2.1 và 2.2 phủ đủ.
 
 ---
 
 ## 16. Mô hình "variational" được nhắc trong buổi họp
 
-Tên mô hình **chưa được xác nhận**. Cần hỏi lại thầy/cô trước khi đưa vào thực nghiệm; không tự ghi là VAE.
+Tên mô hình **chưa được xác nhận** — cần hỏi lại thầy/cô; không tự ghi là VAE.
 
-Nếu đúng là **Mult-VAE** (Liang et al., 2018, *Variational Autoencoders for Collaborative Filtering*): đây là mô hình
-tự mã hoá biến phân cho CF trên phản hồi ẩn. Đầu vào là vector lịch sử mua của một user; mô hình mã hoá thành một phân
-phối ẩn rồi giải mã ra xác suất mua cho mọi item. Có thể dùng làm nhánh DL hoặc baseline mạnh, trên cùng giao thức Full
-Ranking. Đề tài chưa cài đặt mô hình này.
+Khả năng cao là **Mult-VAE** (Liang et al., 2018, *Variational Autoencoders for Collaborative Filtering*). Báo cáo mục
+2.4.4 đã trình bày mô hình này (công thức 2.18): đầu vào là vector mua của cả một user, mã hoá thành phân phối ẩn Gauss,
+giải mã ra phân phối đa thức trên toàn catalog, huấn luyện bằng ELBO có hệ số β. Hợp với Full Ranking vì chấm cả catalog
+trong một lượt và không cần lấy mẫu âm. Đề tài **chưa cài đặt**; đã đưa vào hướng phát triển (mục 5.3). Nếu thầy/cô yêu
+cầu thêm vào thực nghiệm: phải đăng ký trước như phần mở rộng (tune chỉ trên val, ghi PREREG, họ so sánh riêng), vì tập
+test đã được xem.
 
 ---
 
@@ -566,23 +591,33 @@ Ranking. Đề tài chưa cài đặt mô hình này.
 | # | Bước | Trạng thái | Bằng chứng |
 |---|---|---|---|
 | 1 | Sửa Train/Test split | Xong: mốc thời gian chung | `splitting.py`, Bảng 3.3 |
-| 2 | Kiểm tra data leakage | Xong (còn rò rỉ nhỏ do k-core, đã ghi là hạn chế) | `tests/test_no_leakage_real_data.py`, mục 4.5 |
+| 2 | Kiểm tra data leakage | Xong (còn rò rỉ nhỏ do k-core, đã ghi là hạn chế) | `tests/test_no_leakage_real_data.py`, mục 4.6 |
 | 3 | Tạo bộ test chuẩn | Xong, có khoá test và nhật ký truy cập | `audit/PREREG.md`, `audit/test_access_log.csv` |
-| 4 | Chạy lại Baseline/MF | Xong: Random, Most Popular, BPR-MF, GMF | Bảng 4.2 |
+| 4 | Chạy lại Baseline/MF | Xong: Random, Most Popular, BPR-MF, GMF; mở rộng: ItemKNN, UserKNN | Bảng 4.2, 4.9 |
 | 5 | Chọn ít nhất một mô hình DL | MLP; đã thử thêm CFNet trên validation | Bảng 4.1, `audit/tuning_log.csv` |
 | 6 | Xây Hybrid | Xong: NeuMF-Scratch, NeuMF-Pretrained | `src/models/neumf.py`, Hình 2.1 |
-| 7 | Thử Fusion | Early fusion (NeuMF): có số test; late fusion GMF + MLP: **chưa làm**; trộn iALS + NeuMF: chỉ validation | Mục 12–13 ở trên |
-| 8 | Bảng NDCG/HR/Recall/Precision | Xong: mean ± std 3 seed, kèm kiểm định | Bảng 4.2–4.3 |
-| 9 | Vẽ kiến trúc | Có Hình 2.1, 3.1, 3.2; thiếu sơ đồ late fusion | Mục 15 ở trên |
-| 10 | Phân tích kết quả | Xong: ablation, phân tầng, beyond-accuracy, Sampled-99, độ trễ | Chương 4 |
+| 7 | Thử Fusion | Early fusion (NeuMF): có số test; late fusion GMF + MLP và BPR-MF + MLP: đã tune trên val, chấm test trong lần chạy lại (mở rộng); trộn iALS + NeuMF: chỉ validation | Mục 12–13 ở trên, báo cáo mục 4.5 |
+| 8 | Bảng NDCG/HR/Recall/Precision | Xong: mean ± std 3 seed, kèm kiểm định | Bảng 4.2, 4.4; mở rộng 4.9–4.10 |
+| 9 | Vẽ kiến trúc | Có Hình 2.1, 2.2 (early vs late fusion), 3.1, 3.2 | Mục 15 ở trên |
+| 10 | Phân tích kết quả | Xong: ablation, phân tầng, beyond-accuracy, Sampled-99, độ trễ, phần mở rộng | Chương 4 |
 
 ---
 
 ## 18. Câu hỏi khó khác nên chuẩn bị
 
-- **"Tập test đã bị chấm mấy lần?"** — Hai đợt chính (27/09 và 29/09, mỗi đợt 3 seed) và một lần phân tích phụ, đều ghi
-  trong `audit/test_access_log.csv`. Đợt hai thêm bước huấn luyện lại trên train ∪ val; cấu hình, chỉ số, họ so sánh và
-  tiêu chí giữ nguyên, kết luận không đổi. Đã công bố ở mục 3.6 và phần tóm tắt.
+- **"Tập test đã bị chấm mấy lần?"** — Hai đợt chính (27/09 và 29/09, mỗi đợt 3 seed) và một lần phân tích phụ, rồi một
+  lần chạy lại toàn bộ trên commit cuối (3 seed + phần mở rộng + phân tích phụ). Mọi lần đều ghi trong
+  `audit/test_access_log.csv` kèm commit và lý do; mỗi thay đổi đều đăng ký trước khi chạy (PREREG mục 8–9). Cấu hình,
+  chỉ số, họ so sánh và tiêu chí của 7 mô hình chính không đổi qua các lần; kết luận không đổi. Đã công bố ở mục 3.6,
+  4.1 (ý "Lần chấm") và phần tóm tắt.
+- **"Vì sao phải chạy lại toàn bộ khi đã có số?"** — Kết quả 29/09 sinh ở một commit cũ; sau đó thư mục mã được đổi tên
+  và thêm phần mở rộng. Chạy lại để mọi số liệu trong báo cáo truy vết về **một** commit. Không tune lại, không đổi cấu
+  hình; huấn luyện ở chế độ GPU tất định nên trên cùng máy kỳ vọng ra đúng cùng số — đó cũng là một kiểm tra tái lập
+  (`scripts/19_check_report.py` so số mới với số cũ).
+- **"Nếu UserKNN/ItemKNN tốt hơn NeuMF thì đề tài còn ý nghĩa gì?"** — Đó chính là câu hỏi đề tài đặt ra: NeuMF có đáng độ
+  phức tạp trên dữ liệu thời trang thưa không. Baseline láng giềng được tune tốt vượt mô hình học sâu là phát hiện đã
+  được Ferrari Dacrema et al. (2019) ghi nhận trên nhiều bộ dữ liệu; đề tài kiểm chứng lại trên H&M bằng quy trình không
+  thiên lệch và báo cáo đúng như vậy.
 - **"Vì sao NeuMF-Scratch là mô hình lai được chọn, trong khi Pretrained tốt hơn trên test?"** — Theo quy tắc đăng ký
   trước, mô hình được chọn theo validation (Scratch 0,01107 > Pretrained 0,00913); test chỉ để báo cáo, không chọn lại.
   Thứ hạng đổi giữa val và test (Hình 4.3) cho thấy chênh lệch giữa các mô hình nhỏ hơn nhiễu.
@@ -591,12 +626,15 @@ Ranking. Đề tài chưa cài đặt mô hình này.
 - **"Vì sao dùng mẫu 500k mà không dùng toàn bộ 31,8 triệu dòng?"** — Full Ranking trên toàn bộ dữ liệu (889.062 user ×
   90.690 item ở k = 5) cần khoảng 8·10¹⁰ phép chấm điểm cho mỗi mô hình, không khả thi trên GPU 4 GB. Mẫu lấy theo khách
   hàng, giữ trọn lịch sử và tất định (chạy lại ra đúng cùng một file).
-- **"Vì sao không chia leave-one-out như đề cương?"** — Leave-one-out rò rỉ tương lai (mục 1.7). Đề tài vẫn chạy nó làm
-  giao thức phụ để đối chiếu; thứ hạng mô hình đổi giữa hai giao thức, đúng như Meng et al. (2020) cảnh báo.
+- **"Vì sao không chia leave-one-out như đề cương?"** — Leave-one-out rò rỉ tương lai (báo cáo mục 3.2.5): trên hm500k,
+  trung bình 11,2% tương tác train xảy ra sau ngày của món test của user đó, và 60,9% user có món val và món test cùng
+  ngày (Meng et al., 2020). Leave-one-out chỉ còn là run khám phá với cấu hình mặc định, không dùng để chọn hay so sánh
+  mô hình.
 - **"Timestamp chỉ theo ngày có gây rò rỉ không?"** — Một món test có thể được mua cùng ngày (cùng giỏ) với một món
-  trong lịch sử. Ảnh hưởng này như nhau với mọi mô hình và đã ghi ở mục 4.5, ý (iv).
-- **"Demo dùng mô hình nào?"** — Demo nạp trọng số của một lần chạy khám phá theo leave-one-out với cấu hình mặc định
-  (sản phẩm đích lấy từ validation để không lộ test), không phải trọng số của đánh giá cuối. Vì vậy số trên demo không
-  trùng Chương 4 — đã ghi trong báo cáo mục 3.7.3.
+  trong lịch sử. Ảnh hưởng này như nhau với mọi mô hình và đã ghi ở mục 4.6, ý (iv).
+- **"Demo dùng mô hình nào?"** — Đúng các mô hình của đánh giá cuối (`outputs/final/seed42`, huấn luyện lại trên
+  train ∪ val, cấu hình riêng của từng mô hình); sản phẩm đích là các món khách mua lần đầu trong giai đoạn test. Số
+  trên demo khớp file per-user của Chương 4 (có test tự động `demo/tests/test_demo.py`). Đây là hiển thị lại kết quả đã
+  chấm, không phải một lần chấm mới. Chế độ khám phá leave-one-out cũ vẫn giữ (`DEMO_MODE=explore`).
 - **"3 seed có đủ không?"** — Kiểm định làm theo user (2.996 cặp quan sát), không theo seed. Với 3 seed, Wilcoxon theo
   seed không thể đạt p < 0,05 (p nhỏ nhất là 0,25).

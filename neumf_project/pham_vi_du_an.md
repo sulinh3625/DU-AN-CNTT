@@ -388,7 +388,9 @@ giúp trên dữ liệu này (Pretrained < Scratch trên val).
 - Chỉ viết "A tốt hơn B" khi **đồng thời**: p Holm < 0,05, CI bootstrap không chứa 0, chênh lệch tương đối ≥ 5%.
   Ngược lại: "không khác biệt có ý nghĩa". Nếu mô hình lai không vượt baseline MF đã tune, báo cáo đúng như vậy.
 
-### 8.4 Lệch kế hoạch (đều trước mọi lần chấm test)
+### 8.4 Lệch kế hoạch
+
+Trước mọi lần chấm test:
 
 - Lớp `EarlyFusionModel` bỏ khỏi tuning/kiểm định vì trùng kiến trúc MLP (mục 3.5).
 - NeuMF cho phép nhánh GMF và MLP khác số chiều (`gmf_dim`) để nạp được GMF/MLP tốt nhất.
@@ -396,6 +398,16 @@ giúp trên dữ liệu này (Pretrained < Scratch trên val).
   trong `audit/tuning_log.csv` để minh bạch: trộn điểm 0,01260, CFNet 0,01169, iALS 0,01141 — đều cao hơn
   NeuMF-Scratch 0,01107 trên val; không chạy test cho chúng.
 - Đánh giá cuối chạy bằng `scripts/11_final.py` (thay `03 --final`) để mỗi mô hình dùng cấu hình tốt nhất riêng.
+
+Sau khi đã xem test (đều đăng ký trong PREREG **trước** khi chạy):
+
+- **29/09/2026:** train lại trên train ∪ val trước khi chấm test (PREREG mục 8; mục 9.4 bên dưới).
+- **02/10/2026 — mở rộng (PREREG mục 9):** late fusion GMF + MLP và BPR-MF + MLP, ItemKNN, UserKNN; tham số chọn trên
+  val (kiểm tra chạy lại ra đúng cùng số trên cả 34 cấu hình), một lần chấm test bằng `scripts/17_extension.py`, họ 7
+  so sánh riêng có Holm riêng (mục 9.6).
+- **02/10/2026 — chạy lại toàn bộ trên commit cuối (PREREG mục 8):** `python run.py final` (18 → 11 → 12 → 17 → 16 →
+  13 → 14 → 15 → 19) để mọi số trong báo cáo truy vết về một commit; không tune lại. Chạy trên đúng máy RTX 3050 của
+  lần 29/09 thì 7 mô hình chính kỳ vọng ra đúng cùng số (chế độ GPU tất định từ 28/09).
 
 ---
 
@@ -467,21 +479,34 @@ NeuMF-Pretrained vs BPR-MF, p Wilcoxon 0,021, p Holm 0,168) — cùng kết lu�
 
 Số liệu: `outputs/final/{stratified,beyond_accuracy,sampled99,latency}.csv`.
 
+### 9.6 Mở rộng sau khi xem test (PREREG mục 9 — chấm trong lần chạy lại)
+
+Late fusion GMF + MLP (w = 0,1) và BPR-MF + MLP (w = 0,3), ItemKNN (k = 100, shrink = 50), UserKNN (k = 200, shrink = 0).
+Trên val (NDCG@10): UserKNN 0,01340, ItemKNN 0,01217, late GMF + MLP 0,01005 (GMF riêng 0,00843, MLP riêng 0,00922),
+late BPR-MF + MLP 0,00972 (BPR-MF riêng 0,00911); NeuMF-Scratch 0,01107. Trên test: `outputs/final/extension/`
+(`summary.csv`, `significance.csv`) sau `python run.py final`; báo cáo mục 4.5, Bảng 4.9–4.10, câu kết luận sinh tự
+động từ `significance.csv`. Họ 7 so sánh: late GMF + MLP vs NeuMF-Scratch, NeuMF-Pretrained, GMF, MLP; late BPR-MF + MLP
+vs BPR-MF; ItemKNN, UserKNN vs NeuMF-Scratch.
+
 ---
 
 ## 10. Demo (inference-only)
 
-Web mô phỏng shop H&M (`demo/`), không train lại: nạp checkpoint, dựng lại pipeline theo config rồi **đối chiếu**
-`metadata.json` của run (số users/items/interactions/split) — lệch thì báo lỗi thay vì nạp sai ID.
+Web mô phỏng shop H&M (`demo/`), không train lại: nạp checkpoint, dựng lại pipeline theo config rồi **đối chiếu** với
+kết quả đã lưu (số user test, số item ứng viên; hoặc `metadata.json` của run khám phá) — lệch thì báo lỗi thay vì nạp
+sai ID.
 
+- **Chế độ mặc định `final`:** nạp đúng checkpoint của đánh giá cuối `outputs/final/seed42/` (cấu hình riêng từng mô
+  hình theo `results.json`), lịch sử = train ∪ val, sản phẩm đích = các món mua lần đầu trong giai đoạn test (nhiều món
+  mỗi khách), candidate = item train ∪ val trừ món đã mua. Số per-user khớp `outputs/final/seed42/results_per_user.csv`
+  (test tự động; chỉ vài hạng rất sâu > 100 có thể lệch 1 vị trí vì logit tính lại trên CPU). Có thêm 4 mô hình mở rộng.
+  Chế độ cũ `explore` (run leave-one-out `hm500k_seed42`, cấu hình mặc định, item đích từ validation): `DEMO_MODE=explore`.
 - **Khách hàng mới:** gợi ý rule-based (lọc theo lựa chọn + độ phổ biến train) — gắn nhãn **không phải mô hình NeuMF**.
-- **Admin kiểm thử:** lịch sử mua, top-K từng mô hình, hạng item test, Hit@K/NDCG@K — chấm đúng protocol huấn luyện
-  (`build_full_ranking_records`, `rank_positive`, cùng tie-break seed, xếp bằng logit). Trung bình per-user khớp
-  kết quả run (sai lệch ≤ 1e-6).
-- **Dashboard:** chỉ đọc file kết quả đã chạy.
-- **Run được demo:** mặc định `hm500k_seed42` — run khám phá theo leave-one-out, cấu hình mặc định (chưa tune), item
-  đích lấy từ validation. Đây **không** phải checkpoint đánh giá cuối (`outputs/final/`, demo chưa nạp được), nên số
-  trong demo không trùng mục 9.
+- **Admin kiểm thử:** lịch sử mua, top-K từng mô hình (so sánh 2 mô hình), hạng của từng sản phẩm đích, HR/NDCG/Recall@K
+  — chấm đúng protocol đánh giá (cùng tập ứng viên, tie-break seed, xếp bằng logit; late fusion min-max trên tập ứng
+  viên). Thẻ **"10 khách tương đồng nhất" (UserKNN)**: độ tương đồng, số món mua chung, láng giềng đã mua món đích nào —
+  minh hoạ trực tiếp "Top-K user tương đồng" (`GET /api/users/{id}/neighbors`).
+- **Dashboard:** chỉ đọc file kết quả đã chạy (chế độ final: `outputs/final/*.csv`, kể cả phần mở rộng nếu đã có).
 
 ---
 
@@ -520,7 +545,7 @@ Web mô phỏng shop H&M (`demo/`), không train lại: nạp checkpoint, dựng
 | Timestamp theo ngày | Item test có thể mua cùng ngày (cùng giỏ) với item trong train — như nhau cho mọi mô hình |
 | Leave-one-out rò rỉ tương lai | Lý do protocol chính là mốc thời gian chung (mục 5.1) |
 | Full Ranking trên H&M đầy đủ | Không khả thi trên CPU/GPU 4 GB |
-| ItemKNN, UserKNN, late fusion chỉ có ở phần mở rộng | Bản ItemKNN dày cũ bị chặn ở 5.000 item; bản thưa top-K và late fusion MF + DNN được thêm sau khi đã xem test (PREREG mục 9), kiểm định trong họ so sánh riêng |
+| ItemKNN, UserKNN, late fusion thêm sau khi xem test | Bản ItemKNN dày cũ bị chặn ở 5.000 item. Bản thưa top-K, UserKNN và late fusion MF + DNN tune trên val (ItemKNN 0,01217, UserKNN 0,01340, GMF+MLP 0,01005, BPR-MF+MLP 0,00972), đăng ký PREREG mục 9 trước khi chấm, chấm test một lần trong lần chạy lại (`scripts/17_extension.py`), họ 7 so sánh riêng — kết quả mở rộng, không thay kết luận chính |
 | GPU không tất định | cuDNN trên GPU khác có thể lệch nhẹ số GMF/MLP/NeuMF; kết luận thống kê mới là thứ cần giữ |
 | Độ trễ Top-K (R7) | Chỉ đo tuần tự trên CPU của một máy (`scripts/14_secondary.py`, 200 yêu cầu): NeuMF-Pretrained p50 1,1 ms, p95 1,6 ms (mục 9.5); chưa đo dưới tải đồng thời |
 | Train lại thêm sau khi xem test | Bước train lại trên train ∪ val được quyết định sau lần chấm 27/09 (PREREG mục 8); số mục 9 là lần chấm thứ hai, kết luận không đổi (mục 9.4) |

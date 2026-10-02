@@ -45,6 +45,7 @@
 \usepackage{float}
 \usepackage{longtable}
 \usepackage{booktabs}
+\usepackage{adjustbox} % bảng sinh tự động: max width=\textwidth (thu nhỏ bảng rộng, không phóng to bảng hẹp)
 \usepackage{array}
 \usepackage{multirow}
 \usepackage{tabularx}
@@ -234,5 +235,9 @@
 \newcommand{\chuaco}[1]{\begin{center}\fbox{\parbox{0.92\textwidth}{\raggedright\small\textit{Chưa có số liệu: #1}}}\end{center}}
 % \bangketqua{tên file}{lệnh sinh ra file}: chèn bảng sinh tự động, hoặc khung nhắc nếu chưa có.
 \newcommand{\bangketqua}[2]{\IfFileExists{content/tables/#1}{\input{content/tables/#1}}{\chuaco{chạy #2 rồi \texttt{scripts/15\_export\_report.py}.}}}
+% \bangref{tên file}{nhãn}: ``Bảng~X'' nếu bảng đã được sinh, nếu chưa thì chữ thay thế (tránh tham chiếu ``??'').
+\newcommand{\bangref}[2]{\IfFileExists{content/tables/#1}{Bảng~\ref{#2}}{bảng kết quả (chưa có số liệu)}}
+% \hinhref{đường dẫn hình}{nhãn}: ``Hình~X'' nếu hình đã được sinh, nếu chưa thì chữ thay thế.
+\newcommand{\hinhref}[2]{\IfFileExists{#1}{Hình~\ref{#2}}{hình kết quả (chưa có số liệu)}}
 % \hinhketqua{đường dẫn}{độ rộng}{chú thích}{nhãn}{lệnh sinh ra hình}
 \newcommand{\hinhketqua}[5]{\IfFileExists{#1}{\begin{figure}[htbp]\centering\includegraphics[width=#2]{#1}\caption{#3}\label{#4}\end{figure}}{\chuaco{hình ``#3'' --- #5.}}}

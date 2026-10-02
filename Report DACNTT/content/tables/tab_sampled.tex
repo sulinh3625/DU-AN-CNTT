@@ -1,9 +1,9 @@
 % Sinh tự động bởi scripts/15_export_report.py — KHÔNG sửa tay.
 \begin{table}[htbp]
-    \centering
+    \centering\small
     \caption{Đối chiếu Full Ranking với Sampled-99 (1 item đúng + 99 item âm, protocol NCF gốc) trên tập test; trung bình 3 seed}
     \label{tab:sampled}
-    \resizebox{\textwidth}{!}{%
+    \begin{adjustbox}{max width=\textwidth}
     \begin{tabular}{lrrrr}
         \toprule
         Mô hình & NDCG@10 Full & NDCG@10 Sampled-99 & HR@10 Sampled-99 & Hệ số thổi phồng \\
@@ -13,8 +13,9 @@
         GMF & 0{,}00907 & 0{,}1482 & 0{,}2591 & 16{,}3$\times$ \\
         MLP & 0{,}00931 & 0{,}1491 & 0{,}2593 & 16{,}0$\times$ \\
         BPR-MF & 0{,}01007 & 0{,}1527 & 0{,}2623 & 15{,}2$\times$ \\
-        MostPopular & 0{,}00917 & 0{,}1531 & 0{,}2612 & 16{,}7$\times$ \\
+        Most Popular & 0{,}00917 & 0{,}1531 & 0{,}2612 & 16{,}7$\times$ \\
         \bottomrule
-    \end{tabular}}
+    \end{tabular}
+    \end{adjustbox}
     \par\smallskip{\footnotesize Hệ số thổi phồng = NDCG@10 Sampled-99 / NDCG@10 Full Ranking.}
 \end{table}

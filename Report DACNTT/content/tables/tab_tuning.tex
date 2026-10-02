@@ -1,9 +1,9 @@
 % Sinh tự động bởi scripts/15_export_report.py — KHÔNG sửa tay.
 \begin{table}[htbp]
-    \centering
-    \caption{Cấu hình tốt nhất của từng mô hình sau tuning (chỉ trên tập validation, seed 42, 6 cấu hình/mô hình, protocol mốc thời gian chung)}
+    \centering\small
+    \caption{Cấu hình tốt nhất của từng mô hình sau tuning (chỉ trên tập validation, seed 42, protocol mốc thời gian chung; 6 cấu hình/mô hình, late fusion quét 11 giá trị $w$)}
     \label{tab:tuning}
-    \resizebox{\textwidth}{!}{%
+    \begin{adjustbox}{max width=\textwidth}
     \begin{tabular}{llrrr}
         \toprule
         Mô hình & Cấu hình tốt nhất & NDCG@10 & Recall@10 & HR@10 \\
@@ -13,7 +13,13 @@
         BPR-MF & d=32; lr=0{,}03; reg=0{,}005; 20 epoch & 0{,}00912 & 0{,}01386 & 0{,}03824 \\
         GMF & d=64; lr=0{,}0005; neg=4; wd=0 & 0{,}00843 & 0{,}01213 & 0{,}03033 \\
         MLP & d=32; lr=0{,}001; neg=8; wd=0; dropout=0{,}2 & 0{,}00837 & 0{,}01420 & 0{,}03648 \\
+        \midrule\multicolumn{5}{l}{\textit{Mở rộng sau khi xem test (mục~\ref{sec:extension_results})}} \\
+        UserKNN & k=200; shrink=0 & 0{,}01340 & 0{,}01910 & 0{,}04527 \\
+        ItemKNN & k=100; shrink=50 & 0{,}01217 & 0{,}01729 & 0{,}04088 \\
+        Late Fusion GMF + MLP & $w$=0{,}1 (GMF), $1-w$=0{,}9 (MLP) & 0{,}01005 & 0{,}01531 & 0{,}04088 \\
+        Late Fusion BPR-MF + MLP & $w$=0{,}3 (BPR-MF), $1-w$=0{,}7 (MLP) & 0{,}00972 & 0{,}01561 & 0{,}04044 \\
         \bottomrule
-    \end{tabular}}
-    \par\smallskip{\footnotesize Số trên validation của cấu hình tốt nhất lạc quan (chọn trên chính tập đó); không dùng để kết luận.}
+    \end{tabular}
+    \end{adjustbox}
+    \par\smallskip{\footnotesize Số trên validation của cấu hình tốt nhất lạc quan (chọn trên chính tập đó); không dùng để kết luận. Late fusion: $w\cdot$minmax(điểm thành phần thứ nhất) $+ (1-w)\cdot$minmax(điểm MLP); $w = 1$ và $w = 0$ cho đúng thứ hạng của từng thành phần.}
 \end{table}

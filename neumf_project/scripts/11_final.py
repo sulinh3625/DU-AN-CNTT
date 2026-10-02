@@ -5,7 +5,9 @@
 Khoá test: từ chối nếu audit/PREREG.md chưa commit, thiếu --reason, hoặc working tree có file đã theo dõi bị sửa.
 Mỗi seed ghi 1 dòng audit/test_access_log.csv TRƯỚC khi chấm test. Mỗi mô hình train trên train, early stopping
 trên val (giống tuning) để lấy best_epoch, rồi train lại từ đầu trên train ∪ val đúng best_epoch epoch và chấm test
-(MostPopular, BPR-MF cũng fit trên train ∪ val). Ra: outputs/final/seed<N>/{results.json, results_per_user.csv, topk.json, *.pt}.
+(MostPopular, BPR-MF cũng fit trên train ∪ val). Ra: outputs/final/seed<N>/{results.json, results_per_user.csv, topk.json,
+history.csv, *.pt}. history.csv = lịch sử từng epoch của mạng PyTorch (phase "select": loss + NDCG@10 val, dùng chọn
+best_epoch; phase "refit": loss khi train lại) — chỉ ghi thêm, không đổi phép tính; dùng vẽ đường hội tụ (13_plot_final.py).
 """
 from __future__ import annotations
 
@@ -47,7 +49,7 @@ def run_seed(seed, cfg, D, best, device, out_root, prov, reason):
     log_test_access(AUDIT_DIR / "test_access_log.csv", f"final_seed{seed}", prov, MODELS, reason)
     out = ensure_dir(out_root / f"seed{seed}")
     kw = dict(k_values=cfg.evaluation.k_values, tie_seed=cfg.evaluation.tie_break_seed, include_redundant=True)
-    rows, results, topk, train_meta = [], {}, {}, {}
+    rows, results, topk, train_meta, histories = [], {}, {}, {}, []
 
     def score(name, obj):
         per = []
@@ -78,9 +80,11 @@ def run_seed(seed, cfg, D, best, device, out_root, prov, reason):
         key = TORCH_KEYS[name]
         p = best[key]["params"]
         sel_init, refit_init = init or (None, None)
-        sel, _, meta = fit(key, p, D.tr, D.train_pos, D.val, tune.MAX_EPOCHS, tune.PATIENCE, sel_init)
-        net, _, refit = fit(key, p, D.trva, D.trva_pos, None, meta["best_epoch"], meta["best_epoch"], refit_init)
+        sel, hist_sel, meta = fit(key, p, D.tr, D.train_pos, D.val, tune.MAX_EPOCHS, tune.PATIENCE, sel_init)
+        net, hist_refit, refit = fit(key, p, D.trva, D.trva_pos, None, meta["best_epoch"], meta["best_epoch"], refit_init)
         train_meta[name] = {**meta, "refit_train_time_s": refit["train_time_s"]}
+        histories.extend({"model": name, "phase": "select", **h} for h in hist_sel)
+        histories.extend({"model": name, "phase": "refit", **h} for h in hist_refit)
         torch.save(net.state_dict(), out / f"{key}.pt")
         return sel, net
 
@@ -100,6 +104,7 @@ def run_seed(seed, cfg, D, best, device, out_root, prov, reason):
         score(name, net)
 
     pd.DataFrame(rows).to_csv(out / "results_per_user.csv", index=False)
+    pd.DataFrame(histories).to_csv(out / "history.csv", index=False)
     (out / "topk.json").write_text(json.dumps(topk), encoding="utf-8")
     (out / "results.json").write_text(json.dumps(dict(
         seed=seed, evaluated_on="test", provenance=prov, n_test_users=len(D.test),

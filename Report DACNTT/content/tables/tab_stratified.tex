@@ -1,9 +1,9 @@
 % Sinh tự động bởi scripts/15_export_report.py — KHÔNG sửa tay.
 \begin{table}[htbp]
-    \centering
+    \centering\small
     \caption{NDCG@10 theo nhóm item (head = 10\% item phổ biến nhất trong train $\cup$ val) và nhóm user (cold = 20\% user ít tương tác train $\cup$ val nhất); trung bình 3 seed}
     \label{tab:stratified}
-    \resizebox{\textwidth}{!}{%
+    \begin{adjustbox}{max width=\textwidth}
     \begin{tabular}{lrrrrr}
         \toprule
         Mô hình & Tất cả (2996) & Head (1521) & Tail (2652) & Cold (555) & Warm (2441) \\
@@ -13,8 +13,9 @@
         GMF & 0{,}00907 & 0{,}02735 & 0{,}00000 & 0{,}00917 & 0{,}00904 \\
         MLP & 0{,}00931 & 0{,}02756 & 0{,}00000 & 0{,}00957 & 0{,}00925 \\
         BPR-MF & 0{,}01007 & 0{,}02999 & 0{,}00013 & 0{,}00957 & 0{,}01019 \\
-        MostPopular & 0{,}00917 & 0{,}02762 & 0{,}00000 & 0{,}01053 & 0{,}00887 \\
+        Most Popular & 0{,}00917 & 0{,}02762 & 0{,}00000 & 0{,}01053 & 0{,}00887 \\
         \bottomrule
-    \end{tabular}}
+    \end{tabular}
+    \end{adjustbox}
     \par\smallskip{\footnotesize Số trong ngoặc: số user test của nhóm. User có item đúng ở cả head lẫn tail được tính ở cả hai nhóm, mỗi nhóm chỉ xét item đúng của nhóm đó.}
 \end{table}

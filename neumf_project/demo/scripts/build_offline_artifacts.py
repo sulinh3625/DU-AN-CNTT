@@ -33,15 +33,15 @@ def per_user_results(ctx: DataContext, top_k: int):
     users = ctx.target_users
     for s in range(0, len(users), USER_CHUNK):
         chunk = users[s:s + USER_CHUNK]
-        scores = {m: inference.score_items(ctx, m, chunk) for m in ctx.available_models}
+        scores = {m: inference.score_items(ctx, m, chunk) for m in ctx.models}  # mạng PyTorch: chấm theo lô
         for j, u in enumerate(chunk):
             u = int(u)
             record = inference.eval_record(ctx, u)
             for m in ctx.available_models:
-                cand_scores = inference.candidate_scores(ctx, m, u, record, scores[m][j])
+                cand_scores = inference.candidate_scores(ctx, m, u, record, scores[m][j] if m in scores else None)
                 r = inference.rank_from_scores(ctx, u, cand_scores, top_k, record)
                 rows.append({"customer_id": ctx.customer_ids[u], "user_idx": u, "model": m,
-                             "target_item": record.positive_item, "rank": r["rank"],
+                             "target_item": record.positive_item, "rank": min(r["ranks"]),
                              "n_candidates": r["n_candidates"], **r["metrics"]})
                 top_lists[m].append(r["top_items"])
         print(f"  {min(s + USER_CHUNK, len(users))}/{len(users)} users", end="\r")
@@ -85,7 +85,8 @@ def main():
     ap.add_argument("--run-tag", default=None)
     args = ap.parse_args()
 
-    ctx = DataContext(args.run_tag, load_customers=False)
+    # File offline chỉ dùng cho dashboard của chế độ explore (run leave-one-out); chế độ final đọc outputs/final/.
+    ctx = DataContext(args.run_tag, load_customers=False, mode="explore")
     top_k = max(ctx.k_values)
     out_dir = ARTIFACTS_DIR / ctx.run_tag
     out_dir.mkdir(parents=True, exist_ok=True)

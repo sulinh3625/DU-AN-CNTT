@@ -12,6 +12,7 @@ from .data_context import CONFIG_PATH, DEMO_ROOT, EXPERIMENTS_DIR, PROJECT_ROOT
 from scripts.common import REPORT_HIDDEN_MODELS  # noqa: E402  (data_context đã thêm PROJECT_ROOT vào sys.path)
 
 TABLES_DIR = PROJECT_ROOT / "outputs" / "tables"
+FINAL_DIR = PROJECT_ROOT / "outputs" / "final"
 ARTIFACTS_DIR = DEMO_ROOT / "artifacts"
 RANK_BIN_EDGES = [1, 2, 3, 5, 11, 21, 51, 101, 201, 501, 1001, 2001, 5001, 10001, 20001]
 OFFLINE_CMD = "python demo/scripts/build_offline_artifacts.py"
@@ -119,6 +120,53 @@ def data_stats(run_tag: str) -> dict:
     data = {k: meta.get(k) for k in keys}
     data["density"] = meta["n_interactions"] / (meta["n_users"] * meta["n_items"])
     return _ok(path, run_tag, data)
+
+
+FINAL_RUN_CMD = 'python run.py final --reason "..."'
+
+
+def _final_csv(name: str) -> tuple[Path, pd.DataFrame | None]:
+    path = FINAL_DIR / name
+    return path, (pd.read_csv(path) if path.exists() else None)
+
+
+def final_dashboard(ctx) -> dict:
+    """Dashboard chế độ final: đọc đúng các file kết quả của Chương 4 (outputs/final/), không tính lại."""
+    out = {"mode": "final", "run_tag": ctx.run_tag}
+    path, main = _final_csv("summary.csv")
+    ext_path, ext = _final_csv("extension/summary.csv")
+    if main is None:
+        out["summary"] = _missing(FINAL_RUN_CMD)
+    else:
+        main = main.rename(columns={main.columns[0]: "model"}).assign(extension=False)
+        if ext is not None:
+            ext = ext.rename(columns={ext.columns[0]: "model"}).assign(extension=True)
+            main = pd.concat([main, ext], ignore_index=True)
+        out["summary"] = _ok(path, None, json.loads(main.sort_values("NDCG@10_mean", ascending=False)
+                                                     .to_json(orient="records")))
+    for key, name in (("significance", "significance.csv"), ("ext_significance", "extension/significance.csv")):
+        p, df = _final_csv(name)
+        out[key] = _missing(FINAL_RUN_CMD) if df is None else _ok(p, None, json.loads(df.to_json(orient="records")))
+    p, st = _final_csv("stratified.csv")
+    out["stratified"] = _missing(FINAL_RUN_CMD) if st is None else _ok(p, None, json.loads(
+        st.groupby(["model", "subset"])["NDCG@10"].mean().unstack("subset").reset_index().to_json(orient="records")))
+    for key, name in (("beyond", "beyond_accuracy.csv"), ("sampled", "sampled99.csv")):
+        p, df = _final_csv(name)
+        out[key] = _missing(FINAL_RUN_CMD) if df is None else _ok(p, None, json.loads(
+            df.drop(columns=[c for c in ("seed", "n_cases") if c in df.columns]).groupby("model").mean()
+            .reset_index().to_json(orient="records")))
+    p, lat = _final_csv("latency.csv")
+    out["latency"] = _missing(FINAL_RUN_CMD) if lat is None else _ok(p, None, json.loads(
+        lat[["model", "p50_ms", "p95_ms", "mean_ms", "n_candidates_mean"]].to_json(orient="records")))
+    m = ctx.run_metadata
+    out["stats"] = {"status": "ok", "source": f"outputs/final/{ctx.run_tag.replace('final_', '')}/results.json",
+                    "run_tag": ctx.run_tag, "data": {
+                        "n_users": ctx.n_users, "n_items": ctx.n_items, "n_interactions": int(len(ctx.data_df)),
+                        "density": len(ctx.data_df) / (ctx.n_users * ctx.n_items), "k_core": ctx.cfg.dataset.k_core,
+                        "train": m["train"], "validation": m["validation"], "test": m["test"],
+                        "train_val": m["train_val"], "n_test_users": m["n_test_users"],
+                        "n_candidates": m["n_candidate_items"], "commit": str(m["provenance"].get("git_commit"))[:7]}}
+    return out
 
 
 def dashboard(run_tag: str) -> dict:

@@ -31,7 +31,8 @@ Mọi lệch khỏi kế hoạch phải ghi vào mục "Lệch kế hoạch" ở
 
 (Sửa loop 14 — xem mục 8. Bản đăng ký ban đầu còn MostPopular-Recent, iALS, EarlyFusion, B, C.)
 
-ItemKNN không chạy (10.345 item > ngưỡng dense 5.000) — ghi là hạn chế.
+ItemKNN không chạy (10.345 item > ngưỡng dense 5.000) — ghi là hạn chế. (Bản thưa top-k, UserKNN và late fusion
+MF + DNN được thêm sau khi đã xem test: mục 9.)
 
 ## 4. Ngân sách tuning (như nhau cho mọi mô hình có siêu tham số)
 - Tuning chỉ trên validation, seed 42, mỗi mô hình **6 cấu hình**, lấy bằng một lần rút ngẫu nhiên cố định
@@ -51,7 +52,7 @@ ItemKNN không chạy (10.345 item > ngưỡng dense 5.000) — ghi là hạn ch
 
 ## 5. Đánh giá cuối (test)
 - Mỗi mô hình dùng cấu hình tốt nhất trên val, chạy **3 seed** (42, 2024, 2025) qua `--final`, mỗi lần ghi
-  `docs/audit/test_access_log.csv`. Không sửa kiến trúc/siêu tham số sau khi xem số test (nếu phải sửa: ghi log +
+  `audit/test_access_log.csv` (lúc đăng ký nằm ở `docs/audit/`). Không sửa kiến trúc/siêu tham số sau khi xem số test (nếu phải sửa: ghi log +
   báo cáo, và số sau sửa được đánh dấu "sau khi xem test").
 - Báo cáo: mean ± std qua 3 seed; per-user = trung bình NDCG@10 của user qua 3 seed.
 
@@ -91,3 +92,63 @@ ItemKNN không chạy (10.345 item > ngưỡng dense 5.000) — ghi là hạn ch
   user/item có trong train ∪ val, candidate = item train ∪ val (2.996 user, 10.216 item thay vì 2.893 / 10.145).
   Lý do dựa trên thí nghiệm chỉ-trên-val: bỏ trống 4 tuần sát ngày chấm làm NDCG@10 giảm 17–19% (MostPopular,
   BPR-MF). Cấu hình (best_configs.json), metric, họ so sánh, tiêu chí giữ nguyên. Số test chạy lại thay số cũ.
+- **02/10/2026 (SAU khi đã xem test 27/09 và 29/09) — đăng ký trước lần chạy lại toàn bộ:** chạy lại một lần toàn
+  bộ chuỗi đánh giá cuối trên một commit sạch (`python run.py final --reason ...`: 11 → 12 → 17 → 16 → 13 → 14 →
+  15 → 19) để mọi số liệu trong báo cáo truy vết về **cùng một commit** — kết quả 29/09 sinh ở `c559c86`, sau đó
+  thư mục được đổi tên và thêm phần mở rộng mục 9. Không tune lại; cấu hình (`best_configs.json`), seed, metric, họ
+  so sánh, tiêu chí kết luận giữ nguyên. Từ 28/09 (`d689ca5`) huấn luyện chạy ở chế độ GPU tất định
+  (`src/utils/seed.py`), và code huấn luyện/đánh giá của 7 mô hình chính không đổi kể từ `c559c86` (chỉ thêm file
+  mới), nên chạy lại trên **cùng máy** (máy có GPU RTX 3050 Laptop đã chạy ngày 29/09), cùng phiên bản thư viện
+  **kỳ vọng ra đúng cùng số** với lần 29/09 — đây đồng thời là kiểm tra tái lập. Chạy trên máy khác (Colab T4, CPU)
+  thì Random, MostPopular, ItemKNN, UserKNN vẫn trùng, BPR-MF (numpy) gần như trùng, còn GMF/MLP/NeuMF có thể lệch nhẹ. `scripts/19_check_report.py` so số mới với bản đã commit; nếu lệch, báo cáo dùng số của
+  lần chạy lại và ghi rõ độ lệch. (Tuning 27/09 chạy trước khi có chế độ tất định nên không tái lập được từng bit:
+  MLP dựng lại theo đúng cấu hình tốt nhất cho val NDCG@10 0,00922 so với 0,00837 lúc tuning —
+  `audit/rebuilt_checkpoints.json`; GMF và BPR-MF dựng lại khớp tuyệt đối. Lựa chọn cấu hình không đổi.)
+
+## 9. Mở rộng sau khi xem test
+
+Đăng ký 02/10/2026, **trước** khi chấm test cho các mô hình dưới đây; **sau** khi đã xem test của 7 mô hình chính
+(27/09, 29/09). Kết quả mục này báo cáo là **kết quả mở rộng**, không thay kết luận chính (mục 6–7 giữ nguyên, mô
+hình lai được chọn vẫn là NeuMF-Scratch).
+
+**Lý do (góp ý của GVHD):** (i) so sánh hợp nhất ở mức biểu diễn (NeuMF — early fusion) với hợp nhất ở mức điểm
+(late fusion) của **cùng** hai thành phần MF và DNN; (ii) baseline láng giềng mà đề cương đặt ra (Item-based CF) và
+câu hỏi "Top-K người dùng tương đồng" (UserKNN).
+
+**Mô hình:**
+- `LateFusion-GMF-MLP`: w·minmax(điểm GMF) + (1 − w)·minmax(điểm MLP), min-max trên tập ứng viên của từng user
+  (`src/models/late_fusion.py`). GMF, MLP là hai mô hình tốt nhất đã tune ở mục 4, huấn luyện **riêng**.
+- `LateFusion-BPR-MLP`: như trên với BPR-MF và MLP (thêm DNN vào baseline MF đã tune).
+- `ItemKNN`, `UserKNN`: cosine trên vector mua nhị phân, có hệ số co (shrink), giữ top-k láng giềng, ma trận thưa
+  (`src/baselines/neighborhood.py`; bản ItemKNN dày cũ bị chặn ở 5.000 item đã gỡ).
+
+**Chọn tham số (chỉ val, seed 42, `scripts/10_tune.py --model extension`):**
+- ItemKNN, UserKNN: 6 cấu hình rút từ lưới k ∈ {20, 50, 100, 200, 500} × shrink ∈ {0, 10, 50} (numpy seed 0, cấu
+  hình mặc định k = 100, shrink = 0 luôn có) — cùng ngân sách 6 cấu hình như mục 4.
+- Late fusion: quét đủ 11 giá trị w ∈ {0; 0,1; …; 1} (một tham số, không huấn luyện thêm mạng nào — như mô hình trộn
+  điểm B ở mục 4). Thành phần trên val là checkpoint train-only của GMF, MLP, BPR-MF tốt nhất (`outputs/tuning/`;
+  MLP là bản dựng lại, xem mục 8).
+- Kết quả (`audit/best_configs.json`, val NDCG@10): UserKNN k = 200, shrink = 0 → 0,01340; ItemKNN k = 100,
+  shrink = 50 → 0,01217; LateFusion-GMF-MLP w = 0,1 → 0,01005 (thành phần đứng riêng: GMF 0,00843 khi w = 1, MLP
+  0,00922 khi w = 0); LateFusion-BPR-MLP w = 0,3 → 0,00972. Đối chiếu: NeuMF-Scratch 0,01107.
+- Truy vết: 34 dòng `tuning_log.csv` của phần này ghi ở commit `922f64f` với working tree đang có code mở rộng chưa
+  commit (commit ở `16eb349`). Chạy lại kiểm tra ngày 02/10/2026 trên code đã commit (ghi ra thư mục tạm, không đụng
+  `audit/`): **cả 34 cấu hình ra đúng cùng số** (sai lệch tối đa 0), cùng tham số được chọn.
+
+**Chấm test (`scripts/17_extension.py`, một lần, ghi `test_access_log.csv` trước khi chấm):**
+- Late fusion nạp đúng GMF, MLP, BPR-MF mà `11_final.py` đã huấn luyện lại trên train ∪ val cho từng seed
+  (`outputs/final/seed*/`) — cùng checkpoint của kết quả chính, không huấn luyện thêm; w theo val.
+- ItemKNN, UserKNN tính trên train ∪ val với (k, shrink) theo val; tất định nên giống nhau ở mọi seed.
+- Cùng tập test, tập ứng viên, quy tắc loại item đã mua, tie-break (mục 1, 5).
+
+**Kiểm định:** họ **7 so sánh riêng**, hiệu chỉnh Holm riêng (α = 0,05), cùng tiêu chí "A tốt hơn B" của mục 6
+(p Holm < 0,05, CI bootstrap không chứa 0, chênh lệch tương đối ≥ 5%):
+1. LateFusion-GMF-MLP vs NeuMF-Scratch (late vs early fusion, mô hình lai được chọn)
+2. LateFusion-GMF-MLP vs NeuMF-Pretrained
+3. LateFusion-GMF-MLP vs GMF (sau khi lai vs trước khi lai — nhánh MF)
+4. LateFusion-GMF-MLP vs MLP (sau khi lai vs trước khi lai — nhánh DNN)
+5. LateFusion-BPR-MLP vs BPR-MF
+6. ItemKNN vs NeuMF-Scratch
+7. UserKNN vs NeuMF-Scratch
+
+(Cài đặt: `EXT_COMPARISONS` trong `scripts/17_extension.py`.) Họ này không gộp với họ 8 so sánh của mục 6.

@@ -8,7 +8,7 @@
 
 Phụ lục này liệt kê từng luận điểm lý thuyết và phương pháp luận được sử dụng trong dự án kèm nguồn gốc học thuật tương ứng, nhằm bảo đảm mọi khẳng định đều truy nguyên được về tài liệu công bố chính thống.
 
-\begin{longtable}{|p{0.08\textwidth}|p{0.48\textwidth}|p{0.34\textwidth}|}
+\begin{longtable}{|p{0.10\textwidth}|p{0.46\textwidth}|p{0.34\textwidth}|}
 \hline
 \textbf{Mục} & \textbf{Luận điểm} & \textbf{Nguồn} \\
 \hline
@@ -21,85 +21,85 @@ Phụ lục này liệt kê từng luận điểm lý thuyết và phương phá
 \hline
 \multicolumn{3}{|l|}{\textit{A.1. Tổng quan về Hệ thống gợi ý \& Lọc cộng tác}} \\
 \hline
-1.1.1 & Vai trò cá nhân hóa gợi ý trong thương mại điện tử &
+\ref{subsec:thuctrang} & Vai trò cá nhân hóa gợi ý trong thương mại điện tử &
 \textcite{schafer2001commerce}; \textcite{linden2003amazon} \\
 \hline
-2.1.2 & Nền tảng Lọc cộng tác dựa trên bộ nhớ (Memory-based CF, GroupLens, Item-based CF) &
+\ref{subsec:memory_model_based} & Nền tảng Lọc cộng tác dựa trên bộ nhớ (Memory-based CF, GroupLens, Item-based CF) &
 \textcite{resnick1994grouplens}; \textcite{sarwar2001item}; \textcite{su2009survey} \\
 \hline
-1.1.2 & Hạn chế của tích vô hướng trong Nhân tử hóa ma trận (Matrix Factorization) &
-\textcite{koren2009matrix} \\
+\ref{subsec:memory_model_based}, \ref{sec:extension_results} & Baseline láng giềng (ItemKNN, UserKNN) được tune tốt thường không thua mô hình học sâu &
+\textcite{sarwar2001item}; \textcite{dacrema2019progress} \\
 \hline
-1.2.2 & Bộ dữ liệu H\&M Personalized Fashion Recommendations &
+\ref{subsec:hanche_cf} & Hạn chế của tích vô hướng trong Nhân tử hóa ma trận (Matrix Factorization) &
+\textcite{koren2009matrix}; \textcite{he2017ncf} \\
+\hline
+\ref{subsec:phamvi} & Bộ dữ liệu H\&M Personalized Fashion Recommendations &
 \textcite{hm2022kaggle} \\
 \hline
 
 \hline
-\multicolumn{3}{|l|}{\textit{A.2. Phản hồi ẩn \& Kiến trúc Neural Collaborative Filtering}} \\
+\multicolumn{3}{|l|}{\textit{A.2. Phản hồi ẩn, Neural Collaborative Filtering \& chiến lược hợp nhất}} \\
 \hline
-2.2.4 & Xếp hạng cá nhân hóa Bayes (BPR) từ phản hồi ẩn &
+\ref{subsec:bpr} & Xếp hạng cá nhân hóa Bayes (BPR) từ phản hồi ẩn &
 \textcite{rendle2009bpr} \\
 \hline
-2.3 & Khung làm việc NCF và kiến trúc mô hình lai NeuMF (GMF + MLP) &
+\ref{sec:ncf_architecture} & Khung làm việc NCF và kiến trúc mô hình lai NeuMF (GMF + MLP) &
 \textcite{he2017ncf} \\
 \hline
-2.3.4 & Chiến lược hợp nhất Early Fusion và Late Fusion; kiểu lai weighted &
+\ref{subsec:early_late_fusion} & Chiến lược hợp nhất Early Fusion và Late Fusion; Late Fusion có trọng số là kiểu lai weighted &
 \textcite{atrey2010multimodal}; \textcite{liu2018combine}; \textcite{holinh2023multisource}; \textcite{burke2002hybrid} \\
 \hline
-3.5.1 & Thuật toán tối ưu hóa thích ứng Adam (Pre-training và tinh chỉnh) &
+\ref{subsec:pretraining_strategy} & Thuật toán tối ưu hóa thích ứng Adam (Pre-training và tinh chỉnh) &
 \textcite{kingma2014adam} \\
 \hline
-2.4.1 & Mô hình Wide \& Deep và DeepFM trong gợi ý (Feature-rich Deep CTR) &
-\textcite{cheng2016wide}; \textcite{guo2017deepfm} \\
-\hline
 
 \hline
-\multicolumn{3}{|l|}{\textit{A.3. Xu hướng nghiên cứu hiện đại (2016--2025)}} \\
+\multicolumn{3}{|l|}{\textit{A.3. Xu hướng nghiên cứu hiện đại}} \\
 \hline
-2.4.2 & Kiến trúc hai tháp (Two-Tower) cho truy hồi quy mô lớn &
-\textcite{covington2016youtube} \\
+\ref{subsec:deep_ctr} & Mô hình lai dựa trên đặc trưng: Wide \& Deep, Factorization Machines, DeepFM, DIN &
+\textcite{cheng2016wide}; \textcite{rendle2010fm}; \textcite{guo2017deepfm}; \textcite{zhou2018din} \\
 \hline
-2.4.3 & Gợi ý theo chuỗi hành vi (Sequential/Session-based) &
+\ref{subsec:sequential_rec} & Gợi ý theo chuỗi hành vi và Transformer &
 \textcite{hidasi2016gru4rec}; \textcite{kang2018self}; \textcite{sun2019bert4rec} \\
 \hline
-2.4.4 & Học biểu diễn trên đồ thị (Graph-based Collaborative Filtering) &
+\ref{subsec:graph_cf} & Học biểu diễn trên đồ thị (Graph-based Collaborative Filtering) &
 \textcite{wang2019ngcf}; \textcite{he2020lightgcn} \\
 \hline
-2.4.5 & Biến phân tự mã hóa, học tự giám sát, LLM và Diffusion cho gợi ý &
-\textcite{liang2018multvae}; \textcite{wu2021sgl}; \textcite{rajput2023tiger}; \textcite{wu2023survey_llm4rec}; \textcite{wei2025diffusion} \\
+\ref{subsec:vae_cf} & Tự mã hóa biến phân cho lọc cộng tác (Mult-VAE) &
+\textcite{liang2018multvae} \\
 \hline
-2.4 & Khảo sát cập nhật (2024) về mạng nơ-ron sâu trong Collaborative Filtering &
-\textcite{li2024dnncf}; \textcite{zhang2019deeplearningsurvey} \\
+\ref{sec:modern_trends} & Học tự giám sát, gợi ý sinh, mô hình ngôn ngữ lớn, mô hình khuếch tán; kiến trúc hai tháp; khảo sát tổng quan &
+\textcite{wu2021sgl}; \textcite{rajput2023tiger}; \textcite{wu2023survey_llm4rec}; \textcite{wei2025diffusion}; \textcite{covington2016youtube}; \textcite{zhang2019deeplearningsurvey}; \textcite{li2024dnncf} \\
 \hline
 
 \hline
-\multicolumn{3}{|l|}{\textit{A.4. Đánh giá Top-K, Cài đặt \& Hướng phát triển}} \\
+\multicolumn{3}{|l|}{\textit{A.4. Đánh giá Top-K, cài đặt \& kiểm định}} \\
 \hline
-2.5 & Giao thức đánh giá hiệu năng xếp hạng Top-N Recommendation &
+\ref{sec:metrics} & Giao thức đánh giá hiệu năng xếp hạng Top-N Recommendation &
 \textcite{cremonesi2010performance}; \textcite{he2017ncf} \\
 \hline
-2.5, 4.4.5 & Vấn đề đánh giá bằng mẫu âm lấy mẫu con (Sampled Metrics); chọn Full Ranking &
+\ref{sec:metrics}, \ref{subsec:sampled_comparison} & Vấn đề đánh giá bằng mẫu âm lấy mẫu con (Sampled Metrics); chọn Full Ranking &
 \textcite{krichene2020sampled} \\
 \hline
-3.2.5 & Chia dữ liệu theo một mốc thời gian chung thay vì Leave-One-Out &
+\ref{subsec:split_sampling} & Chia dữ liệu theo một mốc thời gian chung thay vì Leave-One-Out &
 \textcite{meng2020splitting} \\
 \hline
-3.6, 4.6 & Baseline phải được tinh chỉnh cùng ngân sách; không chọn mô hình trên tập test; MF được tune kỹ vượt NeuMF &
+\ref{sec:protocol}, \ref{sec:discussion} & Baseline phải được tinh chỉnh cùng ngân sách; không chọn mô hình trên tập test; MF được tune kỹ vượt NeuMF &
 \textcite{dacrema2019progress}; \textcite{rendle2020ncfmf} \\
 \hline
-3.6, 4.3 & iALS được tinh chỉnh là baseline MF mạnh &
+\ref{sec:protocol}, \ref{sec:tuning_results} & iALS được tinh chỉnh là baseline MF mạnh &
 \textcite{rendle2022ials} \\
 \hline
-3.6 & Kiểm định Wilcoxon signed-rank, paired bootstrap, hiệu chỉnh Holm &
+\ref{sec:protocol} & Kiểm định Wilcoxon signed-rank, paired bootstrap, hiệu chỉnh Holm &
 \textcite{wilcoxon1945}; \textcite{efron1993bootstrap}; \textcite{holm1979} \\
 \hline
-1.3 & Nền tảng và thư viện tính toán học sâu PyTorch &
+\ref{sec:phuongphap} & Nền tảng và thư viện tính toán học sâu PyTorch &
 \textcite{paszke2019pytorch} \\
 \hline
-2.5 & Đánh giá xếp hạng dựa trên độ đo NDCG &
+\ref{sec:metrics} & Đánh giá xếp hạng dựa trên độ đo NDCG &
 \textcite{jarvelin2002} \\
 \hline
-2.5.1 & Chỉ số ngoài độ chính xác: Novelty (Self-Information) &
+\ref{subsec:beyond_accuracy} & Chỉ số ngoài độ chính xác: Novelty (Self-Information) &
 \textcite{vargas2011novelty} \\
 \hline
 \end{longtable}
@@ -115,11 +115,10 @@ Mã nguồn nằm trong thư mục \texttt{neumf\_project/} của kho mã dự �
 
 \begin{enumerate}
     \item \textbf{Dữ liệu:} đặt \texttt{transactions\_train.csv} của cuộc thi H\&M vào \texttt{data/raw/hm/}, chạy \texttt{python run.py sample-hm} để tạo mẫu hm500k (tất định, khoảng 70 giây).
-    \item \textbf{Tinh chỉnh (chỉ tập xác thực):} \texttt{python scripts/10\_tune.py --model all}; mỗi cấu hình ghi một dòng vào \texttt{audit/tuning\_log.csv}, cấu hình tốt nhất vào \texttt{audit/best\_configs.json}.
-    \item \textbf{Đánh giá cuối trên tập kiểm thử:} \texttt{python scripts/11\_final.py --reason "..."} (3 seed). Kịch bản từ chối chạy nếu \texttt{audit/PREREG.md} chưa được lưu vào git, thiếu lý do hoặc mã nguồn có thay đổi chưa lưu; mỗi lần chấm ghi một dòng vào \texttt{audit/test\_access\_log.csv}.
-    \item \textbf{Kiểm định và biểu đồ:} \texttt{python scripts/12\_significance.py} rồi \texttt{python scripts/13\_plot\_final.py}.
-    \item \textbf{Phân tích phụ:} \texttt{python scripts/14\_secondary.py --reason "..."} (phân tầng, beyond-accuracy, Sampled-99, độ trễ; nạp lại trọng số, không huấn luyện lại).
-    \item \textbf{Xuất sang báo cáo:} \texttt{python scripts/15\_export\_report.py} sinh các bảng \texttt{content/tables/*.tex}, macro số liệu và chép hình vào \texttt{media/figures/final/}; biên dịch lại báo cáo.
+    \item \textbf{Tinh chỉnh (chỉ tập xác thực):} \texttt{python scripts/10\_tune.py --model all} cho năm mô hình chính và \texttt{--model extension} cho bốn mô hình mở rộng; mỗi cấu hình ghi một dòng vào \texttt{audit/tuning\_log.csv}, cấu hình tốt nhất vào \texttt{audit/best\_configs.json}.
+    \item \textbf{Kiểm tra sẵn sàng:} \texttt{python run.py preflight} -- mã nguồn đã lưu vào git, kế hoạch \texttt{audit/PREREG.md} đã lưu và có mục mở rộng, dữ liệu dựng lại khớp kích thước gốc, tinh chỉnh mở rộng chạy lại ra đúng cùng số.
+    \item \textbf{Chạy lại toàn bộ số liệu:} \texttt{python run.py final --reason "..."} chạy tuần tự: chấm test 3 seed (\texttt{11\_final.py}) $\rightarrow$ kiểm định (\texttt{12}) $\rightarrow$ mở rộng (\texttt{17\_extension.py}) $\rightarrow$ chỉ số @20 (\texttt{16}) $\rightarrow$ biểu đồ (\texttt{13}) $\rightarrow$ phân tích phụ (\texttt{14}) $\rightarrow$ xuất bảng, macro số liệu và hình sang báo cáo (\texttt{15}) $\rightarrow$ đối chiếu câu chữ (\texttt{19\_check\_report.py}). Các bước chấm test từ chối chạy nếu kế hoạch chưa được lưu vào git, thiếu lý do hoặc mã nguồn có thay đổi chưa lưu; mỗi lần chấm ghi một dòng vào \texttt{audit/test\_access\_log.csv}.
+    \item \textbf{Biên dịch báo cáo:} chạy \texttt{compile.bat} trong thư mục báo cáo. Nếu số liệu đổi, bước đối chiếu ở trên chỉ ra những câu nhận xét bằng chữ cần sửa.
 \end{enumerate}
 
-Notebook \texttt{notebooks/colab\_final.ipynb} chạy tuần tự các bước 1 và 3--6 trên Google Colab (GPU T4) với cấu hình đã tinh chỉnh. Nhật ký \texttt{audit/test\_access\_log.csv} liệt kê mọi lần tập kiểm thử được chấm, kèm phiên bản mã nguồn và mã băm cấu hình tương ứng.
+Notebook \texttt{notebooks/colab\_final.ipynb} chạy cùng chuỗi trên Google Colab (GPU T4) với cấu hình đã tinh chỉnh. Nhật ký \texttt{audit/test\_access\_log.csv} liệt kê mọi lần tập kiểm thử được chấm, kèm phiên bản mã nguồn và mã băm cấu hình tương ứng.

@@ -15,5 +15,6 @@ data/splits/**/*
 !data/splits/**/.gitkeep
 
 # Kết quả và checkpoint (*.pt, *.npz — mỗi file < 5 MB) đều được push để chạy lại demo/phân tích không cần train.
-# Chỉ bỏ config tạm của multi-seed.
+# Chỉ bỏ config tạm của multi-seed và thư mục kiểm tra tái lập tuning của scripts/18_preflight.py.
 outputs/experiments/_temp_configs/
+outputs/tuning_recheck/

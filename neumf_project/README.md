@@ -4,8 +4,10 @@
 
 Dữ liệu: **hm500k** — mẫu ~500k giao dịch H&M Personalized Fashion Recommendations, lấy theo khách hàng, trải đủ
 2018-09-20 → 2020-09-22 (sau k-core 10: 7.519 users × 10.345 items). Mô hình: GMF, MLP, NeuMF-Scratch,
-NeuMF-Pretrained; baseline Random, MostPopular, BPR-MF. Đánh giá Full Ranking, protocol chính chia theo một mốc
-thời gian chung.
+NeuMF-Pretrained; baseline Random, MostPopular, BPR-MF; phần mở rộng (PREREG mục 9) late fusion GMF + MLP,
+BPR-MF + MLP, ItemKNN, UserKNN. Đánh giá Full Ranking, protocol chính chia theo một mốc thời gian chung.
+
+**Chạy lại toàn bộ số liệu báo cáo:** `python run.py preflight` rồi `python run.py final --reason "..."` (mục 5.2).
 
 - **Lý thuyết, phạm vi, phương pháp, kết quả:** `pham_vi_du_an.md` — đọc trước khi sửa code.
 - **Hướng dẫn chạy:** file này (máy local mục 2–6, Google Colab mục 7).
@@ -47,13 +49,16 @@ neumf_project/
 │   ├── 15_export_report.py      # Xuất bảng .tex + macro số liệu + hình sang Report DACNTT/
 │   ├── 16_extra_k.py            # Chỉ số @20 tính lại từ hạng đã lưu (mô tả; không chấm lại mô hình)
 │   ├── 17_extension.py          # Mở rộng PREREG mục 9 trên TEST: late fusion GMF+MLP, BPR-MF+MLP, ItemKNN, UserKNN
+│   ├── 18_preflight.py          # Kiểm tra sẵn sàng trước khi chạy lại (tree sạch, PREREG, dữ liệu, tái lập tuning)
+│   ├── 19_check_report.py       # Đối chiếu sau khi chạy: tái lập, câu chữ báo cáo, số chép tay trong tài liệu
 │   └── run_all.py               # 03 rồi 05
-├── audit/                   # Bằng chứng thực nghiệm: PREREG.md, tuning_log.csv, best_configs.json, test_access_log.csv
+├── audit/                   # Bằng chứng thực nghiệm: PREREG.md, tuning_log.csv, best_configs.json, test_access_log.csv,
+│                            #   final_2909_*.csv (bản lưu kết quả lần chấm 29/09 để đối chiếu tái lập)
 ├── notebooks/
 │   └── colab_final.ipynb    # Notebook Colab chạy lại kết quả cuối (mục 7)
 ├── demo/                    # Web demo (xem demo/README.md)
 ├── outputs/
-│   ├── final/               # Kết quả cuối (summary.csv, significance.csv, seed*/)
+│   ├── final/               # Kết quả cuối (summary.csv, significance.csv, seed*/ kèm checkpoint, extension/)
 │   └── {checkpoints,experiments,tables,figures,data_audit,tuning}/
 ├── tests/
 ├── run.py                   # CLI tổng hợp (python run.py -h)
@@ -116,77 +121,83 @@ pytest -q                 # tests/ — cần có hm500k cho các test chạy tr�
 pytest demo/tests -q      # cần đã có run hm500k và file offline của demo
 ```
 
-## 5. Pipeline chính thức (tuning → test → kiểm định → biểu đồ)
+## 5. Pipeline chính thức (tuning → test → kiểm định → báo cáo)
 
-Đây là đường tạo ra số liệu trong báo cáo (xem `pham_vi_du_an.md` mục 7–9).
+Đây là đường tạo ra số liệu trong báo cáo (xem `pham_vi_du_an.md` mục 7–9, `audit/PREREG.md`).
 
 ### 5.1 Tuning (chỉ validation) — đã chạy xong, thường không cần chạy lại
 
 ```bash
-python scripts/10_tune.py --model all          # hoặc: bpr | gmf | mlp | neumf_scratch | neumf_pretrained
+python scripts/10_tune.py --model all          # 5 mô hình chính: bpr | gmf | mlp | neumf_scratch | neumf_pretrained
+python scripts/10_tune.py --model extension    # 4 mô hình mở rộng: itemknn | userknn | late_gmf_mlp | late_bpr_mlp
 ```
 
 Mặc định **ghi nối** vào `audit/tuning_log.csv` và ghi đè `best_configs.json` — là bằng chứng đã commit.
-Muốn thử lại mà không đụng bằng chứng: thêm `--log-dir outputs/tuning_rerun`. Thời gian gốc: 1,9 giờ GPU.
+Muốn thử lại mà không đụng bằng chứng: thêm `--log-dir outputs/tuning_rerun`. Thời gian gốc: 1,9 giờ GPU (chính) +
+khoảng 3 phút (mở rộng). Late fusion cần checkpoint train-only của GMF, MLP, BPR-MF trong `outputs/tuning/` (đã commit);
+nếu mất, script huấn luyện lại đúng cấu hình đó và ghi số val của bản dựng lại vào `audit/rebuilt_checkpoints.json`.
 
-### 5.2 Đánh giá cuối trên test (3 seed)
-
-```bash
-git status                       # working tree phải sạch, nếu không script từ chối chạy
-python scripts/11_final.py --reason "Lý do chấm test"      # mặc định seed 42 2024 2025
-# hoặc cả chuỗi 5.2 → 5.4 bằng một lệnh:
-python run.py final --reason "Lý do chấm test"
-```
-
-Mỗi mô hình: train trên train + early stopping trên val để lấy `best_epoch`, rồi **train lại từ đầu trên train ∪ val**
-đúng `best_epoch` epoch và chấm test (MostPopular, BPR-MF cũng fit trên train ∪ val) — `pham_vi_du_an.md` mục 5.1.
-
-Khoá test: script chỉ chạy khi `audit/PREREG.md` đã commit, có `--reason` và tree sạch. Mỗi seed ghi 1 dòng
-vào `audit/test_access_log.csv` **trước** khi chấm. Chạy một lần cho cả 3 seed (sau seed đầu file log đã đổi
-nên không chạy tách được). Chạy xong nên commit dòng log mới. Ra: `outputs/final/seed<N>/` (`results.json`,
-`results_per_user.csv`, `topk.json`, checkpoint). Thời gian: khoảng 1,5 giờ trên RTX 3050 (65 phút trước khi
-thêm bước train lại).
-
-### 5.3 Kiểm định và biểu đồ
+### 5.2 Chạy lại toàn bộ số liệu báo cáo — một lệnh
 
 ```bash
-python scripts/12_significance.py     # → outputs/final/summary.csv, significance.csv
-python scripts/13_plot_final.py       # → outputs/figures/final_metrics.png, final_significance.png, final_val_vs_test.png
+git status                                     # mọi thay đổi phải được commit trước (khoá test)
+python run.py preflight                        # kiểm tra sẵn sàng, không chấm test (3–4 phút)
+python run.py final --reason "Chạy lại toàn bộ trên commit cuối (PREREG mục 8, 02/10/2026)"
 ```
 
-`13_plot_final.py` cần `outputs/final/seed*/results_per_user.csv` (chỉ có sau khi chạy 11).
+`run.py final` chạy tuần tự (dừng ngay nếu một bước lỗi):
 
-### 5.4 Phân tích phụ và xuất sang báo cáo
+| Bước | Script | Việc | Chấm test? | Thời gian (RTX 3050) |
+|---|---|---|---|---|
+| 18 | `18_preflight.py` | tree sạch, PREREG đã commit và có mục 9, đủ cấu hình, dữ liệu khớp gốc, tuning mở rộng chạy lại ra đúng cùng số | không | 3–4 phút |
+| 11 | `11_final.py` | 3 seed: chọn epoch trên val → train lại trên train ∪ val → chấm test | có (3 dòng log) | ~1,5 giờ |
+| 12 | `12_significance.py` | mean ± std, Wilcoxon + bootstrap + Holm (họ 8 so sánh) | không | < 1 phút |
+| 17 | `17_extension.py` | late fusion (dùng đúng GMF/MLP/BPR-MF của bước 11), ItemKNN, UserKNN; họ 7 so sánh riêng | có (1 dòng log) | 5–10 phút |
+| 16 | `16_extra_k.py` | chỉ số @20 từ hạng đã lưu (cả mô hình mở rộng) | không | < 1 phút |
+| 13 | `13_plot_final.py` | biểu đồ `outputs/figures/final_*.png` | không | < 1 phút |
+| 14 | `14_secondary.py` | head/tail, cold/warm, beyond-accuracy, Sampled-99, độ trễ CPU | có (1 dòng log) | 10–15 phút |
+| 15 | `15_export_report.py` | bảng `.tex`, macro số liệu (kể cả câu kết luận tự sinh), hình → `../Report DACNTT/` | không | < 1 phút |
+| 19 | `19_check_report.py` | so số mới với bản đã commit, kiểm tra 33 khẳng định bằng chữ trong báo cáo, liệt kê dòng tài liệu còn ghi số cũ, macro/bảng còn thiếu | không | < 1 phút |
+
+- **Máy chạy:** kết quả 29/09 chạy trên máy có **GPU RTX 3050 Laptop** (`outputs/final/final.log`). Huấn luyện ở chế độ
+  GPU tất định (`src/utils/seed.py`, từ 28/09), nên chạy lại **trên chính máy đó** với cùng phiên bản thư viện kỳ vọng
+  ra đúng cùng số cho 7 mô hình chính — `19_check_report.py` in "trùng khớp" hoặc độ lệch. Máy khác (Colab T4) thì
+  Random, MostPopular, ItemKNN, UserKNN vẫn trùng, BPR-MF gần như trùng, GMF/MLP/NeuMF có thể lệch nhẹ. Máy không có GPU
+  NVIDIA (PyTorch bản CPU) chạy được nhưng chậm hơn nhiều.
+- **Khoá test:** 11 đòi tree sạch; 14 và 17 chỉ cho phép `outputs/` và `audit/test_access_log.csv` thay đổi (do bước
+  trước vừa ghi). Chạy một lệnh cho cả chuỗi (sau bước 11 tree đã đổi nên không chạy lại 11 riêng được nếu chưa commit).
+- **Chỉ chạy phần mở rộng** trên checkpoint đã có (không chạy lại 11): `python run.py extension --reason "..."`
+  (18 → 17 → 16 → 15 → 19).
+
+### 5.3 Sau khi chạy
+
+1. Đọc kết quả `19_check_report.py` (chạy lại bất cứ lúc nào: `python run.py check-report`):
+   - mục 2 `[SAI]`: câu nhận xét bằng chữ trong báo cáo không còn đúng với số mới → sửa câu ở `tệp:dòng` được in ra;
+   - mục 3: dòng trong `van_dap.md`, `pham_vi_du_an.md`, README, notebook còn ghi số cũ → sửa;
+   - mục 4: macro/bảng còn thiếu (bình thường phải hết sau bước 15).
+2. Biên dịch báo cáo: `../Report DACNTT/compile.bat`. Số liệu trong Chương 4, 5 và tóm tắt đọc qua macro
+   (`\Res{Pre}{NDCG10}`, `\Esig{all}{summary}`...) nên tự cập nhật; câu kết luận của phần mở rộng sinh từ
+   `outputs/final/extension/significance.csv`.
+3. (Tuỳ chọn) chụp lại Hình 3.3–3.4 nếu số trên demo đổi: `python run.py demo`, mở
+   `http://127.0.0.1:8000/?user=<customer_id>&compare=1&a=NeuMF-Pretrained&b=BPR-MF#admin`.
+4. Commit kết quả (`outputs/final/`, `audit/test_access_log.csv`, `Report DACNTT/`) và tài liệu đã sửa.
+
+### 5.4 Từng bước riêng lẻ (nếu cần)
 
 ```bash
-python scripts/14_secondary.py --reason "Phân tích phụ trên test"   # nạp checkpoint của 11, không train lại
-python scripts/15_export_report.py                                 # → ../Report DACNTT/content/tables/, media/figures/final/
+python scripts/11_final.py --reason "..."       # mặc định seed 42 2024 2025
+python scripts/12_significance.py               # → outputs/final/summary.csv, significance.csv
+python scripts/17_extension.py --reason "..."   # → outputs/final/extension/
+python scripts/16_extra_k.py                    # → outputs/final/extra_k20.csv
+python scripts/13_plot_final.py                 # → outputs/figures/final_*.png
+python scripts/14_secondary.py --reason "..."   # → outputs/final/{stratified,beyond_accuracy,sampled99,latency}.csv
+python scripts/15_export_report.py              # → ../Report DACNTT/content/tables/, media/figures/final/
+python scripts/19_check_report.py               # đối chiếu
 ```
 
-`14_secondary.py` cần checkpoint trong `outputs/final/seed*/` và là một lần chấm test (ghi 1 dòng nhật ký); chỉ đòi
-code/cấu hình không bị sửa (cho phép `outputs/` và `audit/test_access_log.csv`). Ra `outputs/final/{stratified,
-beyond_accuracy,sampled99,latency}.csv` (khoảng 10–15 phút trên GPU).
-
-`15_export_report.py` sinh bảng `.tex`, file macro `results_macros.tex` và chép hình `final_*.png` vào báo cáo. Chương 4,
-5 và phần tóm tắt đọc số qua macro (`\Res{Pre}{NDCG10}`, `\Sig{PreBPR}{pholm}`…), nên chạy lại script rồi biên dịch là
-số trong báo cáo tự cập nhật. Bảng/hình chưa có số liệu sẽ hiện khung "Chưa có số liệu" thay vì lỗi biên dịch.
-
-### 5.5 Mở rộng sau khi xem test (PREREG mục 9)
-
-Trả lời góp ý của GVHD: late fusion MF + DNN (so với NeuMF là early fusion) và baseline láng giềng của đề cương.
-
-```bash
-python scripts/10_tune.py --model extension    # chỉ val: k của ItemKNN/UserKNN, w của 2 late fusion
-# ghi tham số đã chọn vào audit/PREREG.md mục 9, rồi COMMIT toàn bộ (khoá test đòi tree sạch)
-python scripts/17_extension.py --reason "Mở rộng PREREG mục 9"   # 1 lần chấm test, CPU vài phút
-python scripts/16_extra_k.py                    # @20 từ hạng đã lưu (cả mô hình mở rộng)
-python scripts/15_export_report.py
-```
-
-Late fusion = w·minmax(điểm A) + (1−w)·minmax(điểm B), hai mô hình huấn luyện riêng (`src/models/late_fusion.py`).
-`17_extension.py` nạp GMF, MLP, BPR-MF đã huấn luyện của từng seed trong `outputs/final/seed*/` (không train lại), dựng
-ItemKNN/UserKNN trên train ∪ val, kiểm định họ 7 so sánh riêng (Holm riêng). Nếu checkpoint tuning (train-only) không
-còn, `10_tune.py` huấn luyện lại đúng cấu hình tốt nhất và ghi số val của bản dựng lại vào `audit/rebuilt_checkpoints.json`.
+Late fusion = w·minmax(điểm A) + (1−w)·minmax(điểm B), hai mô hình huấn luyện riêng (`src/models/late_fusion.py`),
+min-max trên tập ứng viên của từng user. Bảng/hình chưa có số liệu sẽ hiện khung "Chưa có số liệu", macro chưa có
+giá trị hiện "[chưa có]" thay vì lỗi biên dịch.
 
 ## 6. Chạy nhanh bằng `run.py` (khám phá, protocol phụ, demo)
 
@@ -221,9 +232,9 @@ Demo bằng Docker (chỉ inference, dữ liệu và `outputs/` mount qua volume
 
 ## 7. Chạy trên Google Colab
 
-Notebook chính: **`notebooks/colab_final.ipynb`** — chạy lại đúng pipeline mục 5.2–5.4 (dữ liệu → khám phá từng bước →
-11_final 3 seed → kiểm định → biểu đồ → phân tích phụ → xuất bảng/hình cho báo cáo), dùng `best_configs.json` đã tune,
-**không tune lại**.
+Notebook chính: **`notebooks/colab_final.ipynb`** — chạy đúng chuỗi của `python run.py final` (mục 5.2: dữ liệu →
+khám phá từng bước → kiểm tra sẵn sàng → 11_final 3 seed → kiểm định → mở rộng PREREG mục 9 → @20 → biểu đồ → phân
+tích phụ → xuất bảng/hình cho báo cáo → đối chiếu câu chữ), dùng `best_configs.json` đã tune, **không tune lại**.
 
 Notebook **clone code từ GitHub** (`sulinh3625/DU-AN-CNTT`, nhánh `main`), nên mọi thay đổi ở máy local phải
 **commit + push** trước khi chạy.
@@ -260,12 +271,12 @@ Chọn một trong hai cách:
 | 3 | Clone repo + `pip install` | Nếu pip đổi phiên bản numpy/pandas: `Runtime → Restart session`, chạy lại ô 2 và `%cd /content/DU-AN-CNTT/neumf_project` |
 | 4 | Dữ liệu hm500k | Dùng bản trên Drive nếu có; không thì tải Kaggle + lấy mẫu (10–20 phút) rồi lưu lên Drive |
 | 5 | Khám phá pipeline từng bước | Kiểm tra khớp lần chạy gốc (201.801 cặp train, 10.145 item trong train) — lệch thì **dừng** |
-| 6 | pytest + kiểm tra tree sạch | Tree bẩn thì 11_final từ chối chạy |
+| 6 | pytest + `18_preflight.py` | Báo **CHƯA SẴN SÀNG** (tree bẩn, PREREG thiếu mục 9, dữ liệu lệch, tuning mở rộng không tái lập) thì dừng |
 | 7 | `11_final.py` 3 seed | 65 phút – 2 giờ; log ghi song song lên Drive. Giữ tab mở để Colab không ngắt |
-| 8 | Kiểm định + biểu đồ | Báo lỗi nếu seed nào chưa chạy xong |
+| 8 | Kiểm định, `17_extension.py`, @20, biểu đồ | Báo lỗi nếu seed nào chưa chạy xong; phần mở rộng 5–10 phút, ghi 1 dòng nhật ký test |
 | 9 | `14_secondary.py` | 10–15 phút; sửa `REASON_SECONDARY` ở ô 2 nếu muốn. Độ trễ đo trên CPU của Colab |
-| 10 | `15_export_report.py` | Sinh bảng/macro/hình cho báo cáo trong bản clone |
-| 11 | Lưu Drive + tải zip về máy | `My Drive/neumf_colab/results_<thời điểm>/` (không kèm checkpoint) |
+| 10 | `15_export_report.py`, `19_check_report.py` | Sinh bảng/macro/hình cho báo cáo trong bản clone; log đối chiếu lưu `check_report.log` lên Drive |
+| 11 | Lưu Drive + tải zip về máy | `My Drive/neumf_colab/results_<thời điểm>/` (kèm checkpoint của `outputs/final/seed*/`) |
 | 12 | Xem nhanh kết quả | Đối chiếu với số gốc ở cuối notebook |
 
 ### 7.4 Sau khi chạy
@@ -279,12 +290,10 @@ Giải nén zip và chép về repo (bảng này cũng có ở cuối mục 11 c
 | `test_access_log.csv` | `neumf_project/audit/test_access_log.csv` (ghi đè — đã gồm dòng cũ + dòng mới) |
 | `report/` | `Report DACNTT/` (ghi đè `content/tables/`, `media/figures/final/`) |
 
-Rồi commit và biên dịch lại báo cáo (`Report DACNTT/compile.bat`). Các câu nhận xét bằng chữ ở chương 4 (so sánh gần
-ngưỡng nhất, thứ hạng, phân tầng, beyond-accuracy — mục 4.4.1–4.4.5) viết theo số liệu lần chấm 29/09: chạy lại thì
-đọc lại và sửa nếu số đổi chiều.
+Rồi làm như mục 5.3: `python run.py check-report` chỉ ra câu nhận xét bằng chữ nào trong báo cáo (Chương 1, 4, 5, tóm
+tắt) không còn đúng với số mới và dòng tài liệu nào còn ghi số cũ; sửa, biên dịch lại báo cáo
+(`Report DACNTT/compile.bat`) và commit. Câu kết luận của phần mở rộng và câu "Lần chấm" ở mục 4.1 tự sinh từ số liệu.
 
-- Nếu số so sánh "tốt hơn" trong bảng kiểm định khác 0/8, các câu kết luận chữ trong chương 4, 5 và tóm tắt phải sửa
-  theo (số liệu trong câu thì tự cập nhật, nhưng câu "không so sánh nào có ý nghĩa" là chữ).
 - Random và MostPopular phải ra giống hệt số gốc; BPR-MF gần như giống hệt; GMF/MLP/NeuMF trên GPU T4 có thể lệch
   nhẹ (cuDNN không tất định). Kết luận thống kê mới là thứ cần giữ.
 - Colab ngắt giữa chừng: chạy lại từ ô 2 (mỗi lần chạy lại vẫn được ghi vào nhật ký test).

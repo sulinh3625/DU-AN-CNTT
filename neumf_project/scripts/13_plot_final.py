@@ -3,7 +3,9 @@
     python scripts/12_significance.py && python scripts/13_plot_final.py
 
 Ra outputs/figures/: final_metrics.png (3 metric, mean ± std + điểm từng seed), final_significance.png (chênh lệch
-NDCG@10 + CI 95% bootstrap, p Holm), final_val_vs_test.png (NDCG@10 trên val lúc tuning vs test).
+NDCG@10 + CI 95% bootstrap, p Holm), final_val_vs_test.png (NDCG@10 trên val lúc tuning vs test),
+final_training_curves.png (đường hội tụ seed 42, cần history.csv của 11_final.py), final_ablation_val.png (ablation
+trên validation, cần outputs/ablation/ablation_val.csv của 20_ablation.py). Tiêu đề hình sinh theo số liệu.
 """
 from __future__ import annotations
 
@@ -93,8 +95,9 @@ def plot_significance(sig: pd.DataFrame):
                 transform=ax.get_yaxis_transform(), va="center", fontsize=8.5, color=INK2)
     ax.set_xlim(sig["ci_low"].min() * 1.1, right)
     ax.set_xlabel("Chênh lệch NDCG@10 (A − B), CI 95% bootstrap theo user", fontsize=9, color=INK2)
-    ax.set_title("Kiểm định cặp: không so sánh nào có ý nghĩa (Wilcoxon + Holm, α = 0,05)",
-                 fontsize=11, color=INK, loc="left")
+    n_sig = int((sig["verdict"] != "không khác biệt có ý nghĩa").sum())
+    verdict = "không so sánh nào có ý nghĩa" if n_sig == 0 else f"{n_sig}/{len(sig)} so sánh có ý nghĩa"
+    ax.set_title(f"Kiểm định cặp: {verdict} (Wilcoxon + Holm, α = 0,05)", fontsize=11, color=INK, loc="left")
     style(ax, 4)
     fig.savefig(FIG / "final_significance.png", dpi=200, bbox_inches="tight", facecolor=SURFACE)
     plt.close(fig)
@@ -116,9 +119,86 @@ def plot_val_vs_test(per: pd.DataFrame, order: list[str]):
                        for c, lab in (("#eb6834", "Validation (seed 42, cấu hình tốt nhất)"),
                                       ("#2a78d6", "Test (trung bình 3 seed)"))],
               loc="upper center", bbox_to_anchor=(0.5, -0.14), ncol=2, frameon=False, fontsize=9)
-    ax.set_title("NDCG@10: thứ hạng trên validation không giữ nguyên trên test", fontsize=11, color=INK, loc="left")
+    val_rank = sorted(models, key=lambda m: -best[TUNE_KEY[m]]["val"]["NDCG@10"])
+    test_rank = sorted(models, key=lambda m: -test[m])
+    kept = "giữ nguyên" if val_rank == test_rank else "không giữ nguyên"
+    ax.set_title(f"NDCG@10: thứ hạng trên validation {kept} trên test", fontsize=11, color=INK, loc="left")
     style(ax, 4)
     fig.savefig(FIG / "final_val_vs_test.png", dpi=200, bbox_inches="tight", facecolor=SURFACE)
+    plt.close(fig)
+
+
+NEURAL_COLOR = {"GMF": "#eb6834", "MLP": "#f2b134", "NeuMF-Scratch": "#2a78d6", "NeuMF-Pretrained": "#173f7a"}
+
+
+def style_lines(ax, yfmt=4):
+    """Kiểu cho biểu đồ đường: trục x là epoch/số nguyên, trục y định dạng số kiểu Việt Nam."""
+    ax.set_facecolor(SURFACE)
+    for side in ("top", "right"):
+        ax.spines[side].set_visible(False)
+    for side in ("left", "bottom"):
+        ax.spines[side].set_color(MUTED)
+    ax.tick_params(colors=INK2, labelsize=9, length=0)
+    ax.grid(axis="y", color=GRID, linewidth=0.8)
+    ax.set_axisbelow(True)
+    ax.yaxis.set_major_formatter(FuncFormatter(lambda v, _: vn(v, yfmt)))
+
+
+def plot_training_curves(seed_dir: Path):
+    """Đường hội tụ của 4 mạng nơ-ron (seed 42): NDCG@10 validation và loss huấn luyện theo epoch, phase chọn epoch."""
+    path = seed_dir / "history.csv"
+    if not path.exists():
+        print(f"Bỏ qua đường hội tụ: chưa có {path.relative_to(PROJECT_ROOT).as_posix()} (11_final.py bản mới ghi file này)")
+        return
+    h = pd.read_csv(path)
+    sel = h[h["phase"] == "select"]
+    fig, axes = plt.subplots(1, 2, figsize=(12.5, 4.2), facecolor=SURFACE)
+    for m, c in NEURAL_COLOR.items():
+        d = sel[sel["model"] == m]
+        if d.empty:
+            continue
+        axes[0].plot(d["epoch"], d["NDCG@10"], color=c, linewidth=1.8, marker="o", markersize=3, label=m)
+        b = d.loc[d["NDCG@10"].idxmax()]
+        axes[0].scatter([b["epoch"]], [b["NDCG@10"]], s=90, facecolors="none", edgecolors=c, linewidths=1.8, zorder=3)
+        axes[1].plot(d["epoch"], d["loss"], color=c, linewidth=1.8, label=m)
+    axes[0].set_title("NDCG@10 trên validation theo epoch (vòng tròn: epoch tốt nhất)", fontsize=11, color=INK, loc="left")
+    axes[1].set_title("Hàm mất mát BCE trên tập huấn luyện theo epoch", fontsize=11, color=INK, loc="left")
+    for ax, fmt in zip(axes, (4, 3)):
+        style_lines(ax, fmt)
+        ax.set_xlabel("Epoch", fontsize=9, color=INK2)
+        ax.xaxis.get_major_locator().set_params(integer=True)
+    axes[0].legend(loc="lower right", frameon=False, fontsize=9)
+    fig.suptitle(f"Đường hội tụ khi chọn số epoch (seed {seed_dir.name.removeprefix('seed')}; NeuMF-Pretrained: giai "
+                 "đoạn tinh chỉnh sau tiền huấn luyện)", fontsize=12, color=INK, y=1.03)
+    fig.savefig(FIG / "final_training_curves.png", dpi=200, bbox_inches="tight", facecolor=SURFACE)
+    plt.close(fig)
+
+
+ABLATION = PROJECT_ROOT / "outputs" / "ablation" / "ablation_val.csv"
+ABLATION_FACTORS = [("embedding_dim", "Số chiều embedding d"), ("n_hidden", "Số tầng ẩn của tháp MLP"),
+                    ("negative_ratio", "Số mẫu âm cho mỗi mẫu dương")]
+
+
+def plot_ablation():
+    """Ablation trên validation (scripts/20_ablation.py): NDCG@10 khi đổi từng yếu tố, cột đậm = cấu hình đã chọn."""
+    if not ABLATION.exists():
+        print("Bỏ qua hình ablation: chưa có outputs/ablation/ablation_val.csv (chạy scripts/20_ablation.py)")
+        return
+    a = pd.read_csv(ABLATION, dtype={"value": str}, keep_default_na=False)
+    fig, axes = plt.subplots(1, 3, figsize=(13, 3.9), sharey=True, facecolor=SURFACE)
+    for ax, (factor, label) in zip(axes, ABLATION_FACTORS):
+        rows = a[a["factor"].isin([factor, "base"])].sort_values(factor)
+        xs = rows[factor].astype(int).astype(str).tolist()
+        colors = ["#2a78d6" if f == "base" else "#a9c4e8" for f in rows["factor"]]
+        ax.bar(xs, rows["NDCG@10"], color=colors, width=0.62)
+        for x, v in zip(xs, rows["NDCG@10"]):
+            ax.text(x, v, vn(v, 4), ha="center", va="bottom", fontsize=8, color=INK)
+        ax.set_xlabel(label, fontsize=9.5, color=INK2)
+        style_lines(ax, 4)
+    axes[0].set_ylabel("NDCG@10 (validation)", fontsize=9.5, color=INK2)
+    fig.suptitle("Ablation NeuMF-Scratch trên validation — đổi từng yếu tố quanh cấu hình đã chọn (cột đậm), seed 42",
+                 fontsize=12, color=INK, y=1.04)
+    fig.savefig(FIG / "final_ablation_val.png", dpi=200, bbox_inches="tight", facecolor=SURFACE)
     plt.close(fig)
 
 
@@ -129,6 +209,8 @@ def main():
     plot_metrics(per, order)
     plot_significance(pd.read_csv(FINAL / "significance.csv"))
     plot_val_vs_test(per, order)
+    plot_training_curves(FINAL / "seed42")
+    plot_ablation()
     print("Đã ghi:", *sorted(p.name for p in FIG.glob("final_*.png")))
 
 

@@ -1,9 +1,9 @@
 % Sinh tự động bởi scripts/15_export_report.py — KHÔNG sửa tay.
 \begin{table}[htbp]
-    \centering
+    \centering\small
     \caption{Chỉ số ngoài độ chính xác của danh sách top-10 trên tập test (trung bình 3 seed)}
     \label{tab:beyond}
-    \resizebox{\textwidth}{!}{%
+    \begin{adjustbox}{max width=\textwidth}
     \begin{tabular}{lrrrr}
         \toprule
         Mô hình & Coverage & Novelty (bit) & ARP & HRR \\
@@ -13,8 +13,9 @@
         GMF & 2{,}9\% & 10{,}02 & 220{,}5 & 99{,}5\% \\
         MLP & 0{,}6\% & 9{,}80 & 243{,}3 & 99{,}9\% \\
         BPR-MF & 7{,}4\% & 10{,}13 & 227{,}6 & 93{,}3\% \\
-        MostPopular & 0{,}2\% & 9{,}69 & 258{,}5 & 100{,}0\% \\
+        Most Popular & 0{,}2\% & 9{,}69 & 258{,}5 & 100{,}0\% \\
         \bottomrule
-    \end{tabular}}
+    \end{tabular}
+    \end{adjustbox}
     \par\smallskip{\footnotesize Coverage: tỉ lệ item xuất hiện trong ít nhất một top-10. Novelty: $-\log_2 P(i)$ trung bình. ARP: số tương tác train $\cup$ val trung bình của item được gợi ý. HRR: tỉ lệ item head trong top-10.}
 \end{table}

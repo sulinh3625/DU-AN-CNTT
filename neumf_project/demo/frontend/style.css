@@ -124,6 +124,9 @@ th, td { padding: 6px 8px; border-bottom: 1px solid var(--border); text-align: r
 th:first-child, td:first-child { text-align: left; }
 th { font-size: 11px; text-transform: uppercase; letter-spacing: 0.03em; color: var(--muted); }
 td.best { font-weight: 800; }
+.nb-table td { vertical-align: top; }
+.nb-table td:nth-child(2), .nb-table th:nth-child(2), .sig td:nth-child(2), .sig th:nth-child(2) { text-align: left; }
+.nb-table .tag { display: inline-block; margin: 0 4px 4px 0; text-align: left; }
 .dash-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
 .dash-grid .wide { grid-column: 1 / -1; }
 @media (max-width: 980px) { .dash-grid { grid-template-columns: 1fr; } }

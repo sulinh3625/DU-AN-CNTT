@@ -6,23 +6,35 @@ import pandas as pd
 import pytest
 
 from demo.backend import inference, metrics_io
-from demo.backend.data_context import DataContext, resolve_latest_run_tag
+from demo.backend.data_context import FINAL_DIR, FINAL_SEED, DataContext, final_available, resolve_latest_run_tag
 from demo.backend.onboarding import Onboarding, load_onboarding_config
 from src.data_pipeline.splitting import assert_disjoint_splits
 
 TOL = 1e-6
+# Logit tính lại trên CPU có thể lệch ~1e-7 so với GPU lúc đánh giá cuối -> hai item gần như hoà điểm có thể đổi chỗ
+# ở hạng rất sâu. Mọi hạng trong vùng top-DEEP phải trùng tuyệt đối; sâu hơn cho phép lệch vài vị trí.
+DEEP, DEEP_SLACK = 100, 3
 
 
 @pytest.fixture(scope="module")
 def ctx():
+    """Chế độ explore: run khám phá leave-one-out."""
     try:
         resolve_latest_run_tag()
     except FileNotFoundError as exc:
         pytest.skip(str(exc))
-    return DataContext(load_customers=False)
+    return DataContext(load_customers=False, mode="explore")
 
 
-# ------------------------------------------------------------------ split
+@pytest.fixture(scope="module")
+def fctx():
+    """Chế độ final: checkpoint của đánh giá cuối (outputs/final/seed42)."""
+    if not final_available():
+        pytest.skip("Chưa có outputs/final/seed42 kèm checkpoint — chạy scripts/11_final.py")
+    return DataContext(load_customers=False, mode="final")
+
+
+# ------------------------------------------------------------------ explore: split
 def test_splits_disjoint_and_one_item_per_user(ctx):
     assert_disjoint_splits(ctx.train_df, ctx.val_df, ctx.test_df)
     assert ctx.test_df["user"].is_unique and ctx.val_df["user"].is_unique
@@ -57,7 +69,7 @@ def test_candidates_follow_protocol(ctx):
     assert len(cand) == ctx.n_items - len(ctx.seen_pos[u] - {ctx.target_item[u]})
 
 
-# --------------------------------------------------- per-user vs file
+# --------------------------------------------------- explore: per-user vs file
 def test_demo_metrics_match_results_per_user(ctx):
     path = metrics_io.per_user_path(ctx.run_tag)
     if path is None:
@@ -73,7 +85,8 @@ def test_demo_metrics_match_results_per_user(ctx):
             assert out["rank"] == row["rank"], (m, u)
             assert out["n_candidates"] == row["n_candidates"]
             for metric, v in out["metrics"].items():
-                assert abs(v - row[metric]) <= TOL, (m, u, metric, v, row[metric])
+                if metric in row:
+                    assert abs(v - row[metric]) <= TOL, (m, u, metric, v, row[metric])
 
 
 def test_results_per_user_mean_matches_run(ctx):
@@ -87,6 +100,83 @@ def test_results_per_user_mean_matches_run(ctx):
     for m, row in means.iterrows():
         for metric, v in row.items():
             assert abs(v - official.loc[m, metric]) <= TOL, (m, metric)
+
+
+# ------------------------------------------------------------------ final: đúng mô hình của Chương 4
+def test_final_targets_are_test_pairs_and_unseen(fctx):
+    assert fctx.mode == "final" and fctx.evaluated_on == "test"
+    expected = {int(u): sorted(int(i) for i in g["item"]) for u, g in fctx.test_df.groupby("user")}
+    assert fctx.target_items == expected
+    for u in fctx.target_users[:300]:
+        u = int(u)
+        assert not set(fctx.target_items[u]) & fctx.train_pos[u]
+        hist = fctx.history(u)
+        assert {h["item_idx"] for h in hist} == fctx.train_pos[u]
+        assert all(h["t_dat"] < str(fctx.cfg.dataset.test_start) for h in hist)  # lịch sử chỉ trước mốc test
+
+
+def test_final_candidates_match_evaluation_records(fctx):
+    """Tập ứng viên của demo trùng record của 11_final.py (build_full_ranking_records_multi trên train ∪ val)."""
+    from src.evaluation.full_ranking import build_full_ranking_records_multi
+    pool = np.flatnonzero(fctx.pool_mask)
+    users = set(int(u) for u in fctx.target_users[:200])
+    sub = fctx.test_df[fctx.test_df["user"].isin(users)]
+    for rec in build_full_ranking_records_multi(sub, fctx.n_items, fctx.seen_pos, pool):
+        mine = inference.eval_record(fctx, rec.user)
+        assert np.array_equal(mine.candidates, rec.candidates)
+        assert np.array_equal(mine.positives, rec.positives)
+
+
+def test_final_metrics_match_chapter4_per_user(fctx):
+    """Chỉ số per-user của demo khớp outputs/final/seed42/results_per_user.csv (số của Chương 4)."""
+    ref = pd.read_csv(FINAL_DIR / f"seed{FINAL_SEED}" / "results_per_user.csv").set_index(["model", "user"])
+    rng = np.random.default_rng(1)
+    users = rng.choice(fctx.target_users, size=60, replace=False)
+    models = [m for m in fctx.available_models if m in ref.index.get_level_values(0)]
+    assert set(models) >= {"NeuMF-Pretrained", "NeuMF-Scratch", "GMF", "MLP", "BPR-MF", "MostPopular"}
+    for m in models:
+        for u in users:
+            out = inference.recommend(fctx, m, int(u), 10)["evaluation"]
+            row = ref.loc[(m, int(u))]
+            want = [int(x) for x in str(row["ranks"]).split(";")]
+            assert out["n_candidates"] == row["n_candidates"]
+            for got, exp in zip(out["ranks"], want):
+                assert got == exp if min(got, exp) <= DEEP else abs(got - exp) <= DEEP_SLACK, (m, u, got, exp)
+            for metric, v in out["metrics"].items():
+                if metric in row:
+                    assert abs(v - row[metric]) <= TOL, (m, u, metric, v, row[metric])
+
+
+def test_final_late_fusion_minmax_on_candidates(fctx):
+    """Late fusion chuẩn hoá min-max trên tập ứng viên (như 17_extension.py), không phải trên toàn catalog."""
+    if "LateFusion-GMF-MLP" not in fctx.scorers:
+        pytest.skip("Chưa có tham số mở rộng trong best_configs.json")
+    u = int(fctx.target_users[0])
+    rec = inference.eval_record(fctx, u)
+    scores = inference.candidate_scores(fctx, "LateFusion-GMF-MLP", u, rec)
+    assert len(scores) == len(rec.candidates) and scores.min() >= 0 and scores.max() <= 1
+
+
+def test_final_neighbors_are_sorted_and_counted(fctx):
+    if "UserKNN" not in fctx.scorers:
+        pytest.skip("Chưa có tham số UserKNN trong best_configs.json")
+    u = int(fctx.target_users[5])
+    nb = fctx.neighbors(u, 10)
+    assert 0 < len(nb) <= 10
+    sims = [n["similarity"] for n in nb]
+    assert sims == sorted(sims, reverse=True)
+    for n in nb:
+        v = fctx.user2idx[n["customer_id"]]
+        assert n["n_common"] == len(fctx.train_pos[u] & fctx.train_pos[v]) > 0
+        assert {t["item_idx"] for t in n["bought_target"]} <= set(fctx.target_items[u])
+
+
+def test_final_dashboard_reads_result_files(fctx):
+    d = metrics_io.final_dashboard(fctx)
+    assert d["summary"]["status"] == "ok"
+    models = {r["model"] for r in d["summary"]["data"]}
+    assert {"BPR-MF", "NeuMF-Pretrained", "Random"} <= models
+    assert d["stats"]["data"]["n_test_users"] == len(fctx.target_users)
 
 
 # ------------------------------------------------------------- onboarding
