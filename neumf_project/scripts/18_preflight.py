@@ -10,8 +10,9 @@ Dừng với mã lỗi 1 nếu một điều kiện bắt buộc không đạt (
   3. audit/best_configs.json có đủ 5 mô hình chính + 4 mô hình mở rộng; checkpoint train-only của thành phần late
      fusion còn trong outputs/tuning/ (nếu mất, 10_tune.py sẽ dựng lại và làm bẩn tree).
   4. Dữ liệu hm500k dựng lại ra đúng kích thước của lần chạy gốc (201.801 / 7.057 / 9.229 cặp, ...).
-  5. Tuning mở rộng chạy lại (ghi ra outputs/tuning_recheck/, bị .gitignore) cho đúng cùng tham số và số val như
-     audit/ — nếu lệch thì code đã đổi, phải xem lại trước khi chấm test.
+  5. Tuning mở rộng chạy lại trên CPU (ghi ra outputs/tuning_recheck/, bị .gitignore) cho cùng tập cấu hình và số val
+     như audit/ — lệch NDCG@10 quá TOL_NDCG thì code đã đổi, phải xem lại trước khi chấm test; lệch nhỏ hơn (sai khác
+     số học giữa máy) chỉ cảnh báo.
 Cảnh báo (không dừng): không có GPU, ít dung lượng đĩa, thiếu thư mục báo cáo.
 """
 from __future__ import annotations
@@ -19,10 +20,13 @@ from __future__ import annotations
 import argparse
 import importlib.util
 import json
+import os
 import shutil
 import subprocess
 import sys
 from pathlib import Path
+
+import pandas as pd
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(PROJECT_ROOT))
@@ -33,12 +37,15 @@ AUDIT = PROJECT_ROOT / "audit"
 PREREG_MARKER = "## 9. Mở rộng sau khi xem test"
 MAIN_KEYS = ["bpr", "gmf", "mlp", "neumf_scratch", "neumf_pretrained"]
 EXT_KEYS = ["itemknn", "userknn", "late_gmf_mlp", "late_bpr_mlp"]
-# Kích thước của lần chạy gốc (pham_vi_du_an.md mục 5.1, báo cáo Bảng 3.3).
+# Kích thước dữ liệu của lần chạy gốc giao thức v1 (29/09/2026, mẫu A, một mốc thời gian chung).
 EXPECTED = {"train": 201_801, "val": 7_057, "test": 9_229, "test_users": 2_996, "train_items": 10_145,
             "trva": 209_212, "trva_items": 10_216}
 RECHECK_DIR = PROJECT_ROOT / "outputs" / "tuning_recheck"
 ORIGINAL_GPU = "RTX 3050"  # GPU của lần chạy 29/09 (outputs/final/final.log)
 METRICS = ["NDCG@10", "Recall@10", "HR@10", "Precision@10", "NDCG@5"]
+# Một item đúng đổi hạng một bậc làm NDCG@10 val (2.275 user) lệch từ ~1e-5 (giữa danh sách) tới ~1,6e-4 (hạng 1↔2);
+# 5e-4 ≈ 5% của NDCG@10 val (~0,01) — đủ rộng cho sai khác số học giữa máy, đủ hẹp để bắt code đổi.
+TOL_NDCG = 5e-4
 
 
 class Report:
@@ -129,7 +136,9 @@ def check_data(r: Report) -> None:
     try:
         _, D = tune.load_data("configs/hm500k_global.yaml", with_test=True)
     except FileNotFoundError as exc:
-        r.fail(f"Không đọc được dữ liệu: {exc} — chạy `python run.py sample-hm`.")
+        r.fail(f"Không đọc được dữ liệu: {exc} — chạy `python run.py sample-hm`. Máy đã chạy trước 02/10 (thư mục cũ "
+               "neumf_project_v2/): data/ bị .gitignore nên không theo khi đổi tên thư mục — chép "
+               "neumf_project_v2/data/ sang neumf_project/data/.")
         return
     got = {"train": len(D.tr), "val": len(D.va), "test": len(D.te), "test_users": len(D.test),
            "train_items": len(D.pool), "trva": len(D.trva), "trva_items": len(D.test_pool)}
@@ -141,28 +150,54 @@ def check_data(r: Report) -> None:
              "10.216 item ứng viên")
 
 
+def compare_extension(old: pd.DataFrame, new: pd.DataFrame, best: dict, again: dict, key: str) -> tuple[str, str]:
+    """So tuning mở rộng chạy lại với audit/ cho một mô hình: ("ok" | "warn" | "fail", thông điệp).
+
+    So TỪNG cấu hình (tuning_log.csv), không chỉ cấu hình tốt nhất. Lệch NDCG@10 ≤ TOL_NDCG là sai khác số học giữa
+    máy/thiết bị (thứ tự cộng dấu phẩy động làm vài item đúng đổi hạng một bậc) -> chỉ cảnh báo, kể cả khi lần chạy lại
+    chọn tham số khác trong phạm vi sai số; 17_extension.py luôn dùng tham số đã đăng ký trong audit/best_configs.json.
+    Khác tập cấu hình hoặc lệch lớn hơn -> code đã đổi."""
+    cols = [f"val_{m}" for m in METRICS]
+    o = old[old["model"] == key].drop_duplicates("params", keep="last").set_index("params")[cols]
+    n = new[new["model"] == key].drop_duplicates("params", keep="last").set_index("params")[cols]
+    if set(n.index) != set(o.index):
+        return "fail", (f"Tuning mở rộng {key} KHÔNG tái lập: tập cấu hình khác audit/ "
+                        f"({sorted(set(n.index) ^ set(o.index))[:3]}) — code đã đổi, xem lại trước khi chấm test.")
+    gap = (n - o.loc[n.index]).abs()
+    gap_ndcg, gap_all = float(gap["val_NDCG@10"].max()), float(gap.to_numpy().max())
+    gap_best = max(abs(again[key]["val"][mt] - best[key]["val"][mt]) for mt in METRICS)
+    same = again[key]["params"] == best[key]["params"]
+    if same and gap_all == 0 and gap_best == 0:
+        return "ok", f"Tuning mở rộng {key}: cùng tham số {best[key]['params']}, val khớp tuyệt đối ({len(n)} cấu hình)"
+    if gap_ndcg <= TOL_NDCG:
+        picked = "" if same else f"; lần chạy lại chọn {again[key]['params']} (chênh nằm trong sai số)"
+        return "warn", (f"Tuning mở rộng {key}: val lệch tối đa {gap_all:.1e} (NDCG@10 {gap_ndcg:.1e} ≤ {TOL_NDCG:.0e})"
+                        f" — sai khác số học giữa máy, không phải code đổi{picked}. 17_extension.py dùng tham số đã "
+                        f"đăng ký {best[key]['params']}.")
+    return "fail", (f"Tuning mở rộng {key} KHÔNG tái lập: NDCG@10 val lệch tới {gap_ndcg:.2e} (> {TOL_NDCG:.0e}) — "
+                    "code đã đổi, xem lại trước khi chấm test.")
+
+
 def check_extension_tuning(r: Report, best: dict) -> None:
-    """Chạy lại tuning mở rộng (chỉ val, ~3 phút) vào thư mục bị .gitignore rồi so với audit/."""
+    """Chạy lại tuning mở rộng (chỉ val, ~3 phút) vào thư mục bị .gitignore rồi so với audit/. Ép chạy trên CPU như
+    lần tính số trong audit/ (02/10/2026) để giảm sai khác số học giữa thiết bị."""
     if RECHECK_DIR.exists():
         shutil.rmtree(RECHECK_DIR)
     RECHECK_DIR.mkdir(parents=True)
     shutil.copy(AUDIT / "best_configs.json", RECHECK_DIR / "best_configs.json")
     cmd = [sys.executable, str(PROJECT_ROOT / "scripts" / "10_tune.py"), "--model", "extension",
            "--log-dir", str(RECHECK_DIR), "--ckpt-dir", str(RECHECK_DIR / "ckpt")]
-    print("  ... chạy lại tuning mở rộng trên val (không ghi audit/):", flush=True)
-    res = subprocess.run(cmd, cwd=PROJECT_ROOT, capture_output=True, text=True, encoding="utf-8", errors="replace")
+    print("  ... chạy lại tuning mở rộng trên val, bằng CPU (không ghi audit/):", flush=True)
+    res = subprocess.run(cmd, cwd=PROJECT_ROOT, capture_output=True, text=True, encoding="utf-8", errors="replace",
+                         env={**os.environ, "CUDA_VISIBLE_DEVICES": ""})
     if res.returncode != 0:
         r.fail("10_tune.py --model extension lỗi:\n" + res.stdout[-1500:] + res.stderr[-1500:])
         return
     again = json.loads((RECHECK_DIR / "best_configs.json").read_text(encoding="utf-8"))
+    old, new = pd.read_csv(AUDIT / "tuning_log.csv"), pd.read_csv(RECHECK_DIR / "tuning_log.csv")
     for k in EXT_KEYS:
-        same_params = again[k]["params"] == best[k]["params"]
-        gap = max(abs(again[k]["val"][mt] - best[k]["val"][mt]) for mt in METRICS)
-        if same_params and gap == 0:
-            r.ok(f"Tuning mở rộng {k}: cùng tham số {best[k]['params']}, val khớp tuyệt đối")
-        else:
-            r.fail(f"Tuning mở rộng {k} KHÔNG tái lập: {best[k]['params']} → {again[k]['params']}, "
-                   f"lệch val tối đa {gap:.2e} — code đã đổi, xem lại trước khi chấm test.")
+        status, msg = compare_extension(old, new, best, again, k)
+        {"ok": r.ok, "warn": r.warn, "fail": r.fail}[status](msg)
 
 
 def check_environment(r: Report, need_report: bool) -> None:
@@ -209,7 +244,8 @@ def main():
         print(f"CHƯA SẴN SÀNG: {len(r.errors)} lỗi. Sửa rồi chạy lại `python scripts/18_preflight.py`.")
         sys.exit(1)
     plan = ("17 (mở rộng, ~5–10 phút) → 16 → 15 → 19" if args.extension_only else
-            "11 (3 seed, ~1,5 giờ trên RTX 3050) → 12 → 17 (~5–10 phút) → 16 → 13 → 14 (~10–15 phút) → 15 → 19")
+            "20 (ablation chỉ trên validation, ~45–60 phút) → 11 (3 seed, ~1,5 giờ trên RTX 3050) → 12 → 17 (~5–10 "
+            "phút) → 16 → 13 → 14 (~10–15 phút) → 15 → 19")
     print(f"SẴN SÀNG{' (có cảnh báo)' if r.warnings else ''}. Thứ tự chạy: {plan}.")
 
 

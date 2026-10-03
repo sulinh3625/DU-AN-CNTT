@@ -231,8 +231,29 @@
 \providecommand{\Kx}[2]{\resultmacro{kx}{#1}{#2}}
 \providecommand{\Ext}[2]{\resultmacro{ext}{#1}{#2}}
 \providecommand{\Esig}[2]{\resultmacro{esig}{#1}{#2}}
+\providecommand{\Abl}[2]{\resultmacro{abl}{#1}{#2}}
 \InputIfFileExists{content/tables/results_macros.tex}{}{}
+% --- SỐ LIỆU GIAO THỨC v2 (kết quả chính) ---
+% Do neumf_project/scripts/24_report_v2.py sinh vào content/tables/v2/ và media/figures/v2/.
+% Mô hình: NeuMFF, LateF, GMFF, MLPF, NeuMF, GMF, MLP, BPR, IKNN, UKNN, Cont, RecPop, Pop, Rand.
+% \VRes/\VSd{mô hình}{NDCG10|Recall10|HR10|Precision10|NDCG5|NDCG20|NDCG10old|NDCG10new}: mẫu B, tập kiểm thử;
+% \VVal: mẫu A, tập xác thực; \VSig{1..10|all}{rel|pholm|lo|hi|verdict|phrase|summary}; \VAbl, \VGrp, \VBey, \VData, \VCfg.
+\providecommand{\VRes}[2]{\resultmacro{vres}{#1}{#2}}
+\providecommand{\VSd}[2]{\resultmacro{vsd}{#1}{#2}}
+\providecommand{\VOnly}[2]{\resultmacro{vonly}{#1}{#2}}
+\providecommand{\VVal}[2]{\resultmacro{vval}{#1}{#2}}
+\providecommand{\VRank}[2]{\resultmacro{vrank}{#1}{#2}}
+\providecommand{\VSig}[2]{\resultmacro{vsig}{#1}{#2}}
+\providecommand{\VGrp}[2]{\resultmacro{vgrp}{#1}{#2}}
+\providecommand{\VAbl}[2]{\resultmacro{vabl}{#1}{#2}}
+\providecommand{\VBey}[2]{\resultmacro{vbey}{#1}{#2}}
+\providecommand{\VData}[2]{\resultmacro{vdata}{#1}{#2}}
+\providecommand{\VCfg}[2]{\resultmacro{vcfg}{#1}{#2}}
+\InputIfFileExists{content/tables/v2/results_v2_macros.tex}{}{}
 \newcommand{\chuaco}[1]{\begin{center}\fbox{\parbox{0.92\textwidth}{\raggedright\small\textit{Chưa có số liệu: #1}}}\end{center}}
+% \bangketquaV{tên file}{lệnh sinh}: như \bangketqua cho bảng của giao thức v2 (content/tables/v2/).
+\newcommand{\bangketquaV}[2]{\IfFileExists{content/tables/v2/#1}{\input{content/tables/v2/#1}}{\chuaco{chạy #2 rồi \texttt{scripts/24\_report\_v2.py}.}}}
+\newcommand{\bangrefV}[2]{\IfFileExists{content/tables/v2/#1}{Bảng~\ref{#2}}{bảng kết quả (chưa có số liệu)}}
 % \bangketqua{tên file}{lệnh sinh ra file}: chèn bảng sinh tự động, hoặc khung nhắc nếu chưa có.
 \newcommand{\bangketqua}[2]{\IfFileExists{content/tables/#1}{\input{content/tables/#1}}{\chuaco{chạy #2 rồi \texttt{scripts/15\_export\_report.py}.}}}
 % \bangref{tên file}{nhãn}: ``Bảng~X'' nếu bảng đã được sinh, nếu chưa thì chữ thay thế (tránh tham chiếu ``??'').

@@ -1,7 +1,7 @@
 % Sinh tự động bởi scripts/15_export_report.py — KHÔNG sửa tay.
 \begin{table}[htbp]
     \centering\small
-    \caption{Độ trễ phục vụ một yêu cầu gợi ý top-10 trên CPU (chấm toàn bộ candidate của một user rồi lấy top-10), mili giây}
+    \caption{Độ trễ phục vụ một yêu cầu gợi ý top-10 trên CPU (tính điểm toàn bộ sản phẩm ứng viên của một người dùng rồi lấy top-10), tính bằng mili giây}
     \label{tab:latency}
     \begin{adjustbox}{max width=\textwidth}
     \begin{tabular}{lrrr}
@@ -17,5 +17,5 @@
         \bottomrule
     \end{tabular}
     \end{adjustbox}
-    \par\smallskip{\footnotesize 200 yêu cầu, user chọn ngẫu nhiên trong tập test, trung bình 10.182 candidate/yêu cầu; CPU: AMD64 Family 25 Model 68 Stepping 1, AuthenticAMD, 8 luồng PyTorch.}
+    \par\smallskip{\footnotesize 200 yêu cầu, người dùng chọn ngẫu nhiên trong tập kiểm thử, trung bình 10.182 sản phẩm ứng viên mỗi yêu cầu; CPU: AMD64 Family 25 Model 68 Stepping 1 (AMD), 8 luồng PyTorch. p50, p95: trung vị và phân vị 95 của độ trễ.}
 \end{table}

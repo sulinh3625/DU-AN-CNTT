@@ -109,9 +109,11 @@ def train_one_model(
             i = torch.from_numpy(train_dataset.items[idx]).long().to(device)
             y = torch.from_numpy(train_dataset.labels[idx]).float().to(device)
             w = torch.from_numpy(train_dataset.sample_weights[idx]).float().to(device)
+            # Dữ liệu có đặc trưng (FeatureTrainDataset) mang thêm đầu vào theo từng mẫu, vd. ngày mua và đặc trưng user.
+            extra = {k: torch.from_numpy(v[idx]).to(device) for k, v in getattr(train_dataset, "extras", {}).items()}
 
             optimizer.zero_grad(set_to_none=True)
-            logits = model(u, i)
+            logits = model(u, i, **extra)
             loss = (criterion(logits, y) * w).mean()
             loss.backward()
             optimizer.step()

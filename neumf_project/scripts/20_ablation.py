@@ -1,7 +1,7 @@
 """Ablation trên VALIDATION (đề cương chi tiết mục 4.5 và 5.3): ảnh hưởng của số chiều embedding, số tầng ẩn của
 tháp MLP và tỉ lệ mẫu âm tới mô hình lai NeuMF-Scratch.
 
-    python scripts/20_ablation.py              # 12 cấu hình, khoảng 30–45 phút trên RTX 3050
+    python scripts/20_ablation.py              # 12 cấu hình, khoảng 45–60 phút trên RTX 3050
     python scripts/20_ablation.py --resume     # chạy tiếp, bỏ qua cấu hình đã có trong file kết quả
 
 Mỗi lần chỉ đổi MỘT yếu tố quanh cấu hình đã chọn của NeuMF-Scratch (audit/best_configs.json):

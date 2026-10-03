@@ -123,10 +123,11 @@ def history(customer_id: str):
 
 
 @router.get("/users/{customer_id}/recommend")
-def recommend(customer_id: str, model: str = "NeuMF-Pretrained", k: int = 10):
+def recommend(customer_id: str, model: str = "", k: int = 10):
     c = ctx()
     if k not in c.k_values:
         raise HTTPException(400, f"K phải thuộc {c.k_values} (evaluation.k_values trong config).")
+    model = model or c.available_models[0]
     if model not in c.available_models:
         reason = c.unavailable.get(model, "Model không hỗ trợ.")
         raise HTTPException(404, f"Model '{model}' không khả dụng: {reason}")
@@ -181,6 +182,8 @@ def onboarding_recommend(req: OnboardingRequest):
 @router.get("/dashboard")
 def dashboard():
     c = ctx()
+    if c.mode == "v2":
+        return metrics_io.v2_dashboard(c)
     return metrics_io.final_dashboard(c) if c.mode == "final" else metrics_io.dashboard(c.run_tag)
 
 

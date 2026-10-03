@@ -10,7 +10,8 @@ from src.evaluation.ranking_utils import deterministic_tie_key
 
 MAX_PAIRS_PER_BATCH = 400_000
 SCORE_KIND = {"MostPopular": "lượt mua train", "BPR-MF": "điểm", "ItemKNN": "Σ sim", "UserKNN": "Σ sim",
-              "LateFusion-GMF-MLP": "điểm trộn", "LateFusion-BPR-MLP": "điểm trộn"}
+              "LateFusion-GMF-MLP": "điểm trộn", "LateFusion-BPR-MLP": "điểm trộn", "LateFusion-F": "điểm trộn",
+              "MostPopular-Recent": "giao dịch gần đây", "Content": "cosine"}
 METRIC_NAMES = ("HR", "NDCG", "Recall", "Precision")
 
 

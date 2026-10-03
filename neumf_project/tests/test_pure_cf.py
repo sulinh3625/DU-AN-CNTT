@@ -1,4 +1,7 @@
-"""R2 (thuần CF) + R4 (thống kê chỉ từ train) cho pipeline chính."""
+"""R2 (thuần CF) + R4 (thống kê chỉ từ train) cho pipeline của giao thức v1 (lịch sử phát triển).
+
+Giao thức v2 dùng đặc trưng sản phẩm/khách hàng có chủ đích (audit/PREREG_v2.md) — các module của v2 được liệt kê riêng
+trong V2_FEATURE_FILES và kiểm tra không rò rỉ thời gian ở tests/test_v2.py; pipeline v1 vẫn phải thuần CF."""
 from __future__ import annotations
 
 import re
@@ -14,8 +17,11 @@ from src.data_pipeline.preprocessing import apply_feedback_weights
 
 ROOT = Path(__file__).resolve().parents[1]
 MAIN_CONFIGS = ["configs/hm500k.yaml", "configs/hm500k_global.yaml"]
+# Module chỉ dùng cho giao thức v2 (mô hình có đặc trưng) — được phép đọc articles.csv, customers.csv.
+V2_FEATURE_FILES = {ROOT / "src" / "data_pipeline" / f for f in ("features.py", "protocol_v2.py", "feature_dataset.py")} | {
+    ROOT / "src" / "models" / "hybrid_features.py", ROOT / "src" / "evaluation" / "v2.py"}
 PIPELINE_FILES = sorted({*ROOT.joinpath("src").rglob("*.py"), *ROOT.joinpath("scripts").glob("0[1-6]_*.py"),
-                         ROOT / "scripts" / "common.py", ROOT / "scripts" / "run_all.py"})
+                         ROOT / "scripts" / "common.py", ROOT / "scripts" / "run_all.py"} - V2_FEATURE_FILES)
 METADATA = re.compile(r"articles\.csv|customers\.csv|side_features|detail_desc|prod_name")
 CF_BASELINES = {"random", "popularity", "bpr", "itemknn"}
 
@@ -31,6 +37,16 @@ def test_main_configs_are_pure_cf(path):
 def test_training_and_evaluation_code_never_mentions_metadata_files():
     hits = [f"{p.relative_to(ROOT)}:{i}" for p in PIPELINE_FILES
             for i, line in enumerate(p.read_text(encoding="utf-8").splitlines(), 1) if METADATA.search(line)]
+    assert hits == []
+
+
+def test_v1_pipeline_does_not_import_v2_feature_modules():
+    """Pipeline v1 (thuần CF) không import module đặc trưng của v2; các module v2 có tồn tại thật."""
+    assert all(p.exists() for p in V2_FEATURE_FILES)
+    names = re.compile(r"\b(features|protocol_v2|feature_dataset|hybrid_features)\b")
+    hits = [f"{p.relative_to(ROOT)}:{i}" for p in PIPELINE_FILES
+            for i, line in enumerate(p.read_text(encoding="utf-8").splitlines(), 1)
+            if line.lstrip().startswith(("from ", "import ")) and names.search(line)]
     assert hits == []
 
 

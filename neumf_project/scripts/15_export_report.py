@@ -143,15 +143,20 @@ def export_tuning(m: Macros) -> str:
     rows.sort(key=lambda r: -_row_value(r))
     ext_rows.sort(key=lambda r: -_row_value(r))
     export_fusion_parts(m)
-    caption = ("Cấu hình tốt nhất của từng mô hình sau tuning (chỉ trên tập validation, seed 42, protocol mốc thời "
-               "gian chung; 6 cấu hình/mô hình")
-    note = "Số trên validation của cấu hình tốt nhất lạc quan (chọn trên chính tập đó); không dùng để kết luận."
+    caption = ("Cấu hình tốt nhất của từng mô hình sau tinh chỉnh siêu tham số (chỉ trên tập xác thực, seed 42, chia "
+               "theo mốc thời gian chung; 6 cấu hình mỗi mô hình")
+    note = ("d: số chiều Embedding; lr: tốc độ học; neg: số mẫu âm cho mỗi mẫu dương; wd: hệ số weight decay (điều "
+            "chuẩn $L_2$); reg: hệ số điều chuẩn của BPR-MF; $\\alpha$: trọng số khởi tạo lớp đầu ra của "
+            "NeuMF-Pretrained. Số trên tập xác thực của cấu hình tốt nhất là lạc quan (được chọn trên chính tập đó), "
+            "không dùng để kết luận.")
     if ext_rows:
-        rows.append([r"\midrule\multicolumn{5}{l}{\textit{Mở rộng sau khi xem test (mục~\ref{sec:extension_results})}}"])
+        rows.append([r"\midrule\multicolumn{5}{l}{\textit{Mở rộng sau khi đã xem kết quả trên tập kiểm thử "
+                     r"(mục~\ref{sec:extension_results})}}"])
         rows.extend(ext_rows)
-        caption += ", late fusion quét 11 giá trị $w$"
-        note += (" Late fusion: $w\\cdot$minmax(điểm thành phần thứ nhất) $+ (1-w)\\cdot$minmax(điểm MLP); "
-                 "$w = 1$ và $w = 0$ cho đúng thứ hạng của từng thành phần.")
+        caption += ", Late Fusion quét 11 giá trị $w$"
+        note += (" k, shrink: số láng giềng và hệ số co (ItemKNN, UserKNN). Late Fusion: $w\\cdot$minmax(điểm thành "
+                 "phần thứ nhất) $+ (1-w)\\cdot$minmax(điểm MLP); $w = 1$ và $w = 0$ cho đúng thứ hạng của từng thành "
+                 "phần.")
     return table("tab:tuning", caption + ")", "llrrr",
                  ["Mô hình", "Cấu hình tốt nhất", "NDCG@10", "Recall@10", "HR@10"], rows, note)
 
@@ -174,12 +179,12 @@ SECOND_RUN_COMMIT = "c559c86"  # lần chấm thứ hai (29/09/2026); số của
 
 
 def run_info(commit: str, s: pd.DataFrame) -> str:
-    """Câu mô tả số liệu đang dùng thuộc lần chấm nào — tự đổi sau lần chạy lại toàn bộ (PREREG mục 8, 02/10/2026)."""
+    """Câu mô tả số liệu đang dùng thuộc lần đánh giá nào — tự đổi sau lần chạy lại toàn bộ (PREREG mục 8, 02/10/2026)."""
     if commit.startswith(SECOND_RUN_COMMIT):
-        return ("số liệu dưới đây là lần chấm test thứ hai (29/09/2026), sau khi bổ sung bước huấn luyện lại; lần chấm "
-                "đầu cho cùng kết luận (mục~\\ref{sec:protocol}, phần lệch kế hoạch).")
+        return ("số liệu dưới đây là lần đánh giá thứ hai trên tập kiểm thử (29/09/2026), sau khi bổ sung bước huấn "
+                "luyện lại; lần đánh giá đầu tiên cho cùng kết luận (mục~\\ref{sec:protocol}, phần lệch kế hoạch).")
     ref_s, ref_g = AUDIT / "final_2909_summary.csv", AUDIT / "final_2909_significance.csv"
-    text = (f"số liệu dưới đây được sinh lại trong một lần chạy toàn bộ trên phiên bản mã nguồn cuối (commit "
+    text = (f"số liệu dưới đây được sinh lại trong một lần chạy toàn bộ trên phiên bản mã nguồn cuối (mã phiên bản "
             f"\\texttt{{{commit[:7]}}}), theo kế hoạch đăng ký trước ở mục~\\ref{{sec:protocol}}")
     if not (ref_s.exists() and ref_g.exists() and (FINAL / "significance.csv").exists()):
         return text + "."
@@ -190,10 +195,10 @@ def run_info(commit: str, s: pd.DataFrame) -> str:
             f"lệch tối đa {vn(gap)} (khác phần cứng hoặc thư viện; bảng dùng số của lần chạy lại)")
     n_new = int((pd.read_csv(FINAL / "significance.csv")["verdict"] != NOT_SIG).sum())
     n_ref = int((pd.read_csv(ref_g)["verdict"] != NOT_SIG).sum())
-    verdict = (f"cả ba lần chấm cho cùng kết luận ({n_new}/8 so sánh đạt tiêu chí ``tốt hơn'')" if n_new == n_ref else
-               f"kết luận kiểm định khác lần chấm thứ hai: {n_new}/8 so sánh đạt tiêu chí ``tốt hơn'' (lần thứ hai: "
-               f"{n_ref}/8)")
-    return f"{text}; so với lần chấm thứ hai (29/09/2026), NDCG@10 của 7 mô hình chính {same}, và {verdict}."
+    verdict = (f"cả ba lần đánh giá cho cùng kết luận ({n_new}/8 so sánh đạt tiêu chí ``tốt hơn'')" if n_new == n_ref
+               else f"kết luận kiểm định khác lần đánh giá thứ hai: {n_new}/8 so sánh đạt tiêu chí ``tốt hơn'' (lần thứ "
+               f"hai: {n_ref}/8)")
+    return f"{text}; so với lần đánh giá thứ hai (29/09/2026), NDCG@10 của 7 mô hình chính {same}, và {verdict}."
 
 
 def export_final(m: Macros) -> str:
@@ -213,9 +218,9 @@ def export_final(m: Macros) -> str:
     r = json.loads(next(FINAL.glob("seed*/results.json")).read_text(encoding="utf-8"))
     m.add("res", "all", "runinfo", run_info(r["provenance"].get("git_commit") or "", s))
     n = lambda x: f"{x:,}".replace(",", ".")
-    return table("tab:final", "Kết quả trên tập test: trung bình $\\pm$ độ lệch chuẩn qua 3 seed (Full Ranking, "
-                 "protocol mốc thời gian chung, train lại trên train $\\cup$ val; "
-                 f"{n(r['n_test_users'])} user, {n(r['n_candidate_items'])} item candidate)", "lrrrrr",
+    return table("tab:final", "Kết quả trên tập kiểm thử: trung bình $\\pm$ độ lệch chuẩn qua 3 seed (Full Ranking, "
+                 "chia theo mốc thời gian chung, huấn luyện lại trên tập huấn luyện $\\cup$ xác thực; "
+                 f"{n(r['n_test_users'])} người dùng, {n(r['n_candidate_items'])} sản phẩm ứng viên)", "lrrrrr",
                  ["Mô hình", *METRICS], rows, "In đậm: giá trị trung bình cao nhất mỗi cột.")
 
 
@@ -230,18 +235,18 @@ def export_significance(m: Macros) -> str:
             m.add("sig", k, name, v)
         m.add("sig", k, "verdict", verdict_phrase(r))
         rows.append([show(r["A"]), show(r["B"]), vn(r["mean_A"]), vn(r["mean_B"]), vals["rel"],
-                     f"[{vals['cilo']}; {vals['cihi']}]", vals["pw"], vals["pholm"], r["verdict"]])
+                     f"[{vals['cilo']}; {vals['cihi']}]", vals["pw"], vals["pholm"], verdict_cell(r)])
     m.add("sig", "all", "nbetter", str(int((sig["verdict"] != NOT_SIG).sum())))
     m.add("sig", "all", "n", str(len(sig)))
     summary_vn, summary_en = family_summary(sig, "họ so sánh chính")
     m.add("sig", "all", "summary", summary_vn)
     m.add("sig", "all", "summaryen", summary_en)
     m.add("sig", "all", "nusers", f"{int(sig['n_users'].iloc[0]):,}".replace(",", "."))
-    return table("tab:significance", "Kiểm định cặp theo user trên NDCG@10 (trung bình qua 3 seed): Wilcoxon "
-                 "signed-rank, CI 95\\% paired bootstrap, hiệu chỉnh Holm trên họ 8 so sánh", "llrrrrrrl",
+    return table("tab:significance", "Kiểm định cặp theo người dùng trên NDCG@10 (trung bình qua 3 seed): kiểm định "
+                 "Wilcoxon signed-rank, khoảng tin cậy (CI) 95\\% bằng bootstrap cặp, hiệu chỉnh Holm trên họ 8 so "
+                 "sánh", "llrrrrrrc",
                  ["A", "B", "NDCG@10 A", "NDCG@10 B", "Chênh", "CI 95\\% (A$-$B)", "p Wilcoxon", "p Holm",
-                  "Kết luận"], rows,
-                 "``A tốt hơn B'' chỉ khi đồng thời p Holm $<$ 0,05, CI không chứa 0 và chênh lệch tương đối $\\geq$ 5\\%.")
+                  "Kết luận"], rows, SIG_NOTE)
 
 
 def export_secondary(m: Macros) -> list[tuple[str, str]]:
@@ -258,12 +263,13 @@ def export_secondary(m: Macros) -> list[tuple[str, str]]:
             m.add("strat", "n", sub, f"{n:,}".replace(",", "."))
         rows = [[show(x), *[vn(st.loc[(x, sub), "NDCG@10"]) for sub in subsets]] for x in models]
         out.append(("tab_stratified.tex", table(
-            "tab:stratified", "NDCG@10 theo nhóm item (head = 10\\% item phổ biến nhất trong train $\\cup$ val) và "
-            "nhóm user (cold = 20\\% user ít tương tác train $\\cup$ val nhất); trung bình 3 seed", "lrrrrr",
+            "tab:stratified", "NDCG@10 theo nhóm sản phẩm (head: 10\\% sản phẩm được mua nhiều nhất trong tập huấn "
+            "luyện $\\cup$ xác thực) và nhóm người dùng (cold: 20\\% người dùng có ít tương tác nhất); trung bình 3 seed",
+            "lrrrrr",
             ["Mô hình", f"Tất cả ({n_users['all']})", f"Head ({n_users['head']})", f"Tail ({n_users['tail']})",
              f"Cold ({n_users['cold']})", f"Warm ({n_users['warm']})"], rows,
-            "Số trong ngoặc: số user test của nhóm. User có item đúng ở cả head lẫn tail được tính ở cả hai nhóm, "
-            "mỗi nhóm chỉ xét item đúng của nhóm đó.")))
+            "Số trong ngoặc: số người dùng kiểm thử của nhóm. Người dùng có sản phẩm đúng ở cả head lẫn tail được tính "
+            "ở cả hai nhóm, mỗi nhóm chỉ xét sản phẩm đúng của nhóm đó.")))
     if (FINAL / "beyond_accuracy.csv").exists():
         b = pd.read_csv(FINAL / "beyond_accuracy.csv").groupby("model").mean(numeric_only=True)
         rows = []
@@ -275,10 +281,11 @@ def export_secondary(m: Macros) -> list[tuple[str, str]]:
                 m.add("beyond", KEY[x], k, v)
             rows.append([show(x), *vals.values()])
         out.append(("tab_beyond.tex", table(
-            "tab:beyond", "Chỉ số ngoài độ chính xác của danh sách top-10 trên tập test (trung bình 3 seed)",
+            "tab:beyond", "Chỉ số ngoài độ chính xác của danh sách top-10 trên tập kiểm thử (trung bình 3 seed)",
             "lrrrr", ["Mô hình", "Coverage", "Novelty (bit)", "ARP", "HRR"], rows,
-            "Coverage: tỉ lệ item xuất hiện trong ít nhất một top-10. Novelty: $-\\log_2 P(i)$ trung bình. "
-            "ARP: số tương tác train $\\cup$ val trung bình của item được gợi ý. HRR: tỉ lệ item head trong top-10.")))
+            "Coverage: tỉ lệ sản phẩm xuất hiện trong ít nhất một danh sách top-10. Novelty: giá trị $-\\log_2 P(i)$ "
+            "trung bình. ARP: số người dùng đã mua (trong tập huấn luyện $\\cup$ xác thực), tính trung bình trên các "
+            "sản phẩm được gợi ý. HRR: tỉ lệ sản phẩm thuộc nhóm head trong top-10.")))
     if (FINAL / "sampled99.csv").exists():
         sp = pd.read_csv(FINAL / "sampled99.csv").groupby("model").mean(numeric_only=True)
         full = pd.read_csv(FINAL / "summary.csv", index_col=0)
@@ -294,8 +301,8 @@ def export_secondary(m: Macros) -> list[tuple[str, str]]:
         m.add("samp", "all", "rankchanged", "có" if (rank_full != rank_samp).any() else "không")
         m.add("samp", "all", "ncases", f"{int(sp['n_cases'].iloc[0]):,}".replace(",", "."))
         out.append(("tab_sampled.tex", table(
-            "tab:sampled", "Đối chiếu Full Ranking với Sampled-99 (1 item đúng + 99 item âm, protocol NCF gốc) "
-            "trên tập test; trung bình 3 seed", "lrrrr",
+            "tab:sampled", "Đối chiếu Full Ranking với Sampled-99 (1 sản phẩm đúng + 99 sản phẩm âm lấy ngẫu nhiên) "
+            "trên tập kiểm thử; trung bình 3 seed", "lrrrr",
             ["Mô hình", "NDCG@10 Full", "NDCG@10 Sampled-99", "HR@10 Sampled-99", "Hệ số thổi phồng"], rows,
             "Hệ số thổi phồng = NDCG@10 Sampled-99 / NDCG@10 Full Ranking.")))
     if (FINAL / "latency.csv").exists():
@@ -313,12 +320,19 @@ def export_secondary(m: Macros) -> list[tuple[str, str]]:
         m.add("lat", "all", "n", str(int(r0["n_requests"])))
         m.add("lat", "all", "ncand", ncand)
         out.append(("tab_latency.tex", table(
-            "tab:latency", "Độ trễ phục vụ một yêu cầu gợi ý top-10 trên CPU (chấm toàn bộ candidate của một user "
-            "rồi lấy top-10), mili giây", "lrrr", ["Mô hình", "p50", "p95", "Trung bình"], rows,
-            f"{int(r0['n_requests'])} yêu cầu, user chọn ngẫu nhiên trong tập test, trung bình {ncand} "
-            f"candidate/yêu cầu; CPU: {str(r0['cpu']).replace('_', ' ')}, "
-            f"{int(r0['torch_threads'])} luồng PyTorch.")))
+            "tab:latency", "Độ trễ phục vụ một yêu cầu gợi ý top-10 trên CPU (tính điểm toàn bộ sản phẩm ứng viên "
+            "của một người dùng rồi lấy top-10), tính bằng mili giây", "lrrr",
+            ["Mô hình", "p50", "p95", "Trung bình"], rows,
+            f"{int(r0['n_requests'])} yêu cầu, người dùng chọn ngẫu nhiên trong tập kiểm thử, trung bình {ncand} "
+            f"sản phẩm ứng viên mỗi yêu cầu; CPU: {cpu_name(r0['cpu'])}, {int(r0['torch_threads'])} luồng PyTorch. "
+            "p50, p95: trung vị và phân vị 95 của độ trễ.")))
     return out
+
+
+def cpu_name(raw) -> str:
+    """Tên CPU cho chú thích bảng: platform.processor() trên Windows trả về dạng 'AMD64 Family 25 ..., AuthenticAMD'."""
+    s = str(raw).replace("_", " ")
+    return s.replace(", AuthenticAMD", " (AMD)").replace(", GenuineIntel", " (Intel)")
 
 
 def export_extra_k(m: Macros, k: int = 20) -> list[tuple[str, str]]:
@@ -336,8 +350,8 @@ def export_extra_k(m: Macros, k: int = 20) -> list[tuple[str, str]]:
             m.add("kx", KEY[x], mkey(mt), vn(df.loc[x, f"{mt}_mean"]))
         rows.append([show(x), *[f"{cols[mt][x]} $\\pm$ {vn(df.loc[x, f'{mt}_std'])}" for mt in names]])
     return [(f"tab_k{k}.tex", table(
-        f"tab:k{k}", f"Chỉ số ở K = {k} trên tập test, tính lại từ hạng đã lưu của lần chấm (không chấm lại mô hình); "
-        "trung bình $\\pm$ độ lệch chuẩn qua 3 seed", "lrrrr", ["Mô hình", *names], rows,
+        f"tab:k{k}", f"Chỉ số ở K = {k} trên tập kiểm thử, tính lại từ thứ hạng đã lưu của lần đánh giá (không đánh "
+        "giá lại mô hình); trung bình $\\pm$ độ lệch chuẩn qua 3 seed", "lrrrr", ["Mô hình", *names], rows,
         "Chỉ số mô tả bổ sung, không dùng để kết luận (chỉ số chính đã đăng ký là NDCG@10)."))]
 
 
@@ -346,6 +360,15 @@ def verdict_phrase(r) -> str:
     if r["verdict"] == NOT_SIG:
         return NOT_SIG
     return f"{show(r['A'] if r['verdict'] == 'A tốt hơn' else r['B'])} tốt hơn có ý nghĩa"
+
+
+def verdict_cell(r) -> str:
+    """Ô "Kết luận" trong bảng kiểm định: "---" khi không có ý nghĩa (giải thích ở chú thích) để bảng 9 cột đủ hẹp."""
+    return "---" if r["verdict"] == NOT_SIG else r["verdict"]
+
+
+SIG_NOTE = ("---: không khác biệt có ý nghĩa. ``A tốt hơn'' (hoặc ``B tốt hơn'') chỉ khi đồng thời p Holm $<$ 0,05, "
+            "CI không chứa 0 và chênh lệch tương đối $\\geq$ 5\\%.")
 
 
 def family_summary(s: pd.DataFrame, family: str) -> tuple[str, str]:
@@ -392,12 +415,13 @@ def export_extension(m: Macros) -> list[tuple[str, str]]:
         name = f"{show(x)}$^{{\\dagger}}$" if x in EXT_ORDER else show(x)
         rows.append([name, *[f"{cols[mt][x]} $\\pm$ {vn(both.loc[x, f'{mt}_std'])}" for mt in shown]])
     out = [("tab_extension.tex", table(
-        "tab:extension", "Mô hình mở rộng (đánh dấu $\\dagger$) đặt cạnh các mô hình chính trên tập test, xếp theo "
-        "NDCG@10; trung bình $\\pm$ độ lệch chuẩn qua 3 seed", "lrrr",
+        "tab:extension", "Mô hình mở rộng (đánh dấu $\\dagger$) đặt cạnh các mô hình chính trên tập kiểm thử, xếp "
+        "theo NDCG@10; trung bình $\\pm$ độ lệch chuẩn qua 3 seed", "lrrr",
         ["Mô hình", *shown], rows,
-        "$^{\\dagger}$Thêm sau khi đã xem test lần đầu (mục~\\ref{sec:protocol}). Late fusion: "
-        "$w\\cdot$minmax(điểm thành phần thứ nhất) $+ (1-w)\\cdot$minmax(điểm MLP), hai mô hình huấn luyện riêng, "
-        "$w$ chọn trên validation. ItemKNN, UserKNN: top-$k$ láng giềng cosine, tất định nên độ lệch chuẩn bằng 0."))]
+        "$^{\\dagger}$Bổ sung sau khi đã xem kết quả trên tập kiểm thử lần đầu (mục~\\ref{sec:protocol}). Late "
+        "Fusion: $w\\cdot$minmax(điểm thành phần thứ nhất) $+ (1-w)\\cdot$minmax(điểm MLP), hai mô hình huấn luyện "
+        "riêng, $w$ chọn trên tập xác thực. ItemKNN, UserKNN: $k$ láng giềng gần nhất theo độ tương đồng cosine, tất "
+        "định nên độ lệch chuẩn bằng 0."))]
     sig_path = ext_dir / "significance.csv"
     if sig_path.exists():
         s = pd.read_csv(sig_path)
@@ -410,23 +434,24 @@ def export_extension(m: Macros) -> list[tuple[str, str]]:
                 m.add("esig", key, name, v)
             m.add("esig", key, "verdict", verdict_phrase(r))
             rows.append([show(r["A"]), show(r["B"]), vn(r["mean_A"]), vn(r["mean_B"]), vals["rel"],
-                         f"[{vals['cilo']}; {vals['cihi']}]", vals["pw"], vals["pholm"], r["verdict"]])
+                         f"[{vals['cilo']}; {vals['cihi']}]", vals["pw"], vals["pholm"], verdict_cell(r)])
         m.add("esig", "all", "nbetter", str(int((s["verdict"] != NOT_SIG).sum())))
         m.add("esig", "all", "n", str(len(s)))
         summary_vn, summary_en = family_summary(s, "họ mở rộng")
         m.add("esig", "all", "summary", summary_vn)
         m.add("esig", "all", "summaryen", summary_en)
         out.append(("tab_ext_significance.tex", table(
-            "tab:ext_significance", "Kiểm định cặp theo user trên NDCG@10 cho họ 7 so sánh mở rộng: Wilcoxon "
-            "signed-rank, CI 95\\% paired bootstrap, hiệu chỉnh Holm riêng trong họ", "llrrrrrrl",
+            "tab:ext_significance", "Kiểm định cặp theo người dùng trên NDCG@10 cho họ 7 so sánh mở rộng: kiểm định "
+            "Wilcoxon signed-rank, khoảng tin cậy (CI) 95\\% bằng bootstrap cặp, hiệu chỉnh Holm riêng trong họ",
+            "llrrrrrrc",
             ["A", "B", "NDCG@10 A", "NDCG@10 B", "Chênh", "CI 95\\% (A$-$B)", "p Wilcoxon", "p Holm", "Kết luận"],
-            rows, "Cùng tiêu chí với họ so sánh chính; họ này được đăng ký sau khi đã xem test của các mô hình chính "
-                  "và không gộp với họ 8 so sánh chính.")))
+            rows, SIG_NOTE + " Cùng tiêu chí với họ so sánh chính; họ này được đăng ký sau khi đã xem kết quả trên tập "
+                  "kiểm thử của các mô hình chính và không gộp với họ 8 so sánh chính.")))
     return out
 
 
 ABLATION = PROJECT_ROOT / "outputs" / "ablation" / "ablation_val.csv"
-ABL_FACTORS = [("embedding_dim", "d", "Số chiều embedding $d$"), ("n_hidden", "layers", "Số tầng ẩn MLP"),
+ABL_FACTORS = [("embedding_dim", "d", "Số chiều Embedding $d$"), ("n_hidden", "layers", "Số tầng ẩn MLP"),
                ("negative_ratio", "neg", "Số mẫu âm / mẫu dương")]
 
 
@@ -449,16 +474,17 @@ def ablation_summary(a: pd.DataFrame) -> str:
             f"{int(base['n_hidden'])} tầng ẩn, {int(base['negative_ratio'])} mẫu âm) đạt {vn(float(base['NDCG@10']))}. ")
     layers = a[a["factor"].isin(["n_hidden", "base"])].set_index("n_hidden")["NDCG@10"]
     n_best, deepest = best["layers"][0], int(layers.index.max())
+    # Chỉ mô tả xu hướng trên dữ liệu của đề tài; không so với số liệu công bố của tài liệu tham khảo (khác dữ liệu và
+    # giao thức đánh giá — tài liệu chỉ là cơ sở phương pháp).
     if n_best == 0:
-        text += ("Bỏ hẳn các tầng ẩn (nhánh MLP chỉ nối hai embedding) cho kết quả tốt nhất, tức tháp sâu hơn không "
-                 "giúp trên dữ liệu này -- khác với xu hướng ``càng sâu càng tốt'' mà bài NCF gốc ghi nhận trên "
-                 "MovieLens và Pinterest. ")
+        text += ("Bỏ hẳn các tầng ẩn (nhánh MLP chỉ nối hai Embedding) cho kết quả tốt nhất, tức trên dữ liệu này tháp "
+                 "sâu hơn không giúp ích. ")
     elif n_best < deepest:
         text += (f"Tháp nông với {n_best} tầng ẩn là tốt nhất; thêm tầng không cải thiện thêm ({deepest} tầng: "
-                 f"{vn(float(layers[deepest]))}) -- khác với xu hướng ``càng sâu càng tốt'' của bài NCF gốc. ")
+                 f"{vn(float(layers[deepest]))}). ")
     else:
         text += (f"Tháp sâu nhất ({deepest} tầng ẩn) cho kết quả tốt nhất (không có tầng ẩn: {vn(float(layers[0]))}), "
-                 "cùng chiều với bài NCF gốc. ")
+                 "tức trên dữ liệu này tăng độ sâu của tháp MLP có giúp ích. ")
     text += (f"Chênh lệch giữa mức tốt nhất và kém nhất của từng yếu tố lần lượt là {pct(spread['d'])} (số chiều), "
              f"{pct(spread['layers'])} (số tầng) và {pct(spread['neg'])} (số mẫu âm).")
     return text
@@ -491,11 +517,11 @@ def export_ablation(m: Macros) -> list[tuple[str, str]]:
     m.add("abl", "all", "nconfigs", str(len(a)))
     m.add("abl", "all", "summary", ablation_summary(a))
     return [("tab_ablation.tex", table(
-        "tab:ablation", "Ablation NeuMF-Scratch trên tập validation: đổi lần lượt từng yếu tố quanh cấu hình đã chọn, "
+        "tab:ablation", "Ablation NeuMF-Scratch trên tập xác thực: đổi lần lượt từng yếu tố quanh cấu hình đã chọn, "
         "giữ nguyên các siêu tham số còn lại (seed 42)", "llrrrrr",
         ["Yếu tố", "Giá trị", "NDCG@10", "Recall@10", "HR@10", "Epoch tốt nhất", "Số tham số"], rows,
         "Tháp MLP giảm một nửa mỗi tầng ($[2d \\to d \\to d/2 \\to \\dots]$); 0 tầng ẩn = nhánh MLP chỉ nối hai "
-        "embedding. Một seed, chỉ trên tập xác thực: phân tích mô tả, không dùng để chọn lại cấu hình của đánh giá "
+        "Embedding. Một seed, chỉ trên tập xác thực: phân tích mô tả, không dùng để chọn lại cấu hình của đánh giá "
         "cuối."))]
 
 

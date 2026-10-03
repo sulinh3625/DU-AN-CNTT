@@ -5,17 +5,17 @@ import torch.nn as nn
 
 
 class EarlyFusionModel(nn.Module):
-    """Baseline Early Fusion — đối chứng trực tiếp với NeuMF (Late Fusion).
+    """Lớp cũ, KHÔNG dùng trong tuning/đánh giá cuối: kiến trúc trùng hệt MLP của src/models/neumf.py.
 
-    Khác NeuMF (4 embedding riêng cho GMF/MLP, chỉ nối ở lớp output cuối),
-    EarlyFusionModel dùng MỘT bộ embedding user/item duy nhất, nối
-    (concatenate) ngay từ đầu vào rồi đưa qua một mạng MLP chung.
-    Không có nhánh tương tác nhân element-wise (GMF) riêng biệt.
+    Lớp này được viết theo cách hiểu ban đầu "early fusion = nối embedding user–item ngay ở đầu vào". Đối chiếu cho thấy
+    nó chính là MLP đứng riêng (cùng 2 embedding → nối → tháp MLP → lớp output; test
+    tests/test_tuning.py::test_early_fusion_is_architecturally_identical_to_mlp), nên bị loại (PREREG mục 8).
 
-    Dùng để trả lời trực tiếp câu hỏi giảng viên: "Early fusion hay late
-    fusion hiệu quả hơn trong bài toán này?" — cùng embedding_dim,
-    mlp_layers, dropout, optimizer, LR, epoch budget với NeuMF để so sánh
-    công bằng (fair ablation).
+    Thuật ngữ đã chốt theo luận án của GVHD (Hồ Thị Linh, 2023) và báo cáo mục 2.3.4:
+      - Early Fusion = nối biểu diễn của các view rồi MỘT mô hình dự đoán -> NeuMF (nối vector GMF với vector cuối MLP);
+      - Late Fusion = trộn điểm của các mô hình huấn luyện riêng -> src/models/late_fusion.py (GMF + MLP);
+      - MLP đứng riêng = mô hình DNN thuần, không phải phép hợp nhất MF + DNN.
+    Tên lớp giữ nguyên vì run khám phá cũ và test còn dùng.
     """
 
     def __init__(self, n_users: int, n_items: int, embedding_dim: int, layers: list[int], dropout: float = 0.2):
@@ -44,8 +44,8 @@ class EarlyFusionModel(nn.Module):
         nn.init.xavier_uniform_(self.output_layer.weight)
 
     def vector(self, users, items):
-        # Kết hợp NGAY từ đầu vào (early fusion) — khác GMF.vector() (nhân
-        # element-wise) và khác NeuMF (2 nhánh riêng rồi mới nối ở cuối).
+        # Nối embedding user–item ở đầu vào — đúng như MLP.vector() trước tháp MLP (đây là DNN thuần, không phải
+        # hợp nhất MF + DNN).
         return torch.cat([self.user_emb(users), self.item_emb(items)], dim=-1)
 
     def forward(self, users, items):

@@ -8,7 +8,7 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 
-from .data_context import CONFIG_PATH, DEMO_ROOT, EXPERIMENTS_DIR, PROJECT_ROOT
+from .data_context import CONFIG_PATH, DEMO_ROOT, EXPERIMENTS_DIR, PROJECT_ROOT, V2_DIR
 from scripts.common import REPORT_HIDDEN_MODELS  # noqa: E402  (data_context đã thêm PROJECT_ROOT vào sys.path)
 
 TABLES_DIR = PROJECT_ROOT / "outputs" / "tables"
@@ -166,6 +166,51 @@ def final_dashboard(ctx) -> dict:
                         "train": m["train"], "validation": m["validation"], "test": m["test"],
                         "train_val": m["train_val"], "n_test_users": m["n_test_users"],
                         "n_candidates": m["n_candidate_items"], "commit": str(m["provenance"].get("git_commit"))[:7]}}
+    return out
+
+
+V2_RUN_CMD = 'python run.py v2-final --reason "..."' + " (hoặc python run.py v2-report)"
+V2_NAME = {"random": "Random", "popularity": "MostPopular", "recent_pop": "MostPopular-Recent", "content": "Content",
+           "itemknn": "ItemKNN", "userknn": "UserKNN", "bpr": "BPR-MF", "gmf": "GMF", "mlp": "MLP", "neumf": "NeuMF",
+           "gmf_f": "GMF-F", "mlp_f": "MLP-F", "neumf_f": "NeuMF-F", "late_f": "LateFusion-F"}
+
+
+def _v2_csv(name: str) -> tuple[Path, pd.DataFrame | None]:
+    path = V2_DIR / name
+    if not path.exists():
+        return path, None
+    try:
+        return path, pd.read_csv(path)
+    except pd.errors.EmptyDataError:
+        return path, None
+
+
+def _v2_block(name: str, transform) -> dict:
+    path, df = _v2_csv(name)
+    if df is None or df.empty:
+        return _missing(V2_RUN_CMD)
+    return {"status": "ok", "source": path.relative_to(PROJECT_ROOT).as_posix(), "run_tag": None,
+            "data": json.loads(transform(df).to_json(orient="records"))}
+
+
+def v2_dashboard(ctx) -> dict:
+    """Dashboard giao thức v2: đọc đúng các file của scripts/24_report_v2.py (outputs/v2/final/), không tính lại."""
+    named = lambda df: df.assign(model=df["model"].map(V2_NAME).fillna(df["model"]))  # noqa: E731
+    out = {"mode": "v2", "run_tag": ctx.run_tag, "dry_run": ctx.run_metadata["dry_run"]}
+    out["summary"] = _v2_block("summary.csv", named)
+    out["significance"] = _v2_block("significance.csv", lambda df: df.assign(
+        A=df["A"].map(V2_NAME), B=df["B"].map(V2_NAME)))
+    out["groups"] = _v2_block("groups.csv", named)
+    out["beyond"] = _v2_block("beyond.csv", named)
+    out["ablation"] = _v2_block("ablation.csv", lambda df: df)
+    m = ctx.run_metadata
+    out["stats"] = {"status": "ok", "source": (V2_DIR / "data.json").relative_to(PROJECT_ROOT).as_posix(),
+                    "run_tag": ctx.run_tag, "data": {
+                        "n_users": ctx.n_users, "n_items": ctx.n_items, "n_interactions": int(len(ctx.data_df)),
+                        "train_pairs": m["train_pairs"], "n_test_users": m["n_test_users"], "targets": m["targets"],
+                        "new_item_targets": m["new_item_targets"], "n_candidates": m["n_candidate_items"],
+                        "n_new_items": m["n_new_items"], "k_core": m["k_core"],
+                        "commit": str(m["provenance"].get("git_commit"))[:7]}}
     return out
 
 

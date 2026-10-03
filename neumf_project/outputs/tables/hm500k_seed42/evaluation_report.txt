@@ -28,7 +28,6 @@ MostPopular      0.0090 0.0149  0.0059   0.0078
 BPR-MF           0.0114 0.0178  0.0075   0.0096
 GMF              0.0102 0.0157  0.0071   0.0088
 MLP              0.0093 0.0161  0.0061   0.0083
-EarlyFusion      0.0100 0.0180  0.0064   0.0089
 NeuMF-Scratch    0.0108 0.0192  0.0070   0.0097
 NeuMF-Pretrained 0.0090 0.0160  0.0059   0.0081
 
@@ -43,7 +42,6 @@ MostPopular      0.1807 0.2621  0.1228   0.1489
 BPR-MF           0.1843 0.2656  0.1252   0.1512
 GMF              0.1910 0.2841  0.1268   0.1566
 MLP              0.1813 0.2604  0.1240   0.1494
-EarlyFusion      0.1853 0.2676  0.1256   0.1521
 NeuMF-Scratch    0.2000 0.2906  0.1350   0.1641
 NeuMF-Pretrained 0.1960 0.2935  0.1336   0.1651
 
@@ -57,7 +55,6 @@ MostPopular      0.0000 0.0000  0.0000   0.0000
 BPR-MF           0.0002 0.0004  0.0001   0.0002
 GMF              0.0000 0.0000  0.0000   0.0000
 MLP              0.0000 0.0000  0.0000   0.0000
-EarlyFusion      0.0000 0.0000  0.0000   0.0000
 NeuMF-Scratch    0.0000 0.0000  0.0000   0.0000
 NeuMF-Pretrained 0.0004 0.0005  0.0002   0.0002
 
@@ -70,7 +67,6 @@ MostPopular           0.0016            251.7500           0.1227         1.0000
 BPR-MF                0.1215            220.9300           0.1076         0.9315  10.1431
 GMF                   0.0739            175.5200           0.0855         0.9896  10.4050
 MLP                   0.0086            241.0200           0.1174         0.9949   9.8034
-EarlyFusion           0.0065            242.4700           0.1181         0.9980   9.7814
 NeuMF-Scratch         0.0395            177.7600           0.0866         0.9972  10.3297
 NeuMF-Pretrained      0.1214            180.0400           0.0877         0.9697  10.3974
 
@@ -84,7 +80,6 @@ MostPopular           0.0180      0.0141        0.0106        0.0072
 BPR-MF                0.0219      0.0168        0.0126        0.0088
 GMF                   0.0219      0.0141        0.0141        0.0075
 MLP                   0.0226      0.0145        0.0123        0.0073
-EarlyFusion           0.0206      0.0173        0.0113        0.0083
 NeuMF-Scratch         0.0233      0.0181        0.0118        0.0091
 NeuMF-Pretrained      0.0206      0.0148        0.0105        0.0075
 
@@ -97,16 +92,15 @@ MostPopular             N/A        N/A              N/A            N/A
 BPR-MF               571648        N/A              N/A          117.1
 GMF                  571680          8           0.0088          177.2
 MLP                  574400         10           0.0083          273.4
-EarlyFusion          574400          8           0.0089          242.6
 NeuMF-Scratch       1146080          3           0.0097          180.6
 NeuMF-Pretrained    1146080          1           0.0081          144.3
 
 📝 PHÂN TÍCH
 ──────────────────────────────────────────────────
   (Seed 42, 1 lần chạy — chênh lệch chưa kiểm định; kết luận thắng/thua cần 06_aggregate_seeds.py trên ≥ 6 seed hoặc bootstrap theo user.)
+  (Ẩn khỏi bảng, vẫn lưu trong results.json: EarlyFusion)
   Neural tot nhat vs Classical tot nhat: NeuMF-Scratch 0.0097 - BPR-MF 0.0096 = +0.0001 (NDCG@10, tuyet doi)
   Pretrained vs Scratch: NeuMF-Pretrained 0.0081 - NeuMF-Scratch 0.0097 = -0.0016 (NDCG@10, tuyet doi)
   MLP vs GMF: MLP 0.0083 - GMF 0.0088 = -0.0005 (NDCG@10, tuyet doi)
-  Late (NeuMF-Scratch) vs Early Fusion: NeuMF-Scratch 0.0097 - EarlyFusion 0.0089 = +0.0007 (NDCG@10, tuyet doi)
 
 ======================================================================

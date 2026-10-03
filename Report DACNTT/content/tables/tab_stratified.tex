@@ -1,7 +1,7 @@
 % Sinh tự động bởi scripts/15_export_report.py — KHÔNG sửa tay.
 \begin{table}[htbp]
     \centering\small
-    \caption{NDCG@10 theo nhóm item (head = 10\% item phổ biến nhất trong train $\cup$ val) và nhóm user (cold = 20\% user ít tương tác train $\cup$ val nhất); trung bình 3 seed}
+    \caption{NDCG@10 theo nhóm sản phẩm (head: 10\% sản phẩm được mua nhiều nhất trong tập huấn luyện $\cup$ xác thực) và nhóm người dùng (cold: 20\% người dùng có ít tương tác nhất); trung bình 3 seed}
     \label{tab:stratified}
     \begin{adjustbox}{max width=\textwidth}
     \begin{tabular}{lrrrrr}
@@ -17,5 +17,5 @@
         \bottomrule
     \end{tabular}
     \end{adjustbox}
-    \par\smallskip{\footnotesize Số trong ngoặc: số user test của nhóm. User có item đúng ở cả head lẫn tail được tính ở cả hai nhóm, mỗi nhóm chỉ xét item đúng của nhóm đó.}
+    \par\smallskip{\footnotesize Số trong ngoặc: số người dùng kiểm thử của nhóm. Người dùng có sản phẩm đúng ở cả head lẫn tail được tính ở cả hai nhóm, mỗi nhóm chỉ xét sản phẩm đúng của nhóm đó.}
 \end{table}

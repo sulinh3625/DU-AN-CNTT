@@ -84,7 +84,7 @@ def run(config_path: str, run_tag: str | None = None, final: bool = False, reaso
     chỉ được phép khi audit/PREREG.md đã commit, và mỗi lần ghi 1 dòng test_access_log.csv."""
     experiment_start = time.perf_counter()
     if final and not prereg_committed(PREREG_PATH):
-        raise SystemExit(f"--final bị khoá: chưa commit {PREREG_PATH} (khoá tập test, xem pham_vi_du_an.md mục 7).")
+        raise SystemExit(f"--final bị khoá: chưa commit {PREREG_PATH} (khoá tập test, xem audit/PREREG.md).")
     if final and not reason.strip():
         raise SystemExit("--final cần --reason (ghi vào test_access_log.csv).")
     cfg, adapter = build_adapter(config_path)
@@ -189,10 +189,9 @@ def run(config_path: str, run_tag: str | None = None, final: bool = False, reaso
     pd.DataFrame(hist).to_csv(run_dir / "history_mlp.csv", index=False)
     torch.save(mlp.state_dict(), ckpt_dir / "mlp.pt")
 
-    # 3b) Early Fusion baseline — đối chứng trực tiếp với NeuMF (Late Fusion).
-    # EarlyFusion va NeuMF-Scratch hoc tu dau -> pretrain_* (Adam) nhu He et al. 2017; finetune_* chi cho NeuMF-Pretrained.
-    # công bằng: chỉ khác nhau ở chỗ kết hợp sớm (concat rồi 1 mạng chung)
-    # hay muộn (2 nhánh riêng rồi mới nối ở cuối).
+    # 3b) EarlyFusionModel (chỉ trong run khám phá): kiến trúc trùng hệt MLP ở trên (PREREG mục 8), bị ẩn khỏi bảng/biểu
+    # đồ (scripts/common.py: REPORT_HIDDEN_MODELS). Thuật ngữ đã chốt: NeuMF mới là early fusion ở mức biểu diễn; late
+    # fusion = trộn điểm mô hình huấn luyện riêng (src/models/late_fusion.py). Học từ đầu -> pretrain_* (Adam).
     if cfg.training.train_early_fusion:
         early_fusion = EarlyFusionModel(
             data.n_users, data.n_items, cfg.model.embedding_dim, cfg.model.mlp_layers, cfg.model.dropout

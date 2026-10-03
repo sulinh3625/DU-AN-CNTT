@@ -76,6 +76,9 @@ MF + DNN được thêm sau khi đã xem test: mục 9.)
   cùng tháp MLP → lớp output). Bằng chứng: smoke tuning 1 epoch cùng seed cho val NDCG@10 bằng nhau (0,00770 vs
   0,00770); `tests/test_tuning.py::test_early_fusion_is_architecturally_identical_to_mlp`. Trong báo cáo, MLP
   chính là ablation "early fusion"/DNN-only. Họ 8 so sánh ở mục 6 không có EarlyFusion nên không đổi.
+  *(Ghi chú thuật ngữ, 03/10/2026: theo định nghĩa đã chốt với luận án GVHD, MLP đứng riêng là mô hình DNN thuần — không
+  phải "early fusion"; NeuMF mới là early fusion ở mức biểu diễn, late fusion là trộn điểm của mô hình huấn luyện riêng
+  (mục 9). Câu trên giữ nguyên văn lúc đăng ký.)*
 - **Loop 12:** NeuMF-Pretrained cho phép nhánh GMF và MLP khác số chiều (`NeuMF(..., gmf_dim=...)`, như NCF gốc)
   để nạp được GMF/MLP tốt nhất; negative_ratio và weight_decay khi fine-tune lấy theo MLP tốt nhất.
 - **Loop 14 (quyết định của người dùng, TRƯỚC mọi --final, chưa xem test):** bỏ iALS, MostPopular-Recent, CFNet (C)
@@ -104,6 +107,18 @@ MF + DNN được thêm sau khi đã xem test: mục 9.)
   lần chạy lại và ghi rõ độ lệch. (Tuning 27/09 chạy trước khi có chế độ tất định nên không tái lập được từng bit:
   MLP dựng lại theo đúng cấu hình tốt nhất cho val NDCG@10 0,00922 so với 0,00837 lúc tuning —
   `audit/rebuilt_checkpoints.json`; GMF và BPR-MF dựng lại khớp tuyệt đối. Lựa chọn cấu hình không đổi.)
+- **03/10/2026 — bổ sung cho mục 02/10 ở trên, trước lần chạy lại** (cấu hình, seed, metric, họ so sánh, tiêu chí
+  giữ nguyên):
+  - Ablation chỉ trên validation (theo đề cương chi tiết mục 4.5, 5.3): `scripts/20_ablation.py` đổi lần lượt từng yếu
+    tố quanh cấu hình đã chọn của NeuMF-Scratch — embedding_dim ∈ {8, 16, 32, 64, 128}, số tầng ẩn MLP ∈
+    {0, 1, 2, 3, 4}, negative_ratio ∈ {1, 2, 4, 8} — seed 42, cùng quy trình huấn luyện như tuning. Không dựng test
+    records, không ghi `test_access_log.csv`; kết quả là phân tích mô tả, **không** dùng để chọn lại cấu hình của
+    đánh giá cuối.
+  - `11_final.py` (từ commit `e29164e`) ghi thêm loss và NDCG@10 validation của từng epoch ra
+    `outputs/final/seed*/history.csv` để vẽ đường hội tụ — không đổi phép tính, nên kỳ vọng "ra đúng cùng số" ở mục
+    02/10 vẫn giữ.
+  - Chuỗi `python run.py final` thành 18 → 20 → 11 → 12 → 17 → 16 → 13 → 14 → 15 → 19; 18 và 20 không chạm test và
+    chạy trước lần chấm test đầu tiên của chuỗi.
 
 ## 9. Mở rộng sau khi xem test
 

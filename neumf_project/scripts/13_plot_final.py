@@ -33,6 +33,11 @@ MODEL_GROUP = {"NeuMF-Pretrained": "Mô hình đề tài (NeuMF)", "NeuMF-Scratc
                "BPR-MF": "Baseline", "MostPopular": "Baseline", "Random": "Baseline"}
 TUNE_KEY = {"BPR-MF": "bpr", "GMF": "gmf", "MLP": "mlp", "NeuMF-Scratch": "neumf_scratch",
             "NeuMF-Pretrained": "neumf_pretrained"}
+DISPLAY = {"MostPopular": "Most Popular"}  # cùng tên hiển thị với bảng của 15_export_report.py
+
+
+def show(m: str) -> str:
+    return DISPLAY.get(m, m)
 INK, INK2, MUTED, GRID, SURFACE = "#0b0b0b", "#52514e", "#898781", "#e1e0d9", "#fcfcfb"
 
 
@@ -69,14 +74,14 @@ def plot_metrics(per: pd.DataFrame, order: list[str]):
         ax.set_xlim(0, stat["mean"].max() * 1.28)
         ax.set_title(m, fontsize=11, color=INK, loc="left")
         style(ax, 3)
-    axes[0].set_yticks(list(y), order, fontsize=10, color=INK)
+    axes[0].set_yticks(list(y), [show(o) for o in order], fontsize=10, color=INK)
     axes[0].invert_yaxis()
     handles = [Patch(color=c, label=g) for g, c in GROUP.items()]
     handles.append(Line2D([], [], marker="o", color=INK, linestyle="none", markersize=4, label="Từng seed"))
     fig.legend(handles=handles, loc="upper center", ncol=4, frameon=False, fontsize=9, bbox_to_anchor=(0.5, 1.0))
     n_users = f"{per['user'].nunique():,}".replace(",", ".")
-    fig.suptitle(f"Kết quả trên tập test — trung bình ± độ lệch chuẩn qua {per['seed'].nunique()} seed "
-                 f"(Full Ranking, {n_users} user)", fontsize=12, color=INK, y=1.08)
+    fig.suptitle(f"Kết quả trên tập kiểm thử — trung bình ± độ lệch chuẩn qua {per['seed'].nunique()} seed "
+                 f"(Full Ranking, {n_users} người dùng)", fontsize=12, color=INK, y=1.08)
     fig.savefig(FIG / "final_metrics.png", dpi=200, bbox_inches="tight", facecolor=SURFACE)
     plt.close(fig)
 
@@ -88,13 +93,13 @@ def plot_significance(sig: pd.DataFrame):
     ax.axvline(0, color=INK2, linewidth=1)
     ax.hlines(list(y), sig["ci_low"], sig["ci_high"], color="#2a78d6", linewidth=2)
     ax.scatter(sig["diff"], list(y), s=40, color="#2a78d6", zorder=3, edgecolors=SURFACE, linewidths=2)
-    ax.set_yticks(list(y), [f"{a}  vs  {b}" for a, b in zip(sig["A"], sig["B"])], fontsize=9.5, color=INK)
+    ax.set_yticks(list(y), [f"{show(a)}  vs  {show(b)}" for a, b in zip(sig["A"], sig["B"])], fontsize=9.5, color=INK)
     right = max(sig["ci_high"].max(), 0) * 1.05
     for i, r in sig.iterrows():
         ax.text(1.02, i, f"{r['rel_diff'] * 100:+.1f}%".replace(".", ",") + f"   p Holm = {vn(r['p_holm'], 3)}",
                 transform=ax.get_yaxis_transform(), va="center", fontsize=8.5, color=INK2)
     ax.set_xlim(sig["ci_low"].min() * 1.1, right)
-    ax.set_xlabel("Chênh lệch NDCG@10 (A − B), CI 95% bootstrap theo user", fontsize=9, color=INK2)
+    ax.set_xlabel("Chênh lệch NDCG@10 (A − B), khoảng tin cậy 95% (bootstrap theo người dùng)", fontsize=9, color=INK2)
     n_sig = int((sig["verdict"] != "không khác biệt có ý nghĩa").sum())
     verdict = "không so sánh nào có ý nghĩa" if n_sig == 0 else f"{n_sig}/{len(sig)} so sánh có ý nghĩa"
     ax.set_title(f"Kiểm định cặp: {verdict} (Wilcoxon + Holm, α = 0,05)", fontsize=11, color=INK, loc="left")
@@ -116,13 +121,13 @@ def plot_val_vs_test(per: pd.DataFrame, order: list[str]):
     ax.set_yticks(range(len(models)), models, fontsize=10, color=INK)
     ax.invert_yaxis()
     ax.legend(handles=[Line2D([], [], marker="o", color=c, linestyle="none", markersize=7, label=lab)
-                       for c, lab in (("#eb6834", "Validation (seed 42, cấu hình tốt nhất)"),
-                                      ("#2a78d6", "Test (trung bình 3 seed)"))],
+                       for c, lab in (("#eb6834", "Tập xác thực (seed 42, cấu hình tốt nhất)"),
+                                      ("#2a78d6", "Tập kiểm thử (trung bình 3 seed)"))],
               loc="upper center", bbox_to_anchor=(0.5, -0.14), ncol=2, frameon=False, fontsize=9)
     val_rank = sorted(models, key=lambda m: -best[TUNE_KEY[m]]["val"]["NDCG@10"])
     test_rank = sorted(models, key=lambda m: -test[m])
     kept = "giữ nguyên" if val_rank == test_rank else "không giữ nguyên"
-    ax.set_title(f"NDCG@10: thứ hạng trên validation {kept} trên test", fontsize=11, color=INK, loc="left")
+    ax.set_title(f"NDCG@10: thứ hạng trên tập xác thực {kept} trên tập kiểm thử", fontsize=11, color=INK, loc="left")
     style(ax, 4)
     fig.savefig(FIG / "final_val_vs_test.png", dpi=200, bbox_inches="tight", facecolor=SURFACE)
     plt.close(fig)
@@ -161,7 +166,8 @@ def plot_training_curves(seed_dir: Path):
         b = d.loc[d["NDCG@10"].idxmax()]
         axes[0].scatter([b["epoch"]], [b["NDCG@10"]], s=90, facecolors="none", edgecolors=c, linewidths=1.8, zorder=3)
         axes[1].plot(d["epoch"], d["loss"], color=c, linewidth=1.8, label=m)
-    axes[0].set_title("NDCG@10 trên validation theo epoch (vòng tròn: epoch tốt nhất)", fontsize=11, color=INK, loc="left")
+    axes[0].set_title("NDCG@10 trên tập xác thực theo epoch (vòng tròn: epoch tốt nhất)", fontsize=11, color=INK,
+                      loc="left")
     axes[1].set_title("Hàm mất mát BCE trên tập huấn luyện theo epoch", fontsize=11, color=INK, loc="left")
     for ax, fmt in zip(axes, (4, 3)):
         style_lines(ax, fmt)
@@ -175,7 +181,7 @@ def plot_training_curves(seed_dir: Path):
 
 
 ABLATION = PROJECT_ROOT / "outputs" / "ablation" / "ablation_val.csv"
-ABLATION_FACTORS = [("embedding_dim", "Số chiều embedding d"), ("n_hidden", "Số tầng ẩn của tháp MLP"),
+ABLATION_FACTORS = [("embedding_dim", "Số chiều Embedding d"), ("n_hidden", "Số tầng ẩn của tháp MLP"),
                     ("negative_ratio", "Số mẫu âm cho mỗi mẫu dương")]
 
 
@@ -195,9 +201,9 @@ def plot_ablation():
             ax.text(x, v, vn(v, 4), ha="center", va="bottom", fontsize=8, color=INK)
         ax.set_xlabel(label, fontsize=9.5, color=INK2)
         style_lines(ax, 4)
-    axes[0].set_ylabel("NDCG@10 (validation)", fontsize=9.5, color=INK2)
-    fig.suptitle("Ablation NeuMF-Scratch trên validation — đổi từng yếu tố quanh cấu hình đã chọn (cột đậm), seed 42",
-                 fontsize=12, color=INK, y=1.04)
+    axes[0].set_ylabel("NDCG@10 (tập xác thực)", fontsize=9.5, color=INK2)
+    fig.suptitle("Ablation NeuMF-Scratch trên tập xác thực — đổi từng yếu tố quanh cấu hình đã chọn (cột đậm), "
+                 "seed 42", fontsize=12, color=INK, y=1.04)
     fig.savefig(FIG / "final_ablation_val.png", dpi=200, bbox_inches="tight", facecolor=SURFACE)
     plt.close(fig)
 

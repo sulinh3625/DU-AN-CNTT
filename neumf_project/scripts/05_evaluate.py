@@ -365,7 +365,7 @@ def _build_report(primary_df, sampled_df, tail_df, beyond_df, train_df, metadata
                   primary_df.loc[neural, "NDCG@10"].idxmax(), primary_df.loc[classical, "NDCG@10"].idxmax())
     diff_line("Pretrained vs Scratch", "NeuMF-Pretrained", "NeuMF-Scratch")
     diff_line("MLP vs GMF", "MLP", "GMF")
-    diff_line("Late (NeuMF-Scratch) vs Early Fusion", "NeuMF-Scratch", "EarlyFusion")
+    diff_line("NeuMF-Scratch (early fusion MF + DNN) vs EarlyFusionModel (= MLP, DNN thuan)", "NeuMF-Scratch", "EarlyFusion")
     L += ["", sep]
     return "\n".join(L)
 

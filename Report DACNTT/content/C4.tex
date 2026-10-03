@@ -4,154 +4,124 @@
 \section{Cấu hình thực nghiệm}
 \label{sec:exp_config}
 
-Toàn bộ thực nghiệm dùng mẫu hm500k sau lọc $k$-core ($k=10$): 7.519 người dùng, 10.345 sản phẩm, chia theo mốc thời gian chung (mục~\ref{subsec:split_sampling}). Tinh chỉnh và đánh giá cuối được chạy trên GPU NVIDIA GeForce RTX 3050 Laptop (4 GB), RAM 16 GB, bằng PyTorch \parencite{paszke2019pytorch}; độ trễ suy diễn được đo riêng trên CPU (mục~\ref{subsec:latency}). Mọi bảng số liệu, hình và con số kết quả trong chương này được sinh tự động từ tệp kết quả của quy trình thực nghiệm, không nhập tay.
+Thực nghiệm theo giao thức v2 (Chương~\ref{chap:thietke_trienkhai}) gồm hai bước tách biệt: tinh chỉnh trên tập xác thực của mẫu phát triển A, và đánh giá cuối một lần trên tập kiểm thử của mẫu kiểm định B -- những khách hàng không có trong mẫu A. Quy mô dữ liệu của hai mẫu ở \bangrefV{tab_v2_data.tex}{tab:v2data} (mục~\ref{subsec:split_sampling}). Mọi bảng số liệu, hình và con số kết quả trong chương này được sinh tự động từ tệp kết quả của quy trình thực nghiệm, không nhập tay. Các tài liệu tham khảo được dùng làm cơ sở về phương pháp (định nghĩa mô hình, cách huấn luyện và cách đánh giá); vì đề tài dùng dữ liệu, cách chia dữ liệu và giao thức đánh giá riêng, số liệu trong chương này \emph{không} được so sánh trực tiếp với số liệu công bố trong các tài liệu đó -- mọi so sánh đều giữa các mô hình của đề tài, trên cùng dữ liệu và cùng giao thức.
 
-Giao thức đánh giá:
 \begin{itemize}
-    \item \textbf{Full Ranking (chính):} với mỗi người dùng kiểm thử, xếp hạng toàn bộ 10.216 sản phẩm có trong tập huấn luyện $\cup$ xác thực, trừ các sản phẩm người dùng đã mua trong hai tập này; các sản phẩm đúng luôn nằm trong tập ứng viên. Hòa điểm được phá bằng một khoá tất định (seed 2026), giống nhau cho mọi mô hình.
-    \item \textbf{Độ đo chính:} NDCG@10 trung bình theo người dùng trên tập kiểm thử (2.996 người dùng, 9.229 cặp đúng). Độ đo phụ: Recall@10, HR@10, Precision@10, NDCG@5 (định nghĩa cho trường hợp nhiều sản phẩm đúng ở mục~\ref{sec:metrics}).
-    \item \textbf{Sampled-99 (chỉ đối chiếu):} mỗi cặp đúng được xếp cùng 99 sản phẩm âm lấy ngẫu nhiên, theo giao thức NCF gốc \parencite{he2017ncf}; không dùng để kết luận \parencite{krichene2020sampled}.
-    \item \textbf{Số lần chạy:} mỗi mô hình được chạy với 3 seed (42, 2024, 2025); với mỗi seed, số epoch được chọn trên tập xác thực rồi mô hình được huấn luyện lại trên tập huấn luyện $\cup$ xác thực trước khi chấm test (mục~\ref{subsec:split_sampling}); báo cáo trung bình $\pm$ độ lệch chuẩn qua seed; kiểm định theo mục~\ref{sec:protocol}.
-    \item \textbf{Lần chấm:} \Res{all}{runinfo}
+    \item \textbf{Full Ranking:} với mỗi khách được đánh giá, xếp hạng toàn bộ tập ứng viên -- sản phẩm cũ và sản phẩm mới, trừ những sản phẩm khách đã mua trước mốc (trung bình \VData{Btest}{cand} ứng viên mỗi khách ở tập kiểm thử của mẫu B). Khi nhiều sản phẩm có điểm bằng nhau, thứ tự giữa chúng được quyết định bằng một khoá giả ngẫu nhiên cố định (seed 2026), giống nhau cho mọi mô hình.
+    \item \textbf{Độ đo chính:} NDCG@10 trung bình theo người dùng trên tập kiểm thử của mẫu B (\VData{Btest}{users} người dùng, \VData{Btest}{targets} cặp đúng, trong đó \VData{Btest}{newitemtargets} cặp -- \VData{Btest}{newpct}\% -- là sản phẩm mới). Độ đo phụ: Recall@10, HR@10, Precision@10, NDCG@5, NDCG@20 (định nghĩa ở mục~\ref{sec:metrics}); NDCG@10 theo nhóm sản phẩm cũ/mới.
+    \item \textbf{Số lần chạy:} mỗi mô hình được chạy với 5 seed (\VData{run}{seedlist}); với mỗi seed, số epoch được chọn trên tập xác thực của mẫu B, rồi mô hình được huấn luyện lại trên mọi cặp trước 29/07/2020 trước khi chấm tập kiểm thử (mục~\ref{sec:protocol}). Báo cáo trung bình $\pm$ độ lệch chuẩn qua seed; kiểm định theo mục~\ref{sec:protocol}.
+    \item \textbf{Môi trường chạy:} tinh chỉnh chạy trên máy tính cá nhân không có GPU (CPU 4 nhân, RAM 16 GB), mất tổng cộng \VCfg{all}{hours} giờ cho \VCfg{all}{nconfigs} cấu hình. Đánh giá cuối chạy trên \VData{run}{device} (CPU \VData{run}{cpu}; GPU: \VData{run}{gpu}), Python \VData{run}{python}, PyTorch \VData{run}{torch} \parencite{paszke2019pytorch}, mất \VData{run}{hours} giờ cho 5 seed. Mọi dòng nhật ký tinh chỉnh và mọi lần đánh giá cuối có cùng một mã băm nội dung mã nguồn (\texttt{\VData{run}{codehash}}); đánh giá cuối chạy trên phiên bản mã nguồn \texttt{\VData{run}{commit}} đã lưu, không có thay đổi chưa lưu.
 \end{itemize}
 
 \section{Phương pháp đối chứng (Baselines)}
 \label{sec:baselines}
 
-Bảy mô hình được đánh giá, chia ba nhóm:
+Ngoài mô hình đề tài NeuMF-F và các mô hình đối chiếu trên cùng khung (GMF-F, MLP-F, LateFusion-F, GMF, MLP, NeuMF -- mục~\ref{subsec:early_fusion_design}), bảy baseline được đánh giá với cùng dữ liệu, tập ứng viên và quy tắc đánh giá:
 \begin{enumerate}
-    \item \textbf{Baseline:} \textbf{Random} (điểm ngẫu nhiên -- cận dưới); \textbf{Most Popular} (điểm là số người dùng đã mua sản phẩm trong tập huấn luyện, mọi người dùng nhận cùng một danh sách trừ sản phẩm đã mua); \textbf{BPR-MF} \parencite{rendle2009bpr} -- nhân tử hóa ma trận tuyến tính tối ưu xếp hạng theo cặp, được tinh chỉnh cùng ngân sách như NeuMF.
-    \item \textbf{Ablation:} \textbf{GMF} (chỉ nhánh MF) và \textbf{MLP} (chỉ nhánh DNN, mô hình DNN thuần -- mục~\ref{subsec:early_fusion_design}).
-    \item \textbf{Mô hình đề tài:} \textbf{NeuMF-Scratch} (khởi tạo ngẫu nhiên) và \textbf{NeuMF-Pretrained} (khởi tạo từ GMF, MLP đã huấn luyện) \parencite{he2017ncf} -- mô hình lai MF + DNN theo kiểu Early Fusion ở mức biểu diễn (mục~\ref{subsec:early_late_fusion}).
+    \item \textbf{Random} -- điểm ngẫu nhiên, cận dưới.
+    \item \textbf{Most Popular} -- điểm của sản phẩm là số khách trong dữ liệu huấn luyện của mẫu đã mua sản phẩm đó; mọi khách nhận cùng một danh sách (trừ sản phẩm đã mua). Sản phẩm mới có điểm 0 và bị xếp cuối.
+    \item \textbf{MostPopular-Recent} -- độ phổ biến \emph{gần đây} trên toàn bộ H\&M: điểm của sản phẩm $i$ là số giao dịch của nó trong $W$ ngày trước mốc dự đoán, $\sum_{d=\tau-W}^{\tau-1} n_{i,d}$, với $W$ chọn trên tập xác thực. Đây là baseline mạnh với dữ liệu thời trang có xu hướng thay đổi nhanh; nó dùng cùng nguồn doanh số với đặc trưng thời gian của NeuMF-F (mục~\ref{subsec:features}), nên so sánh với nó cho biết NeuMF-F có học được gì vượt trên xu hướng chung hay không. Sản phẩm mới chưa có doanh số nên vẫn xếp sau sản phẩm đang bán.
+    \item \textbf{Content} -- gợi ý theo nội dung thuần \parencite{lops2011content}: mỗi sản phẩm được biểu diễn bằng vector văn bản (mục~\ref{subsec:features}) nối với mã hóa one-hot của bốn thuộc tính (nhóm sản phẩm, nhóm màu, nhóm chỉ mục, nhóm may mặc), chuẩn hóa về độ dài 1; hồ sơ của khách là trung bình có trọng số các vector sản phẩm đã mua, trọng số giảm theo thời gian với chu kỳ bán rã $h$ ngày ($\omega = 2^{-(\tau - t_{uj})/h}$, hoặc bằng 1 nếu không dùng trọng số); điểm là độ tương đồng cosine giữa hồ sơ và sản phẩm. Content không dùng ID nên chấm được sản phẩm mới, nhưng không học từ hành vi của những khách khác.
+    \item \textbf{ItemKNN} \parencite{sarwar2001item} và \textbf{UserKNN} -- lọc cộng tác dựa trên láng giềng (mục~\ref{subsec:memory_model_based}), với số láng giềng $k$ và hệ số co chọn trên tập xác thực.
+    \item \textbf{BPR-MF} \parencite{rendle2009bpr} -- nhân tử hóa ma trận tối ưu xếp hạng theo cặp, đại diện cho MF tuyến tính được tinh chỉnh cùng ngân sách.
 \end{enumerate}
-Bốn mô hình được bổ sung \emph{sau} khi đã xem số liệu test của bảy mô hình trên và được báo cáo tách riêng ở mục~\ref{sec:extension_results}: Late Fusion GMF + MLP và Late Fusion BPR-MF + MLP (mục~\ref{subsec:early_late_fusion}), ItemKNN \parencite{sarwar2001item} và UserKNN (mục~\ref{subsec:memory_model_based}). Bản ItemKNN đầu tiên dùng ma trận tương đồng dày $10.345 \times 10.345$ nên không chạy được trong giới hạn bộ nhớ; bản thưa top-$k$ khắc phục điều này. Hai baseline láng giềng quan trọng vì \textcite{dacrema2019progress} cho thấy ItemKNN được tune tốt có thể vượt NeuMF.
+Most Popular, ItemKNN, UserKNN và BPR-MF chỉ dùng ID nên xếp mọi sản phẩm mới cuối danh sách, giống GMF, MLP và NeuMF (mục~\ref{subsec:split_sampling}). Đặt mô hình học sâu cạnh các baseline đơn giản được tinh chỉnh đầy đủ là nguyên tắc đánh giá được khuyến nghị trong \textcite{dacrema2019progress}.
 
-\section{Kết quả tinh chỉnh trên tập xác thực}
+\section{Kết quả tinh chỉnh trên tập xác thực của mẫu A}
 \label{sec:tuning_results}
 
-Bảng~\ref{tab:tuning} liệt kê cấu hình tốt nhất của từng mô hình sau 6 cấu hình thử (tổng thời gian tinh chỉnh 1,9 giờ GPU, mọi dòng nhật ký cùng một phiên bản mã nguồn, không có thay đổi chưa lưu). Mọi con số trong bảng là trên tập \emph{xác thực}; chúng lạc quan vì chính tập này được dùng để chọn cấu hình, nên chỉ dùng để chọn, không dùng để kết luận. Phần dưới của bảng là bốn mô hình của phần mở rộng (mục~\ref{sec:extension_results}), được chọn với cùng quy tắc sau khi đã xem test lần đầu.
+\bangrefV{tab_v2_tuning.tex}{tab:v2tuning} liệt kê cấu hình tốt nhất của từng mô hình. Mọi con số trong bảng là trên tập \emph{xác thực} của mẫu A; chúng lạc quan vì chính tập này được dùng để chọn cấu hình, nên chỉ dùng để chọn, không dùng để kết luận.
 
-\bangketqua{tab_tuning.tex}{\texttt{scripts/10\_tune.py}}
+\bangketquaV{tab_v2_tuning.tex}{\texttt{scripts/22\_tune\_v2.py}}
 
-\hinhketqua{media/figures/final/final_training_curves.png}{\textwidth}{Đường hội tụ của GMF, MLP, NeuMF-Scratch và NeuMF-Pretrained khi chọn số epoch (seed 42): NDCG@10 trên tập xác thực và hàm mất mát BCE trên tập huấn luyện theo epoch; vòng tròn là epoch tốt nhất}{fig:training_curves}{chạy \texttt{scripts/11\_final.py} (bản ghi \texttt{history.csv}) rồi \texttt{scripts/13\_plot\_final.py}}
+Trên tập xác thực của mẫu A, NeuMF-F đạt NDCG@10 = \VVal{NeuMFF}{NDCG10} với cấu hình \VCfg{NeuMFF}{params}; NeuMF chỉ dùng ID đạt \VVal{NeuMF}{NDCG10}, GMF-F \VVal{GMFF}{NDCG10}, MLP-F \VVal{MLPF}{NDCG10} và LateFusion-F \VVal{LateF}{NDCG10} (\VCfg{LateF}{params}). Trong các baseline, cao nhất là UserKNN (\VVal{UKNN}{NDCG10}) và ItemKNN (\VVal{IKNN}{NDCG10}); MostPopular-Recent đạt \VVal{RecPop}{NDCG10} và BPR-MF \VVal{BPR}{NDCG10}. Các mạng nơ-ron đạt NDCG@10 tốt nhất trên tập xác thực ở epoch trung vị \VCfg{all}{epochmedian} (muộn nhất epoch \VCfg{all}{epochmax}) trong \VCfg{all}{nneural} cấu hình mạng nơ-ron đã thử.
 
-Ba nhận xét từ quá trình tinh chỉnh. Thứ nhất, trên validation NeuMF-Scratch đứng đầu (NDCG@10 = \Val{Scr}{NDCG10}), trong khi NeuMF-Pretrained (\Val{Pre}{NDCG10}) chỉ ngang BPR-MF (\Val{BPR}{NDCG10}) -- pre-training không giúp trên dữ liệu này. Theo quy tắc đã đăng ký (mục~\ref{sec:protocol}), \textbf{NeuMF-Scratch là mô hình lai được chọn}. Thứ hai, các mô hình nơ-ron đạt đỉnh rất sớm (đa số ở epoch 1--3, muộn nhất epoch 9), dấu hiệu quá khớp nhanh trên dữ liệu thưa; \hinhref{media/figures/final/final_training_curves.png}{fig:training_curves} vẽ đường hội tụ của bốn mạng nơ-ron trong bước chọn số epoch của đánh giá cuối (seed 42): NDCG@10 trên tập xác thực đạt đỉnh sau vài epoch rồi không còn tăng (dừng sớm sau 5 epoch không cải thiện), trong khi hàm mất mát trên tập huấn luyện vẫn tiếp tục giảm. Thứ ba, các ứng viên đã bị loại khỏi phạm vi trước khi chấm test (mục~\ref{sec:protocol}) đều cao hơn NeuMF-Scratch trên validation: trộn điểm iALS + NeuMF-Scratch đạt 0,01260, DeepCF/CFNet 0,01169 và iALS đã tune 0,01141 (iALS mặc định chỉ 0,00906) -- phù hợp với nhận định của \textcite{rendle2022ials} rằng MF được tune kỹ là baseline rất mạnh. Hai baseline láng giềng của phần mở rộng cũng vậy: UserKNN đạt \Val{UKNN}{NDCG10} -- cao nhất trong toàn bộ quá trình tinh chỉnh -- và ItemKNN \Val{IKNN}{NDCG10}.
-
-\section{Kết quả trên tập kiểm thử}
+\section{Kết quả đánh giá cuối trên mẫu kiểm định B}
 \label{sec:exp_results}
 
 \subsection{So sánh các độ đo xếp hạng (Full Ranking)}
 \label{subsec:hr_ndcg_comparison}
 
-Bảng~\ref{tab:final} và Hình~\ref{fig:final_metrics} trình bày kết quả trên tập kiểm thử của 7 mô hình, trung bình qua 3 seed.
+\bangrefV{tab_v2_main.tex}{tab:v2main} và \hinhref{media/figures/v2/v2_metrics.png}{fig:v2_metrics} trình bày kết quả trên tập kiểm thử của mẫu B, trung bình qua 5 seed.
 
-\bangketqua{tab_final.tex}{\texttt{scripts/11\_final.py} và \texttt{scripts/12\_significance.py}}
+\bangketquaV{tab_v2_main.tex}{\texttt{scripts/23\_final\_v2.py}}
 
-\hinhketqua{media/figures/final/final_metrics.png}{\textwidth}{NDCG@10, Recall@10 và HR@10 trên tập kiểm thử: trung bình $\pm$ độ lệch chuẩn qua 3 seed, chấm đen là từng seed}{fig:final_metrics}{chạy \texttt{scripts/13\_plot\_final.py} rồi \texttt{scripts/15\_export\_report.py}}
+\hinhketqua{media/figures/v2/v2_metrics.png}{\textwidth}{NDCG@10, Recall@10 và HR@10 trên tập kiểm thử của mẫu B: trung bình $\pm$ độ lệch chuẩn qua 5 seed, chấm đen là từng seed}{fig:v2_metrics}{chạy \texttt{scripts/23\_final\_v2.py} rồi \texttt{scripts/24\_report\_v2.py}}
 
-Trước hết, thang giá trị tuyệt đối rất thấp (NDCG@10 cao nhất khoảng 0,01): mỗi người dùng kiểm thử có trung bình 3,08 sản phẩm đúng giữa hơn 10.000 ứng viên, và dự đoán những món \emph{chưa từng mua} trong 8 tuần sau mốc huấn luyện là bài toán khó với dữ liệu thời trang. Vì vậy thông tin quan trọng là thứ hạng tương đối và chênh lệch có ý nghĩa thống kê hay không, không phải độ lớn tuyệt đối.
-
-Bốn quan sát chính:
-\begin{enumerate}
-    \item \textbf{BPR-MF có trung bình cao nhất trên mọi độ đo} (NDCG@10 = \Res{BPR}{NDCG10} $\pm$ \Sd{BPR}{NDCG10}), dù là mô hình tuyến tính đơn giản nhất trong nhóm có học.
-    \item \textbf{NeuMF-Pretrained ngang Most Popular}: \Res{Pre}{NDCG10} so với \Res{MostPop}{NDCG10} (chênh \Sig{PreMostPop}{rel}, không có ý nghĩa thống kê). Mô hình lai được chọn theo validation, NeuMF-Scratch, chỉ đạt \Res{Scr}{NDCG10}.
-    \item \textbf{GMF, MLP và hai biến thể NeuMF nằm sát nhau} (NDCG@10 từ \Res{GMF}{NDCG10} đến \Res{Pre}{NDCG10}), chênh lệch nhỏ hơn hoặc cùng cỡ với độ lệch chuẩn giữa các seed của các mô hình nơ-ron.
-    \item \textbf{Mọi mô hình có học đều vượt xa Random} (NDCG@10 = \Res{Random}{NDCG10}), tức đều học được tín hiệu thật từ dữ liệu. Most Popular là baseline mạnh: độ phổ biến giải thích phần lớn những gì các mô hình phức tạp hơn nắm bắt được.
-\end{enumerate}
-
-Ở K = 20 (Bảng~\ref{tab:k20}) -- chỉ số mô tả bổ sung, tính lại từ hạng đã lưu của cùng lần chấm, không chấm lại mô hình; bảng gồm cả bốn mô hình mở rộng của mục~\ref{sec:extension_results} -- trong bảy mô hình chính, BPR-MF vẫn có trung bình cao nhất (NDCG@20 = \Kx{BPR}{NDCG20}); các mô hình còn lại tiếp tục nằm sát nhau và thứ tự giữa chúng thay đổi so với K = 10 (Most Popular \Kx{MostPop}{NDCG20} và MLP \Kx{MLP}{NDCG20} nhỉnh hơn NeuMF-Pretrained \Kx{Pre}{NDCG20}), thêm một dấu hiệu rằng chênh lệch giữa các mô hình này nằm trong mức nhiễu.
-
-\bangketqua{tab_k20.tex}{\texttt{scripts/16\_extra\_k.py}}
+NeuMF-F đạt NDCG@10 = \VRes{NeuMFF}{NDCG10} $\pm$ \VSd{NeuMFF}{NDCG10}, xếp \VRank{NeuMFF}{NDCG10} trong 14 mô hình; NeuMF chỉ dùng ID đạt \VRes{NeuMF}{NDCG10} $\pm$ \VSd{NeuMF}{NDCG10}, BPR-MF \VRes{BPR}{NDCG10} $\pm$ \VSd{BPR}{NDCG10}, UserKNN \VRes{UKNN}{NDCG10}, ItemKNN \VRes{IKNN}{NDCG10}, MostPopular-Recent \VRes{RecPop}{NDCG10} và Content \VRes{Cont}{NDCG10}. Thang giá trị tuyệt đối thấp vì mỗi khách có vài sản phẩm đúng giữa khoảng \VData{Btest}{cand} ứng viên, và dự đoán những món \emph{chưa từng mua} trong 8 tuần tới là bài toán khó với dữ liệu thời trang; thông tin quan trọng là thứ hạng tương đối và chênh lệch có ý nghĩa thống kê hay không.
 
 \subsection{Kiểm định ý nghĩa thống kê}
 \label{subsec:multiseed_results}
 
-Bảng~\ref{tab:significance} và Hình~\ref{fig:final_significance} trình bày kết quả kiểm định cặp theo người dùng (\Sig{all}{nusers} người dùng) trên họ \Sig{all}{n} so sánh đã đăng ký trước.
+\bangrefV{tab_v2_sig.tex}{tab:v2sig} và \hinhref{media/figures/v2/v2_significance.png}{fig:v2_significance} trình bày kiểm định họ \VSig{all}{n} so sánh đã đăng ký trước (mục~\ref{sec:protocol}). \VSig{all}{summary}
 
-\bangketqua{tab_significance.tex}{\texttt{scripts/12\_significance.py}}
+\bangketquaV{tab_v2_sig.tex}{\texttt{scripts/23\_final\_v2.py}}
 
-\hinhketqua{media/figures/final/final_significance.png}{0.95\textwidth}{Chênh lệch NDCG@10 (A $-$ B) với khoảng tin cậy 95\% bootstrap theo người dùng, kèm giá trị $p$ đã hiệu chỉnh Holm}{fig:final_significance}{chạy \texttt{scripts/13\_plot\_final.py} rồi \texttt{scripts/15\_export\_report.py}}
+\hinhketqua{media/figures/v2/v2_significance.png}{0.95\textwidth}{Hiệu NDCG@10 (A $-$ B) của họ 10 so sánh đã đăng ký, với khoảng tin cậy 95\% bootstrap theo người dùng và giá trị $p$ đã hiệu chỉnh Holm}{fig:v2_significance}{chạy \texttt{scripts/24\_report\_v2.py}}
 
-Số so sánh đạt tiêu chí ``A tốt hơn B'' là \textbf{\Sig{all}{nbetter}/\Sig{all}{n}}: mọi khoảng tin cậy đều chứa 0 và mọi giá trị $p$ sau hiệu chỉnh Holm đều $\ge 0{,}05$. So sánh gần ngưỡng nhất là NeuMF-Pretrained với GMF: NDCG@10 của NeuMF-Pretrained chênh \Sig{PreGMF}{rel} so với GMF và $p$ Wilcoxon chưa hiệu chỉnh là \Sig{PreGMF}{pw} -- dưới 0,05 nếu xét riêng lẻ -- nhưng sau hiệu chỉnh cho 8 so sánh $p_{Holm} = $ \Sig{PreGMF}{pholm} và khoảng tin cậy [\Sig{PreGMF}{cilo}; \Sig{PreGMF}{cihi}] vẫn chứa 0; đây là ví dụ trực tiếp cho lý do phải hiệu chỉnh đa so sánh. So với BPR-MF, NeuMF-Pretrained chênh \Sig{PreBPR}{rel} ($p_{Holm} = $ \Sig{PreBPR}{pholm}). Kết luận đúng theo tiêu chí đã đăng ký: \emph{NeuMF không vượt BPR-MF, không vượt Most Popular, và không khác biệt có ý nghĩa với các nhánh GMF, MLP của chính nó.}
+Theo từng câu hỏi nghiên cứu: \textit{(1) đặc trưng có cải thiện mô hình lai không} -- NeuMF-F so với NeuMF chênh \VSig{1}{rel} (\VSig{1}{phrase}); \textit{(2) hợp nhất có giúp so với từng nhánh không} -- so với GMF-F chênh \VSig{2}{rel} (\VSig{2}{phrase}), so với MLP-F chênh \VSig{3}{rel} (\VSig{3}{phrase}); \textit{(3) hợp nhất sớm hay muộn} -- so với LateFusion-F chênh \VSig{4}{rel} (\VSig{4}{phrase}); \textit{(4) so với các baseline} -- BPR-MF \VSig{5}{rel} (\VSig{5}{phrase}), ItemKNN \VSig{6}{rel} (\VSig{6}{phrase}), UserKNN \VSig{7}{rel} (\VSig{7}{phrase}), MostPopular-Recent \VSig{8}{rel} (\VSig{8}{phrase}), Content \VSig{9}{rel} (\VSig{9}{phrase}); \textit{(5) mô hình lai chỉ dùng ID so với MF} -- NeuMF so với BPR-MF chênh \VSig{10}{rel} (\VSig{10}{phrase}).
 
-Hình~\ref{fig:val_vs_test} đặt NDCG@10 trên validation (lúc tinh chỉnh) cạnh NDCG@10 trên test. Thứ hạng không được giữ nguyên: NeuMF-Scratch đứng đầu trên validation nhưng trên test chỉ xếp \Res{Scr}{rank} trong bảy mô hình, dưới cả BPR-MF, NeuMF-Pretrained, MLP và Most Popular. Đây là minh chứng trực tiếp rằng chênh lệch giữa các mô hình nhỏ hơn mức nhiễu của việc chọn trên một tập validation 2.275 người dùng -- và là lý do đề tài không kết luận dựa trên một lần chạy hay trên số liệu validation.
+\subsection{Sản phẩm cũ và sản phẩm mới}
+\label{subsec:longtail_results}
 
-\hinhketqua{media/figures/final/final_val_vs_test.png}{0.8\textwidth}{NDCG@10 trên validation (seed 42, cấu hình tốt nhất) so với trên test (trung bình 3 seed)}{fig:val_vs_test}{chạy \texttt{scripts/13\_plot\_final.py} rồi \texttt{scripts/15\_export\_report.py}}
+\bangrefV{tab_v2_groups.tex}{tab:v2groups} và \hinhref{media/figures/v2/v2_groups.png}{fig:v2_groups} tách NDCG@10 theo nhóm sản phẩm đúng (mục~\ref{sec:metrics}), và thêm phân tích độ nhạy khi tập ứng viên chỉ gồm sản phẩm cũ -- gần với giao thức v1. Đây là phân tích mô tả, không kiểm định.
+
+\bangketquaV{tab_v2_groups.tex}{\texttt{scripts/23\_final\_v2.py}}
+
+\hinhketqua{media/figures/v2/v2_groups.png}{\textwidth}{NDCG@10 theo nhóm sản phẩm đúng cũ/mới và khi tập ứng viên chỉ gồm sản phẩm cũ (trung bình qua 5 seed, thanh lỗi: khoảng tin cậy 95\% bootstrap theo người dùng)}{fig:v2_groups}{chạy \texttt{scripts/24\_report\_v2.py}}
+
+Trên nhóm sản phẩm đúng mới (\VData{Btest}{usersnew} người dùng có ít nhất một sản phẩm đúng mới), các mô hình chỉ dùng ID đạt NDCG@10 bằng 0 theo cấu tạo; NeuMF-F đạt \VRes{NeuMFF}{NDCG10new}, Content \VRes{Cont}{NDCG10new}. Trên nhóm sản phẩm đúng cũ, NeuMF-F đạt \VRes{NeuMFF}{NDCG10old}, so với \VRes{NeuMF}{NDCG10old} của NeuMF, \VRes{BPR}{NDCG10old} của BPR-MF và \VRes{UKNN}{NDCG10old} của UserKNN. Khi chỉ xét sản phẩm cũ (cột cuối), hiệu NDCG@10 giữa NeuMF-F và NeuMF là \VGrp{NeuMF}{oldonlydiff} (khoảng tin cậy 95\%: [\VGrp{NeuMF}{oldonlylo}; \VGrp{NeuMF}{oldonlyhi}]), giữa NeuMF-F và BPR-MF là \VGrp{BPR}{oldonlydiff} ([\VGrp{BPR}{oldonlylo}; \VGrp{BPR}{oldonlyhi}]).
 
 \subsection{Phân tích bóc tách thành phần (Ablation Study)}
 \label{subsec:ablation}
 
+\bangrefV{tab_v2_ablation.tex}{tab:v2ablation} và \hinhref{media/figures/v2/v2_ablation.png}{fig:v2_ablation} so sánh NeuMF-F đầy đủ với năm biến thể tắt một thành phần, cùng siêu tham số và cùng quy trình huấn luyện (seed 42, mục~\ref{subsec:early_fusion_design}). Đây là phân tích mô tả với một seed, không dùng để chọn lại cấu hình.
+
+\bangketquaV{tab_v2_ablation.tex}{\texttt{scripts/23\_final\_v2.py}}
+
+\hinhketqua{media/figures/v2/v2_ablation.png}{\textwidth}{Ablation của NeuMF-F trên tập kiểm thử của mẫu B (seed 42): NDCG@10 trên mọi sản phẩm đúng, sản phẩm cũ và sản phẩm mới}{fig:v2_ablation}{chạy \texttt{scripts/24\_report\_v2.py}}
+
+So với NeuMF-F đầy đủ (NDCG@10 = \VAbl{Full}{NDCG10} ở seed 42), bỏ đặc trưng thời gian làm NDCG@10 thay đổi \VAbl{AblTime}{rel}, bỏ vector văn bản \VAbl{AblText}{rel}, bỏ thuộc tính sản phẩm \VAbl{AblAttr}{rel}, bỏ thông tin khách hàng \VAbl{AblUser}{rel}, và không bỏ ID ngẫu nhiên khi huấn luyện \VAbl{AblIdDrop}{rel}.
+
+\subsection{Độ phủ, sản phẩm mới trong gợi ý và chi phí huấn luyện}
+\label{subsec:beyond_results}
+
+\bangketquaV{tab_v2_beyond.tex}{\texttt{scripts/23\_final\_v2.py}}
+
+\bangrefV{tab_v2_beyond.tex}{tab:v2beyond} mô tả danh sách top-10 (mục~\ref{subsec:beyond_accuracy}) và chi phí huấn luyện. Most Popular là trường hợp giới hạn với độ phủ \VBey{Pop}{cov}; NeuMF-F có độ phủ \VBey{NeuMFF}{cov} và tỉ lệ sản phẩm mới trong top-10 là \VBey{NeuMFF}{new} (Content: \VBey{Cont}{new}). Thời gian huấn luyện trung bình mỗi seed của NeuMF-F là \VBey{NeuMFF}{time} phút, so với \VBey{NeuMF}{time} phút của NeuMF chỉ dùng ID và \VBey{BPR}{time} phút của BPR-MF.
+
+\subsection{Hội tụ và độ ổn định giữa hai mẫu}
+\label{subsec:curves}
+
+\hinhketqua{media/figures/v2/v2_curves.png}{\textwidth}{Đường hội tụ của các mạng nơ-ron khi chọn số epoch trên tập xác thực của mẫu B (seed 42): NDCG@10 trên tập xác thực và hàm mất mát BCE trên tập huấn luyện theo epoch; vòng tròn là epoch được chọn}{fig:v2_curves}{chạy \texttt{scripts/24\_report\_v2.py}}
+
+\hinhketqua{media/figures/v2/v2_val_vs_test.png}{0.8\textwidth}{NDCG@10 trên tập xác thực của mẫu A (lúc tinh chỉnh) và trên tập kiểm thử của mẫu B (đánh giá cuối)}{fig:v2_val_vs_test}{chạy \texttt{scripts/24\_report\_v2.py}}
+
+\hinhref{media/figures/v2/v2_curves.png}{fig:v2_curves} cho thấy diễn biến NDCG@10 trên tập xác thực theo epoch khi chọn số epoch cho đánh giá cuối; \hinhref{media/figures/v2/v2_val_vs_test.png}{fig:v2_val_vs_test} đặt NDCG@10 lúc tinh chỉnh (mẫu A, tập xác thực) cạnh NDCG@10 lúc đánh giá cuối (mẫu B, tập kiểm thử). Hai con số không cùng thang -- tập kiểm thử dài gấp đôi tập xác thực và có tỉ lệ sản phẩm mới khác -- nên điều cần xem là thứ hạng giữa các mô hình có được giữ khi chuyển sang khách hàng mới hay không.
+
+\section{Lịch sử phát triển: giao thức v1}
+\label{sec:v1_history}
+
+Trước giao thức v2, đề tài đã thực nghiệm theo giao thức v1 trên mẫu A: chỉ dùng mã khách hàng và mã sản phẩm (lọc cộng tác thuần), lọc $k$-core trên toàn bộ mẫu, chỉ giữ người dùng và sản phẩm đã có trong dữ liệu huấn luyện, và đánh giá trên tập kiểm thử của chính mẫu A (2.996 người dùng, 10.216 sản phẩm ứng viên). Bảy mô hình được so sánh: Random, Most Popular, BPR-MF, GMF, MLP và hai biến thể NeuMF -- NeuMF-Scratch (khởi tạo ngẫu nhiên) và NeuMF-Pretrained (khởi tạo từ GMF, MLP đã huấn luyện theo chiến lược tiền huấn luyện của \textcite{he2017ncf}). Kết quả (trung bình 3 seed):
 \begin{itemize}
-    \item \textbf{Đóng góp của hai nhánh GMF và MLP:} Nếu hợp nhất GMF và MLP tạo ra cộng hưởng như khung NCF kỳ vọng, NeuMF phải vượt cả hai nhánh đơn lẻ. Số liệu không xác nhận điều này: NDCG@10 của NeuMF-Pretrained chênh \Sig{PreGMF}{rel} so với GMF và \Sig{PreMLP}{rel} so với MLP, của NeuMF-Scratch chênh \Sig{ScrGMF}{rel} so với GMF và \Sig{ScrMLP}{rel} so với MLP -- cả bốn so sánh đều không có ý nghĩa thống kê ($p_{Holm}$ lần lượt \Sig{PreGMF}{pholm}, \Sig{PreMLP}{pholm}, \Sig{ScrGMF}{pholm}, \Sig{ScrMLP}{pholm}). Tăng số tham số lên gấp đôi (NeuMF-Scratch có 2,30 triệu tham số so với 1,14 triệu của GMF) không chuyển thành lợi ích đo được.
-    \item \textbf{Early Fusion và Late Fusion:} NeuMF hợp nhất nhánh MF và nhánh DNN ở mức biểu diễn (Early Fusion, mục~\ref{subsec:early_late_fusion}); như ý trên, trên tập kiểm thử nó không khác biệt có ý nghĩa với từng nhánh đứng riêng. Phép so sánh với Late Fusion của cùng hai thành phần -- trộn điểm GMF và MLP được huấn luyện riêng -- nằm ở phần mở rộng (mục~\ref{sec:extension_results}): so với NeuMF-Scratch, Late Fusion GMF + MLP chênh \Esig{LFGMScr}{rel} (\Esig{LFGMScr}{verdict}); so với NeuMF-Pretrained chênh \Esig{LFGMPre}{rel} (\Esig{LFGMPre}{verdict}). Phép trộn iALS với NeuMF-Scratch (một mô hình MF với chính mô hình lai) chỉ có số trên tập xác thực -- 0,01260, cao hơn từng thành phần đứng riêng (iALS 0,01141; NeuMF-Scratch 0,01107), gợi ý NeuMF mang tín hiệu bổ sung cho MF -- vì đã bị loại khỏi phạm vi trước lần chấm test đầu tiên (mục~\ref{sec:protocol}).
-    \item \textbf{Hiệu quả của Pre-training:} NDCG@10 test của NeuMF-Pretrained chênh \Sig{PreScr}{rel} so với NeuMF-Scratch, không có ý nghĩa thống kê ($p_{Holm} = $ \Sig{PreScr}{pholm}); trên validation thì ngược lại (Pretrained thấp hơn Scratch). Không có bằng chứng rằng Pre-training giúp trên dữ liệu này -- khác với mức cải thiện 1--2\% mà bài gốc báo cáo trên MovieLens và Pinterest \parencite{he2017ncf}.
-    \item \textbf{Số chiều Embedding, số tầng MLP và tỉ lệ mẫu âm:} Ngoài việc được tinh chỉnh như mọi siêu tham số khác (GMF và NeuMF-Scratch chọn $d=64$, MLP chọn $d=32$; MLP và NeuMF-Pretrained chọn 8 mẫu âm, các mô hình còn lại chọn 4 -- Bảng~\ref{tab:tuning}), ba yếu tố này được khảo sát riêng theo đề cương bằng một ablation trên tập xác thực: đổi lần lượt từng yếu tố quanh cấu hình đã chọn của NeuMF-Scratch -- $d \in \{8, 16, 32, 64, 128\}$, số tầng ẩn của tháp MLP từ 0 đến 4 (tương tự thí nghiệm MLP-0 đến MLP-4 của bài gốc \parencite{he2017ncf}), số mẫu âm $\in \{1, 2, 4, 8\}$ -- giữ nguyên các siêu tham số còn lại và cùng quy trình huấn luyện (\bangref{tab_ablation.tex}{tab:ablation}, \hinhref{media/figures/final/final_ablation_val.png}{fig:ablation_val}). \Abl{all}{summary} Đây là phân tích mô tả với một seed, chỉ trên tập xác thực và không dùng để chọn lại cấu hình của đánh giá cuối; chênh lệch nhỏ giữa các mức có thể nằm trong nhiễu huấn luyện.
+    \item BPR-MF có NDCG@10 trung bình cao nhất (\Res{BPR}{NDCG10}); NeuMF-Pretrained đạt \Res{Pre}{NDCG10}, NeuMF-Scratch \Res{Scr}{NDCG10}, Most Popular \Res{MostPop}{NDCG10}, GMF \Res{GMF}{NDCG10}, MLP \Res{MLP}{NDCG10}. Không so sánh nào trong họ \Sig{all}{n} so sánh đăng ký trước đạt tiêu chí ``tốt hơn'' (\Sig{all}{nbetter}/\Sig{all}{n}): NeuMF chỉ dùng ID không vượt MF đã tinh chỉnh, không vượt Most Popular và không khác biệt có ý nghĩa với chính các nhánh GMF, MLP của nó. Tiền huấn luyện không mang lại lợi ích đo được.
+    \item Gần như toàn bộ độ chính xác đến từ nhóm sản phẩm phổ biến nhất (10\% sản phẩm được mua nhiều nhất); trên nhóm sản phẩm ít phổ biến, không mô hình nào gợi ý đúng đáng kể.
+    \item Theo giao thức lấy mẫu Sampled-99 (mỗi sản phẩm đúng xếp cùng 99 sản phẩm âm), mọi chỉ số bị thổi phồng nhiều lần và thứ hạng giữa các mô hình thay đổi (Most Popular đứng đầu) -- minh họa cho khuyến nghị chỉ dùng Full Ranking \parencite{krichene2020sampled}.
 \end{itemize}
-
-\bangketqua{tab_ablation.tex}{\texttt{scripts/20\_ablation.py}}
-
-\hinhketqua{media/figures/final/final_ablation_val.png}{\textwidth}{Ablation NeuMF-Scratch trên tập xác thực: NDCG@10 khi đổi số chiều Embedding, số tầng ẩn của tháp MLP và số mẫu âm; cột đậm là cấu hình đã chọn}{fig:ablation_val}{chạy \texttt{scripts/20\_ablation.py} rồi \texttt{scripts/13\_plot\_final.py}}
-
-\subsection{Đánh giá phân tầng: sản phẩm phổ biến/ít phổ biến và người dùng ít/nhiều tương tác}
-\label{subsec:longtail_results}
-
-Để kiểm tra mô hình có học được sở thích cá nhân hay chỉ nắm bắt độ phổ biến, tập kiểm thử được chia theo hai chiều, định nghĩa chỉ dựa trên dữ liệu mà mô hình được huấn luyện trước khi chấm test (tập huấn luyện $\cup$ xác thực): \textit{(i)} theo sản phẩm -- nhóm \textbf{head} là 10\% sản phẩm được mua nhiều nhất, còn lại là \textbf{tail}; \textit{(ii)} theo người dùng -- nhóm \textbf{cold} là 20\% người dùng có ít tương tác nhất (cold-start \emph{tương đối}, không phải người dùng mới), còn lại là \textbf{warm}. Đây là phân tích mô tả, không kiểm định (mục~\ref{sec:protocol}).
-
-\bangketqua{tab_stratified.tex}{\texttt{scripts/14\_secondary.py}}
-
-Trên nhóm sản phẩm tail -- nơi độ phổ biến không giúp được -- NeuMF-Pretrained đạt NDCG@10 \Strat{Pre}{tail}, BPR-MF \Strat{BPR}{tail} và Most Popular \Strat{MostPop}{tail}; trên nhóm head lần lượt là \Strat{Pre}{head}, \Strat{BPR}{head} và \Strat{MostPop}{head}. Trên nhóm người dùng cold, NeuMF-Pretrained đạt \Strat{Pre}{cold} so với \Strat{Pre}{warm} ở nhóm warm. Gần như toàn bộ độ chính xác đến từ nhóm head: trên nhóm này mọi mô hình đạt NDCG@10 khoảng 0,03, còn trên nhóm tail không mô hình nào vượt quá 0,0003 (GMF, MLP và Most Popular bằng 0; cao nhất là NeuMF-Scratch với \Strat{Scr}{tail}). Nói cách khác, không mô hình nào -- kể cả NeuMF -- gợi ý đúng được sản phẩm ít phổ biến. Khoảng cách cold/warm nhỏ và không theo một chiều: Most Popular đạt \Strat{MostPop}{cold} ở nhóm cold, cao nhất trong mọi mô hình và cao hơn chính nó ở nhóm warm (\Strat{MostPop}{warm}); chỉ BPR-MF và NeuMF-Scratch thấp hơn ở nhóm cold (\Strat{BPR}{cold} so với \Strat{BPR}{warm}; \Strat{Scr}{cold} so với \Strat{Scr}{warm}). Như vậy, với người dùng ít lịch sử, gợi ý theo độ phổ biến trên dữ liệu này không kém các mô hình cá nhân hóa -- nhận xét mô tả, chưa kiểm định, và nhóm cold chỉ có \Strat{n}{cold} người dùng.
-
-Bảng~\ref{tab:beyond} bổ sung các chỉ số ngoài độ chính xác của danh sách top-10 (mục~\ref{subsec:beyond_accuracy}).
-
-\bangketqua{tab_beyond.tex}{\texttt{scripts/14\_secondary.py}}
-
-Most Popular là trường hợp giới hạn: mọi người dùng nhận gần như cùng một danh sách gồm các sản phẩm phổ biến nhất, nên độ bao phủ catalog chỉ \Beyond{MostPop}{coverage} và tỉ lệ sản phẩm head trong gợi ý là \Beyond{MostPop}{HRR}. Các mô hình cá nhân hóa có độ bao phủ lần lượt \Beyond{BPR}{coverage} (BPR-MF), \Beyond{GMF}{coverage} (GMF), \Beyond{MLP}{coverage} (MLP), \Beyond{Scr}{coverage} (NeuMF-Scratch) và \Beyond{Pre}{coverage} (NeuMF-Pretrained). NeuMF-Scratch đa dạng nhất: độ bao phủ \Beyond{Scr}{coverage}, độ mới \Beyond{Scr}{novelty} bit và tỉ lệ sản phẩm head thấp nhất (\Beyond{Scr}{HRR}) -- nhưng độ chính xác không cao hơn (NDCG@10 \Res{Scr}{NDCG10}, xếp \Res{Scr}{rank}). Ngược lại, MLP gần như chỉ gợi ý sản phẩm phổ biến (độ bao phủ \Beyond{MLP}{coverage}, HRR \Beyond{MLP}{HRR}), sát với Most Popular; NeuMF-Pretrained và GMF cũng có HRR trên 98\%. BPR-MF vừa có độ chính xác trung bình cao nhất vừa đa dạng thứ hai (độ bao phủ \Beyond{BPR}{coverage}, HRR \Beyond{BPR}{HRR}), nên trên dữ liệu này đa dạng hơn không nhất thiết đi kèm độ chính xác thấp hơn.
-
-\subsection{Đối chiếu với giao thức Sampled-99}
-\label{subsec:sampled_comparison}
-
-Bảng~\ref{tab:sampled} chấm lại cùng các mô hình theo giao thức của bài NCF gốc: mỗi trong \Samp{all}{ncases} cặp đúng của tập kiểm thử được xếp cùng 99 sản phẩm âm lấy ngẫu nhiên (cố định, dùng chung cho mọi mô hình).
-
-\bangketqua{tab_sampled.tex}{\texttt{scripts/14\_secondary.py}}
-
-Mọi mô hình đều bị thổi phồng chỉ số dưới Sampled-99 (NeuMF-Pretrained: NDCG@10 \Samp{Pre}{NDCG10}, gấp \Samp{Pre}{ratio} lần Full Ranking; Most Popular gấp \Samp{MostPop}{ratio} lần), vì xếp một sản phẩm đúng giữa 100 ứng viên dễ hơn nhiều so với giữa hơn 10.000. Thứ hạng giữa các mô hình \Samp{all}{rankchanged} thay đổi so với Full Ranking: Most Popular chỉ xếp thứ tư theo Full Ranking nhưng đứng đầu theo Sampled-99. Đây là minh họa trực tiếp cho cảnh báo của \textcite{krichene2020sampled}: chỉ số lấy mẫu không nhất quán với chỉ số đầy đủ, nên không được dùng để so sánh mô hình -- và là lý do các con số của bài gốc (HR@10 khoảng 0,7 trên MovieLens) không thể đặt cạnh kết quả của đề tài.
-
-\subsection{Độ trễ suy diễn}
-\label{subsec:latency}
-
-Để có bằng chứng định lượng về khả năng triển khai, độ trễ phục vụ một yêu cầu gợi ý được đo trên CPU: với mỗi người dùng chọn ngẫu nhiên trong tập kiểm thử, mô hình chấm toàn bộ khoảng \Lat{all}{ncand} ứng viên rồi lấy top-10 (Bảng~\ref{tab:latency}).
-
-\bangketqua{tab_latency.tex}{\texttt{scripts/14\_secondary.py}}
-
-Độ trễ trung vị của NeuMF-Pretrained là \Lat{Pre}{p50} ms, phân vị 95 là \Lat{Pre}{p95} ms (BPR-MF: \Lat{BPR}{p50} / \Lat{BPR}{p95} ms). Ở quy mô catalog khoảng 10.000 sản phẩm, chấm toàn bộ catalog cho một người dùng trên CPU là khả thi cho phục vụ trực tuyến. Với catalog lớn hơn nhiều bậc, cách chấm toàn bộ bằng MLP sẽ không còn phù hợp: tích vô hướng của MF/BPR cho phép dùng tìm kiếm lân cận gần đúng, còn MLP thì không \parencite{rendle2020ncfmf}.
-
-\section{Mở rộng: Late Fusion MF + DNN và baseline láng giềng}
-\label{sec:extension_results}
-
-Mục này trả lời hai câu hỏi còn mở sau đánh giá chính: \textit{(i)} hợp nhất ở mức điểm dự đoán (Late Fusion) có khác hợp nhất ở mức biểu diễn (NeuMF -- Early Fusion) hay không khi dùng \emph{cùng} hai thành phần GMF và MLP (Hình~\ref{fig:fusion_compare}); \textit{(ii)} baseline láng giềng mà đề cương đặt ra (ItemKNN) và UserKNN -- cách tiếp cận ``Top-$K$ người dùng tương đồng'' (mục~\ref{subsec:memory_model_based}) -- đứng ở đâu so với các mô hình học. Bốn mô hình được thêm \emph{sau} khi đã xem số liệu test của bảy mô hình chính, nên được đăng ký riêng trước khi chấm (mục~\ref{sec:protocol}), kiểm định trong một họ 7 so sánh có hiệu chỉnh Holm riêng, và không thay đổi kết luận ở mục~\ref{subsec:multiseed_results}.
-
-\paragraph{Trên tập xác thực.} Tham số được chọn với cùng quy tắc như các mô hình chính (phần dưới Bảng~\ref{tab:tuning}). UserKNN ($k = 200$) đạt NDCG@10 = \Val{UKNN}{NDCG10} và ItemKNN ($k = 100$, hệ số co 50) đạt \Val{IKNN}{NDCG10}, đều cao hơn NeuMF-Scratch (\Val{Scr}{NDCG10}). Late Fusion GMF + MLP chọn $w = 0{,}1$, tức nghiêng hẳn về MLP, và đạt \Val{LFGM}{NDCG10}, cao hơn cả hai thành phần đứng riêng (GMF \Val{LFGM}{parta}, MLP \Val{LFGM}{partb}); Late Fusion BPR-MF + MLP ($w = 0{,}3$) đạt \Val{LFBM}{NDCG10}, so với \Val{LFBM}{parta} của BPR-MF đứng riêng. Như vậy trên validation, trộn điểm hai mô hình huấn luyện riêng có giúp so với từng thành phần, nhưng vẫn thấp hơn NeuMF-Scratch. MLP thành phần ở đây là bản huấn luyện lại đúng cấu hình tốt nhất ở chế độ GPU tất định, nên số validation của nó khác số lúc tinh chỉnh trong Bảng~\ref{tab:tuning} (mục~\ref{sec:protocol}).
-
-\paragraph{Trên tập kiểm thử.} \bangref{tab_extension.tex}{tab:extension} đặt bốn mô hình mở rộng cạnh bảy mô hình chính; \bangref{tab_ext_significance.tex}{tab:ext_significance} là kiểm định cặp theo người dùng với cùng tiêu chí ``tốt hơn'' như mục~\ref{sec:protocol}.
-
-\bangketqua{tab_extension.tex}{\texttt{scripts/17\_extension.py} (PREREG mục 9)}
-
-\bangketqua{tab_ext_significance.tex}{\texttt{scripts/17\_extension.py} (PREREG mục 9)}
-
-Late Fusion GMF + MLP đạt NDCG@10 = \Ext{LFGM}{NDCG10} $\pm$ \Ext{LFGM}{sdNDCG10}, xếp \Ext{LFGM}{rank} trong \Ext{all}{nmodels} mô hình. So với NeuMF-Scratch -- mô hình lai được chọn -- nó chênh \Esig{LFGMScr}{rel} ($p_{Holm}$ = \Esig{LFGMScr}{pholm}; \Esig{LFGMScr}{verdict}); so với NeuMF-Pretrained chênh \Esig{LFGMPre}{rel} (\Esig{LFGMPre}{verdict}); so với từng thành phần đứng riêng: với GMF \Esig{LFGMGMF}{rel} (\Esig{LFGMGMF}{verdict}), với MLP \Esig{LFGMMLP}{rel} (\Esig{LFGMMLP}{verdict}). Thêm MLP vào baseline MF đã tinh chỉnh bằng trộn điểm (Late Fusion BPR-MF + MLP, NDCG@10 = \Ext{LFBM}{NDCG10}) so với BPR-MF đứng riêng: \Esig{LFBMBPR}{rel} (\Esig{LFBMBPR}{verdict}). Hai baseline láng giềng tất định nên độ lệch chuẩn bằng 0: ItemKNN đạt \Ext{IKNN}{NDCG10} và UserKNN \Ext{UKNN}{NDCG10}, so với NeuMF-Scratch lần lượt \Esig{IKNNScr}{rel} (\Esig{IKNNScr}{verdict}) và \Esig{UKNNScr}{rel} (\Esig{UKNNScr}{verdict}). Trong cả \Ext{all}{nmodels} mô hình, NDCG@10 trung bình cao nhất thuộc về \Ext{all}{best}.
-
-Tổng hợp theo tiêu chí đã đăng ký: \Esig{all}{summary} Vì bốn mô hình này được thêm sau khi đã xem test, đây là bằng chứng bổ sung cho câu hỏi Early Fusion hay Late Fusion và cho vị trí của baseline láng giềng; muốn khẳng định cần một lần đánh giá trên dữ liệu chưa từng xem (mục~\ref{sec:huongphattrien}).
+Giai đoạn v1 để lại bốn bài học, là cơ sở trực tiếp của giao thức v2: \textit{(i)} với dữ liệu thưa như H\&M, chỉ tăng độ phức tạp của mô hình trên cùng thông tin ID (NeuMF so với MF) không mang lại lợi ích -- cần bổ sung \emph{thông tin} chứ không chỉ bổ sung tham số; \textit{(ii)} loại sản phẩm mới khỏi đánh giá làm bài toán dễ hơn thực tế và che mất giới hạn lớn nhất của lọc cộng tác thuần; \textit{(iii)} lọc $k$-core trên toàn bộ mẫu dùng cả thông tin của giai đoạn kiểm thử; \textit{(iv)} tập kiểm thử của mẫu A đã được xem nhiều lần (27/09, 29/09/2026) và một số quyết định -- như bổ sung bước huấn luyện lại trên tập huấn luyện $\cup$ xác thực, thêm Late Fusion và baseline láng giềng -- được đưa ra sau khi đã xem kết quả, nên số liệu v1 không còn là ước lượng không thiên lệch. Vì vậy kết quả v1 chỉ được báo cáo như lịch sử phát triển, không gộp với kết quả v2; mọi kết luận của báo cáo lấy từ mẫu B.
 
 \section{Phạm vi và giới hạn thực nghiệm}
 \label{sec:pham_vi_thuc_nghiem}
 
-Kết quả của chương này có giá trị trong phạm vi sau: \textit{(i)} mẫu hm500k (khoảng 1,6\% khách hàng của H\&M) sau lọc $k=10$, thiên về khách mua nhiều; \textit{(ii)} giao thức chia theo mốc thời gian chung; khi huấn luyện lại trên tập huấn luyện $\cup$ xác thực, số epoch được lấy từ lần huấn luyện chỉ trên tập huấn luyện (ít hơn khoảng 3,5\% dữ liệu) vì không còn tập xác thực để dừng sớm, nên có thể chưa tối ưu; bước huấn luyện lại này được bổ sung sau lần chấm test đầu tiên (mục~\ref{sec:protocol}); \textit{(iii)} chỉ người dùng và sản phẩm đã có trong dữ liệu huấn luyện (tập huấn luyện $\cup$ xác thực khi chấm test) -- bài toán Cold-start tuyệt đối nằm ngoài phạm vi; \textit{(iv)} ngày mua chỉ ở mức ngày, nên một sản phẩm kiểm thử có thể được mua cùng ngày (cùng giỏ hàng) với một sản phẩm trong lịch sử -- ảnh hưởng như nhau với mọi mô hình; \textit{(v)} lọc $k$-core được áp dụng trên toàn bộ mẫu trước khi chia, tức có dùng thông tin số lượng tương tác của giai đoạn xác thực/kiểm thử -- rò rỉ nhỏ và như nhau cho mọi mô hình; \textit{(vi)} một bộ dữ liệu duy nhất; \textit{(vii)} bốn mô hình ở mục~\ref{sec:extension_results} được thêm sau khi đã xem test, nên kết quả của chúng là kết quả mở rộng với họ kiểm định riêng. Huấn luyện chạy ở chế độ GPU tất định để chạy lại trên cùng máy ra cùng số (kết quả đối chiếu ghi ở mục~\ref{sec:exp_config}, ý ``Lần chấm''); trên GPU khác, các mô hình nơ-ron có thể cho số lệch nhẹ -- kết luận thống kê mới là điều cần được giữ nguyên khi chạy lại.
+Kết quả của chương này có giá trị trong phạm vi sau: \textit{(i)} một mẫu kiểm định khoảng 21.000 khách hàng (khoảng 1,5\% khách của H\&M) sau lọc $k=10$, thiên về khách mua nhiều; \textit{(ii)} khung thời gian 07--09/2020 và giả định doanh nghiệp biết trước danh mục sắp bán (mục~\ref{subsec:split_sampling}) -- nếu không có giả định này, sản phẩm mới không thể nằm trong tập ứng viên của bất kỳ mô hình nào; \textit{(iii)} khách hàng mới chưa có lịch sử mua nằm ngoài phạm vi; \textit{(iv)} lọc $k$-core dùng mọi cặp trước mốc kiểm thử, nên tập người dùng/sản phẩm ở giai đoạn xác thực phụ thuộc một phần vào dữ liệu tháng 7/2020 -- điều này chỉ ảnh hưởng việc chọn cấu hình trên mẫu A, không ảnh hưởng tập kiểm thử của mẫu B; \textit{(v)} thuộc tính khách hàng là ảnh chụp tại thời điểm công bố dữ liệu (không có mốc thời gian); \textit{(vi)} ablation chỉ chạy một seed; \textit{(vii)} một bộ dữ liệu duy nhất. Đánh giá cuối được tính trên \VData{run}{device}; chạy lại trên phần cứng khác (CPU so với GPU) có thể làm các mạng nơ-ron lệch nhẹ ở chữ số cuối -- kết luận thống kê mới là điều cần được giữ nguyên khi chạy lại.
 
 \section{Thảo luận}
 \label{sec:discussion}
 
-\textit{NeuMF có vượt các baseline hay không?} Không. Trên dữ liệu và giao thức của đề tài, cả hai biến thể NeuMF đều không vượt BPR-MF đã tinh chỉnh (BPR-MF có trung bình cao nhất) và không khác biệt có ý nghĩa với Most Popular. Kết quả này nhất quán với hai nghiên cứu đối chứng đáng tin cậy nhất về NCF: \textcite{rendle2020ncfmf} cho thấy MF tích vô hướng được tune kỹ vượt NeuMF ngay trên dữ liệu của bài gốc, và \textcite{dacrema2019progress} cho thấy nhiều cải thiện của mô hình học sâu biến mất khi baseline được tune đúng và tập test không bị dùng để chọn mô hình. Đề tài áp dụng đúng hai điều kiện đó (cùng ngân sách tinh chỉnh, khoá tập test) và thu được kết luận tương tự. Phần mở rộng (mục~\ref{sec:extension_results}) bổ sung hai baseline láng giềng mà \textcite{dacrema2019progress} khuyến nghị: so với NeuMF-Scratch, UserKNN chênh \Esig{UKNNScr}{rel} (\Esig{UKNNScr}{verdict}) và ItemKNN chênh \Esig{IKNNScr}{rel} (\Esig{IKNNScr}{verdict}).
+\textit{Mô hình lai có đặc trưng có vượt các baseline hay không?} Theo tiêu chí đã đăng ký trước: \VSig{all}{summary} So sánh này có ý nghĩa vì ba điều kiện về phương pháp được bảo đảm: mọi mô hình được tinh chỉnh với cùng ngân sách, tập kiểm thử không được dùng để chọn mô hình, và kết luận lấy trên những khách hàng chưa từng được dùng để ra quyết định -- các nguyên tắc đánh giá mà đề tài áp dụng theo khuyến nghị của \textcite{dacrema2019progress} và \textcite{rendle2020ncfmf}.
 
-\textit{Kết hợp tuyến tính -- phi tuyến có mang lại lợi ích?} Ở mức biểu diễn thì không đo được: NeuMF không khác biệt có ý nghĩa với GMF hay MLP đứng riêng. Ở mức điểm dự đoán (phần mở rộng), Late Fusion GMF + MLP so với GMF: \Esig{LFGMGMF}{verdict}; so với MLP: \Esig{LFGMMLP}{verdict}. Một cách giải thích nhất quán với số liệu của NeuMF: với trung bình 26,9 tương tác huấn luyện mỗi người dùng, dữ liệu không đủ để tầng phi tuyến học được cấu trúc tương tác nào vượt quá những gì tích vô hướng đã nắm bắt -- các mô hình nơ-ron đạt đỉnh trên tập xác thực chỉ sau 1--9 epoch rồi quá khớp. \textcite{rendle2020ncfmf} còn chỉ ra rằng một MLP cần rất nhiều dữ liệu mới xấp xỉ được chính phép tích vô hướng.
+\textit{Đặc trưng đóng góp gì?} So sánh NeuMF-F với NeuMF chỉ dùng ID (\VSig{1}{rel}, \VSig{1}{phrase}) đo trực tiếp giá trị của đặc trưng trong cùng kiến trúc hai nhánh. Phân tích theo nhóm sản phẩm (mục~\ref{subsec:longtail_results}) tách phần đóng góp này thành hai nguồn: khả năng gợi ý sản phẩm mới -- điều mô hình chỉ dùng ID không làm được -- và thay đổi trên sản phẩm cũ; ablation (mục~\ref{subsec:ablation}) cho biết nhóm đặc trưng nào quan trọng nhất.
 
-\textit{Kết quả âm có giá trị gì?} Kết quả âm được báo cáo đúng như quy tắc đã đăng ký trước, không chọn lọc số liệu có lợi. Giá trị của đề tài nằm ở một quy trình đánh giá đáng tin cậy -- dữ liệu tái lập được, chia theo thời gian không rò rỉ tương lai, cùng ngân sách tinh chỉnh, khoá tập test, kiểm định cặp có hiệu chỉnh đa so sánh -- và ở bằng chứng rằng trên dữ liệu giao dịch thời trang thưa, độ phức tạp của NeuMF không được đền bù bằng độ chính xác. Các hướng có tín hiệu tích cực trên validation (iALS được tune, trộn điểm MF với NeuMF) được chuyển thành hướng phát triển ở Chương~\ref{chap:ketluan}.
+\textit{Kết hợp tuyến tính -- phi tuyến có mang lại lợi ích?} So với từng nhánh đứng riêng, NeuMF-F chênh \VSig{2}{rel} so với GMF-F và \VSig{3}{rel} so với MLP-F; so với hợp nhất muộn của chính hai nhánh, chênh \VSig{4}{rel} (\VSig{4}{phrase}).
+
+\textit{Kết quả có giá trị gì nếu không ủng hộ giả thuyết?} Kết quả được báo cáo đúng như quy tắc đã đăng ký trước, không chọn lọc số liệu có lợi. Dù kết luận theo hướng nào, giá trị của đề tài nằm ở một quy trình đánh giá đáng tin cậy -- tập ứng viên gồm cả sản phẩm mới, đặc trưng không dùng thông tin tương lai, cùng ngân sách tinh chỉnh, mẫu kiểm định độc lập, khoá tập kiểm thử, kiểm định cặp có hiệu chỉnh đa so sánh -- và ở các phép so sánh tách riêng được đóng góp của từng thành phần.

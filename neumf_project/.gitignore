@@ -18,3 +18,6 @@ data/splits/**/*
 # Chỉ bỏ config tạm của multi-seed và thư mục kiểm tra tái lập tuning của scripts/18_preflight.py.
 outputs/experiments/_temp_configs/
 outputs/tuning_recheck/
+# Chạy thử đánh giá cuối v2 trên tập xác thực của mẫu A (scripts/23_final_v2.py --dry-run) — số liệu không có ý nghĩa.
+outputs/v2/dry_run/
+outputs/v2/dry_run.log

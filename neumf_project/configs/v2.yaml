@@ -1,0 +1,25 @@
+# Giao thức v2 (audit/PREREG_v2.md): mô hình lai MF + DNN có đặc trưng, đánh giá trên mẫu khách hàng độc lập.
+samples:
+  dev: data/processed/hm/hm500k_transactions.csv        # mẫu phát triển: tinh chỉnh, chỉ dùng tập xác thực
+  holdout: data/processed/hm/hm500k_b_transactions.csv  # mẫu kiểm định: khách khác hẳn, tập kiểm thử mở đúng một lần
+features:
+  catalog: data/processed/hm/catalog_v2.npz             # scripts/21_build_features.py
+  sales: data/processed/hm/daily_sales_v2.npz
+  customers: data/raw/hm/customers.csv
+val_start: "2020-07-01"   # tập xác thực: 01/07–28/07/2020
+test_start: "2020-07-29"  # tập kiểm thử: 29/07–22/09/2020
+k_core: 10                # lọc trên các cặp trước test_start
+training:
+  batch_size: 512
+  max_epochs: 20
+  patience: 5             # dừng sớm theo NDCG@10 trên tập xác thực
+  device: auto
+tuning:
+  seed: 42
+  grid_seed: 0
+  n_configs: 6            # mỗi mô hình có học: 6 cấu hình (gồm cấu hình mặc định)
+evaluation:
+  tie_break_seed: 2026
+  k_values: [5, 10, 20]
+final:
+  seeds: [42, 2024, 2025, 2026, 3407]

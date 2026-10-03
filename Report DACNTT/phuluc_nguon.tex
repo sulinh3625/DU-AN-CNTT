@@ -6,7 +6,7 @@
 \addcontentsline{toc}{chapter}{PHỤ LỤC A. ĐỐI CHIẾU LUẬN ĐIỂM VÀ NGUỒN TRÍCH DẪN}
 \label{app:nguon}
 
-Phụ lục này liệt kê từng luận điểm lý thuyết và phương pháp luận được sử dụng trong dự án kèm nguồn gốc học thuật tương ứng, nhằm bảo đảm mọi khẳng định đều truy nguyên được về tài liệu công bố chính thống.
+Phụ lục này liệt kê từng luận điểm lý thuyết và phương pháp luận được sử dụng trong dự án kèm nguồn gốc học thuật tương ứng, nhằm bảo đảm mọi khẳng định đều truy nguyên được về tài liệu công bố chính thống. Các tài liệu là cơ sở về phương pháp; số liệu của chúng không được dùng làm chuẩn so sánh với kết quả của đề tài.
 
 \begin{longtable}{|p{0.10\textwidth}|p{0.46\textwidth}|p{0.34\textwidth}|}
 \hline
@@ -24,21 +24,27 @@ Phụ lục này liệt kê từng luận điểm lý thuyết và phương phá
 \ref{subsec:thuctrang} & Vai trò cá nhân hóa gợi ý trong thương mại điện tử &
 \textcite{schafer2001commerce}; \textcite{linden2003amazon} \\
 \hline
+\ref{subsec:khainiem_rs}, \ref{sec:baselines} & Lọc dựa trên nội dung; hệ gợi ý lai kết hợp nội dung với cộng tác &
+\textcite{lops2011content}; \textcite{burke2002hybrid} \\
+\hline
 \ref{subsec:memory_model_based} & Nền tảng Lọc cộng tác dựa trên bộ nhớ (Memory-based CF, GroupLens, Item-based CF) &
 \textcite{resnick1994grouplens}; \textcite{sarwar2001item}; \textcite{su2009survey} \\
 \hline
-\ref{subsec:memory_model_based}, \ref{sec:extension_results} & Baseline láng giềng (ItemKNN, UserKNN) được tune tốt thường không thua mô hình học sâu &
+\ref{subsec:memory_model_based}, \ref{sec:baselines} & Baseline láng giềng (ItemKNN, UserKNN); nguyên tắc đặt mô hình học sâu cạnh baseline đơn giản được tinh chỉnh đầy đủ &
 \textcite{sarwar2001item}; \textcite{dacrema2019progress} \\
 \hline
 \ref{subsec:hanche_cf} & Hạn chế của tích vô hướng trong Nhân tử hóa ma trận (Matrix Factorization) &
 \textcite{koren2009matrix}; \textcite{he2017ncf} \\
+\hline
+\ref{subsec:thachthuc_sparsity}, \ref{subsec:hanche_cf} & Khởi đầu lạnh (Cold-Start) và nhu cầu kết hợp thông tin nội dung &
+\textcite{schein2002coldstart} \\
 \hline
 \ref{subsec:phamvi} & Bộ dữ liệu H\&M Personalized Fashion Recommendations &
 \textcite{hm2022kaggle} \\
 \hline
 
 \hline
-\multicolumn{3}{|l|}{\textit{A.2. Phản hồi ẩn, Neural Collaborative Filtering \& chiến lược hợp nhất}} \\
+\multicolumn{3}{|l|}{\textit{A.2. Phản hồi ẩn, NCF, mô hình lai có đặc trưng \& chiến lược hợp nhất}} \\
 \hline
 \ref{subsec:bpr} & Xếp hạng cá nhân hóa Bayes (BPR) từ phản hồi ẩn &
 \textcite{rendle2009bpr} \\
@@ -46,18 +52,24 @@ Phụ lục này liệt kê từng luận điểm lý thuyết và phương phá
 \ref{sec:ncf_architecture} & Khung làm việc NCF và kiến trúc mô hình lai NeuMF (GMF + MLP) &
 \textcite{he2017ncf} \\
 \hline
+\ref{subsec:deep_ctr}, \ref{subsec:gmf_design} & Mô hình lai dựa trên đặc trưng: Factorization Machines, Wide \& Deep, DeepFM, DIN &
+\textcite{rendle2010fm}; \textcite{cheng2016wide}; \textcite{guo2017deepfm}; \textcite{zhou2018din} \\
+\hline
+\ref{subsec:deep_ctr}, \ref{subsec:embedding_design} & Bỏ ngẫu nhiên biểu diễn sở thích khi huấn luyện để chấm được đối tượng khởi đầu lạnh (DropoutNet) &
+\textcite{volkovs2017dropoutnet} \\
+\hline
+\ref{subsec:deep_ctr}, \ref{subsec:features} & Biểu diễn văn bản bằng TF-IDF và phân tích ngữ nghĩa tiềm ẩn (SVD rút gọn) &
+\textcite{salton1988term}; \textcite{deerwester1990lsa} \\
+\hline
 \ref{subsec:early_late_fusion} & Chiến lược hợp nhất Early Fusion và Late Fusion; Late Fusion có trọng số là kiểu lai weighted &
 \textcite{atrey2010multimodal}; \textcite{liu2018combine}; \textcite{holinh2023multisource}; \textcite{burke2002hybrid} \\
 \hline
-\ref{subsec:pretraining_strategy} & Thuật toán tối ưu hóa thích ứng Adam (Pre-training và tinh chỉnh) &
+\ref{subsec:bce_regularization} & Thuật toán tối ưu hóa thích ứng Adam &
 \textcite{kingma2014adam} \\
 \hline
 
 \hline
 \multicolumn{3}{|l|}{\textit{A.3. Xu hướng nghiên cứu hiện đại}} \\
-\hline
-\ref{subsec:deep_ctr} & Mô hình lai dựa trên đặc trưng: Wide \& Deep, Factorization Machines, DeepFM, DIN &
-\textcite{cheng2016wide}; \textcite{rendle2010fm}; \textcite{guo2017deepfm}; \textcite{zhou2018din} \\
 \hline
 \ref{subsec:sequential_rec} & Gợi ý theo chuỗi hành vi và Transformer &
 \textcite{hidasi2016gru4rec}; \textcite{kang2018self}; \textcite{sun2019bert4rec} \\
@@ -78,17 +90,17 @@ Phụ lục này liệt kê từng luận điểm lý thuyết và phương phá
 \ref{sec:metrics} & Giao thức đánh giá hiệu năng xếp hạng Top-N Recommendation &
 \textcite{cremonesi2010performance}; \textcite{he2017ncf} \\
 \hline
-\ref{sec:metrics}, \ref{subsec:sampled_comparison} & Vấn đề đánh giá bằng mẫu âm lấy mẫu con (Sampled Metrics); chọn Full Ranking &
+\ref{sec:metrics}, \ref{sec:v1_history} & Vấn đề đánh giá bằng tập ứng viên lấy mẫu (Sampled Metrics); chọn Full Ranking &
 \textcite{krichene2020sampled} \\
 \hline
 \ref{subsec:split_sampling} & Chia dữ liệu theo một mốc thời gian chung thay vì Leave-One-Out &
 \textcite{meng2020splitting} \\
 \hline
-\ref{sec:protocol}, \ref{sec:discussion} & Baseline phải được tinh chỉnh cùng ngân sách; không chọn mô hình trên tập test; MF được tune kỹ vượt NeuMF &
+\ref{sec:protocol}, \ref{sec:discussion} & Baseline phải được tinh chỉnh cùng ngân sách; không chọn mô hình trên tập kiểm thử &
 \textcite{dacrema2019progress}; \textcite{rendle2020ncfmf} \\
 \hline
-\ref{sec:protocol}, \ref{sec:tuning_results} & iALS được tinh chỉnh là baseline MF mạnh &
-\textcite{rendle2022ials} \\
+\ref{subsec:mf_model}, \ref{sec:v1_history} & Thuật toán iALS cho phản hồi ẩn và cách tinh chỉnh iALS &
+\textcite{hu2008implicit}; \textcite{rendle2022ials} \\
 \hline
 \ref{sec:protocol} & Kiểm định Wilcoxon signed-rank, paired bootstrap, hiệu chỉnh Holm &
 \textcite{wilcoxon1945}; \textcite{efron1993bootstrap}; \textcite{holm1979} \\
@@ -99,7 +111,7 @@ Phụ lục này liệt kê từng luận điểm lý thuyết và phương phá
 \ref{sec:metrics} & Đánh giá xếp hạng dựa trên độ đo NDCG &
 \textcite{jarvelin2002} \\
 \hline
-\ref{subsec:beyond_accuracy} & Chỉ số ngoài độ chính xác: Novelty (Self-Information) &
+\ref{subsec:beyond_accuracy} & Thiên lệch phổ biến và các chỉ số ngoài độ chính xác &
 \textcite{vargas2011novelty} \\
 \hline
 \end{longtable}
@@ -111,14 +123,17 @@ Phụ lục này liệt kê từng luận điểm lý thuyết và phương phá
 \addcontentsline{toc}{chapter}{PHỤ LỤC B. TÁI LẬP KẾT QUẢ THỰC NGHIỆM}
 \label{app:taolap}
 
-Mã nguồn nằm trong thư mục \texttt{neumf\_project/} của kho mã dự án; hướng dẫn chi tiết (máy cá nhân và Google Colab) ở tệp \texttt{README.md}. Các bước tạo ra toàn bộ số liệu của Chương~\ref{chap:thucnghiem}:
+Mã nguồn nằm trong thư mục \texttt{neumf\_project/} của kho mã dự án; hướng dẫn chi tiết ở tệp \texttt{README.md}. Các bước tạo ra toàn bộ số liệu của giao thức v2 (Chương~\ref{chap:thucnghiem}):
 
+\begingroup\sloppy
 \begin{enumerate}
-    \item \textbf{Dữ liệu:} đặt \texttt{transactions\_train.csv} của cuộc thi H\&M vào \texttt{data/raw/hm/}, chạy \texttt{python run.py sample-hm} để tạo mẫu hm500k (tất định, khoảng 70 giây).
-    \item \textbf{Tinh chỉnh (chỉ tập xác thực):} \texttt{python scripts/10\_tune.py --model all} cho năm mô hình chính và \texttt{--model extension} cho bốn mô hình mở rộng; mỗi cấu hình ghi một dòng vào \texttt{audit/tuning\_log.csv}, cấu hình tốt nhất vào \texttt{audit/best\_configs.json}.
-    \item \textbf{Kiểm tra sẵn sàng:} \texttt{python run.py preflight} -- mã nguồn đã lưu vào git, kế hoạch \texttt{audit/PREREG.md} đã lưu và có mục mở rộng, dữ liệu dựng lại khớp kích thước gốc, tinh chỉnh mở rộng chạy lại ra đúng cùng số.
-    \item \textbf{Chạy lại toàn bộ số liệu:} \texttt{python run.py final --reason "..."} chạy tuần tự: chấm test 3 seed (\texttt{11\_final.py}) $\rightarrow$ kiểm định (\texttt{12}) $\rightarrow$ mở rộng (\texttt{17\_extension.py}) $\rightarrow$ chỉ số @20 (\texttt{16}) $\rightarrow$ biểu đồ (\texttt{13}) $\rightarrow$ phân tích phụ (\texttt{14}) $\rightarrow$ xuất bảng, macro số liệu và hình sang báo cáo (\texttt{15}) $\rightarrow$ đối chiếu câu chữ (\texttt{19\_check\_report.py}). Các bước chấm test từ chối chạy nếu kế hoạch chưa được lưu vào git, thiếu lý do hoặc mã nguồn có thay đổi chưa lưu; mỗi lần chấm ghi một dòng vào \texttt{audit/test\_access\_log.csv}.
-    \item \textbf{Biên dịch báo cáo:} chạy \texttt{compile.bat} trong thư mục báo cáo. Nếu số liệu đổi, bước đối chiếu ở trên chỉ ra những câu nhận xét bằng chữ cần sửa.
+    \item \textbf{Dữ liệu:} đặt \texttt{transactions\_train.csv}, \texttt{articles.csv} và \texttt{customers.csv} của cuộc thi H\&M vào \texttt{data/raw/hm/}; chạy \texttt{python run.py sample-hm} để tạo mẫu phát triển A và \texttt{python run.py v2-data} để tạo mẫu kiểm định B cùng các tệp đặc trưng (danh mục sản phẩm, doanh số theo ngày). Mọi bước đều tất định.
+    \item \textbf{Tinh chỉnh (chỉ tập xác thực của mẫu A):} \texttt{python run.py v2-tune --resume}; mỗi cấu hình ghi một dòng vào \texttt{audit/v2/tuning\_log.csv} (kèm phiên bản và mã băm nội dung mã nguồn), cấu hình tốt nhất vào \texttt{audit/v2/best\_configs.json}.
+    \item \textbf{Đăng ký trước:} kế hoạch \texttt{audit/PREREG\_v2.md} phải được lưu vào git trước bước đánh giá cuối.
+    \item \textbf{Chạy thử (không chạm tập kiểm thử):} \texttt{python run.py v2-dry-run} chạy trọn đường ống đánh giá cuối trên tập xác thực của mẫu A với 1 epoch, để phát hiện lỗi trước khi mở tập kiểm thử.
+    \item \textbf{Đánh giá cuối:} \texttt{python run.py v2-final --reason "..."} chạy \texttt{23\_final\_v2.py} (5 seed trên mẫu B, có khoá tập kiểm thử: từ chối chạy nếu kế hoạch chưa lưu, thiếu lý do, mã nguồn có thay đổi chưa lưu hoặc khác mã nguồn lúc tinh chỉnh; mỗi seed ghi một dòng vào \texttt{audit/test\_access\_log.csv} trước khi chấm) rồi \texttt{24\_report\_v2.py} (kiểm định, bảng, hình và macro số liệu sang báo cáo).
+    \item \textbf{Biên dịch báo cáo:} chạy \texttt{compile.bat} trong thư mục báo cáo.
 \end{enumerate}
+\endgroup
 
-Notebook \texttt{notebooks/colab\_final.ipynb} chạy cùng chuỗi trên Google Colab (GPU T4) với cấu hình đã tinh chỉnh. Nhật ký \texttt{audit/test\_access\_log.csv} liệt kê mọi lần tập kiểm thử được chấm, kèm phiên bản mã nguồn và mã băm cấu hình tương ứng.
+Kết quả của giai đoạn phát triển (giao thức v1, mục~\ref{sec:v1_history}) được giữ nguyên trong kho mã (\texttt{outputs/final/}, \texttt{audit/PREREG.md}) cùng các lệnh tái lập tương ứng trong \texttt{README.md}. Nhật ký \texttt{audit/test\_access\_log.csv} liệt kê mọi lần đánh giá trên tập kiểm thử của cả hai giao thức, kèm phiên bản mã nguồn và mã băm cấu hình tương ứng.

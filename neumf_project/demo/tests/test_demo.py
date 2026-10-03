@@ -6,7 +6,8 @@ import pandas as pd
 import pytest
 
 from demo.backend import inference, metrics_io
-from demo.backend.data_context import FINAL_DIR, FINAL_SEED, DataContext, final_available, resolve_latest_run_tag
+from demo.backend.data_context import (FINAL_DIR, FINAL_SEED, V2_DIR, DataContext, final_available,
+                                      resolve_latest_run_tag, v2_available)
 from demo.backend.onboarding import Onboarding, load_onboarding_config
 from src.data_pipeline.splitting import assert_disjoint_splits
 
@@ -32,6 +33,19 @@ def fctx():
     if not final_available():
         pytest.skip("Chưa có outputs/final/seed42 kèm checkpoint — chạy scripts/11_final.py")
     return DataContext(load_customers=False, mode="final")
+
+
+@pytest.fixture(scope="module")
+def vctx():
+    """Chế độ v2: checkpoint seed 42 của đánh giá cuối giao thức v2 (outputs/v2/final/seed42) — kết quả chính."""
+    if not v2_available():
+        pytest.skip("Chưa có outputs/v2/final/seed42 kèm checkpoint — chạy scripts/23_final_v2.py")
+    return DataContext(load_customers=False, mode="v2")
+
+
+V2_KEY = {"NeuMF-F": "neumf_f", "GMF-F": "gmf_f", "MLP-F": "mlp_f", "NeuMF": "neumf", "GMF": "gmf", "MLP": "mlp",
+          "LateFusion-F": "late_f", "BPR-MF": "bpr", "UserKNN": "userknn", "ItemKNN": "itemknn",
+          "MostPopular-Recent": "recent_pop", "Content": "content", "MostPopular": "popularity"}
 
 
 # ------------------------------------------------------------------ explore: split
@@ -177,6 +191,44 @@ def test_final_dashboard_reads_result_files(fctx):
     models = {r["model"] for r in d["summary"]["data"]}
     assert {"BPR-MF", "NeuMF-Pretrained", "Random"} <= models
     assert d["stats"]["data"]["n_test_users"] == len(fctx.target_users)
+
+
+# ------------------------------------------------------------- v2 (kết quả chính)
+def test_v2_metrics_match_per_user_file(vctx):
+    """Chỉ số per-user của demo khớp outputs/v2/final/seed42/per_user.csv.gz (số của Chương 4)."""
+    per = pd.read_csv(V2_DIR / f"seed{FINAL_SEED}" / "per_user.csv.gz").set_index(["model", "user"])
+    rng = np.random.default_rng(2)
+    users = rng.choice(vctx.target_users, size=min(40, len(vctx.target_users)), replace=False)
+    assert {"NeuMF-F", "NeuMF", "GMF-F", "MLP-F", "LateFusion-F", "BPR-MF"} <= set(vctx.available_models)
+    for m in vctx.available_models:
+        for u in users:
+            out = inference.recommend(vctx, m, int(u), 10)["evaluation"]
+            row = per.loc[(V2_KEY[m], int(u))]
+            want = [int(x) for x in str(row["ranks"]).split(";")]
+            assert out["n_candidates"] == row["n_candidates"]
+            for got, exp in zip(out["ranks"], want):
+                assert got == exp if min(got, exp) <= DEEP else abs(got - exp) <= DEEP_SLACK, (m, u, got, exp)
+            assert abs(out["metrics"]["NDCG@10"] - row["NDCG@10"]) <= TOL, (m, u)
+
+
+def test_v2_id_only_models_rank_new_items_last(vctx):
+    """Mô hình chỉ dùng ID xếp mọi sản phẩm mới sau mọi sản phẩm cũ; sản phẩm mới được gắn cờ is_new."""
+    u = next(u for u, items in vctx.target_items.items() if any(vctx.new_mask[i] for i in items))
+    rec = inference.eval_record(vctx, int(u))
+    n_old = int((~vctx.new_mask[rec.candidates]).sum())
+    for m in ("NeuMF", "GMF", "MLP", "BPR-MF", "MostPopular"):
+        if m in vctx.available_models:
+            out = inference.recommend(vctx, m, int(u), 10)
+            new_ranks = [t["rank"] for t in out["targets"] if t["is_new"]]
+            assert new_ranks and min(new_ranks) > n_old, m
+
+
+def test_v2_dashboard_reads_result_files(vctx):
+    d = metrics_io.v2_dashboard(vctx)
+    assert d["summary"]["status"] == "ok" and d["significance"]["status"] == "ok"
+    assert {"NeuMF-F", "NeuMF", "UserKNN"} <= {r["model"] for r in d["summary"]["data"]}
+    assert len(d["significance"]["data"]) == 10
+    assert d["stats"]["data"]["n_test_users"] == len(vctx.target_users)
 
 
 # ------------------------------------------------------------- onboarding

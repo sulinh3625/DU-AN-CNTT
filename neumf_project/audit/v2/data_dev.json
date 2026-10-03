@@ -1,0 +1,16 @@
+{
+  "sample": "D:\\A.NĂM 4\\DỰ ÁN CNTT\\SRC code\\DU-AN-CNTT\\neumf_project\\data\\processed\\hm\\hm500k_transactions.csv",
+  "n_users": 7134,
+  "n_items": 19228,
+  "n_id_items": 9596,
+  "n_kept_pairs": 201544,
+  "val": {
+    "train_pairs": 195344,
+    "scoreable": 9594,
+    "new_items": 9633,
+    "users": 2229,
+    "targets": 7074,
+    "new_item_targets": 930,
+    "candidates_mean": 19193.671601615075
+  }
+}

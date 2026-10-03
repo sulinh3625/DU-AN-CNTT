@@ -1,7 +1,7 @@
 % Sinh tự động bởi scripts/15_export_report.py — KHÔNG sửa tay.
 \begin{table}[htbp]
     \centering\small
-    \caption{Chỉ số ngoài độ chính xác của danh sách top-10 trên tập test (trung bình 3 seed)}
+    \caption{Chỉ số ngoài độ chính xác của danh sách top-10 trên tập kiểm thử (trung bình 3 seed)}
     \label{tab:beyond}
     \begin{adjustbox}{max width=\textwidth}
     \begin{tabular}{lrrrr}
@@ -17,5 +17,5 @@
         \bottomrule
     \end{tabular}
     \end{adjustbox}
-    \par\smallskip{\footnotesize Coverage: tỉ lệ item xuất hiện trong ít nhất một top-10. Novelty: $-\log_2 P(i)$ trung bình. ARP: số tương tác train $\cup$ val trung bình của item được gợi ý. HRR: tỉ lệ item head trong top-10.}
+    \par\smallskip{\footnotesize Coverage: tỉ lệ sản phẩm xuất hiện trong ít nhất một danh sách top-10. Novelty: giá trị $-\log_2 P(i)$ trung bình. ARP: số người dùng đã mua (trong tập huấn luyện $\cup$ xác thực), tính trung bình trên các sản phẩm được gợi ý. HRR: tỉ lệ sản phẩm thuộc nhóm head trong top-10.}
 \end{table}

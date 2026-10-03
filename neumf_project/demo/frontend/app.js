@@ -7,10 +7,15 @@ const MODEL_COLORS = {
   "NeuMF-Pretrained": "#b3261e", "NeuMF-Scratch": "#e07a5f", "GMF": "#28528f", "MLP": "#6a8fc7",
   "MostPopular": "#9a9a9a", "BPR-MF": "#1d7a46", "Random": "#d4d0ca",
   "LateFusion-GMF-MLP": "#7b4fa3", "LateFusion-BPR-MLP": "#a97fd0", "ItemKNN": "#b07d12", "UserKNN": "#d9a425",
+  // Giao thức v2
+  "NeuMF-F": "#2a78d6", "GMF-F": "#5b9be6", "MLP-F": "#173f7a", "LateFusion-F": "#7b4fa3", "NeuMF": "#e07a5f",
+  "MostPopular-Recent": "#6b6b6b", "Content": "#1baf7a",
 };
 const SHOW = { "MostPopular": "Most Popular", "LateFusion-GMF-MLP": "Late Fusion GMF + MLP", "LateFusion-BPR-MLP": "Late Fusion BPR-MF + MLP" };
 const show = (m) => SHOW[m] || m;
-const isFinal = () => CTX && CTX.mode === "final";
+// Chế độ đánh giá cuối: "final" (giao thức v1) hoặc "v2" (kết quả chính) — nhiều sản phẩm đích mỗi khách, ứng viên theo pool.
+const isV2 = () => CTX && CTX.mode === "v2";
+const isFinal = () => CTX && (CTX.mode === "final" || CTX.mode === "v2");
 const color = (m) => MODEL_COLORS[m] || "#555";
 
 async function api(path, opts) {
@@ -48,7 +53,9 @@ async function init() {
   }
   const slice = CTX.nrows ? `lát cắt ${num(CTX.nrows)} dòng đầu transactions_train`
     : /hm500k/.test(CTX.config || "") ? "mẫu hm500k theo khách hàng" : "toàn bộ transactions_train";
-  const run = isFinal()
+  const run = isV2()
+    ? `<span>Mô hình của <b>đánh giá cuối giao thức v2</b> (${CTX.dry_run ? "bản chạy thử trên mẫu A" : "mẫu kiểm định B"}, seed ${esc(CTX.run_tag.replace("v2_seed", ""))}, commit ${esc(CTX.commit)}) · ứng viên gồm cả ${num(CTX.n_new_items)} sản phẩm mới</span>`
+    : isFinal()
     ? `<span>Mô hình của <b>đánh giá cuối</b> (outputs/final/seed${esc(CTX.run_tag.replace("final_seed", ""))}, commit ${esc(CTX.commit)}) · chia theo mốc thời gian chung</span>`
     : `<span>run_tag <b>${esc(CTX.run_tag)}</b> (khám phá, leave-one-out)</span>`;
   $("info-strip").innerHTML = `
@@ -61,6 +68,8 @@ async function init() {
 /* ------------------------------------------------------------ shared UI */
 const img = (it) => `<img loading="lazy" src="${API}/image/${esc(it.article_id)}" alt="${esc(it.product_type_name)}">`;
 const headTag = (isHead) => (isHead ? '<span class="tag head">Head</span>' : '<span class="tag tail">Long-tail</span>');
+// Sản phẩm mới (giao thức v2): chưa từng bán trước mốc dự đoán — mô hình chỉ dùng ID không chấm được.
+const itemTag = (it) => (it.is_new ? '<span class="tag new">Mới</span>' : headTag(it.is_head));
 const kOptions = (sel) => {
   sel.innerHTML = CTX.k_values.map((k) => `<option value="${k}">${k}</option>`).join("");
   sel.value = Math.max(...CTX.k_values);
@@ -162,6 +171,15 @@ const targetLabel = () => (isFinal() ? "sản phẩm đích (test)" : CTX.evalua
 
 function renderProtocol() {
   const k = Math.max(...CTX.k_values);
+  if (isV2()) {
+    $("ad-protocol").innerHTML = `<b>Giao thức v2 (đúng Chương 4)</b><br>
+    • <b>Chia theo mốc thời gian</b>: mô hình đã được huấn luyện lại trên mọi cặp trước ${esc(CTX.test_start)}; lịch sử bên trái là đúng dữ liệu mô hình đã học.<br>
+    • <b>Sản phẩm đích</b> = mọi sản phẩm khách mua <i>lần đầu</i> sau mốc (có thể nhiều món), gồm cả <span class="tag new">Mới</span> sản phẩm chưa từng bán trước mốc.<br>
+    • <b>Full ranking</b> trên ${num(CTX.n_candidates)} ứng viên = sản phẩm cũ (có dữ liệu huấn luyện) ∪ ${num(CTX.n_new_items)} sản phẩm mới, trừ những món khách đã mua. Mô hình chỉ dùng ID (NeuMF, GMF, MLP, BPR-MF, KNN, Most Popular) xếp sản phẩm mới cuối danh sách; NeuMF-F, GMF-F, MLP-F, LateFusion-F và Content chấm được sản phẩm mới nhờ đặc trưng.<br>
+    • <code>HR@K = 1</code> nếu có ít nhất một món đích trong top-K; <code>Recall@K</code> = số món đích trong top-K / số món đích; <code>NDCG@K = DCG/IDCG</code>.<br>
+    • Số trên màn hình khớp file per-user của đánh giá cuối (seed 42); đây là hiển thị lại, không phải một lần chấm mới.`;
+    return;
+  }
   $("ad-protocol").innerHTML = isFinal() ? `<b>Protocol đánh giá (đúng Chương 4)</b><br>
     • <b>Chia theo một mốc thời gian chung</b>: train &lt; ${esc(CTX.val_start)} ≤ validation &lt; ${esc(CTX.test_start)} ≤ test. Mô hình đã được huấn luyện lại trên train ∪ validation; lịch sử bên trái là đúng dữ liệu mô hình đã học.<br>
     • <b>Sản phẩm đích</b> = mọi sản phẩm khách mua <i>lần đầu</i> trong giai đoạn test (có thể nhiều món).<br>
@@ -185,8 +203,9 @@ async function initAdmin() {
   const opts = CTX.models.map((m) => `<option value="${esc(m)}">${esc(show(m))}${ext.has(m) ? " (mở rộng)" : ""}</option>`).join("");
   a.innerHTML = opts;
   b.innerHTML = opts;
-  a.value = CTX.models.includes("NeuMF-Pretrained") ? "NeuMF-Pretrained" : CTX.models[0];
-  b.value = CTX.models.includes("GMF") ? "GMF" : CTX.models[1] || CTX.models[0];
+  const pick = (prefs, fallback) => prefs.find((m) => CTX.models.includes(m)) || fallback;
+  a.value = pick(["NeuMF-F", "NeuMF-Pretrained"], CTX.models[0]);
+  b.value = pick(isV2() ? ["NeuMF", "BPR-MF"] : ["GMF"], CTX.models[1] || CTX.models[0]);
   kOptions($("ad-k"));
   const un = Object.entries(CTX.unavailable_models || {});
   $("ad-unavailable").innerHTML = un.map(([m, r]) => `<b>${esc(m)}</b> bị ẩn: ${esc(r)}`).join("<br>");
@@ -290,7 +309,7 @@ async function loadNeighbors(uid) {
 function renderHistory(hist) {
   const label = isFinal() ? `sản phẩm mô hình đã học (train ∪ validation, trước ${esc(CTX.test_start)}), sắp theo ngày mua đầu` : "sản phẩm trong train, sắp theo ngày mua";
   $("ad-history").innerHTML = `<div class="note" style="margin-bottom:8px">${hist.items.length} ${label}.</div>` +
-    hist.items.map((it) => rowItem(it, "", `<div class="score">${it.t_dat}${it.interaction_count > 1 ? `<br>×${it.interaction_count}` : ""}<br>${headTag(it.is_head)}</div>`)).join("");
+    hist.items.map((it) => rowItem(it, "", `<div class="score">${it.t_dat}${it.interaction_count > 1 ? `<br>×${it.interaction_count}` : ""}<br>${itemTag(it)}</div>`)).join("");
 }
 
 function renderRecs(recs, k) {
@@ -306,7 +325,7 @@ function renderRecs(recs, k) {
     return `<div>
       <h3 style="color:${color(r.model)}">${esc(show(r.model))}</h3>
       ${r.items.map((it) => rowItem(it, `<div class="rank">#${it.rank}</div>`,
-        `<div class="score">${esc(r.score_kind)} ${fmt(it.score, r.model === "MostPopular" ? 0 : 3)}<br>${headTag(it.is_head)}${it.is_target ? `<br><span class="tag tail">ĐÍCH</span>` : ""}</div>`,
+        `<div class="score">${esc(r.score_kind)} ${fmt(it.score, r.model === "MostPopular" ? 0 : 3)}<br>${itemTag(it)}${it.is_target ? `<br><span class="tag tail">ĐÍCH</span>` : ""}</div>`,
         it.is_target ? "hit" : "")).join("")}
       <div class="note" style="margin-top:8px">${note}</div>
     </div>`;
@@ -333,9 +352,11 @@ function renderAnswer(recs, hist) {
     : CTX.evaluated_on === "test" ? "Test item (giao dịch cuối, bị giấu khỏi train)"
       : "Validation item (giao dịch áp chót, bị giấu khỏi train) — run chưa chấm test nên test item được giữ kín";
   const targetRows = targets.map((t) => rowItem(t, "",
-    `<div class="score">${recs.map((r, i) => rankOf[i][t.item_idx] ? `<span style="color:${color(r.model)}">#${num(rankOf[i][t.item_idx])}</span>` : "").join("<br>")}<br>${headTag(t.is_head)}</div>`,
+    `<div class="score">${recs.map((r, i) => rankOf[i][t.item_idx] ? `<span style="color:${color(r.model)}">#${num(rankOf[i][t.item_idx])}</span>` : "").join("<br>")}<br>${itemTag(t)}</div>`,
     "hit")).join("");
-  const cand = isFinal()
+  const cand = isV2()
+    ? `Candidates = ${num(CTX.n_candidates)} sản phẩm (cũ ∪ ${num(CTX.n_new_items)} mới) − ${hist.items.length} món khách đã mua.`
+    : isFinal()
     ? `Candidates = ${num(CTX.n_candidates)} sản phẩm của train ∪ validation − ${hist.items.length} món khách đã mua.`
     : `Candidates = ${num(CTX.n_items)} item − ${hist.items.length} item train${v ? " − 1 item validation" : ""}.`;
   $("ad-answer").innerHTML = `
@@ -424,6 +445,47 @@ function renderFinalDashboard(d, dash) {
   }
 }
 
+function renderV2Dashboard(d, dash) {
+  const s = d.stats.data;
+  const metrics = ["NDCG@10", "Recall@10", "HR@10", "Precision@10", "NDCG@5", "NDCG@20"];
+  const ablName = { "neumf_f": "NeuMF-F (đầy đủ)", "neumf_f-text": "Bỏ vector văn bản", "neumf_f-time": "Bỏ đặc trưng thời gian",
+    "neumf_f-user": "Bỏ thông tin khách hàng", "neumf_f-attr": "Bỏ thuộc tính sản phẩm", "neumf_f-iddrop": "Không bỏ ID ngẫu nhiên" };
+  dash.innerHTML = `
+    ${d.dry_run ? '<div class="card wide"><div class="error">Đang hiển thị bản <b>chạy thử</b> (mẫu A, tập xác thực, 1 epoch) — số liệu không có ý nghĩa, chỉ để kiểm tra đường ống.</div></div>' : ""}
+    <div class="card wide"><h2>Dữ liệu của đánh giá cuối (giao thức v2)</h2><div class="stats">${[
+      ["Khách sau k-core", num(s.n_users)], ["Sản phẩm (có ID + mới)", num(s.n_items)], ["Cặp trước mốc kiểm thử", num(s.n_interactions)],
+      ["Cặp huấn luyện", num(s.train_pairs)], ["Khách được chấm", num(s.n_test_users)], ["Cặp đúng", num(s.targets)],
+      ["Cặp đúng là SP mới", num(s.new_item_targets)], ["Ứng viên", num(s.n_candidates)], ["Sản phẩm mới", num(s.n_new_items)],
+      ["k-core", s.k_core], ["Commit", esc(s.commit)],
+    ].map(([l, n]) => `<div class="stat"><div class="n">${n}</div><div class="l">${l}</div></div>`).join("")}</div>${srcLine(d.stats)}</div>
+
+    <div class="card wide"><h2>Kết quả — trung bình ± độ lệch chuẩn qua seed</h2>${body(d.summary, (rows) => `
+      <canvas id="c-final"></canvas>
+      <div class="scroll"><table><tr><th>Mô hình</th>${metrics.map((m) => `<th>${m}</th>`).join("")}</tr>${rows.map((r) =>
+        `<tr><td>${esc(show(r.model))}</td>${metrics.map((m) => `<td>${fmt(r[m + "_mean"], 5)} ± ${fmt(r[m + "_std"], 5)}</td>`).join("")}</tr>`).join("")}</table></div>`)}</div>
+
+    <div class="card wide"><h2>Kiểm định cặp theo khách hàng (NDCG@10) — họ 10 so sánh đăng ký trước</h2>${body(d.significance, sigTable)}</div>
+
+    <div class="card"><h2>NDCG@10 theo nhóm sản phẩm đúng (mô tả)</h2>${body(d.groups, (rows) => simpleTable(rows,
+      [["old_mean", "SP cũ", (v) => fmt(v, 5)], ["new_mean", "SP mới", (v) => fmt(v, 5)], ["oldonly_mean", "Chỉ SP cũ trong ứng viên", (v) => fmt(v, 5)]]))}</div>
+    <div class="card"><h2>Danh sách top-10 và chi phí huấn luyện</h2>${body(d.beyond, (rows) => simpleTable(rows,
+      [["coverage10", "Độ phủ", (v) => pct(v)], ["new_share10", "Tỉ lệ SP mới", (v) => pct(v)], ["best_epoch_mean", "Số epoch", (v) => fmt(v, 1)],
+       ["train_min", "Phút / seed", (v) => fmt(v, 1)]]))}</div>
+    <div class="card wide"><h2>Ablation NeuMF-F (seed 42, mô tả)</h2>${body(d.ablation, (rows) => `<div class="scroll"><table>
+      <tr><th>Biến thể</th><th>NDCG@10</th><th>Thay đổi</th><th>CI 95% của hiệu</th><th>SP cũ</th><th>SP mới</th></tr>${rows.map((r) =>
+        `<tr><td>${esc(ablName[r.variant] || r.variant)}</td><td>${fmt(r["NDCG@10"], 5)}</td><td>${r.variant === "neumf_f" ? "—" : (r.rel >= 0 ? "+" : "") + pct(r.rel)}</td>
+        <td>${r.variant === "neumf_f" ? "—" : `[${fmt(r.ci_low, 5)}; ${fmt(r.ci_high, 5)}]`}</td><td>${fmt(r["NDCG@10_old"], 5)}</td><td>${fmt(r["NDCG@10_new"], 5)}</td></tr>`).join("")}</table></div>`)}</div>`;
+  if (d.summary.status === "ok") {
+    const rows = d.summary.data;
+    chart("c-final", {
+      type: "bar",
+      data: { labels: rows.map((r) => show(r.model)),
+              datasets: [{ label: "NDCG@10 (trung bình qua seed)", data: rows.map((r) => r["NDCG@10_mean"]), backgroundColor: rows.map((r) => color(r.model)) }] },
+      options: { plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true } } },
+    });
+  }
+}
+
 async function loadDashboard() {
   charts.forEach((c) => c.destroy());
   charts = [];
@@ -431,6 +493,7 @@ async function loadDashboard() {
   dash.innerHTML = '<div class="note">Đang đọc file kết quả...</div>';
   let d;
   try { d = await api("/dashboard"); } catch (e) { dash.innerHTML = `<div class="error">${esc(e.message)}</div>`; return; }
+  if (d.mode === "v2") { renderV2Dashboard(d, dash); return; }
   if (d.mode === "final") { renderFinalDashboard(d, dash); return; }
   const metricCols = CTX.k_values.flatMap((k) => [`HR@${k}`, `NDCG@${k}`]);
 

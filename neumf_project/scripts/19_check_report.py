@@ -1,17 +1,18 @@
-"""Đối chiếu báo cáo và tài liệu với số liệu hiện có — bước cuối của `python run.py final`; không chấm test.
+"""Đối chiếu báo cáo và tài liệu với số liệu hiện có — chạy sau scripts/24_report_v2.py; không chấm test.
 
     python scripts/19_check_report.py            # in kết quả, luôn trả mã 0
-    python scripts/19_check_report.py --strict   # trả mã 1 nếu có khẳng định sai / macro, bảng thiếu
+    python scripts/19_check_report.py --strict   # trả mã 1 nếu có khẳng định sai / macro, bảng, hình thiếu
 
 Bốn phần:
-  1. Tái lập: outputs/final/{summary,significance,stratified,beyond_accuracy,sampled99}.csv so với bản đã commit
-     (git HEAD) — độ lệch tuyệt đối lớn nhất. Chạy lại trên cùng máy kỳ vọng lệch 0 (PREREG mục 8, 02/10/2026).
-  2. Khẳng định bằng chữ trong báo cáo (Chương 1, 4, 5, tóm tắt) mà macro số liệu không tự cập nhật — mỗi khẳng định
-     là một điều kiện trên CSV; sai thì in tệp:dòng cần sửa.
-  3. Số chép tay trong van_dap.md, pham_vi_du_an.md, README.md, notebook Colab: nếu số trong CSV khác bản đã commit,
-     liệt kê các dòng còn ghi số cũ.
-  4. Mọi macro (\\Res, \\Sig, \\Ext, ...) và mọi bảng \\bangketqua{...} mà báo cáo dùng đều đã được 15_export_report.py
-     sinh (nếu không, PDF hiện "[chưa có]" / khung "Chưa có số liệu").
+  1. Tái lập: outputs/v2/final/{summary,significance,groups,ablation,beyond}.csv so với bản đã commit (git HEAD) — độ
+     lệch tuyệt đối lớn nhất (chạy lại đánh giá cuối trên cùng máy kỳ vọng lệch 0).
+  2. Khẳng định bằng chữ trong báo cáo mà macro số liệu không tự cập nhật — mỗi khẳng định là một điều kiện trên CSV;
+     sai thì in tệp:dòng cần sửa. Gồm khẳng định về kết quả giao thức v2 (outputs/v2/final/) và về lịch sử phát triển
+     giao thức v1 (outputs/final/, không còn thay đổi).
+  3. Số chép tay trong van_dap.md, pham_vi_du_an.md, README.md, notebook: nếu số v2 khác bản đã commit, liệt kê các dòng
+     còn ghi số cũ.
+  4. Mọi macro (\\VRes, \\VSig, ... của v2; \\Res, \\Sig, ... của v1), mọi bảng \\bangketqua / \\bangketquaV và hình
+     \\hinhketqua mà báo cáo dùng đều đã được sinh (nếu không, PDF hiện "[chưa có]" / khung "Chưa có số liệu").
 """
 from __future__ import annotations
 
@@ -26,52 +27,61 @@ import pandas as pd
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 REPO_ROOT = PROJECT_ROOT.parent
-FINAL = PROJECT_ROOT / "outputs" / "final"
+FINAL = PROJECT_ROOT / "outputs" / "final"           # giao thức v1 (lịch sử phát triển)
+FINAL_V2 = PROJECT_ROOT / "outputs" / "v2" / "final"  # giao thức v2 (kết quả chính)
 REPORT = REPO_ROOT / "Report DACNTT"
 TABLES = REPORT / "content" / "tables"
+NOT_SIG = "không khác biệt có ý nghĩa"
+# v1
 MAIN = ["NeuMF-Pretrained", "NeuMF-Scratch", "GMF", "MLP", "BPR-MF", "MostPopular", "Random"]
-LEARNED = ["NeuMF-Pretrained", "NeuMF-Scratch", "GMF", "MLP", "BPR-MF"]
 NEURAL = ["NeuMF-Pretrained", "NeuMF-Scratch", "GMF", "MLP"]
 SECONDARY = ["NeuMF-Pretrained", "NeuMF-Scratch", "GMF", "MLP", "BPR-MF", "MostPopular"]
-METRICS = ["NDCG@10", "Recall@10", "HR@10", "Precision@10", "NDCG@5"]
-NOT_SIG = "không khác biệt có ý nghĩa"
+# v2 (mã mô hình của scripts/v2_common.py)
+ID_ONLY = ["popularity", "itemknn", "userknn", "bpr", "gmf", "mlp", "neumf", "recent_pop"]
+PERSONALIZED = ["neumf_f", "late_f", "gmf_f", "mlp_f", "neumf", "gmf", "mlp", "bpr", "itemknn", "userknn", "content"]
 DOCS = [REPO_ROOT / "van_dap.md", PROJECT_ROOT / "pham_vi_du_an.md", PROJECT_ROOT / "README.md",
         REPO_ROOT / "README.md", PROJECT_ROOT / "notebooks" / "colab_final.ipynb"]
+V2_FILES = (("summary.csv", ["model"]), ("significance.csv", ["A", "B"]), ("groups.csv", ["model"]),
+            ("ablation.csv", ["variant"]), ("beyond.csv", ["model"]))
 
 
 # ---------------------------------------------------------------- dữ liệu
-def read_csv(name: str, committed: bool = False, **kw) -> pd.DataFrame | None:
+def read_csv(name: str, committed: bool = False, root: Path = FINAL, **kw) -> pd.DataFrame | None:
     if not committed:
-        path = FINAL / name
-        return pd.read_csv(path, **kw) if path.exists() else None
-    res = subprocess.run(["git", "show", f"HEAD:./outputs/final/{name}"], cwd=PROJECT_ROOT, capture_output=True)
-    return pd.read_csv(io.BytesIO(res.stdout), **kw) if res.returncode == 0 else None
+        path = root / name
+        if not path.exists():
+            return None
+        try:
+            return pd.read_csv(path, **kw)
+        except pd.errors.EmptyDataError:
+            return None
+    rel = (root / name).relative_to(PROJECT_ROOT).as_posix()
+    res = subprocess.run(["git", "show", f"HEAD:./{rel}"], cwd=PROJECT_ROOT, capture_output=True)
+    return pd.read_csv(io.BytesIO(res.stdout), **kw) if res.returncode == 0 and res.stdout.strip() else None
 
 
 class Data:
     def __init__(self):
+        # v1 — lịch sử phát triển
         self.S = read_csv("summary.csv", index_col=0)
         g = read_csv("significance.csv")
         self.G = None if g is None else g.set_index(["A", "B"])
         st = read_csv("stratified.csv")
         self.ST = None if st is None else st.groupby(["model", "subset"])["NDCG@10"].mean()
-        b = read_csv("beyond_accuracy.csv")
-        self.B = None if b is None else b.groupby("model").mean(numeric_only=True)
         sp = read_csv("sampled99.csv")
         self.SP = None if sp is None else sp.groupby("model").mean(numeric_only=True)
-        self.K20 = read_csv("extra_k20.csv", index_col=0)
-        self.epochs = []
-        for p in sorted(FINAL.glob("seed*/results.json")):
-            meta = json.loads(p.read_text(encoding="utf-8")).get("train_meta", {})
-            self.epochs += [int(meta[m]["best_epoch"]) for m in NEURAL if m in meta and meta[m].get("best_epoch")]
+        # v2 — kết quả chính
+        s2 = read_csv("summary.csv", root=FINAL_V2)
+        self.S2 = None if s2 is None else s2.set_index("model")
+        g2 = read_csv("significance.csv", root=FINAL_V2)
+        self.G2 = None if g2 is None or g2.empty else g2.set_index(["A", "B"])
+        b2 = read_csv("beyond.csv", root=FINAL_V2)
+        self.B2 = None if b2 is None else b2.set_index("model")
+        info = FINAL_V2 / "data.json"
+        self.info2 = json.loads(info.read_text(encoding="utf-8")) if info.exists() else None
 
-    # tiện ích cho các khẳng định
     def ndcg(self, models=MAIN) -> dict:
         return {m: self.S.loc[m, "NDCG@10_mean"] for m in models}
-
-    def rank(self, model, models=MAIN) -> int:
-        v = self.ndcg(models)
-        return 1 + sum(x > v[model] for x in v.values())
 
     def not_sig(self, *pairs) -> bool:
         return all(self.G.loc[p, "verdict"] == NOT_SIG for p in pairs)
@@ -81,106 +91,68 @@ def argmax(d: dict):
     return max(d, key=d.get)
 
 
-def argmin(d: dict):
-    return min(d, key=d.get)
+def curves(H: pd.DataFrame) -> dict[str, pd.DataFrame]:
+    """Phase chọn epoch của từng mạng nơ-ron trong history.csv."""
+    sel = H[H["phase"] == "select"]
+    return {m: g.sort_values("epoch") for m, g in sel.groupby("model")}
+
+
+def stopped_early(H: pd.DataFrame) -> bool:
+    """Mỗi mô hình: epoch tốt nhất (NDCG@10 val cao nhất) nằm trước epoch cuối của bước chọn — tức đã dừng sớm."""
+    return all(int(g.loc[g["NDCG@10"].idxmax(), "epoch"]) < int(g["epoch"].max()) for g in curves(H).values())
+
+
+def loss_keeps_falling(H: pd.DataFrame) -> bool:
+    """Mỗi mô hình: loss huấn luyện ở epoch cuối thấp hơn ở epoch tốt nhất (vẫn giảm sau đỉnh NDCG@10 val)."""
+    return all(float(g["loss"].iloc[-1]) < float(g.loc[g["NDCG@10"].idxmax(), "loss"]) for g in curves(H).values())
 
 
 # ---------------------------------------------------------- khẳng định
 # (tệp, đoạn văn bản neo để tìm dòng, mô tả, điều kiện, các nguồn dữ liệu cần có)
 def claims(d: Data):
-    S, G, ST, B, SP, K20 = d.S, d.G, d.ST, d.B, d.SP, d.K20
-    neural_spread = lambda: (max(d.ndcg(NEURAL).values()) - min(d.ndcg(NEURAL).values())
-                             <= max(S.loc[m, "NDCG@10_std"] for m in NEURAL))
+    S, G, ST, SP, S2, B2, info = d.S, d.G, d.ST, d.SP, d.S2, d.B2, d.info2
     main_pairs = list(G.index) if G is not None else []
+    id_new_zero = lambda: all(S2.loc[m, "NDCG@10_new_mean"] == 0 for m in ID_ONLY if m in S2.index)  # noqa: E731
+    v1_no_neumf_win = lambda: (all(G.loc[p, "verdict"] != "A tốt hơn"  # noqa: E731
+                                   for p in (("NeuMF-Pretrained", "BPR-MF"), ("NeuMF-Scratch", "BPR-MF")))
+                               and argmax(d.ndcg()) == "BPR-MF")
     return [
-        ("content/C4.tex", "NDCG@10 cao nhất khoảng 0,01", "NDCG@10 cao nhất làm tròn bằng 0,01",
-         lambda: round(max(d.ndcg().values()), 2) == 0.01, ["S"]),
-        ("content/C4.tex", "BPR-MF có trung bình cao nhất trên mọi độ đo", "BPR-MF cao nhất ở cả 5 độ đo",
-         lambda: all(argmax({m: S.loc[m, f"{mt}_mean"] for m in MAIN}) == "BPR-MF" for mt in METRICS), ["S"]),
-        ("content/C4.tex", "NeuMF-Pretrained ngang Most Popular", "NeuMF-Pretrained vs Most Popular không có ý nghĩa",
-         lambda: d.not_sig(("NeuMF-Pretrained", "MostPopular")), ["G"]),
-        ("content/C4.tex", "GMF, MLP và hai biến thể NeuMF nằm sát nhau",
-         "Trong GMF, MLP, 2 NeuMF: thấp nhất GMF, cao nhất NeuMF-Pretrained, khoảng cách ≤ độ lệch chuẩn lớn nhất",
-         lambda: argmin(d.ndcg(NEURAL)) == "GMF" and argmax(d.ndcg(NEURAL)) == "NeuMF-Pretrained"
-         and neural_spread(), ["S"]),
-        ("content/C4.tex", "Mọi mô hình có học đều vượt xa Random", "mọi mô hình có học ≥ 5 lần Random",
-         lambda: min(d.ndcg(LEARNED).values()) >= 5 * S.loc["Random", "NDCG@10_mean"], ["S"]),
-        ("content/C4.tex", "BPR-MF vẫn có trung bình cao nhất", "@20: BPR-MF cao nhất trong 7 mô hình chính; "
-         "Most Popular và MLP > NeuMF-Pretrained",
-         lambda: argmax({m: K20.loc[m, "NDCG@20_mean"] for m in MAIN}) == "BPR-MF"
-         and K20.loc["MostPopular", "NDCG@20_mean"] > K20.loc["NeuMF-Pretrained", "NDCG@20_mean"]
-         and K20.loc["MLP", "NDCG@20_mean"] > K20.loc["NeuMF-Pretrained", "NDCG@20_mean"], ["K20"]),
-        ("content/C4.tex", "mọi khoảng tin cậy đều chứa 0", "mọi CI chính chứa 0 và mọi p Holm ≥ 0,05",
-         lambda: all((G["ci_low"] <= 0) & (G["ci_high"] >= 0) & (G["p_holm"] >= 0.05)), ["G"]),
-        ("content/C4.tex", "So sánh gần ngưỡng nhất là NeuMF-Pretrained với GMF",
-         "p Wilcoxon nhỏ nhất ở (NeuMF-Pretrained, GMF), < 0,05 trước hiệu chỉnh, CI chứa 0",
-         lambda: G["p_wilcoxon"].idxmin() == ("NeuMF-Pretrained", "GMF")
-         and G.loc[("NeuMF-Pretrained", "GMF"), "p_wilcoxon"] < 0.05
-         and G.loc[("NeuMF-Pretrained", "GMF"), "ci_low"] <= 0, ["G"]),
-        ("content/C4.tex", "NeuMF không vượt BPR-MF, không vượt Most Popular",
-         "mọi so sánh chính không có ý nghĩa", lambda: d.not_sig(*main_pairs), ["G"]),
-        ("content/C4.tex", "dưới cả BPR-MF, NeuMF-Pretrained, MLP và Most Popular",
-         "4 mô hình xếp trên NeuMF-Scratch đúng là BPR-MF, NeuMF-Pretrained, MLP, Most Popular",
-         lambda: {m for m in MAIN if S.loc[m, "NDCG@10_mean"] > S.loc["NeuMF-Scratch", "NDCG@10_mean"]}
-         == {"BPR-MF", "NeuMF-Pretrained", "MLP", "MostPopular"}, ["S"]),
-        ("content/C4.tex", "cả bốn so sánh đều không có ý nghĩa thống kê", "NeuMF vs GMF/MLP không có ý nghĩa",
-         lambda: d.not_sig(("NeuMF-Pretrained", "GMF"), ("NeuMF-Pretrained", "MLP"), ("NeuMF-Scratch", "GMF"),
-                           ("NeuMF-Scratch", "MLP")), ["G"]),
-        ("content/C4.tex", "trên validation thì ngược lại", "NeuMF-Pretrained vs NeuMF-Scratch không có ý nghĩa",
-         lambda: d.not_sig(("NeuMF-Pretrained", "NeuMF-Scratch")), ["G"]),
-        ("content/C4.tex", "mọi mô hình đạt NDCG@10 khoảng 0,03", "NDCG@10 nhóm head của mọi mô hình trong [0,02; 0,04]",
-         lambda: all(0.02 <= ST[(m, "head")] <= 0.04 for m in SECONDARY), ["ST"]),
-        ("content/C4.tex", "không mô hình nào vượt quá 0,0003", "tail: max < 0,0003; GMF, MLP, Most Popular = 0; "
-         "cao nhất NeuMF-Scratch",
-         lambda: max(ST[(m, "tail")] for m in SECONDARY) < 0.0003
-         and all(ST[(m, "tail")] == 0 for m in ("GMF", "MLP", "MostPopular"))
-         and argmax({m: ST[(m, "tail")] for m in SECONDARY}) == "NeuMF-Scratch", ["ST"]),
-        ("content/C4.tex", "cao nhất trong mọi mô hình và cao hơn chính nó ở nhóm warm",
-         "Most Popular cao nhất ở nhóm cold và cold > warm",
-         lambda: argmax({m: ST[(m, "cold")] for m in SECONDARY}) == "MostPopular"
-         and ST[("MostPopular", "cold")] > ST[("MostPopular", "warm")], ["ST"]),
-        ("content/C4.tex", "chỉ BPR-MF và NeuMF-Scratch thấp hơn ở nhóm cold",
-         "đúng BPR-MF và NeuMF-Scratch có cold < warm",
-         lambda: {m for m in SECONDARY if ST[(m, "cold")] < ST[(m, "warm")]} == {"BPR-MF", "NeuMF-Scratch"}, ["ST"]),
-        ("content/C4.tex", "NeuMF-Scratch đa dạng nhất", "NeuMF-Scratch: coverage và novelty cao nhất, HRR thấp nhất",
-         lambda: B["coverage"].idxmax() == "NeuMF-Scratch" and B["novelty"].idxmax() == "NeuMF-Scratch"
-         and B["HRR"].idxmin() == "NeuMF-Scratch", ["B"]),
-        ("content/C4.tex", "MLP gần như chỉ gợi ý sản phẩm phổ biến",
-         "MLP: coverage thấp nhất trong các mô hình cá nhân hoá, HRR ≥ 99%",
-         lambda: B.drop("MostPopular")["coverage"].idxmin() == "MLP" and B.loc["MLP", "HRR"] >= 0.99, ["B"]),
-        ("content/C4.tex", "NeuMF-Pretrained và GMF cũng có HRR trên 98", "HRR của NeuMF-Pretrained và GMF > 98%",
-         lambda: B.loc["NeuMF-Pretrained", "HRR"] > 0.98 and B.loc["GMF", "HRR"] > 0.98, ["B"]),
-        ("content/C4.tex", "vừa đa dạng thứ hai", "BPR-MF: coverage cao thứ hai, HRR thấp thứ hai",
-         lambda: list(B["coverage"].sort_values(ascending=False).index[:2]) == ["NeuMF-Scratch", "BPR-MF"]
-         and list(B["HRR"].sort_values().index[:2]) == ["NeuMF-Scratch", "BPR-MF"], ["B"]),
-        ("content/C4.tex", "Most Popular chỉ xếp thứ tư theo Full Ranking nhưng đứng đầu theo Sampled-99",
-         "Most Popular hạng 4/6 theo Full Ranking, hạng 1 theo Sampled-99",
-         lambda: d.rank("MostPopular", SECONDARY) == 4 and SP["NDCG@10"].idxmax() == "MostPopular", ["S", "SP"]),
-        ("content/C4.tex", "chỉ sau 1--9 epoch", "best_epoch của mô hình nơ-ron trong 11_final nằm trong 1–9",
-         lambda: d.epochs and min(d.epochs) >= 1 and max(d.epochs) <= 9, ["S"]),
-        ("content/C5.tex", "BPR-MF đạt NDCG@10 trung bình cao nhất", "BPR-MF cao nhất NDCG@10",
+        # ---- giao thức v2 (kết quả chính)
+        ("content/C4.tex", "các mô hình chỉ dùng ID đạt NDCG@10 bằng 0 theo cấu tạo",
+         "v2: mọi mô hình chỉ dùng ID có NDCG@10 = 0 trên sản phẩm mới", id_new_zero, ["S2"]),
+        ("frontmatter/abstract.tex", "trong khi mọi mô hình chỉ dùng ID bằng 0 theo cấu tạo",
+         "v2: mọi mô hình chỉ dùng ID có NDCG@10 = 0 trên sản phẩm mới", id_new_zero, ["S2"]),
+        ("frontmatter/abstract_english.tex", "whereas every ID-only model scores zero by construction",
+         "v2: mọi mô hình chỉ dùng ID có NDCG@10 = 0 trên sản phẩm mới", id_new_zero, ["S2"]),
+        ("content/C4.tex", "Most Popular là trường hợp giới hạn với độ phủ",
+         "v2: Most Popular có độ phủ top-10 không cao hơn mô hình cá nhân hoá nào",
+         lambda: B2.loc["popularity", "coverage10"] <= min(B2.loc[m, "coverage10"] for m in PERSONALIZED
+                                                           if m in B2.index), ["B2"]),
+        ("content/C4.tex", "Thang giá trị tuyệt đối thấp", "v2: NDCG@10 cao nhất < 0,05",
+         lambda: S2["NDCG@10_mean"].max() < 0.05, ["S2"]),
+        ("content/C4.tex", "mỗi khách có vài sản phẩm đúng giữa khoảng",
+         "v2: trung bình số sản phẩm đúng mỗi khách < 10",
+         lambda: info["test"]["targets"] / info["test"]["users"] < 10, ["info2"]),
+        # ---- giao thức v1 (lịch sử phát triển, mục Lịch sử phát triển của Chương 4)
+        ("content/C4.tex", "BPR-MF có NDCG@10 trung bình cao nhất", "BPR-MF cao nhất NDCG@10",
          lambda: argmax(d.ndcg()) == "BPR-MF", ["S"]),
-        ("content/C5.tex", "pre-training không mang lại lợi ích đo được", "NeuMF-Pretrained vs Scratch không có ý nghĩa",
-         lambda: d.not_sig(("NeuMF-Pretrained", "NeuMF-Scratch")), ["G"]),
-        ("content/C5.tex", "đạt đỉnh sau 1--9 epoch", "best_epoch trong 1–9",
-         lambda: d.epochs and min(d.epochs) >= 1 and max(d.epochs) <= 9, ["S"]),
-        ("content/C5.tex", "cùng cỡ với chênh lệch giữa các mô hình", "khoảng cách giữa 4 mô hình nơ-ron ≤ độ lệch chuẩn",
-         neural_spread, ["S"]),
-        ("frontmatter/abstract.tex", "BPR-MF đạt NDCG@10 trung bình cao nhất", "BPR-MF cao nhất NDCG@10",
-         lambda: argmax(d.ndcg()) == "BPR-MF", ["S"]),
-        ("frontmatter/abstract.tex", "ngang Most Popular", "NeuMF-Pretrained vs Most Popular không có ý nghĩa",
-         lambda: d.not_sig(("NeuMF-Pretrained", "MostPopular")), ["G"]),
-        ("frontmatter/abstract.tex", "Không so sánh nào trong", "0 so sánh chính đạt tiêu chí",
+        ("content/C4.tex", "đăng ký trước đạt tiêu chí", "v1: mọi so sánh chính không có ý nghĩa",
          lambda: d.not_sig(*main_pairs), ["G"]),
-        ("frontmatter/abstract_english.tex", "tuned BPR-MF has the highest mean NDCG@10", "BPR-MF cao nhất NDCG@10",
-         lambda: argmax(d.ndcg()) == "BPR-MF", ["S"]),
-        ("frontmatter/abstract_english.tex", "scores lower still", "NeuMF-Scratch < NeuMF-Pretrained và < Most Popular",
-         lambda: S.loc["NeuMF-Scratch", "NDCG@10_mean"] < min(S.loc["NeuMF-Pretrained", "NDCG@10_mean"],
-                                                                S.loc["MostPopular", "NDCG@10_mean"]), ["S"]),
-        ("frontmatter/abstract_english.tex", "None of the pre-registered comparisons reaches significance",
-         "0 so sánh chính đạt tiêu chí", lambda: d.not_sig(*main_pairs), ["G"]),
-        ("content/C1.tex", "Kết quả (không vượt)", "NeuMF không tốt hơn có ý nghĩa BPR-MF, GMF, MLP",
-         lambda: d.not_sig(*[p for p in main_pairs if p[1] in ("BPR-MF", "GMF", "MLP")]), ["G"]),
+        ("content/C4.tex", "Tiền huấn luyện không mang lại lợi ích đo được",
+         "v1: NeuMF-Pretrained vs NeuMF-Scratch không có ý nghĩa",
+         lambda: d.not_sig(("NeuMF-Pretrained", "NeuMF-Scratch")), ["G"]),
+        ("content/C4.tex", "Gần như toàn bộ độ chính xác đến từ nhóm sản phẩm phổ biến nhất",
+         "v1: NDCG@10 nhóm head trong [0,02; 0,04], nhóm tail < 0,0003",
+         lambda: all(0.02 <= ST[(m, "head")] <= 0.04 for m in SECONDARY)
+         and max(ST[(m, "tail")] for m in SECONDARY) < 0.0003, ["ST"]),
+        ("content/C4.tex", "Most Popular đứng đầu", "v1: Most Popular cao nhất theo Sampled-99",
+         lambda: SP["NDCG@10"].idxmax() == "MostPopular", ["SP"]),
+        ("content/C1.tex", "NeuMF chỉ dùng mã ID không vượt được MF được tinh chỉnh tốt",
+         "v1: BPR-MF cao nhất và không biến thể NeuMF nào tốt hơn có ý nghĩa BPR-MF", v1_no_neumf_win, ["S", "G"]),
+        ("frontmatter/abstract.tex", "NeuMF không vượt MF đã tinh chỉnh",
+         "v1: BPR-MF cao nhất và không biến thể NeuMF nào tốt hơn có ý nghĩa BPR-MF", v1_no_neumf_win, ["S", "G"]),
+        ("frontmatter/abstract_english.tex", "NeuMF did not outperform a tuned MF baseline",
+         "v1: BPR-MF cao nhất và không biến thể NeuMF nào tốt hơn có ý nghĩa BPR-MF", v1_no_neumf_win, ["S", "G"]),
     ]
 
 
@@ -213,30 +185,27 @@ def check_claims(d: Data) -> tuple[int, int]:
             bad += 1
             print(f"   [SAI]    {where}: {desc} — sửa câu này theo số mới")
     total = len(claims(d))
-    print(f"   {total - bad}/{total} khẳng định còn đúng." if not bad else f"   => {bad} khẳng định cần sửa.")
+    print(f"   {total - bad}/{total} khẳng định còn đúng (hoặc chưa có dữ liệu)." if not bad
+          else f"   => {bad} khẳng định cần sửa.")
     return bad, total
 
 
 # ------------------------------------------------------------- tái lập
 def compare_with_committed() -> dict[str, float]:
-    print("1. Tái lập: so với bản đã commit (git HEAD)")
+    print("1. Tái lập (giao thức v2): so với bản đã commit (git HEAD)")
     out = {}
-    for name, key in (("summary.csv", ["model"]), ("significance.csv", ["A", "B"]),
-                      ("stratified.csv", ["model", "seed", "subset"]), ("beyond_accuracy.csv", ["model", "seed"]),
-                      ("sampled99.csv", ["model", "seed"])):
-        new, old = read_csv(name), read_csv(name, committed=True)
+    for name, key in V2_FILES:
+        new, old = read_csv(name, root=FINAL_V2), read_csv(name, committed=True, root=FINAL_V2)
         if new is None or old is None:
             print(f"   {name}: {'chưa có file mới' if new is None else 'chưa có bản commit'} — bỏ qua")
             continue
-        if new.columns[0].startswith("Unnamed"):
-            new, old = new.rename(columns={new.columns[0]: "model"}), old.rename(columns={old.columns[0]: "model"})
         num = [c for c in new.columns if c not in key and pd.api.types.is_numeric_dtype(new[c])]
         m = new.merge(old, on=key, suffixes=("", "_old"), how="outer", indicator=True)
         if (m["_merge"] != "both").any():
             print(f"   {name}: tập dòng khác bản commit ({int((m['_merge'] != 'both').sum())} dòng lệch)")
             out[name] = float("inf")
             continue
-        gap = max((m[c] - m[f"{c}_old"]).abs().max() for c in num) if num else 0.0
+        gap = max(((m[c] - m[f"{c}_old"]).abs().max() for c in num if f"{c}_old" in m), default=0.0)
         out[name] = float(gap)
         print(f"   {name}: lệch tuyệt đối lớn nhất {gap:.3g}" + ("  (trùng khớp)" if gap == 0 else ""))
     return out
@@ -247,34 +216,31 @@ def vn(x: float, nd: int) -> str:
     return f"{x:.{nd}f}".replace(".", ",")
 
 
-def key_numbers(S, G, ST) -> dict[str, str]:
-    """Các con số hay được chép tay vào tài liệu, định dạng như trong tài liệu."""
+def key_numbers(S2, G2) -> dict[str, str]:
+    """Các con số v2 hay được chép tay vào tài liệu, định dạng như trong tài liệu."""
     out = {}
-    if S is not None:
-        for m in S.index:
-            out[f"{m} NDCG@10"] = vn(S.loc[m, "NDCG@10_mean"], 5)
-            out[f"{m} HR@10 (%)"] = vn(100 * S.loc[m, "HR@10_mean"], 2) + "%"
-    if G is not None:
-        for (a, b), r in G.iterrows():
+    if S2 is not None:
+        for m in S2.index:
+            out[f"{m} NDCG@10"] = vn(S2.loc[m, "NDCG@10_mean"], 5)
+    if G2 is not None:
+        for (a, b), r in G2.iterrows():
             out[f"{a} vs {b} p Holm"] = vn(r["p_holm"], 3)
             out[f"{a} vs {b} chênh"] = ("+" if r["rel_diff"] >= 0 else "−") + vn(abs(100 * r["rel_diff"]), 1) + "%"
-    if ST is not None and ("MostPopular", "cold") in ST.index:
-        out["Most Popular nhóm cold"] = vn(ST[("MostPopular", "cold")], 5)
     return out
 
 
 def stale_doc_numbers() -> int:
-    print("\n3. Số chép tay trong tài liệu")
+    print("\n3. Số chép tay trong tài liệu (giao thức v2)")
+
     def load(committed):
-        S = read_csv("summary.csv", committed, index_col=0)
-        g = read_csv("significance.csv", committed)
-        st = read_csv("stratified.csv", committed)
-        return key_numbers(S, None if g is None else g.set_index(["A", "B"]),
-                           None if st is None else st.groupby(["model", "subset"])["NDCG@10"].mean())
+        s = read_csv("summary.csv", committed, root=FINAL_V2)
+        g = read_csv("significance.csv", committed, root=FINAL_V2)
+        return key_numbers(None if s is None else s.set_index("model"),
+                           None if g is None or g.empty else g.set_index(["A", "B"]))
     new, old = load(False), load(True)
     changed = {k: (old[k], new[k]) for k in new if k in old and old[k] != new[k]}
     if not changed:
-        print("   Số liệu chính không đổi so với bản đã commit — không cần sửa số chép tay.")
+        print("   Số liệu chính không đổi so với bản đã commit (hoặc chưa có bản commit) — không cần sửa số chép tay.")
         return 0
     hits = 0
     for label, (o, n) in changed.items():
@@ -290,15 +256,22 @@ def stale_doc_numbers() -> int:
 
 
 # ------------------------------------------------- macro và bảng của báo cáo
-MACRO_RE = re.compile(r"\\(Res|Sd|Sig|Strat|Beyond|Samp|Lat|Val|Kx|Ext|Esig)\{([^{}]*)\}\{([^{}]*)\}")
+MACRO_RE = re.compile(r"\\(Res|Sd|Sig|Strat|Beyond|Samp|Lat|Val|Kx|Ext|Esig|Abl|VRes|VSd|VOnly|VVal|VRank|VSig|"
+                      r"VGrp|VAbl|VBey|VData|VCfg)\{([^{}]*)\}\{([^{}]*)\}")
+
+
+def defined_macros() -> set[str]:
+    out = set()
+    for f in (TABLES / "results_macros.tex", TABLES / "v2" / "results_v2_macros.tex"):
+        if f.exists():
+            out |= set(re.findall(r"\\csname ([^\\]+)\\endcsname", f.read_text(encoding="utf-8")))
+    return out
 
 
 def check_macros_and_tables() -> int:
-    print("\n4. Macro và bảng mà báo cáo dùng")
-    macros_file = TABLES / "results_macros.tex"
-    defined = set(re.findall(r"\\csname ([^\\]+)\\endcsname", macros_file.read_text(encoding="utf-8"))) \
-        if macros_file.exists() else set()
-    missing_m, missing_t = set(), set()
+    print("\n4. Macro, bảng và hình mà báo cáo dùng")
+    defined = defined_macros()
+    missing_m, missing_t, missing_f = set(), set(), set()
     for tex in [*REPORT.glob("content/*.tex"), *REPORT.glob("frontmatter/*.tex")]:
         text = tex.read_text(encoding="utf-8")
         for fam, a, b in MACRO_RE.findall(text):
@@ -307,13 +280,21 @@ def check_macros_and_tables() -> int:
         for t in re.findall(r"\\bangketqua\{([^}]+)\}", text):
             if not (TABLES / t).exists():
                 missing_t.add(f"{t} ({tex.name})")
+        for t in re.findall(r"\\bangketquaV\{([^}]+)\}", text):
+            if not (TABLES / "v2" / t).exists():
+                missing_t.add(f"v2/{t} ({tex.name})")
+        for f in re.findall(r"\\hinhketqua\{([^}]+)\}", text):
+            if not (REPORT / f).exists():
+                missing_f.add(f"{f} ({tex.name})")
     for x in sorted(missing_m):
         print(f"   [THIẾU MACRO] {x} — PDF hiện [chưa có]")
     for x in sorted(missing_t):
         print(f"   [THIẾU BẢNG]  {x} — PDF hiện khung 'Chưa có số liệu'")
-    if not missing_m and not missing_t:
-        print("   Đủ mọi macro và bảng.")
-    return len(missing_m) + len(missing_t)
+    for x in sorted(missing_f):
+        print(f"   [THIẾU HÌNH]  {x} — PDF hiện khung 'Chưa có số liệu'")
+    if not missing_m and not missing_t and not missing_f:
+        print("   Đủ mọi macro, bảng và hình.")
+    return len(missing_m) + len(missing_t) + len(missing_f)
 
 
 def main():
@@ -321,14 +302,12 @@ def main():
     ap.add_argument("--strict", action="store_true")
     args = ap.parse_args()
     d = Data()
-    if d.S is None:
-        raise SystemExit("Chưa có outputs/final/summary.csv — chạy 11_final.py và 12_significance.py trước.")
     compare_with_committed()
     bad, _ = check_claims(d)
     stale = stale_doc_numbers()
     missing = check_macros_and_tables()
     print("\nTóm tắt: " + ("mọi thứ khớp." if not (bad or stale or missing) else
-                         f"{bad} khẳng định sai, {stale} dòng tài liệu ghi số cũ, {missing} macro/bảng thiếu."))
+                         f"{bad} khẳng định sai, {stale} dòng tài liệu ghi số cũ, {missing} macro/bảng/hình thiếu."))
     print("Sau khi sửa: biên dịch lại báo cáo (Report DACNTT/compile.bat) rồi commit.")
     if args.strict and (bad or missing):
         raise SystemExit(1)

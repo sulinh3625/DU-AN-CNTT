@@ -1,7 +1,10 @@
 """Nạp dữ liệu H&M, tái tạo đúng split và ánh xạ ID khớp với checkpoint của một lần chạy.
 
-Hai chế độ (biến môi trường DEMO_MODE, mặc định tự chọn "final" nếu có checkpoint):
+Ba chế độ (biến môi trường DEMO_MODE; mặc định chọn chế độ mới nhất có checkpoint: v2 > final > explore):
 
+- "v2": checkpoint seed 42 của đánh giá cuối giao thức v2 (outputs/v2/final/seed42/, scripts/23_final_v2.py) — kết quả
+  chính của báo cáo: mẫu kiểm định B, ứng viên gồm cả sản phẩm mới, NeuMF-F và các mô hình đối chiếu. Số per-user khớp
+  outputs/v2/final/seed42/per_user.csv.gz. DEMO_V2_DIR=outputs/v2/dry_run để thử với bản chạy thử (mẫu A, xác thực).
 - "final": checkpoint của đánh giá cuối (outputs/final/seed<DEMO_FINAL_SEED, mặc định 42>/) — đúng các mô hình của
   Chương 4: chia theo mốc thời gian chung, mô hình đã huấn luyện lại trên train ∪ val, chấm các sản phẩm đích của tập
   test (một khách có thể có nhiều sản phẩm đích). Số per-user khớp outputs/final/seed42/results_per_user.csv. Có thêm
@@ -45,6 +48,15 @@ EXPERIMENTS_DIR = PROJECT_ROOT / "outputs" / "experiments"
 CHECKPOINTS_DIR = PROJECT_ROOT / "outputs" / "checkpoints"
 FINAL_DIR = PROJECT_ROOT / "outputs" / "final"
 FINAL_SEED = int(os.environ.get("DEMO_FINAL_SEED", "42"))
+V2_DIR = Path(os.environ.get("DEMO_V2_DIR", str(PROJECT_ROOT / "outputs" / "v2" / "final")))
+if not V2_DIR.is_absolute():
+    V2_DIR = PROJECT_ROOT / V2_DIR
+# Giao thức v2: tên hiển thị -> mã mô hình trong scripts/v2_common.py
+V2_NEURAL = {"NeuMF-F": "neumf_f", "GMF-F": "gmf_f", "MLP-F": "mlp_f", "NeuMF": "neumf", "GMF": "gmf", "MLP": "mlp"}
+V2_STATIC = {"MostPopular": "popularity", "MostPopular-Recent": "recent_pop", "Content": "content",
+             "ItemKNN": "itemknn", "UserKNN": "userknn"}
+V2_ORDER = ["NeuMF-F", "LateFusion-F", "GMF-F", "MLP-F", "NeuMF", "GMF", "MLP", "BPR-MF", "UserKNN", "ItemKNN",
+            "MostPopular-Recent", "Content", "MostPopular"]
 BEST_CONFIGS = PROJECT_ROOT / "audit" / "best_configs.json"
 ARTICLES_PATH = PROJECT_ROOT / "data" / "raw" / "hm" / "articles.csv"
 CUSTOMERS_PATH = PROJECT_ROOT / "data" / "raw" / "hm" / "customers.csv"
@@ -71,10 +83,17 @@ def final_available(seed: int = FINAL_SEED) -> bool:
     return all((d / f).exists() for f in need)
 
 
+def v2_available(seed: int = FINAL_SEED) -> bool:
+    d = V2_DIR / f"seed{seed}"
+    return (d / "results.json").exists() and all((d / f"{k}.pt").exists() for k in V2_NEURAL.values())
+
+
 def resolve_mode() -> str:
     mode = os.environ.get("DEMO_MODE", "").strip().lower()
-    if mode in ("final", "explore"):
+    if mode in ("v2", "final", "explore"):
         return mode
+    if v2_available():
+        return "v2"
     return "final" if final_available() else "explore"
 
 
@@ -99,6 +118,8 @@ def resolve_latest_run_tag(prefix: str = RUN_PREFIX) -> str:
 
 def resolve_run_tag(mode: str | None = None) -> str:
     mode = mode or resolve_mode()
+    if mode == "v2":
+        return f"v2_seed{FINAL_SEED}"
     if mode == "final":
         return f"final_seed{FINAL_SEED}"
     return os.environ.get("DEMO_RUN_TAG") or resolve_latest_run_tag()
@@ -128,7 +149,10 @@ class DataContext:
         self.scorers: dict = {}  # mô hình không phải mạng PyTorch: tên -> đối tượng có score_items(user, items)
         self.models: dict[str, torch.nn.Module] = {}
         self.unavailable: dict[str, str] = {}
-        if self.mode == "final":
+        self.new_mask = None  # chỉ giao thức v2: sản phẩm mới (chưa từng bán trước mốc)
+        if self.mode == "v2":
+            self._init_v2()
+        elif self.mode == "final":
             self._init_final()
         else:
             self._init_explore(run_tag)
@@ -280,6 +304,81 @@ class DataContext:
             ("LateFusion-GMF-MLP", best["late_gmf_mlp"]["params"]),
             ("LateFusion-BPR-MLP", best["late_bpr_mlp"]["params"]))}
 
+    # ------------------------------------------------------------------ chế độ v2 (kết quả chính)
+    def _init_v2(self) -> None:
+        """Dựng lại dữ liệu giao thức v2 bằng đúng hàm của scripts/v2_common.py, đối chiếu với data.json của lần chạy,
+        rồi nạp checkpoint seed 42. Mô hình chỉ dùng ID được bọc MaskedScorer/MaskedScoreFn như lúc chấm."""
+        scripts_dir = str(PROJECT_ROOT / "scripts")
+        if scripts_dir not in sys.path:
+            sys.path.insert(0, scripts_dir)
+        import v2_common as V
+
+        seed_dir = V2_DIR / f"seed{FINAL_SEED}"
+        results = json.loads((seed_dir / "results.json").read_text(encoding="utf-8"))
+        info = json.loads((V2_DIR / "data.json").read_text(encoding="utf-8"))
+        dry = str(results.get("evaluated_on", "")).startswith("dry-run")
+        self.run_tag = f"v2_seed{FINAL_SEED}"
+        self.config_path = "configs/v2.yaml"
+        self.cfg = None
+        self.k_values = [int(k) for k in V.CFG["evaluation"]["k_values"]]
+        self.tie_seed = V.CFG["evaluation"]["tie_break_seed"]
+        print(f"[demo] chế độ v2: checkpoint {seed_dir.relative_to(PROJECT_ROOT).as_posix()} "
+              f"({'chạy thử trên mẫu A' if dry else 'mẫu kiểm định B'}, commit "
+              f"{str(results['provenance'].get('git_commit'))[:7]})")
+        D = V.load_data("dev" if dry else "holdout", with_test=not dry)
+        ev = D.val if dry else D.test
+        stage = info["val" if dry else "test"]
+        if (len(ev.records), len(ev.targets)) != (stage["users"], stage["targets"]):
+            raise ValueError(f"Dữ liệu tái tạo ({len(ev.records)} user, {len(ev.targets)} cặp đúng) không khớp "
+                             f"{V2_DIR.name}/data.json ({stage['users']}, {stage['targets']}).")
+        self.evaluated_on = "validation" if dry else "test"
+        self.n_users, self.n_items = D.n_users, D.n_items
+        self.customer_ids = np.asarray([str(c) for c in D.user_raw], dtype=object)
+        self.user2idx = {cid: i for i, cid in enumerate(self.customer_ids)}
+        self.article_ids = np.asarray([f"{int(a):010d}" for a in D.item_article], dtype=object)
+        self.seen_pos = self.train_pos = [set(int(i) for i in s) for s in ev.train_pos]
+        self.pool_mask = ev.scoreable | ev.new
+        self.new_mask = np.asarray(ev.new, dtype=bool)
+        self.target_items = {int(r.user): sorted(int(i) for i in r.positives) for r in ev.records}
+        self.target_item = {u: items[0] for u, items in self.target_items.items()}
+        self.val_item = {}
+        tr = ev.train
+        self.data_df = D.kept
+        # Lịch sử hiển thị = đúng dữ liệu mô hình đã học (mọi cặp trước mốc), ngày = ngày mua đầu.
+        self.train_df = tr.assign(last_timestamp=tr["first_timestamp"], interaction_count=1)
+        self.head_items = define_head_items(tr, self.n_items, 0.1)
+        self.train_item_counts = np.bincount(tr["item"].to_numpy(), minlength=self.n_items)
+        self.train_user_counts = np.bincount(tr["user"].to_numpy(), minlength=self.n_users)
+        self.run_metadata = {"evaluated_on": self.evaluated_on, "provenance": results["provenance"], "dry_run": dry,
+                             "n_test_users": len(ev.records), "n_candidate_items": int(self.pool_mask.sum()),
+                             "n_new_items": int(ev.new.sum()), "targets": len(ev.targets),
+                             "new_item_targets": int(ev.new[ev.targets["item"].to_numpy()].sum()),
+                             "train_pairs": len(tr), "val_start": V.CFG["val_start"], "test_start": V.CFG["test_start"],
+                             "k_core": V.CFG["k_core"]}
+        configs = results.get("configs", {})
+        for name, key in V2_NEURAL.items():
+            path = seed_dir / f"{key}.pt"
+            if key not in configs or not path.exists():
+                self.unavailable[name] = f"Thiếu cấu hình hoặc checkpoint {path.relative_to(PROJECT_ROOT).as_posix()}"
+                continue
+            net = V.build_torch(key, configs[key], D, "cpu")
+            net.load_state_dict(torch.load(path, map_location="cpu"))
+            net.eval()
+            self.models[name] = V.torch_scorer(key, net, ev, D, "cpu").eval()
+        if "late_f" in configs and {"GMF-F", "MLP-F"} <= set(self.models):
+            self.scorers["LateFusion-F"] = LateFusion(self.models["GMF-F"], self.models["MLP-F"], configs["late_f"]["w"])
+        for name, key in V2_STATIC.items():
+            if key in configs:
+                self.scorers[name] = V.score_fn(key, configs[key], D, ev)
+        bpr_path = seed_dir / BPR_CHECKPOINT
+        if bpr_path.exists():
+            self.scorers["BPR-MF"] = V.MaskedScoreFn(BPRMFBaseline.load(bpr_path), ev.scoreable, D.n_id_items)
+        else:
+            self.unavailable["BPR-MF"] = (f"Lần chạy này chưa lưu {bpr_path.relative_to(PROJECT_ROOT).as_posix()} "
+                                          "(23_final_v2.py lưu từ phiên bản có checkpoint BPR-MF). Demo không tự train lại.")
+        self.extension_params = {m: configs[k] for m, k in (("ItemKNN", "itemknn"), ("UserKNN", "userknn"))
+                                 if k in configs}
+
     # ------------------------------------------------------------------ chung
     def _set_ids(self, data) -> None:
         self.customer_ids = np.empty(self.n_users, dtype=object)
@@ -318,6 +417,8 @@ class DataContext:
     # ------------------------------------------------------------- accessors
     @property
     def available_models(self) -> list[str]:
+        if self.mode == "v2":
+            return [m for m in V2_ORDER if m in self.models or m in self.scorers]
         out = [m for m in NEURAL_CHECKPOINTS if m in self.models]
         out += [m for m in ("BPR-MF", "MostPopular") if m in self.scorers]
         return out + [m for m in EXTENSION_MODELS if m in self.scorers]
@@ -343,6 +444,7 @@ class DataContext:
             "colour_group_name": a["colour_group_name"],
             "index_group_name": a["index_group_name"],
             "is_head": int(item) in self.head_items,
+            "is_new": bool(self.new_mask[int(item)]) if self.new_mask is not None else False,
             "train_count": int(self.train_item_counts[int(item)]),
         }
 
@@ -360,6 +462,7 @@ class DataContext:
         knn = self.scorers.get("UserKNN")
         if knn is None:
             return None
+        knn = getattr(knn, "fn", knn)  # chế độ v2: MaskedScoreFn bọc UserKNNBaseline
         mine = self.train_pos[u]
         targets = set(self.target_items.get(u, []))
         out = []
@@ -376,6 +479,20 @@ class DataContext:
         return out
 
     def summary(self) -> dict:
+        if self.mode == "v2":
+            m = self.run_metadata
+            first = self.data_df["first_timestamp"]
+            return {
+                "dataset": "H&M Personalized Fashion Recommendations", "mode": "v2", "config": self.config_path,
+                "nrows": None, "k_core": m["k_core"], "date_min": first.min().date().isoformat(),
+                "date_max": m["test_start"], "run_tag": self.run_tag, "evaluated_on": self.evaluated_on,
+                "dry_run": m["dry_run"], "n_users": self.n_users, "n_items": self.n_items,
+                "n_interactions": int(len(self.data_df)), "k_values": self.k_values, "models": self.available_models,
+                "extension_models": [], "unavailable_models": self.unavailable, "has_neighbors": "UserKNN" in self.scorers,
+                "val_start": m["val_start"], "test_start": m["test_start"],
+                "commit": str(m["provenance"].get("git_commit") or "")[:7], "n_candidates": m["n_candidate_items"],
+                "n_new_items": m["n_new_items"], "n_targets": m["targets"], "n_new_targets": m["new_item_targets"],
+            }
         ds = self.cfg.dataset
         out = {
             "dataset": "H&M Personalized Fashion Recommendations",
