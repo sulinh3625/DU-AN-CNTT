@@ -152,5 +152,113 @@
       "NDCG@10_new": 0.0
     },
     "checkpoint": null
+  },
+  "neumf": {
+    "params": {
+      "dropout": 0.0,
+      "embedding_dim": 32,
+      "lr": 0.0005,
+      "negative_ratio": 4,
+      "weight_decay": 1e-06
+    },
+    "config_hash": "3539d012ec0d415a",
+    "best_epoch": 5,
+    "val": {
+      "NDCG@10": 0.011084,
+      "Recall@10": 0.015694,
+      "HR@10": 0.041723,
+      "Precision@10": 0.004621,
+      "NDCG@5": 0.009182,
+      "NDCG@20": 0.013223,
+      "NDCG@10_old": 0.012275,
+      "NDCG@10_new": 0.0
+    },
+    "checkpoint": null
+  },
+  "gmf_f": {
+    "params": {
+      "embedding_dim": 32,
+      "id_dropout": 0.0,
+      "lr": 0.001,
+      "negative_ratio": 8,
+      "weight_decay": 1e-06
+    },
+    "config_hash": "19c2bab5c59e1bf9",
+    "best_epoch": 7,
+    "val": {
+      "NDCG@10": 0.0157,
+      "Recall@10": 0.024401,
+      "HR@10": 0.066397,
+      "Precision@10": 0.007402,
+      "NDCG@5": 0.011389,
+      "NDCG@20": 0.020401,
+      "NDCG@10_old": 0.016895,
+      "NDCG@10_new": 0.001304
+    },
+    "checkpoint": "outputs/v2/tuning/gmf_f_best.pt"
+  },
+  "mlp_f": {
+    "params": {
+      "dropout": 0.2,
+      "embedding_dim": 32,
+      "id_dropout": 0.5,
+      "lr": 0.0005,
+      "negative_ratio": 4,
+      "weight_decay": 1e-06
+    },
+    "config_hash": "3963aba1cbc49b8e",
+    "best_epoch": 20,
+    "val": {
+      "NDCG@10": 0.011356,
+      "Recall@10": 0.016392,
+      "HR@10": 0.050247,
+      "Precision@10": 0.005249,
+      "NDCG@5": 0.008978,
+      "NDCG@20": 0.014835,
+      "NDCG@10_old": 0.012656,
+      "NDCG@10_new": 0.0
+    },
+    "checkpoint": "outputs/v2/tuning/mlp_f_best.pt"
+  },
+  "neumf_f": {
+    "params": {
+      "dropout": 0.0,
+      "embedding_dim": 32,
+      "id_dropout": 0.0,
+      "lr": 0.0005,
+      "negative_ratio": 8,
+      "weight_decay": 1e-06
+    },
+    "config_hash": "95519e944d48bcb5",
+    "best_epoch": 5,
+    "val": {
+      "NDCG@10": 0.016865,
+      "Recall@10": 0.025736,
+      "HR@10": 0.066846,
+      "Precision@10": 0.007402,
+      "NDCG@5": 0.012802,
+      "NDCG@20": 0.0219,
+      "NDCG@10_old": 0.018688,
+      "NDCG@10_new": 0.000342
+    },
+    "checkpoint": null
+  },
+  "late_f": {
+    "params": {
+      "w": 0.3
+    },
+    "config_hash": "8232dbbe434a2c5c",
+    "best_epoch": null,
+    "val": {
+      "NDCG@10": 0.016316,
+      "Recall@10": 0.02621,
+      "HR@10": 0.071332,
+      "Precision@10": 0.007716,
+      "NDCG@5": 0.01149,
+      "NDCG@20": 0.021908,
+      "NDCG@10_old": 0.017658,
+      "NDCG@10_new": 0.000761
+    },
+    "checkpoint": null
   }
 }

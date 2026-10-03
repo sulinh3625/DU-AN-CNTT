@@ -9,7 +9,8 @@ Giao thức v2 (audit/PREREG_v2.md) — kết quả chính của báo cáo:
 
 Giao thức v1 (lịch sử phát triển; config mặc định: configs/hm500k.yaml, run tag mặc định: hm500k_seed<seed>):
     python run.py sample-hm                  # tạo data/processed/hm/hm500k_transactions.csv (chạy 1 lần)
-    python run.py all                        # audit + train + evaluate, trọn gói (khám phá, bảng trên validation)
+    python run.py all                        # audit + train + evaluate, trọn gói (khám phá, bảng trên validation);
+                                             #   xong thì hỏi y/N chạy tiếp multi-seed + aggregate (--multi-seed / --no-multi-seed để khỏi hỏi)
     python run.py preflight                  # kiểm tra sẵn sàng trước khi chạy lại (tree sạch, PREREG, dữ liệu, tái lập tuning)
     python run.py final --reason "..."       # chạy lại TOÀN BỘ số liệu báo cáo: 18 → 20 → 11 → 12 → 17 → 16 → 13 → 14 → 15 → 19
     python run.py ablation                   # chỉ ablation trên validation (số chiều, số tầng MLP, mẫu âm) — không chấm test
@@ -97,6 +98,12 @@ def cmd_all(args):
     cmd_audit(args)
     extra = (["--run-tag", args.run_tag] if args.run_tag else []) + _final(args)
     _run("run_all.py", "--config", args.config, *extra)
+    if args.multi_seed is None:  # không truyền cờ -> hỏi (chỉ khi chạy tay trên terminal)
+        args.multi_seed = sys.stdin.isatty() and input(
+            f"Chạy tiếp multi-seed + aggregate với seeds {args.seeds}? [y/N] ").strip().lower() in ("y", "yes")
+    if args.multi_seed:
+        cmd_multi_seed(args)
+        cmd_aggregate(args)
 
 
 def cmd_preflight(args):
@@ -184,7 +191,11 @@ def main():
         p.add_argument("--reason", default="", help="Lý do đánh giá test (ghi vào test_access_log.csv)")
         return p
 
-    with_final(with_dataset(sub.add_parser("all", help="Audit + train + evaluate trọn gói"))).add_argument("--run-tag", default=None)
+    p = with_final(with_dataset(sub.add_parser("all", help="Audit + train + evaluate trọn gói, rồi (tuỳ chọn) multi-seed + aggregate")))
+    p.add_argument("--run-tag", default=None)
+    p.add_argument("--multi-seed", action=argparse.BooleanOptionalAction, default=None,
+                   help="chạy/bỏ multi-seed + aggregate sau khi train xong (không truyền: hỏi y/N)")
+    p.add_argument("--seeds", nargs="+", type=int, default=DEFAULT_SEEDS)
     with_dataset(sub.add_parser("audit", help="Audit dữ liệu — bắt buộc trước khi train"))
     with_dataset(sub.add_parser("preprocess", help="Sinh splits độc lập"))
     with_final(with_dataset(sub.add_parser("train", help="Chỉ huấn luyện, không vẽ biểu đồ"))).add_argument("--run-tag", default=None)
