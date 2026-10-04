@@ -1,0 +1,25 @@
+{
+  "sample": "D:\\KhoaLuanTotNghiep\\duan\\DU-AN-CNTT\\neumf_project\\data\\processed\\hm\\hm500k_b_transactions.csv",
+  "n_users": 7038,
+  "n_items": 19109,
+  "n_id_items": 9478,
+  "n_kept_pairs": 199413,
+  "val": {
+    "train_pairs": 192878,
+    "scoreable": 9470,
+    "new_items": 9633,
+    "users": 2268,
+    "targets": 7374,
+    "new_item_targets": 935,
+    "candidates_mean": 19069.787037037036
+  },
+  "test": {
+    "train_pairs": 199413,
+    "scoreable": 9478,
+    "new_items": 7372,
+    "users": 2991,
+    "targets": 12206,
+    "new_item_targets": 6080,
+    "candidates_mean": 16814.139752591105
+  }
+}

@@ -1,0 +1,21 @@
+% Sinh tự động bởi neumf_project/scripts/24_report_v2.py — KHÔNG sửa tay.
+\begin{table}[htbp]
+    \centering\small
+    \caption{Ablation của NeuMF-F trên tập kiểm thử của mẫu B (seed 42; cùng siêu tham số, tắt một thành phần)}
+    \label{tab:v2ablation}
+    \begin{adjustbox}{max width=\textwidth}
+    \begin{tabular}{lrrcrr}
+        \toprule
+        Biến thể & NDCG@10 & Thay đổi & CI 95\% của hiệu & NDCG@10 (SP cũ) & NDCG@10 (SP mới) \\
+        \midrule
+        NeuMF-F (đầy đủ) & 0{,}01486 & --- & --- & 0{,}02441 & 0{,}00036 \\
+        Bỏ vector văn bản & 0{,}01377 & $-$7{,}4\% & [$-$0{,}00378; +0{,}00152] & 0{,}02176 & 0{,}00107 \\
+        Bỏ đặc trưng thời gian & 0{,}01038 & $-$30{,}2\% & [$-$0{,}00703; $-$0{,}00197] & 0{,}01576 & 0{,}00083 \\
+        Bỏ thông tin khách hàng & 0{,}01433 & $-$3{,}6\% & [$-$0{,}00282; +0{,}00180] & 0{,}02254 & 0{,}00133 \\
+        Bỏ thuộc tính sản phẩm & 0{,}01357 & $-$8{,}7\% & [$-$0{,}00335; +0{,}00082] & 0{,}02179 & 0{,}00038 \\
+        Không bỏ ID ngẫu nhiên & 0{,}01486 & +0{,}0\% & [+0{,}00000; +0{,}00000] & 0{,}02441 & 0{,}00036 \\
+        \bottomrule
+    \end{tabular}
+    \end{adjustbox}
+    \par\smallskip{\footnotesize Thay đổi: (biến thể $-$ đầy đủ)/đầy đủ. CI: bootstrap theo người dùng của hiệu biến thể $-$ đầy đủ. Chỉ mô tả, không kiểm định.}
+\end{table}
