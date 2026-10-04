@@ -7,6 +7,10 @@ Mô hình đề tài **NeuMF-F** giữ hai nhánh của NeuMF — GMF (nhân t�
 và bổ sung đặc trưng sản phẩm, khách hàng, thời gian để chấm được cả sản phẩm mới. Cấu hình được tinh chỉnh trên mẫu
 khách hàng A; kết luận lấy trên mẫu khách hàng B độc lập, mở tập kiểm thử đúng một lần (giao thức v2).
 
+**Trạng thái (04/10/2026):** đánh giá cuối trên mẫu B đã chạy xong (5 seed). NeuMF-F đứng 3/14 (NDCG@10 = 0,01470),
+tốt hơn 6/9 đối thủ trong họ so sánh đăng ký trước, ngang GMF-F và UserKNN, thua LateFusion-F (0,01753). Chi tiết, mức
+độ hoàn thành và đối chiếu 17 góp ý của GVHD: [`tong_hop_thay_doi_v2.md`](tong_hop_thay_doi_v2.md).
+
 ## Thư mục
 
 | Thư mục / file | Nội dung |
@@ -15,7 +19,7 @@ khách hàng A; kết luận lấy trên mẫu khách hàng B độc lập, mở
 | `Report DACNTT/` | Báo cáo LaTeX (`main.tex`, biên dịch bằng `compile.bat`) |
 | `tai_lieu/` | Tài liệu tham khảo (luận án của GVHD) |
 | `van_dap.md` | Chuẩn bị vấn đáp: trả lời 17 góp ý của GVHD |
-| `tong_hop_thay_doi_v2.md` | Thay đổi của giao thức v2 và mức độ hoàn thành hiện tại |
+| `tong_hop_thay_doi_v2.md` | Đồ án làm gì và vì sao, kết quả v2, đối chiếu 17 góp ý, mức độ hoàn thành |
 
 ## Đọc gì, ở đâu
 

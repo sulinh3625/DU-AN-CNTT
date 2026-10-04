@@ -135,7 +135,10 @@ A đã bị xem nhiều lần — đó là lý do cần mẫu B.
   đúng; chỉ khách có dữ liệu huấn luyện mới được đánh giá. Món đã mua trước τ không bao giờ là sản phẩm đúng — mô hình
   dự đoán món **mới đối với khách**.
 - Mẫu A ở giai đoạn xác thực: 7.134 khách, 19.228 sản phẩm (9.596 có ID); 2.229 khách được đánh giá với 7.074 cặp
-  đúng, trong đó 930 cặp là sản phẩm mới. Số của mẫu B chỉ có sau đánh giá cuối (`outputs/v2/final/data.json`).
+  đúng, trong đó 930 cặp là sản phẩm mới.
+- Mẫu B ở giai đoạn kiểm thử (`outputs/v2/final/data.json`): 7.038 khách, 19.109 sản phẩm (9.478 có ID, 7.372
+  sản phẩm mới); 2.991 khách được đánh giá với 12.206 cặp đúng, trong đó 6.080 cặp (49,8%) là sản phẩm mới; trung bình
+  16.814 sản phẩm ứng viên mỗi khách.
 
 **Không chia leave-one-out** (cách của He et al., 2017): cách này để lọt thông tin tương lai (Meng et al., 2020). Đo
 trên mẫu A ở giai đoạn phát triển, tính trung bình theo người dùng: 11,2% tương tác trong tập huấn luyện xảy ra sau ngày
@@ -170,7 +173,8 @@ $$p^b_u(t) = P^b_u + W^b_U\, x_u(t), \qquad q^b_i(t) = m_i\, Q^b_i + W^b_I\, x_i
   phép chiếu riêng từng nhánh.
 - $m_i = 1$ với sản phẩm cũ, $m_i = 0$ với sản phẩm mới — khi đó vector chỉ còn phần đặc trưng, nhờ vậy NeuMF-F chấm
   được sản phẩm chưa từng bán. Khi huấn luyện, $m_i$ bị đặt về 0 ngẫu nhiên với xác suất ρ ∈ {0; 0,25; 0,5} (**bỏ ID
-  ngẫu nhiên**, ý tưởng từ DropoutNet) để mô hình học cách chấm khi thiếu ID.
+  ngẫu nhiên**, ý tưởng từ DropoutNet) để mô hình học cách chấm khi thiếu ID. ρ là siêu tham số: tinh chỉnh chọn ρ = 0
+  cho NeuMF-F (không dùng) và ρ = 0,5 cho MLP-F.
 - **Nhánh GMF-F:** $\phi^G = p^G_u \odot q^G_i$ (nhân từng phần tử — tương tác tuyến tính).
 - **Nhánh MLP-F:** nối $[p^M_u ; q^M_i]$ rồi qua tháp [2d → d → d/2 → d/4], ReLU, dropout (tương tác phi tuyến).
 - **Hợp nhất sớm:** $\hat{y}_{ui} = \sigma\big(h^\top [\phi^G ; \phi^M_L]\big)$. Khi xếp hạng dùng logit (trước sigmoid)
@@ -200,7 +204,8 @@ Mô hình chỉ dùng ID (Most Popular, ItemKNN, UserKNN, BPR-MF, GMF, MLP, NeuM
 danh sách — đúng giới hạn của lọc cộng tác thuần mà giao thức muốn đo.
 
 **Ablation NeuMF-F** (cùng siêu tham số, tắt một thành phần): bỏ vector văn bản, bỏ đặc trưng thời gian, bỏ thông tin
-khách, bỏ thuộc tính sản phẩm, bỏ cơ chế bỏ ID ngẫu nhiên (ρ = 0). Chỉ seed 42, chỉ mô tả.
+khách, bỏ thuộc tính sản phẩm, bỏ cơ chế bỏ ID ngẫu nhiên (ρ = 0). Chỉ seed 42, chỉ mô tả. Vì NeuMF-F đã chọn ρ = 0,
+ biến thể cuối trùng hệt bản đầy đủ và không mang thông tin.
 
 ## 6. Đánh giá và kiểm định
 
@@ -269,7 +274,24 @@ Công thức cài ở `src/evaluation/metrics.py`, có unit test tính tay.
 | Đánh giá cuối (mẫu B, tập kiểm thử) | `outputs/v2/final/` (`summary.csv`, `significance.csv`, `groups.csv`, `ablation.csv`, `beyond.csv`) | Mục 4.4 |
 | Lịch sử v1 | `outputs/final/` | Mục 4.5 |
 
-Tình trạng thực hiện hiện tại: `../tong_hop_thay_doi_v2.md`.
+**Tóm tắt kết quả đánh giá cuối** (test mẫu B, 04/10/2026, 5 seed, NDCG@10):
+
+| Mô hình | NDCG@10 | Mô hình | NDCG@10 |
+|---|---|---|---|
+| LateFusion-F | 0,01753 | ItemKNN | 0,01027 |
+| GMF-F | 0,01561 | Most Popular | 0,01004 |
+| **NeuMF-F** | 0,01470 | MostPopular-Recent | 0,00995 |
+| UserKNN | 0,01305 | MLP | 0,00985 |
+| BPR-MF | 0,01206 | MLP-F | 0,00978 |
+| NeuMF | 0,01071 | GMF | 0,00967 |
+| Content | 0,00384 | Random | 0,00031 |
+
+- Họ 10 so sánh: NeuMF-F **tốt hơn** NeuMF, MLP-F, BPR-MF, ItemKNN, MostPopular-Recent, Content; **không khác biệt có ý
+  nghĩa** với GMF-F, UserKNN; **LateFusion-F tốt hơn** NeuMF-F. NeuMF vs BPR-MF: không khác biệt có ý nghĩa.
+- Phần hơn của mô hình có đặc trưng nằm ở sản phẩm cũ; trên sản phẩm mới mọi mô hình đều rất thấp (cao nhất Content).
+- Ablation: đặc trưng thời gian đóng góp nhiều nhất (bỏ đi −30%).
+
+Bảng dạng chữ: `outputs/v2/final/bang2_v2.txt`. Tình trạng thực hiện và đối chiếu 17 góp ý: `../tong_hop_thay_doi_v2.md`.
 
 ## 9. Hạn chế đã biết
 
@@ -282,7 +304,8 @@ Tình trạng thực hiện hiện tại: `../tong_hop_thay_doi_v2.md`.
 | k-core ở giai đoạn xác thực | Lọc dùng mọi cặp trước mốc kiểm thử, nên tập khách/sản phẩm ở giai đoạn xác thực phụ thuộc một phần dữ liệu tháng 7/2020 — chỉ ảnh hưởng việc chọn cấu hình trên A, không ảnh hưởng tập kiểm thử của B |
 | Một mẫu kiểm định | Khoảng 3 nghìn khách có sản phẩm đúng; một khung thời gian (07–09/2020); một bộ dữ liệu |
 | Phạm vi đặc trưng | Chưa dùng ảnh, giá, chuỗi hành vi; văn bản chỉ TF-IDF + SVD |
-| Ablation | Một seed, chỉ mô tả |
+| Ablation | Một seed, chỉ mô tả; biến thể "bỏ ID ngẫu nhiên" không mang thông tin vì NeuMF-F đã chọn ρ = 0 |
+| Sản phẩm mới | Đưa được vào đánh giá nhưng NDCG@10 trên nhóm này của mọi mô hình rất thấp (≤ 0,0018) |
 | Phần cứng | Mạng nơ-ron chạy trên CPU và GPU có thể lệch nhẹ ở chữ số cuối; máy chạy được ghi tự động trong kết quả |
 
 ## 10. Lịch sử: giao thức v1

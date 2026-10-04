@@ -1,0 +1,25 @@
+% Sinh tự động bởi neumf_project/scripts/24_report_v2.py — KHÔNG sửa tay.
+\begin{table}[htbp]
+    \centering\small
+    \caption{Kiểm định họ 10 so sánh đã đăng ký trước trên NDCG@10 (mẫu B, mỗi người dùng lấy trung bình qua 5 seed): Wilcoxon signed-rank, hiệu chỉnh Holm, khoảng tin cậy bootstrap 95\%}
+    \label{tab:v2sig}
+    \begin{adjustbox}{max width=\textwidth}
+    \begin{tabular}{rllrrrcrc}
+        \toprule
+        \# & A & B & NDCG@10 A & NDCG@10 B & (A$-$B)/B & CI 95\% của A$-$B & p Holm & Kết luận \\
+        \midrule
+        1 & NeuMF-F & NeuMF & 0{,}01470 & 0{,}01071 & +37{,}2\% & [+0{,}00190; +0{,}00611] & $<$ 0{,}001 & A tốt hơn \\
+        2 & NeuMF-F & GMF-F & 0{,}01470 & 0{,}01561 & $-$5{,}8\% & [$-$0{,}00208; +0{,}00027] & 0{,}184 & --- \\
+        3 & NeuMF-F & MLP-F & 0{,}01470 & 0{,}00978 & +50{,}3\% & [+0{,}00312; +0{,}00674] & $<$ 0{,}001 & A tốt hơn \\
+        4 & NeuMF-F & LateFusion-F & 0{,}01470 & 0{,}01753 & $-$16{,}1\% & [$-$0{,}00421; $-$0{,}00147] & $<$ 0{,}001 & B tốt hơn \\
+        5 & NeuMF-F & BPR-MF & 0{,}01470 & 0{,}01206 & +21{,}9\% & [+0{,}00033; +0{,}00493] & $<$ 0{,}001 & A tốt hơn \\
+        6 & NeuMF-F & ItemKNN & 0{,}01470 & 0{,}01027 & +43{,}1\% & [+0{,}00178; +0{,}00707] & $<$ 0{,}001 & A tốt hơn \\
+        7 & NeuMF-F & UserKNN & 0{,}01470 & 0{,}01305 & +12{,}7\% & [$-$0{,}00110; +0{,}00438] & $<$ 0{,}001 & --- \\
+        8 & NeuMF-F & MostPopular-Recent & 0{,}01470 & 0{,}00995 & +47{,}8\% & [+0{,}00247; +0{,}00705] & $<$ 0{,}001 & A tốt hơn \\
+        9 & NeuMF-F & Content & 0{,}01470 & 0{,}00384 & +283{,}1\% & [+0{,}00857; +0{,}01328] & $<$ 0{,}001 & A tốt hơn \\
+        10 & NeuMF & BPR-MF & 0{,}01071 & 0{,}01206 & $-$11{,}2\% & [$-$0{,}00236; $-$0{,}00040] & 0{,}055 & --- \\
+        \bottomrule
+    \end{tabular}
+    \end{adjustbox}
+    \par\smallskip{\footnotesize ---: không khác biệt có ý nghĩa. ``A tốt hơn'' (hoặc ``B tốt hơn'') chỉ khi đồng thời p Holm $<$ 0,05, CI không chứa 0 và chênh lệch tương đối $\geq$ 5\%.}
+\end{table}

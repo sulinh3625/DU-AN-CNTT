@@ -1,0 +1,29 @@
+% Sinh tự động bởi neumf_project/scripts/24_report_v2.py — KHÔNG sửa tay.
+\begin{table}[htbp]
+    \centering\small
+    \caption{Mô tả danh sách gợi ý top-10 (seed 42) và chi phí huấn luyện (trung bình qua seed)}
+    \label{tab:v2beyond}
+    \begin{adjustbox}{max width=\textwidth}
+    \begin{tabular}{lrrrr}
+        \toprule
+        Mô hình & Độ phủ ứng viên & Tỉ lệ SP mới trong top-10 & Số epoch chọn & Thời gian (phút) \\
+        \midrule
+        LateFusion-F & 2{,}5\% & 0{,}4\% & --- & 0{,}0 \\
+        GMF-F & 15{,}2\% & 11{,}2\% & 7{,}4 & 7{,}8 \\
+        NeuMF-F & 6{,}9\% & 7{,}1\% & 6{,}6 & 9{,}3 \\
+        UserKNN & 8{,}3\% & 0{,}0\% & --- & 0{,}0 \\
+        BPR-MF & 5{,}2\% & 0{,}0\% & --- & 1{,}9 \\
+        NeuMF & 4{,}3\% & 0{,}0\% & 3{,}4 & 2{,}8 \\
+        ItemKNN & 22{,}8\% & 0{,}0\% & --- & 0{,}0 \\
+        Most Popular & 0{,}1\% & 0{,}0\% & --- & 0{,}0 \\
+        MostPopular-Recent & 0{,}1\% & 0{,}0\% & --- & 0{,}0 \\
+        MLP & 0{,}1\% & 0{,}0\% & 4{,}2 & 2{,}8 \\
+        MLP-F & 0{,}1\% & 0{,}0\% & 6{,}8 & 4{,}7 \\
+        GMF & 0{,}1\% & 0{,}0\% & 1{,}8 & 1{,}8 \\
+        Content & 43{,}9\% & 18{,}2\% & --- & 0{,}0 \\
+        Random & 83{,}1\% & 43{,}8\% & --- & 0{,}0 \\
+        \bottomrule
+    \end{tabular}
+    \end{adjustbox}
+    \par\smallskip{\footnotesize Độ phủ: tỉ lệ sản phẩm của không gian ứng viên xuất hiện trong top-10 của ít nhất một người dùng. Số epoch chọn trên tập xác thực của B trước khi huấn luyện lại. Thời gian: chọn epoch + huấn luyện lại (mạng nơ-ron) hoặc khớp mô hình, không gồm thời gian chấm.}
+\end{table}

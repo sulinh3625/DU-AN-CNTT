@@ -1,0 +1,650 @@
+% Sinh tự động bởi neumf_project/scripts/24_report_v2.py — KHÔNG sửa tay.
+\providecommand{\resultmacro}[3]{\ifcsname #1-#2-#3\endcsname\csname #1-#2-#3\endcsname\else\textbf{[chưa có]}\fi}
+\providecommand{\VRes}[2]{\resultmacro{vres}{#1}{#2}}
+\providecommand{\VSd}[2]{\resultmacro{vsd}{#1}{#2}}
+\providecommand{\VOnly}[2]{\resultmacro{vonly}{#1}{#2}}
+\providecommand{\VVal}[2]{\resultmacro{vval}{#1}{#2}}
+\providecommand{\VRank}[2]{\resultmacro{vrank}{#1}{#2}}
+\providecommand{\VSig}[2]{\resultmacro{vsig}{#1}{#2}}
+\providecommand{\VGrp}[2]{\resultmacro{vgrp}{#1}{#2}}
+\providecommand{\VAbl}[2]{\resultmacro{vabl}{#1}{#2}}
+\providecommand{\VBey}[2]{\resultmacro{vbey}{#1}{#2}}
+\providecommand{\VData}[2]{\resultmacro{vdata}{#1}{#2}}
+\providecommand{\VCfg}[2]{\resultmacro{vcfg}{#1}{#2}}
+\expandafter\def\csname vdata-A-nusers\endcsname{7.134}
+\expandafter\def\csname vdata-A-nitems\endcsname{19.228}
+\expandafter\def\csname vdata-A-niditems\endcsname{9.596}
+\expandafter\def\csname vdata-A-nkeptpairs\endcsname{201.544}
+\expandafter\def\csname vdata-Aval-users\endcsname{2.229}
+\expandafter\def\csname vdata-Aval-targets\endcsname{7.074}
+\expandafter\def\csname vdata-Aval-newitemtargets\endcsname{930}
+\expandafter\def\csname vdata-Aval-trainpairs\endcsname{195.344}
+\expandafter\def\csname vdata-Aval-cand\endcsname{19.194}
+\expandafter\def\csname vdata-B-nusers\endcsname{7.038}
+\expandafter\def\csname vdata-B-nitems\endcsname{19.109}
+\expandafter\def\csname vdata-B-niditems\endcsname{9.478}
+\expandafter\def\csname vdata-B-nkeptpairs\endcsname{199.413}
+\expandafter\def\csname vdata-Bval-users\endcsname{2.268}
+\expandafter\def\csname vdata-Bval-targets\endcsname{7.374}
+\expandafter\def\csname vdata-Bval-newitemtargets\endcsname{935}
+\expandafter\def\csname vdata-Bval-trainpairs\endcsname{192.878}
+\expandafter\def\csname vdata-Bval-cand\endcsname{19.070}
+\expandafter\def\csname vdata-Btest-users\endcsname{2.991}
+\expandafter\def\csname vdata-Btest-targets\endcsname{12.206}
+\expandafter\def\csname vdata-Btest-newitemtargets\endcsname{6.080}
+\expandafter\def\csname vdata-Btest-scoreable\endcsname{9.478}
+\expandafter\def\csname vdata-Btest-newitems\endcsname{7.372}
+\expandafter\def\csname vdata-Btest-trainpairs\endcsname{199.413}
+\expandafter\def\csname vdata-Btest-cand\endcsname{16.814}
+\expandafter\def\csname vdata-Btest-newpct\endcsname{49{,}8}
+\expandafter\def\csname vval-NeuMFF-NDCG10\endcsname{0{,}01687}
+\expandafter\def\csname vval-NeuMFF-NDCG10old\endcsname{0{,}01869}
+\expandafter\def\csname vval-NeuMFF-NDCG10new\endcsname{0{,}00034}
+\expandafter\def\csname vval-NeuMFF-Recall10\endcsname{0{,}02574}
+\expandafter\def\csname vcfg-NeuMFF-params\endcsname{d=32; lr=0{,}0005; neg=8; wd=$10^{-6}$; dropout=0; bỏ ID=0}
+\expandafter\def\csname vcfg-NeuMFF-epoch\endcsname{5}
+\expandafter\def\csname vval-LateF-NDCG10\endcsname{0{,}01632}
+\expandafter\def\csname vval-LateF-NDCG10old\endcsname{0{,}01766}
+\expandafter\def\csname vval-LateF-NDCG10new\endcsname{0{,}00076}
+\expandafter\def\csname vval-LateF-Recall10\endcsname{0{,}02621}
+\expandafter\def\csname vcfg-LateF-params\endcsname{$w$=0{,}3 (GMF-F), $1-w$=0{,}7 (MLP-F)}
+\expandafter\def\csname vval-GMFF-NDCG10\endcsname{0{,}01570}
+\expandafter\def\csname vval-GMFF-NDCG10old\endcsname{0{,}01690}
+\expandafter\def\csname vval-GMFF-NDCG10new\endcsname{0{,}00130}
+\expandafter\def\csname vval-GMFF-Recall10\endcsname{0{,}02440}
+\expandafter\def\csname vcfg-GMFF-params\endcsname{d=32; lr=0{,}001; neg=8; wd=$10^{-6}$; bỏ ID=0}
+\expandafter\def\csname vcfg-GMFF-epoch\endcsname{7}
+\expandafter\def\csname vval-MLPF-NDCG10\endcsname{0{,}01136}
+\expandafter\def\csname vval-MLPF-NDCG10old\endcsname{0{,}01266}
+\expandafter\def\csname vval-MLPF-NDCG10new\endcsname{0{,}00000}
+\expandafter\def\csname vval-MLPF-Recall10\endcsname{0{,}01639}
+\expandafter\def\csname vcfg-MLPF-params\endcsname{d=32; lr=0{,}0005; neg=4; wd=$10^{-6}$; dropout=0{,}2; bỏ ID=0{,}5}
+\expandafter\def\csname vcfg-MLPF-epoch\endcsname{20}
+\expandafter\def\csname vval-NeuMF-NDCG10\endcsname{0{,}01108}
+\expandafter\def\csname vval-NeuMF-NDCG10old\endcsname{0{,}01227}
+\expandafter\def\csname vval-NeuMF-NDCG10new\endcsname{0{,}00000}
+\expandafter\def\csname vval-NeuMF-Recall10\endcsname{0{,}01569}
+\expandafter\def\csname vcfg-NeuMF-params\endcsname{d=32; lr=0{,}0005; neg=4; wd=$10^{-6}$; dropout=0}
+\expandafter\def\csname vcfg-NeuMF-epoch\endcsname{5}
+\expandafter\def\csname vval-GMF-NDCG10\endcsname{0{,}00845}
+\expandafter\def\csname vval-GMF-NDCG10old\endcsname{0{,}00954}
+\expandafter\def\csname vval-GMF-NDCG10new\endcsname{0{,}00000}
+\expandafter\def\csname vval-GMF-Recall10\endcsname{0{,}01421}
+\expandafter\def\csname vcfg-GMF-params\endcsname{d=64; lr=0{,}001; neg=8; wd=$10^{-6}$}
+\expandafter\def\csname vcfg-GMF-epoch\endcsname{1}
+\expandafter\def\csname vval-MLP-NDCG10\endcsname{0{,}00797}
+\expandafter\def\csname vval-MLP-NDCG10old\endcsname{0{,}00893}
+\expandafter\def\csname vval-MLP-NDCG10new\endcsname{0{,}00000}
+\expandafter\def\csname vval-MLP-Recall10\endcsname{0{,}01307}
+\expandafter\def\csname vcfg-MLP-params\endcsname{d=32; lr=0{,}0005; neg=4; wd=$10^{-6}$; dropout=0}
+\expandafter\def\csname vcfg-MLP-epoch\endcsname{5}
+\expandafter\def\csname vval-BPR-NDCG10\endcsname{0{,}00934}
+\expandafter\def\csname vval-BPR-NDCG10old\endcsname{0{,}01064}
+\expandafter\def\csname vval-BPR-NDCG10new\endcsname{0{,}00000}
+\expandafter\def\csname vval-BPR-Recall10\endcsname{0{,}01341}
+\expandafter\def\csname vcfg-BPR-params\endcsname{d=128; lr=0{,}03; reg=0{,}001; 20 epoch}
+\expandafter\def\csname vval-IKNN-NDCG10\endcsname{0{,}01094}
+\expandafter\def\csname vval-IKNN-NDCG10old\endcsname{0{,}01244}
+\expandafter\def\csname vval-IKNN-NDCG10new\endcsname{0{,}00000}
+\expandafter\def\csname vval-IKNN-Recall10\endcsname{0{,}01520}
+\expandafter\def\csname vcfg-IKNN-params\endcsname{k=100; shrink=50}
+\expandafter\def\csname vval-UKNN-NDCG10\endcsname{0{,}01216}
+\expandafter\def\csname vval-UKNN-NDCG10old\endcsname{0{,}01362}
+\expandafter\def\csname vval-UKNN-NDCG10new\endcsname{0{,}00000}
+\expandafter\def\csname vval-UKNN-Recall10\endcsname{0{,}01734}
+\expandafter\def\csname vcfg-UKNN-params\endcsname{k=200; shrink=0}
+\expandafter\def\csname vval-Cont-NDCG10\endcsname{0{,}00499}
+\expandafter\def\csname vval-Cont-NDCG10old\endcsname{0{,}00543}
+\expandafter\def\csname vval-Cont-NDCG10new\endcsname{0{,}00110}
+\expandafter\def\csname vval-Cont-Recall10\endcsname{0{,}00751}
+\expandafter\def\csname vcfg-Cont-params\endcsname{chu kỳ bán rã 30 ngày}
+\expandafter\def\csname vval-RecPop-NDCG10\endcsname{0{,}00830}
+\expandafter\def\csname vval-RecPop-NDCG10old\endcsname{0{,}00915}
+\expandafter\def\csname vval-RecPop-NDCG10new\endcsname{0{,}00000}
+\expandafter\def\csname vval-RecPop-Recall10\endcsname{0{,}01290}
+\expandafter\def\csname vcfg-RecPop-params\endcsname{cửa sổ 14 ngày}
+\expandafter\def\csname vval-Pop-NDCG10\endcsname{0{,}00734}
+\expandafter\def\csname vval-Pop-NDCG10old\endcsname{0{,}00817}
+\expandafter\def\csname vval-Pop-NDCG10new\endcsname{0{,}00000}
+\expandafter\def\csname vval-Pop-Recall10\endcsname{0{,}01237}
+\expandafter\def\csname vcfg-Pop-params\endcsname{---}
+\expandafter\def\csname vcfg-all-nconfigs\endcsname{76}
+\expandafter\def\csname vcfg-all-hours\endcsname{5{,}5}
+\expandafter\def\csname vcfg-all-codehashes\endcsname{1}
+\expandafter\def\csname vcfg-all-nneural\endcsname{36}
+\expandafter\def\csname vcfg-all-epochmax\endcsname{20}
+\expandafter\def\csname vcfg-all-epochmedian\endcsname{5}
+\expandafter\def\csname vres-LateF-NDCG10\endcsname{0{,}01753}
+\expandafter\def\csname vsd-LateF-NDCG10\endcsname{0{,}00085}
+\expandafter\def\csname vres-LateF-Recall10\endcsname{0{,}02416}
+\expandafter\def\csname vsd-LateF-Recall10\endcsname{0{,}00082}
+\expandafter\def\csname vres-LateF-HR10\endcsname{0{,}07663}
+\expandafter\def\csname vsd-LateF-HR10\endcsname{0{,}00182}
+\expandafter\def\csname vres-LateF-Precision10\endcsname{0{,}00839}
+\expandafter\def\csname vsd-LateF-Precision10\endcsname{0{,}00021}
+\expandafter\def\csname vres-LateF-NDCG5\endcsname{0{,}01451}
+\expandafter\def\csname vsd-LateF-NDCG5\endcsname{0{,}00085}
+\expandafter\def\csname vres-LateF-NDCG20\endcsname{0{,}02243}
+\expandafter\def\csname vsd-LateF-NDCG20\endcsname{0{,}00106}
+\expandafter\def\csname vres-LateF-NDCG10old\endcsname{0{,}02818}
+\expandafter\def\csname vsd-LateF-NDCG10old\endcsname{0{,}00142}
+\expandafter\def\csname vres-LateF-NDCG10new\endcsname{0{,}00017}
+\expandafter\def\csname vsd-LateF-NDCG10new\endcsname{0{,}00023}
+\expandafter\def\csname vonly-LateF-NDCG10\endcsname{0{,}02853}
+\expandafter\def\csname vrank-LateF-NDCG10\endcsname{thứ nhất}
+\expandafter\def\csname vres-GMFF-NDCG10\endcsname{0{,}01561}
+\expandafter\def\csname vsd-GMFF-NDCG10\endcsname{0{,}00129}
+\expandafter\def\csname vres-GMFF-Recall10\endcsname{0{,}02150}
+\expandafter\def\csname vsd-GMFF-Recall10\endcsname{0{,}00176}
+\expandafter\def\csname vres-GMFF-HR10\endcsname{0{,}06653}
+\expandafter\def\csname vsd-GMFF-HR10\endcsname{0{,}00452}
+\expandafter\def\csname vres-GMFF-Precision10\endcsname{0{,}00724}
+\expandafter\def\csname vsd-GMFF-Precision10\endcsname{0{,}00053}
+\expandafter\def\csname vres-GMFF-NDCG5\endcsname{0{,}01302}
+\expandafter\def\csname vsd-GMFF-NDCG5\endcsname{0{,}00163}
+\expandafter\def\csname vres-GMFF-NDCG20\endcsname{0{,}01993}
+\expandafter\def\csname vsd-GMFF-NDCG20\endcsname{0{,}00150}
+\expandafter\def\csname vres-GMFF-NDCG10old\endcsname{0{,}02461}
+\expandafter\def\csname vsd-GMFF-NDCG10old\endcsname{0{,}00201}
+\expandafter\def\csname vres-GMFF-NDCG10new\endcsname{0{,}00070}
+\expandafter\def\csname vsd-GMFF-NDCG10new\endcsname{0{,}00033}
+\expandafter\def\csname vonly-GMFF-NDCG10\endcsname{0{,}02643}
+\expandafter\def\csname vrank-GMFF-NDCG10\endcsname{thứ hai}
+\expandafter\def\csname vres-NeuMFF-NDCG10\endcsname{0{,}01470}
+\expandafter\def\csname vsd-NeuMFF-NDCG10\endcsname{0{,}00062}
+\expandafter\def\csname vres-NeuMFF-Recall10\endcsname{0{,}02082}
+\expandafter\def\csname vsd-NeuMFF-Recall10\endcsname{0{,}00116}
+\expandafter\def\csname vres-NeuMFF-HR10\endcsname{0{,}06459}
+\expandafter\def\csname vsd-NeuMFF-HR10\endcsname{0{,}00357}
+\expandafter\def\csname vres-NeuMFF-Precision10\endcsname{0{,}00716}
+\expandafter\def\csname vsd-NeuMFF-Precision10\endcsname{0{,}00041}
+\expandafter\def\csname vres-NeuMFF-NDCG5\endcsname{0{,}01201}
+\expandafter\def\csname vsd-NeuMFF-NDCG5\endcsname{0{,}00038}
+\expandafter\def\csname vres-NeuMFF-NDCG20\endcsname{0{,}01886}
+\expandafter\def\csname vsd-NeuMFF-NDCG20\endcsname{0{,}00069}
+\expandafter\def\csname vres-NeuMFF-NDCG10old\endcsname{0{,}02385}
+\expandafter\def\csname vsd-NeuMFF-NDCG10old\endcsname{0{,}00088}
+\expandafter\def\csname vres-NeuMFF-NDCG10new\endcsname{0{,}00057}
+\expandafter\def\csname vsd-NeuMFF-NDCG10new\endcsname{0{,}00026}
+\expandafter\def\csname vonly-NeuMFF-NDCG10\endcsname{0{,}02536}
+\expandafter\def\csname vrank-NeuMFF-NDCG10\endcsname{thứ ba}
+\expandafter\def\csname vres-UKNN-NDCG10\endcsname{0{,}01305}
+\expandafter\def\csname vsd-UKNN-NDCG10\endcsname{0{,}00000}
+\expandafter\def\csname vres-UKNN-Recall10\endcsname{0{,}01751}
+\expandafter\def\csname vsd-UKNN-Recall10\endcsname{0{,}00000}
+\expandafter\def\csname vres-UKNN-HR10\endcsname{0{,}05182}
+\expandafter\def\csname vsd-UKNN-HR10\endcsname{0{,}00000}
+\expandafter\def\csname vres-UKNN-Precision10\endcsname{0{,}00568}
+\expandafter\def\csname vsd-UKNN-Precision10\endcsname{0{,}00000}
+\expandafter\def\csname vres-UKNN-NDCG5\endcsname{0{,}01075}
+\expandafter\def\csname vsd-UKNN-NDCG5\endcsname{0{,}00000}
+\expandafter\def\csname vres-UKNN-NDCG20\endcsname{0{,}01526}
+\expandafter\def\csname vsd-UKNN-NDCG20\endcsname{0{,}00000}
+\expandafter\def\csname vres-UKNN-NDCG10old\endcsname{0{,}02060}
+\expandafter\def\csname vsd-UKNN-NDCG10old\endcsname{0{,}00000}
+\expandafter\def\csname vres-UKNN-NDCG10new\endcsname{0{,}00000}
+\expandafter\def\csname vsd-UKNN-NDCG10new\endcsname{0{,}00000}
+\expandafter\def\csname vonly-UKNN-NDCG10\endcsname{0{,}02060}
+\expandafter\def\csname vrank-UKNN-NDCG10\endcsname{thứ tư}
+\expandafter\def\csname vres-BPR-NDCG10\endcsname{0{,}01206}
+\expandafter\def\csname vsd-BPR-NDCG10\endcsname{0{,}00071}
+\expandafter\def\csname vres-BPR-Recall10\endcsname{0{,}01671}
+\expandafter\def\csname vsd-BPR-Recall10\endcsname{0{,}00120}
+\expandafter\def\csname vres-BPR-HR10\endcsname{0{,}04875}
+\expandafter\def\csname vsd-BPR-HR10\endcsname{0{,}00253}
+\expandafter\def\csname vres-BPR-Precision10\endcsname{0{,}00532}
+\expandafter\def\csname vsd-BPR-Precision10\endcsname{0{,}00029}
+\expandafter\def\csname vres-BPR-NDCG5\endcsname{0{,}01021}
+\expandafter\def\csname vsd-BPR-NDCG5\endcsname{0{,}00051}
+\expandafter\def\csname vres-BPR-NDCG20\endcsname{0{,}01490}
+\expandafter\def\csname vsd-BPR-NDCG20\endcsname{0{,}00057}
+\expandafter\def\csname vres-BPR-NDCG10old\endcsname{0{,}01877}
+\expandafter\def\csname vsd-BPR-NDCG10old\endcsname{0{,}00116}
+\expandafter\def\csname vres-BPR-NDCG10new\endcsname{0{,}00000}
+\expandafter\def\csname vsd-BPR-NDCG10new\endcsname{0{,}00000}
+\expandafter\def\csname vonly-BPR-NDCG10\endcsname{0{,}01877}
+\expandafter\def\csname vrank-BPR-NDCG10\endcsname{thứ năm}
+\expandafter\def\csname vres-NeuMF-NDCG10\endcsname{0{,}01071}
+\expandafter\def\csname vsd-NeuMF-NDCG10\endcsname{0{,}00068}
+\expandafter\def\csname vres-NeuMF-Recall10\endcsname{0{,}01506}
+\expandafter\def\csname vsd-NeuMF-Recall10\endcsname{0{,}00078}
+\expandafter\def\csname vres-NeuMF-HR10\endcsname{0{,}04580}
+\expandafter\def\csname vsd-NeuMF-HR10\endcsname{0{,}00249}
+\expandafter\def\csname vres-NeuMF-Precision10\endcsname{0{,}00487}
+\expandafter\def\csname vsd-NeuMF-Precision10\endcsname{0{,}00028}
+\expandafter\def\csname vres-NeuMF-NDCG5\endcsname{0{,}00900}
+\expandafter\def\csname vsd-NeuMF-NDCG5\endcsname{0{,}00080}
+\expandafter\def\csname vres-NeuMF-NDCG20\endcsname{0{,}01357}
+\expandafter\def\csname vsd-NeuMF-NDCG20\endcsname{0{,}00038}
+\expandafter\def\csname vres-NeuMF-NDCG10old\endcsname{0{,}01673}
+\expandafter\def\csname vsd-NeuMF-NDCG10old\endcsname{0{,}00120}
+\expandafter\def\csname vres-NeuMF-NDCG10new\endcsname{0{,}00000}
+\expandafter\def\csname vsd-NeuMF-NDCG10new\endcsname{0{,}00000}
+\expandafter\def\csname vonly-NeuMF-NDCG10\endcsname{0{,}01673}
+\expandafter\def\csname vrank-NeuMF-NDCG10\endcsname{thứ sáu}
+\expandafter\def\csname vres-IKNN-NDCG10\endcsname{0{,}01027}
+\expandafter\def\csname vsd-IKNN-NDCG10\endcsname{0{,}00000}
+\expandafter\def\csname vres-IKNN-Recall10\endcsname{0{,}01430}
+\expandafter\def\csname vsd-IKNN-Recall10\endcsname{0{,}00000}
+\expandafter\def\csname vres-IKNN-HR10\endcsname{0{,}03811}
+\expandafter\def\csname vsd-IKNN-HR10\endcsname{0{,}00000}
+\expandafter\def\csname vres-IKNN-Precision10\endcsname{0{,}00411}
+\expandafter\def\csname vsd-IKNN-Precision10\endcsname{0{,}00000}
+\expandafter\def\csname vres-IKNN-NDCG5\endcsname{0{,}00901}
+\expandafter\def\csname vsd-IKNN-NDCG5\endcsname{0{,}00000}
+\expandafter\def\csname vres-IKNN-NDCG20\endcsname{0{,}01224}
+\expandafter\def\csname vsd-IKNN-NDCG20\endcsname{0{,}00000}
+\expandafter\def\csname vres-IKNN-NDCG10old\endcsname{0{,}01606}
+\expandafter\def\csname vsd-IKNN-NDCG10old\endcsname{0{,}00000}
+\expandafter\def\csname vres-IKNN-NDCG10new\endcsname{0{,}00000}
+\expandafter\def\csname vsd-IKNN-NDCG10new\endcsname{0{,}00000}
+\expandafter\def\csname vonly-IKNN-NDCG10\endcsname{0{,}01606}
+\expandafter\def\csname vrank-IKNN-NDCG10\endcsname{thứ bảy}
+\expandafter\def\csname vres-Pop-NDCG10\endcsname{0{,}01004}
+\expandafter\def\csname vsd-Pop-NDCG10\endcsname{0{,}00000}
+\expandafter\def\csname vres-Pop-Recall10\endcsname{0{,}01585}
+\expandafter\def\csname vsd-Pop-Recall10\endcsname{0{,}00000}
+\expandafter\def\csname vres-Pop-HR10\endcsname{0{,}04614}
+\expandafter\def\csname vsd-Pop-HR10\endcsname{0{,}00000}
+\expandafter\def\csname vres-Pop-Precision10\endcsname{0{,}00485}
+\expandafter\def\csname vsd-Pop-Precision10\endcsname{0{,}00000}
+\expandafter\def\csname vres-Pop-NDCG5\endcsname{0{,}00780}
+\expandafter\def\csname vsd-Pop-NDCG5\endcsname{0{,}00000}
+\expandafter\def\csname vres-Pop-NDCG20\endcsname{0{,}01242}
+\expandafter\def\csname vsd-Pop-NDCG20\endcsname{0{,}00000}
+\expandafter\def\csname vres-Pop-NDCG10old\endcsname{0{,}01546}
+\expandafter\def\csname vsd-Pop-NDCG10old\endcsname{0{,}00000}
+\expandafter\def\csname vres-Pop-NDCG10new\endcsname{0{,}00000}
+\expandafter\def\csname vsd-Pop-NDCG10new\endcsname{0{,}00000}
+\expandafter\def\csname vonly-Pop-NDCG10\endcsname{0{,}01546}
+\expandafter\def\csname vrank-Pop-NDCG10\endcsname{thứ tám}
+\expandafter\def\csname vres-RecPop-NDCG10\endcsname{0{,}00995}
+\expandafter\def\csname vsd-RecPop-NDCG10\endcsname{0{,}00000}
+\expandafter\def\csname vres-RecPop-Recall10\endcsname{0{,}01538}
+\expandafter\def\csname vsd-RecPop-Recall10\endcsname{0{,}00000}
+\expandafter\def\csname vres-RecPop-HR10\endcsname{0{,}05383}
+\expandafter\def\csname vsd-RecPop-HR10\endcsname{0{,}00000}
+\expandafter\def\csname vres-RecPop-Precision10\endcsname{0{,}00562}
+\expandafter\def\csname vsd-RecPop-Precision10\endcsname{0{,}00000}
+\expandafter\def\csname vres-RecPop-NDCG5\endcsname{0{,}00791}
+\expandafter\def\csname vsd-RecPop-NDCG5\endcsname{0{,}00000}
+\expandafter\def\csname vres-RecPop-NDCG20\endcsname{0{,}01487}
+\expandafter\def\csname vsd-RecPop-NDCG20\endcsname{0{,}00000}
+\expandafter\def\csname vres-RecPop-NDCG10old\endcsname{0{,}01554}
+\expandafter\def\csname vsd-RecPop-NDCG10old\endcsname{0{,}00000}
+\expandafter\def\csname vres-RecPop-NDCG10new\endcsname{0{,}00000}
+\expandafter\def\csname vsd-RecPop-NDCG10new\endcsname{0{,}00000}
+\expandafter\def\csname vonly-RecPop-NDCG10\endcsname{0{,}01554}
+\expandafter\def\csname vrank-RecPop-NDCG10\endcsname{thứ chín}
+\expandafter\def\csname vres-MLP-NDCG10\endcsname{0{,}00985}
+\expandafter\def\csname vsd-MLP-NDCG10\endcsname{0{,}00030}
+\expandafter\def\csname vres-MLP-Recall10\endcsname{0{,}01473}
+\expandafter\def\csname vsd-MLP-Recall10\endcsname{0{,}00046}
+\expandafter\def\csname vres-MLP-HR10\endcsname{0{,}04373}
+\expandafter\def\csname vsd-MLP-HR10\endcsname{0{,}00119}
+\expandafter\def\csname vres-MLP-Precision10\endcsname{0{,}00463}
+\expandafter\def\csname vsd-MLP-Precision10\endcsname{0{,}00015}
+\expandafter\def\csname vres-MLP-NDCG5\endcsname{0{,}00763}
+\expandafter\def\csname vsd-MLP-NDCG5\endcsname{0{,}00047}
+\expandafter\def\csname vres-MLP-NDCG20\endcsname{0{,}01224}
+\expandafter\def\csname vsd-MLP-NDCG20\endcsname{0{,}00038}
+\expandafter\def\csname vres-MLP-NDCG10old\endcsname{0{,}01515}
+\expandafter\def\csname vsd-MLP-NDCG10old\endcsname{0{,}00044}
+\expandafter\def\csname vres-MLP-NDCG10new\endcsname{0{,}00000}
+\expandafter\def\csname vsd-MLP-NDCG10new\endcsname{0{,}00000}
+\expandafter\def\csname vonly-MLP-NDCG10\endcsname{0{,}01515}
+\expandafter\def\csname vrank-MLP-NDCG10\endcsname{thứ mười}
+\expandafter\def\csname vres-MLPF-NDCG10\endcsname{0{,}00978}
+\expandafter\def\csname vsd-MLPF-NDCG10\endcsname{0{,}00175}
+\expandafter\def\csname vres-MLPF-Recall10\endcsname{0{,}01462}
+\expandafter\def\csname vsd-MLPF-Recall10\endcsname{0{,}00321}
+\expandafter\def\csname vres-MLPF-HR10\endcsname{0{,}05209}
+\expandafter\def\csname vsd-MLPF-HR10\endcsname{0{,}00964}
+\expandafter\def\csname vres-MLPF-Precision10\endcsname{0{,}00560}
+\expandafter\def\csname vsd-MLPF-Precision10\endcsname{0{,}00106}
+\expandafter\def\csname vres-MLPF-NDCG5\endcsname{0{,}00694}
+\expandafter\def\csname vsd-MLPF-NDCG5\endcsname{0{,}00174}
+\expandafter\def\csname vres-MLPF-NDCG20\endcsname{0{,}01381}
+\expandafter\def\csname vsd-MLPF-NDCG20\endcsname{0{,}00238}
+\expandafter\def\csname vres-MLPF-NDCG10old\endcsname{0{,}01611}
+\expandafter\def\csname vsd-MLPF-NDCG10old\endcsname{0{,}00284}
+\expandafter\def\csname vres-MLPF-NDCG10new\endcsname{0{,}00004}
+\expandafter\def\csname vsd-MLPF-NDCG10new\endcsname{0{,}00005}
+\expandafter\def\csname vonly-MLPF-NDCG10\endcsname{0{,}01626}
+\expandafter\def\csname vrank-MLPF-NDCG10\endcsname{thứ mười một}
+\expandafter\def\csname vres-GMF-NDCG10\endcsname{0{,}00967}
+\expandafter\def\csname vsd-GMF-NDCG10\endcsname{0{,}00060}
+\expandafter\def\csname vres-GMF-Recall10\endcsname{0{,}01486}
+\expandafter\def\csname vsd-GMF-Recall10\endcsname{0{,}00094}
+\expandafter\def\csname vres-GMF-HR10\endcsname{0{,}04507}
+\expandafter\def\csname vsd-GMF-HR10\endcsname{0{,}00279}
+\expandafter\def\csname vres-GMF-Precision10\endcsname{0{,}00474}
+\expandafter\def\csname vsd-GMF-Precision10\endcsname{0{,}00030}
+\expandafter\def\csname vres-GMF-NDCG5\endcsname{0{,}00771}
+\expandafter\def\csname vsd-GMF-NDCG5\endcsname{0{,}00097}
+\expandafter\def\csname vres-GMF-NDCG20\endcsname{0{,}01221}
+\expandafter\def\csname vsd-GMF-NDCG20\endcsname{0{,}00072}
+\expandafter\def\csname vres-GMF-NDCG10old\endcsname{0{,}01504}
+\expandafter\def\csname vsd-GMF-NDCG10old\endcsname{0{,}00086}
+\expandafter\def\csname vres-GMF-NDCG10new\endcsname{0{,}00000}
+\expandafter\def\csname vsd-GMF-NDCG10new\endcsname{0{,}00000}
+\expandafter\def\csname vonly-GMF-NDCG10\endcsname{0{,}01504}
+\expandafter\def\csname vrank-GMF-NDCG10\endcsname{thứ mười hai}
+\expandafter\def\csname vres-Cont-NDCG10\endcsname{0{,}00384}
+\expandafter\def\csname vsd-Cont-NDCG10\endcsname{0{,}00000}
+\expandafter\def\csname vres-Cont-Recall10\endcsname{0{,}00563}
+\expandafter\def\csname vsd-Cont-Recall10\endcsname{0{,}00000}
+\expandafter\def\csname vres-Cont-HR10\endcsname{0{,}01605}
+\expandafter\def\csname vsd-Cont-HR10\endcsname{0{,}00000}
+\expandafter\def\csname vres-Cont-Precision10\endcsname{0{,}00167}
+\expandafter\def\csname vsd-Cont-Precision10\endcsname{0{,}00000}
+\expandafter\def\csname vres-Cont-NDCG5\endcsname{0{,}00306}
+\expandafter\def\csname vsd-Cont-NDCG5\endcsname{0{,}00000}
+\expandafter\def\csname vres-Cont-NDCG20\endcsname{0{,}00527}
+\expandafter\def\csname vsd-Cont-NDCG20\endcsname{0{,}00000}
+\expandafter\def\csname vres-Cont-NDCG10old\endcsname{0{,}00477}
+\expandafter\def\csname vsd-Cont-NDCG10old\endcsname{0{,}00000}
+\expandafter\def\csname vres-Cont-NDCG10new\endcsname{0{,}00176}
+\expandafter\def\csname vsd-Cont-NDCG10new\endcsname{0{,}00000}
+\expandafter\def\csname vonly-Cont-NDCG10\endcsname{0{,}00573}
+\expandafter\def\csname vrank-Cont-NDCG10\endcsname{thứ mười ba}
+\expandafter\def\csname vres-Rand-NDCG10\endcsname{0{,}00031}
+\expandafter\def\csname vsd-Rand-NDCG10\endcsname{0{,}00009}
+\expandafter\def\csname vres-Rand-Recall10\endcsname{0{,}00052}
+\expandafter\def\csname vsd-Rand-Recall10\endcsname{0{,}00020}
+\expandafter\def\csname vres-Rand-HR10\endcsname{0{,}00194}
+\expandafter\def\csname vsd-Rand-HR10\endcsname{0{,}00050}
+\expandafter\def\csname vres-Rand-Precision10\endcsname{0{,}00020}
+\expandafter\def\csname vsd-Rand-Precision10\endcsname{0{,}00005}
+\expandafter\def\csname vres-Rand-NDCG5\endcsname{0{,}00019}
+\expandafter\def\csname vsd-Rand-NDCG5\endcsname{0{,}00009}
+\expandafter\def\csname vres-Rand-NDCG20\endcsname{0{,}00058}
+\expandafter\def\csname vsd-Rand-NDCG20\endcsname{0{,}00005}
+\expandafter\def\csname vres-Rand-NDCG10old\endcsname{0{,}00027}
+\expandafter\def\csname vsd-Rand-NDCG10old\endcsname{0{,}00014}
+\expandafter\def\csname vres-Rand-NDCG10new\endcsname{0{,}00028}
+\expandafter\def\csname vsd-Rand-NDCG10new\endcsname{0{,}00019}
+\expandafter\def\csname vonly-Rand-NDCG10\endcsname{0{,}00062}
+\expandafter\def\csname vrank-Rand-NDCG10\endcsname{thứ mười bốn}
+\expandafter\def\csname vdata-run-seeds\endcsname{5}
+\expandafter\def\csname vgrp-LateF-olddiff\endcsname{$-$0{,}00433}
+\expandafter\def\csname vgrp-LateF-oldlo\endcsname{$-$0{,}00655}
+\expandafter\def\csname vgrp-LateF-oldhi\endcsname{$-$0{,}00216}
+\expandafter\def\csname vgrp-LateF-newdiff\endcsname{+0{,}00041}
+\expandafter\def\csname vgrp-LateF-newlo\endcsname{+0{,}00014}
+\expandafter\def\csname vgrp-LateF-newhi\endcsname{+0{,}00071}
+\expandafter\def\csname vgrp-LateF-oldonlydiff\endcsname{$-$0{,}00317}
+\expandafter\def\csname vgrp-LateF-oldonlylo\endcsname{$-$0{,}00539}
+\expandafter\def\csname vgrp-LateF-oldonlyhi\endcsname{$-$0{,}00095}
+\expandafter\def\csname vgrp-GMFF-olddiff\endcsname{$-$0{,}00076}
+\expandafter\def\csname vgrp-GMFF-oldlo\endcsname{$-$0{,}00261}
+\expandafter\def\csname vgrp-GMFF-oldhi\endcsname{+0{,}00118}
+\expandafter\def\csname vgrp-GMFF-newdiff\endcsname{$-$0{,}00013}
+\expandafter\def\csname vgrp-GMFF-newlo\endcsname{$-$0{,}00050}
+\expandafter\def\csname vgrp-GMFF-newhi\endcsname{+0{,}00025}
+\expandafter\def\csname vgrp-GMFF-oldonlydiff\endcsname{$-$0{,}00107}
+\expandafter\def\csname vgrp-GMFF-oldonlylo\endcsname{$-$0{,}00299}
+\expandafter\def\csname vgrp-GMFF-oldonlyhi\endcsname{+0{,}00091}
+\expandafter\def\csname vgrp-UKNN-olddiff\endcsname{+0{,}00325}
+\expandafter\def\csname vgrp-UKNN-oldlo\endcsname{$-$0{,}00101}
+\expandafter\def\csname vgrp-UKNN-oldhi\endcsname{+0{,}00736}
+\expandafter\def\csname vgrp-UKNN-newdiff\endcsname{+0{,}00057}
+\expandafter\def\csname vgrp-UKNN-newlo\endcsname{+0{,}00029}
+\expandafter\def\csname vgrp-UKNN-newhi\endcsname{+0{,}00091}
+\expandafter\def\csname vgrp-UKNN-oldonlydiff\endcsname{+0{,}00476}
+\expandafter\def\csname vgrp-UKNN-oldonlylo\endcsname{+0{,}00047}
+\expandafter\def\csname vgrp-UKNN-oldonlyhi\endcsname{+0{,}00896}
+\expandafter\def\csname vgrp-BPR-olddiff\endcsname{+0{,}00508}
+\expandafter\def\csname vgrp-BPR-oldlo\endcsname{+0{,}00137}
+\expandafter\def\csname vgrp-BPR-oldhi\endcsname{+0{,}00885}
+\expandafter\def\csname vgrp-BPR-newdiff\endcsname{+0{,}00057}
+\expandafter\def\csname vgrp-BPR-newlo\endcsname{+0{,}00029}
+\expandafter\def\csname vgrp-BPR-newhi\endcsname{+0{,}00091}
+\expandafter\def\csname vgrp-BPR-oldonlydiff\endcsname{+0{,}00660}
+\expandafter\def\csname vgrp-BPR-oldonlylo\endcsname{+0{,}00283}
+\expandafter\def\csname vgrp-BPR-oldonlyhi\endcsname{+0{,}01043}
+\expandafter\def\csname vgrp-NeuMF-olddiff\endcsname{+0{,}00711}
+\expandafter\def\csname vgrp-NeuMF-oldlo\endcsname{+0{,}00364}
+\expandafter\def\csname vgrp-NeuMF-oldhi\endcsname{+0{,}01063}
+\expandafter\def\csname vgrp-NeuMF-newdiff\endcsname{+0{,}00057}
+\expandafter\def\csname vgrp-NeuMF-newlo\endcsname{+0{,}00029}
+\expandafter\def\csname vgrp-NeuMF-newhi\endcsname{+0{,}00091}
+\expandafter\def\csname vgrp-NeuMF-oldonlydiff\endcsname{+0{,}00863}
+\expandafter\def\csname vgrp-NeuMF-oldonlylo\endcsname{+0{,}00510}
+\expandafter\def\csname vgrp-NeuMF-oldonlyhi\endcsname{+0{,}01223}
+\expandafter\def\csname vgrp-IKNN-olddiff\endcsname{+0{,}00779}
+\expandafter\def\csname vgrp-IKNN-oldlo\endcsname{+0{,}00367}
+\expandafter\def\csname vgrp-IKNN-oldhi\endcsname{+0{,}01182}
+\expandafter\def\csname vgrp-IKNN-newdiff\endcsname{+0{,}00057}
+\expandafter\def\csname vgrp-IKNN-newlo\endcsname{+0{,}00029}
+\expandafter\def\csname vgrp-IKNN-newhi\endcsname{+0{,}00091}
+\expandafter\def\csname vgrp-IKNN-oldonlydiff\endcsname{+0{,}00930}
+\expandafter\def\csname vgrp-IKNN-oldonlylo\endcsname{+0{,}00515}
+\expandafter\def\csname vgrp-IKNN-oldonlyhi\endcsname{+0{,}01342}
+\expandafter\def\csname vgrp-Pop-olddiff\endcsname{+0{,}00838}
+\expandafter\def\csname vgrp-Pop-oldlo\endcsname{+0{,}00483}
+\expandafter\def\csname vgrp-Pop-oldhi\endcsname{+0{,}01210}
+\expandafter\def\csname vgrp-Pop-newdiff\endcsname{+0{,}00057}
+\expandafter\def\csname vgrp-Pop-newlo\endcsname{+0{,}00029}
+\expandafter\def\csname vgrp-Pop-newhi\endcsname{+0{,}00091}
+\expandafter\def\csname vgrp-Pop-oldonlydiff\endcsname{+0{,}00990}
+\expandafter\def\csname vgrp-Pop-oldonlylo\endcsname{+0{,}00626}
+\expandafter\def\csname vgrp-Pop-oldonlyhi\endcsname{+0{,}01366}
+\expandafter\def\csname vgrp-RecPop-olddiff\endcsname{+0{,}00831}
+\expandafter\def\csname vgrp-RecPop-oldlo\endcsname{+0{,}00479}
+\expandafter\def\csname vgrp-RecPop-oldhi\endcsname{+0{,}01196}
+\expandafter\def\csname vgrp-RecPop-newdiff\endcsname{+0{,}00057}
+\expandafter\def\csname vgrp-RecPop-newlo\endcsname{+0{,}00029}
+\expandafter\def\csname vgrp-RecPop-newhi\endcsname{+0{,}00091}
+\expandafter\def\csname vgrp-RecPop-oldonlydiff\endcsname{+0{,}00982}
+\expandafter\def\csname vgrp-RecPop-oldonlylo\endcsname{+0{,}00625}
+\expandafter\def\csname vgrp-RecPop-oldonlyhi\endcsname{+0{,}01358}
+\expandafter\def\csname vgrp-MLP-olddiff\endcsname{+0{,}00869}
+\expandafter\def\csname vgrp-MLP-oldlo\endcsname{+0{,}00510}
+\expandafter\def\csname vgrp-MLP-oldhi\endcsname{+0{,}01239}
+\expandafter\def\csname vgrp-MLP-newdiff\endcsname{+0{,}00057}
+\expandafter\def\csname vgrp-MLP-newlo\endcsname{+0{,}00029}
+\expandafter\def\csname vgrp-MLP-newhi\endcsname{+0{,}00091}
+\expandafter\def\csname vgrp-MLP-oldonlydiff\endcsname{+0{,}01021}
+\expandafter\def\csname vgrp-MLP-oldonlylo\endcsname{+0{,}00655}
+\expandafter\def\csname vgrp-MLP-oldonlyhi\endcsname{+0{,}01400}
+\expandafter\def\csname vgrp-MLPF-olddiff\endcsname{+0{,}00774}
+\expandafter\def\csname vgrp-MLPF-oldlo\endcsname{+0{,}00488}
+\expandafter\def\csname vgrp-MLPF-oldhi\endcsname{+0{,}01075}
+\expandafter\def\csname vgrp-MLPF-newdiff\endcsname{+0{,}00054}
+\expandafter\def\csname vgrp-MLPF-newlo\endcsname{+0{,}00025}
+\expandafter\def\csname vgrp-MLPF-newhi\endcsname{+0{,}00087}
+\expandafter\def\csname vgrp-MLPF-oldonlydiff\endcsname{+0{,}00910}
+\expandafter\def\csname vgrp-MLPF-oldonlylo\endcsname{+0{,}00614}
+\expandafter\def\csname vgrp-MLPF-oldonlyhi\endcsname{+0{,}01223}
+\expandafter\def\csname vgrp-GMF-olddiff\endcsname{+0{,}00881}
+\expandafter\def\csname vgrp-GMF-oldlo\endcsname{+0{,}00534}
+\expandafter\def\csname vgrp-GMF-oldhi\endcsname{+0{,}01242}
+\expandafter\def\csname vgrp-GMF-newdiff\endcsname{+0{,}00057}
+\expandafter\def\csname vgrp-GMF-newlo\endcsname{+0{,}00029}
+\expandafter\def\csname vgrp-GMF-newhi\endcsname{+0{,}00091}
+\expandafter\def\csname vgrp-GMF-oldonlydiff\endcsname{+0{,}01032}
+\expandafter\def\csname vgrp-GMF-oldonlylo\endcsname{+0{,}00676}
+\expandafter\def\csname vgrp-GMF-oldonlyhi\endcsname{+0{,}01404}
+\expandafter\def\csname vgrp-Cont-olddiff\endcsname{+0{,}01908}
+\expandafter\def\csname vgrp-Cont-oldlo\endcsname{+0{,}01558}
+\expandafter\def\csname vgrp-Cont-oldhi\endcsname{+0{,}02272}
+\expandafter\def\csname vgrp-Cont-newdiff\endcsname{$-$0{,}00119}
+\expandafter\def\csname vgrp-Cont-newlo\endcsname{$-$0{,}00278}
+\expandafter\def\csname vgrp-Cont-newhi\endcsname{+0{,}00001}
+\expandafter\def\csname vgrp-Cont-oldonlydiff\endcsname{+0{,}01963}
+\expandafter\def\csname vgrp-Cont-oldonlylo\endcsname{+0{,}01597}
+\expandafter\def\csname vgrp-Cont-oldonlyhi\endcsname{+0{,}02346}
+\expandafter\def\csname vgrp-Rand-olddiff\endcsname{+0{,}02358}
+\expandafter\def\csname vgrp-Rand-oldlo\endcsname{+0{,}02043}
+\expandafter\def\csname vgrp-Rand-oldhi\endcsname{+0{,}02695}
+\expandafter\def\csname vgrp-Rand-newdiff\endcsname{+0{,}00029}
+\expandafter\def\csname vgrp-Rand-newlo\endcsname{$-$0{,}00005}
+\expandafter\def\csname vgrp-Rand-newhi\endcsname{+0{,}00066}
+\expandafter\def\csname vgrp-Rand-oldonlydiff\endcsname{+0{,}02474}
+\expandafter\def\csname vgrp-Rand-oldonlylo\endcsname{+0{,}02148}
+\expandafter\def\csname vgrp-Rand-oldonlyhi\endcsname{+0{,}02824}
+\expandafter\def\csname vdata-Btest-usersold\endcsname{2.347}
+\expandafter\def\csname vdata-Btest-usersnew\endcsname{1.940}
+\expandafter\def\csname vsig-1-rel\endcsname{+37{,}2\%}
+\expandafter\def\csname vsig-1-diff\endcsname{+0{,}00399}
+\expandafter\def\csname vsig-1-lo\endcsname{+0{,}00190}
+\expandafter\def\csname vsig-1-hi\endcsname{+0{,}00611}
+\expandafter\def\csname vsig-1-pholm\endcsname{$<$ 0{,}001}
+\expandafter\def\csname vsig-1-p\endcsname{$<$ 0{,}001}
+\expandafter\def\csname vsig-1-verdict\endcsname{A tốt hơn}
+\expandafter\def\csname vsig-1-phrase\endcsname{NeuMF-F tốt hơn có ý nghĩa}
+\expandafter\def\csname vsig-2-rel\endcsname{$-$5{,}8\%}
+\expandafter\def\csname vsig-2-diff\endcsname{$-$0{,}00091}
+\expandafter\def\csname vsig-2-lo\endcsname{$-$0{,}00208}
+\expandafter\def\csname vsig-2-hi\endcsname{+0{,}00027}
+\expandafter\def\csname vsig-2-pholm\endcsname{0{,}184}
+\expandafter\def\csname vsig-2-p\endcsname{0{,}184}
+\expandafter\def\csname vsig-2-verdict\endcsname{không khác biệt có ý nghĩa}
+\expandafter\def\csname vsig-2-phrase\endcsname{không khác biệt có ý nghĩa}
+\expandafter\def\csname vsig-3-rel\endcsname{+50{,}3\%}
+\expandafter\def\csname vsig-3-diff\endcsname{+0{,}00492}
+\expandafter\def\csname vsig-3-lo\endcsname{+0{,}00312}
+\expandafter\def\csname vsig-3-hi\endcsname{+0{,}00674}
+\expandafter\def\csname vsig-3-pholm\endcsname{$<$ 0{,}001}
+\expandafter\def\csname vsig-3-p\endcsname{$<$ 0{,}001}
+\expandafter\def\csname vsig-3-verdict\endcsname{A tốt hơn}
+\expandafter\def\csname vsig-3-phrase\endcsname{NeuMF-F tốt hơn có ý nghĩa}
+\expandafter\def\csname vsig-4-rel\endcsname{$-$16{,}1\%}
+\expandafter\def\csname vsig-4-diff\endcsname{$-$0{,}00282}
+\expandafter\def\csname vsig-4-lo\endcsname{$-$0{,}00421}
+\expandafter\def\csname vsig-4-hi\endcsname{$-$0{,}00147}
+\expandafter\def\csname vsig-4-pholm\endcsname{$<$ 0{,}001}
+\expandafter\def\csname vsig-4-p\endcsname{$<$ 0{,}001}
+\expandafter\def\csname vsig-4-verdict\endcsname{B tốt hơn}
+\expandafter\def\csname vsig-4-phrase\endcsname{LateFusion-F tốt hơn có ý nghĩa}
+\expandafter\def\csname vsig-5-rel\endcsname{+21{,}9\%}
+\expandafter\def\csname vsig-5-diff\endcsname{+0{,}00264}
+\expandafter\def\csname vsig-5-lo\endcsname{+0{,}00033}
+\expandafter\def\csname vsig-5-hi\endcsname{+0{,}00493}
+\expandafter\def\csname vsig-5-pholm\endcsname{$<$ 0{,}001}
+\expandafter\def\csname vsig-5-p\endcsname{$<$ 0{,}001}
+\expandafter\def\csname vsig-5-verdict\endcsname{A tốt hơn}
+\expandafter\def\csname vsig-5-phrase\endcsname{NeuMF-F tốt hơn có ý nghĩa}
+\expandafter\def\csname vsig-6-rel\endcsname{+43{,}1\%}
+\expandafter\def\csname vsig-6-diff\endcsname{+0{,}00443}
+\expandafter\def\csname vsig-6-lo\endcsname{+0{,}00178}
+\expandafter\def\csname vsig-6-hi\endcsname{+0{,}00707}
+\expandafter\def\csname vsig-6-pholm\endcsname{$<$ 0{,}001}
+\expandafter\def\csname vsig-6-p\endcsname{$<$ 0{,}001}
+\expandafter\def\csname vsig-6-verdict\endcsname{A tốt hơn}
+\expandafter\def\csname vsig-6-phrase\endcsname{NeuMF-F tốt hơn có ý nghĩa}
+\expandafter\def\csname vsig-7-rel\endcsname{+12{,}7\%}
+\expandafter\def\csname vsig-7-diff\endcsname{+0{,}00165}
+\expandafter\def\csname vsig-7-lo\endcsname{$-$0{,}00110}
+\expandafter\def\csname vsig-7-hi\endcsname{+0{,}00438}
+\expandafter\def\csname vsig-7-pholm\endcsname{$<$ 0{,}001}
+\expandafter\def\csname vsig-7-p\endcsname{$<$ 0{,}001}
+\expandafter\def\csname vsig-7-verdict\endcsname{không khác biệt có ý nghĩa}
+\expandafter\def\csname vsig-7-phrase\endcsname{không khác biệt có ý nghĩa}
+\expandafter\def\csname vsig-8-rel\endcsname{+47{,}8\%}
+\expandafter\def\csname vsig-8-diff\endcsname{+0{,}00475}
+\expandafter\def\csname vsig-8-lo\endcsname{+0{,}00247}
+\expandafter\def\csname vsig-8-hi\endcsname{+0{,}00705}
+\expandafter\def\csname vsig-8-pholm\endcsname{$<$ 0{,}001}
+\expandafter\def\csname vsig-8-p\endcsname{$<$ 0{,}001}
+\expandafter\def\csname vsig-8-verdict\endcsname{A tốt hơn}
+\expandafter\def\csname vsig-8-phrase\endcsname{NeuMF-F tốt hơn có ý nghĩa}
+\expandafter\def\csname vsig-9-rel\endcsname{+283{,}1\%}
+\expandafter\def\csname vsig-9-diff\endcsname{+0{,}01086}
+\expandafter\def\csname vsig-9-lo\endcsname{+0{,}00857}
+\expandafter\def\csname vsig-9-hi\endcsname{+0{,}01328}
+\expandafter\def\csname vsig-9-pholm\endcsname{$<$ 0{,}001}
+\expandafter\def\csname vsig-9-p\endcsname{$<$ 0{,}001}
+\expandafter\def\csname vsig-9-verdict\endcsname{A tốt hơn}
+\expandafter\def\csname vsig-9-phrase\endcsname{NeuMF-F tốt hơn có ý nghĩa}
+\expandafter\def\csname vsig-10-rel\endcsname{$-$11{,}2\%}
+\expandafter\def\csname vsig-10-diff\endcsname{$-$0{,}00135}
+\expandafter\def\csname vsig-10-lo\endcsname{$-$0{,}00236}
+\expandafter\def\csname vsig-10-hi\endcsname{$-$0{,}00040}
+\expandafter\def\csname vsig-10-pholm\endcsname{0{,}055}
+\expandafter\def\csname vsig-10-p\endcsname{0{,}028}
+\expandafter\def\csname vsig-10-verdict\endcsname{không khác biệt có ý nghĩa}
+\expandafter\def\csname vsig-10-phrase\endcsname{không khác biệt có ý nghĩa}
+\expandafter\def\csname vsig-all-summary\endcsname{7/10 so sánh đã đăng ký đạt tiêu chí ``tốt hơn'': NeuMF-F cao hơn NeuMF 37{,}2\% ($p_{Holm}$ $<$ 0{,}001); NeuMF-F cao hơn MLP-F 50{,}3\% ($p_{Holm}$ $<$ 0{,}001); NeuMF-F thấp hơn LateFusion-F 16{,}1\% ($p_{Holm}$ $<$ 0{,}001); NeuMF-F cao hơn BPR-MF 21{,}9\% ($p_{Holm}$ $<$ 0{,}001); NeuMF-F cao hơn ItemKNN 43{,}1\% ($p_{Holm}$ $<$ 0{,}001); NeuMF-F cao hơn MostPopular-Recent 47{,}8\% ($p_{Holm}$ $<$ 0{,}001); NeuMF-F cao hơn Content 283{,}1\% ($p_{Holm}$ $<$ 0{,}001).}
+\expandafter\def\csname vsig-all-summaryEN\endcsname{7 of the 10 comparisons meet the criterion: NeuMF-F outperforms NeuMF; NeuMF-F outperforms MLP-F; NeuMF-F underperforms LateFusion-F; NeuMF-F outperforms BPR-MF; NeuMF-F outperforms ItemKNN; NeuMF-F outperforms MostPopular-Recent; NeuMF-F outperforms Content}
+\expandafter\def\csname vsig-all-nsig\endcsname{7}
+\expandafter\def\csname vsig-all-n\endcsname{10}
+\expandafter\def\csname vabl-AblText-NDCG10\endcsname{0{,}01377}
+\expandafter\def\csname vabl-AblText-rel\endcsname{$-$7{,}4\%}
+\expandafter\def\csname vabl-AblText-lo\endcsname{$-$0{,}00378}
+\expandafter\def\csname vabl-AblText-hi\endcsname{+0{,}00152}
+\expandafter\def\csname vabl-AblTime-NDCG10\endcsname{0{,}01038}
+\expandafter\def\csname vabl-AblTime-rel\endcsname{$-$30{,}2\%}
+\expandafter\def\csname vabl-AblTime-lo\endcsname{$-$0{,}00703}
+\expandafter\def\csname vabl-AblTime-hi\endcsname{$-$0{,}00197}
+\expandafter\def\csname vabl-AblUser-NDCG10\endcsname{0{,}01433}
+\expandafter\def\csname vabl-AblUser-rel\endcsname{$-$3{,}6\%}
+\expandafter\def\csname vabl-AblUser-lo\endcsname{$-$0{,}00282}
+\expandafter\def\csname vabl-AblUser-hi\endcsname{+0{,}00180}
+\expandafter\def\csname vabl-AblAttr-NDCG10\endcsname{0{,}01357}
+\expandafter\def\csname vabl-AblAttr-rel\endcsname{$-$8{,}7\%}
+\expandafter\def\csname vabl-AblAttr-lo\endcsname{$-$0{,}00335}
+\expandafter\def\csname vabl-AblAttr-hi\endcsname{+0{,}00082}
+\expandafter\def\csname vabl-AblIdDrop-NDCG10\endcsname{0{,}01486}
+\expandafter\def\csname vabl-AblIdDrop-rel\endcsname{+0{,}0\%}
+\expandafter\def\csname vabl-AblIdDrop-lo\endcsname{+0{,}00000}
+\expandafter\def\csname vabl-AblIdDrop-hi\endcsname{+0{,}00000}
+\expandafter\def\csname vabl-Full-NDCG10\endcsname{0{,}01486}
+\expandafter\def\csname vbey-LateF-cov\endcsname{2{,}5\%}
+\expandafter\def\csname vbey-LateF-new\endcsname{0{,}4\%}
+\expandafter\def\csname vbey-LateF-time\endcsname{0{,}0}
+\expandafter\def\csname vbey-GMFF-cov\endcsname{15{,}2\%}
+\expandafter\def\csname vbey-GMFF-new\endcsname{11{,}2\%}
+\expandafter\def\csname vbey-GMFF-time\endcsname{7{,}8}
+\expandafter\def\csname vbey-GMFF-epoch\endcsname{7{,}4}
+\expandafter\def\csname vbey-NeuMFF-cov\endcsname{6{,}9\%}
+\expandafter\def\csname vbey-NeuMFF-new\endcsname{7{,}1\%}
+\expandafter\def\csname vbey-NeuMFF-time\endcsname{9{,}3}
+\expandafter\def\csname vbey-NeuMFF-epoch\endcsname{6{,}6}
+\expandafter\def\csname vbey-UKNN-cov\endcsname{8{,}3\%}
+\expandafter\def\csname vbey-UKNN-new\endcsname{0{,}0\%}
+\expandafter\def\csname vbey-UKNN-time\endcsname{0{,}0}
+\expandafter\def\csname vbey-BPR-cov\endcsname{5{,}2\%}
+\expandafter\def\csname vbey-BPR-new\endcsname{0{,}0\%}
+\expandafter\def\csname vbey-BPR-time\endcsname{1{,}9}
+\expandafter\def\csname vbey-NeuMF-cov\endcsname{4{,}3\%}
+\expandafter\def\csname vbey-NeuMF-new\endcsname{0{,}0\%}
+\expandafter\def\csname vbey-NeuMF-time\endcsname{2{,}8}
+\expandafter\def\csname vbey-NeuMF-epoch\endcsname{3{,}4}
+\expandafter\def\csname vbey-IKNN-cov\endcsname{22{,}8\%}
+\expandafter\def\csname vbey-IKNN-new\endcsname{0{,}0\%}
+\expandafter\def\csname vbey-IKNN-time\endcsname{0{,}0}
+\expandafter\def\csname vbey-Pop-cov\endcsname{0{,}1\%}
+\expandafter\def\csname vbey-Pop-new\endcsname{0{,}0\%}
+\expandafter\def\csname vbey-Pop-time\endcsname{0{,}0}
+\expandafter\def\csname vbey-RecPop-cov\endcsname{0{,}1\%}
+\expandafter\def\csname vbey-RecPop-new\endcsname{0{,}0\%}
+\expandafter\def\csname vbey-RecPop-time\endcsname{0{,}0}
+\expandafter\def\csname vbey-MLP-cov\endcsname{0{,}1\%}
+\expandafter\def\csname vbey-MLP-new\endcsname{0{,}0\%}
+\expandafter\def\csname vbey-MLP-time\endcsname{2{,}8}
+\expandafter\def\csname vbey-MLP-epoch\endcsname{4{,}2}
+\expandafter\def\csname vbey-MLPF-cov\endcsname{0{,}1\%}
+\expandafter\def\csname vbey-MLPF-new\endcsname{0{,}0\%}
+\expandafter\def\csname vbey-MLPF-time\endcsname{4{,}7}
+\expandafter\def\csname vbey-MLPF-epoch\endcsname{6{,}8}
+\expandafter\def\csname vbey-GMF-cov\endcsname{0{,}1\%}
+\expandafter\def\csname vbey-GMF-new\endcsname{0{,}0\%}
+\expandafter\def\csname vbey-GMF-time\endcsname{1{,}8}
+\expandafter\def\csname vbey-GMF-epoch\endcsname{1{,}8}
+\expandafter\def\csname vbey-Cont-cov\endcsname{43{,}9\%}
+\expandafter\def\csname vbey-Cont-new\endcsname{18{,}2\%}
+\expandafter\def\csname vbey-Cont-time\endcsname{0{,}0}
+\expandafter\def\csname vbey-Rand-cov\endcsname{83{,}1\%}
+\expandafter\def\csname vbey-Rand-new\endcsname{43{,}8\%}
+\expandafter\def\csname vbey-Rand-time\endcsname{0{,}0}
+\expandafter\def\csname vdata-run-cpu\endcsname{AMD Ryzen 7 6800H with Radeon Graphics}
+\expandafter\def\csname vdata-run-gpu\endcsname{NVIDIA GeForce RTX 3050 Laptop GPU}
+\expandafter\def\csname vdata-run-device\endcsname{GPU}
+\expandafter\def\csname vdata-run-torch\endcsname{2.6.0+cu124}
+\expandafter\def\csname vdata-run-python\endcsname{3.12.2}
+\expandafter\def\csname vdata-run-hours\endcsname{4{,}1}
+\expandafter\def\csname vdata-run-commit\endcsname{2d9e331}
+\expandafter\def\csname vdata-run-codehash\endcsname{b533374e5246d082}
+\expandafter\def\csname vdata-run-seedlist\endcsname{42, 2024, 2025, 2026, 3407}
