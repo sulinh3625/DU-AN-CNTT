@@ -152,5 +152,72 @@
       "NDCG@10_new": 0.0
     },
     "checkpoint": null
+  },
+  "neumf": {
+    "params": {
+      "dropout": 0.2,
+      "embedding_dim": 64,
+      "lr": 0.0005,
+      "negative_ratio": 4,
+      "weight_decay": 1e-06
+    },
+    "config_hash": "38ddf99cf52ba761",
+    "best_epoch": 5,
+    "val": {
+      "NDCG@10": 0.011087,
+      "Recall@10": 0.01505,
+      "HR@10": 0.040825,
+      "Precision@10": 0.004576,
+      "NDCG@5": 0.008911,
+      "NDCG@20": 0.013361,
+      "NDCG@10_old": 0.012225,
+      "NDCG@10_new": 0.0
+    },
+    "checkpoint": null
+  },
+  "gmf_f": {
+    "params": {
+      "embedding_dim": 32,
+      "id_dropout": 0.0,
+      "lr": 0.001,
+      "negative_ratio": 8,
+      "weight_decay": 1e-06
+    },
+    "config_hash": "19c2bab5c59e1bf9",
+    "best_epoch": 11,
+    "val": {
+      "NDCG@10": 0.015702,
+      "Recall@10": 0.022776,
+      "HR@10": 0.064603,
+      "Precision@10": 0.007044,
+      "NDCG@5": 0.012318,
+      "NDCG@20": 0.021163,
+      "NDCG@10_old": 0.016795,
+      "NDCG@10_new": 0.002033
+    },
+    "checkpoint": "outputs/v2/tuning/gmf_f_best.pt"
+  },
+  "mlp_f": {
+    "params": {
+      "dropout": 0.0,
+      "embedding_dim": 32,
+      "id_dropout": 0.5,
+      "lr": 0.001,
+      "negative_ratio": 8,
+      "weight_decay": 0.0
+    },
+    "config_hash": "066f69c4a88d0519",
+    "best_epoch": 16,
+    "val": {
+      "NDCG@10": 0.012658,
+      "Recall@10": 0.019755,
+      "HR@10": 0.056976,
+      "Precision@10": 0.006326,
+      "NDCG@5": 0.009752,
+      "NDCG@20": 0.016883,
+      "NDCG@10_old": 0.013983,
+      "NDCG@10_new": 0.000653
+    },
+    "checkpoint": "outputs/v2/tuning/mlp_f_best.pt"
   }
 }
