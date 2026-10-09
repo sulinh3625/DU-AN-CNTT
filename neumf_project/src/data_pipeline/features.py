@@ -8,7 +8,8 @@ Ba nguồn, đều KHÔNG dùng nhãn của giai đoạn được đánh giá:
 - Thông tin khách (customers.csv): nhóm tuổi, trạng thái hội viên, tần suất nhận tin, FN, Active.
 
 Cache (bị .gitignore): data/processed/hm/catalog_v2.npz, data/processed/hm/daily_sales_v2.npz — tạo bằng
-`python scripts/21_build_features.py`.
+`python scripts/21_build_features.py`. Cache theo article_id; mô hình dùng bản đã gộp mọi màu của một mẫu thành một sản
+phẩm (product_code = article_id // 1000) bằng group_by_product.
 """
 from __future__ import annotations
 
@@ -23,6 +24,7 @@ DAY0 = np.datetime64("2018-09-20")  # ngày đầu của transactions_train.csv
 ITEM_CAT_COLS = ["product_type_no", "product_group_name", "graphical_appearance_no", "colour_group_code",
                  "perceived_colour_value_id", "perceived_colour_master_id", "department_no", "index_code",
                  "index_group_no", "section_no", "garment_group_no"]
+COLOUR_COLS = ("colour_group_code", "perceived_colour_value_id", "perceived_colour_master_id")  # hằng số sau khi gộp
 USER_CAT_COLS = ["age_bucket", "club_member_status", "fashion_news_frequency", "FN", "Active"]
 AGE_EDGES = [20, 25, 30, 35, 45, 55, 65]  # nhóm tuổi: <20, 20–24, ..., 55–64, 65+
 SALES_WINDOWS = (7, 28, 91)
@@ -152,6 +154,45 @@ def item_time_features(cum: np.ndarray, first_day: np.ndarray, items: np.ndarray
     out = np.stack(cols, axis=-1).astype(np.float32)
     out[..., :-1] /= LOG_SCALE
     return out
+
+
+# ---------------------------------------------------- gộp màu theo product_code
+def product_code_of(article_ids) -> np.ndarray:
+    """product_code của H&M = article_id // 1000 (3 chữ số cuối là biến thể màu)."""
+    return np.asarray(article_ids, dtype=np.int64) // 1000
+
+
+def check_product_code(articles_path: str | Path) -> None:
+    """Dừng nếu articles.csv có dòng mà article_id // 1000 khác cột product_code (không tự đổi sang cột đó)."""
+    a = pd.read_csv(articles_path, usecols=["article_id", "product_code"],
+                    dtype={"article_id": "int64", "product_code": "int64"})
+    bad = int((product_code_of(a["article_id"]) != a["product_code"].to_numpy()).sum())
+    if bad:
+        raise ValueError(f"{articles_path}: {bad:,}/{len(a):,} dòng có article_id // 1000 khác product_code — dừng")
+
+
+def group_by_product(catalog: Catalog, sales: DailySales) -> tuple[Catalog, DailySales]:
+    """Gộp mọi màu của cùng một mẫu thành một sản phẩm (product_code_of).
+
+    Catalog mới giữ tên trường article_ids nhưng giá trị là product_code (tăng dần, duy nhất). Thuộc tính lấy theo biến
+    thể có article_id nhỏ nhất; 3 cột màu (COLOUR_COLS) đặt về 0, cardinality 1 — số cột vẫn là len(ITEM_CAT_COLS) nên
+    NeuMFF không phải đổi. Văn bản = trung bình các biến thể rồi chuẩn hoá L2 (hàng toàn 0 giữ 0). Doanh số theo ngày =
+    tổng các biến thể; ngày bán đầu = ngày sớm nhất. Dùng ma trận thưa chỉ báo (sản phẩm × biến thể)."""
+    # article_ids tăng dần -> lần xuất hiện đầu của mỗi product_code là biến thể có article_id nhỏ nhất
+    codes, first, inv = np.unique(product_code_of(catalog.article_ids), return_index=True, return_inverse=True)
+    n_var = len(catalog.article_ids)
+    onehot = sparse.csr_matrix((np.ones(n_var, dtype=np.int32), (inv, np.arange(n_var))), shape=(len(codes), n_var))
+    cats, cards = catalog.cats[first].copy(), list(catalog.cardinalities)
+    for col in COLOUR_COLS:
+        k = ITEM_CAT_COLS.index(col)
+        cats[:, k], cards[k] = 0, 1
+    text = (onehot @ catalog.text) / np.bincount(inv)[:, None]
+    norm = np.linalg.norm(text, axis=1, keepdims=True)
+    text = (text / np.where(norm > 0, norm, 1.0)).astype(np.float32)
+    counts = (onehot @ sales.counts).astype(np.int32).tocsr()
+    first_day = np.full(len(codes), np.iinfo(np.int64).max, dtype=np.int64)
+    np.minimum.at(first_day, inv, sales.first_day)
+    return Catalog(codes, cats, cards, text), DailySales(counts, first_day)
 
 
 # ---------------------------------------------------------------- khách hàng

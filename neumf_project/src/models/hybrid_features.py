@@ -257,12 +257,13 @@ class RecentPopularity:
     __call__ = score
 
 
-CONTENT_ONEHOT = {"product_group_name": 1, "colour_group_code": 3, "index_group_no": 8, "garment_group_no": 10}
+# Không có màu: sau khi gộp mọi màu của một mẫu (features.group_by_product), cột màu là hằng số.
+CONTENT_ONEHOT = {"product_group_name": 1, "index_group_no": 8, "garment_group_no": 10}
 
 
 class ContentProfile:
     """Gợi ý theo nội dung (không dùng ID, không cần lấy mẫu âm): vector sản phẩm = [vector văn bản ; one-hot nhóm sản
-    phẩm, màu, nhóm chỉ mục, nhóm may mặc], chuẩn hoá L2; hồ sơ user = trung bình (có trọng số theo độ mới nếu đặt
+    phẩm, nhóm chỉ mục, nhóm may mặc], chuẩn hoá L2; hồ sơ user = trung bình (có trọng số theo độ mới nếu đặt
     half_life ngày) vector các sản phẩm đã mua trong tập huấn luyện; điểm = cosine. Chấm được cả sản phẩm mới."""
 
     def __init__(self, item_text, item_cats, item_cards, train_df, n_users: int, cutoff: int,
