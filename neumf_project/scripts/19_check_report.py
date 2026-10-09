@@ -124,10 +124,10 @@ def claims(d: Data):
          "v2: mọi mô hình chỉ dùng ID có NDCG@10 = 0 trên sản phẩm mới", id_new_zero, ["S2"]),
         ("frontmatter/abstract_english.tex", "whereas every ID-only model scores zero by construction",
          "v2: mọi mô hình chỉ dùng ID có NDCG@10 = 0 trên sản phẩm mới", id_new_zero, ["S2"]),
-        ("content/C4.tex", "Most Popular là trường hợp giới hạn với độ phủ",
-         "v2: Most Popular có độ phủ top-10 không cao hơn mô hình cá nhân hoá nào",
-         lambda: B2.loc["popularity", "coverage10"] <= min(B2.loc[m, "coverage10"] for m in PERSONALIZED
-                                                           if m in B2.index), ["B2"]),
+        ("content/C4.tex", "Most Popular và MLP-F có độ phủ thấp nhất",
+         "v2: Most Popular và MLP-F có độ phủ top-10 thấp nhất (so với các mô hình cá nhân hoá)",
+         lambda: set(B2.loc[[m for m in ["popularity", *PERSONALIZED] if m in B2.index], "coverage10"]
+                     .nsmallest(2).index) == {"popularity", "mlp_f"}, ["B2"]),
         ("content/C4.tex", "Thang giá trị tuyệt đối thấp", "v2: NDCG@10 cao nhất < 0,05",
          lambda: S2["NDCG@10_mean"].max() < 0.05, ["S2"]),
         ("content/C4.tex", "mỗi khách có vài sản phẩm đúng giữa khoảng",

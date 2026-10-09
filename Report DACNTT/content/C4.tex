@@ -88,7 +88,7 @@ So với NeuMF-F đầy đủ (NDCG@10 = \VAbl{Full}{NDCG10} ở seed 42), bỏ 
 
 \bangketquaV{tab_v2_beyond.tex}{\texttt{scripts/23\_final\_v2.py}}
 
-\bangrefV{tab_v2_beyond.tex}{tab:v2beyond} mô tả danh sách top-10 (mục~\ref{subsec:beyond_accuracy}) và chi phí huấn luyện. Most Popular là trường hợp giới hạn với độ phủ \VBey{Pop}{cov}; NeuMF-F có độ phủ \VBey{NeuMFF}{cov} và tỉ lệ sản phẩm mới trong top-10 là \VBey{NeuMFF}{new} (Content: \VBey{Cont}{new}). Thời gian huấn luyện trung bình mỗi seed của NeuMF-F là \VBey{NeuMFF}{time} phút, so với \VBey{NeuMF}{time} phút của NeuMF chỉ dùng ID và \VBey{BPR}{time} phút của BPR-MF.
+\bangrefV{tab_v2_beyond.tex}{tab:v2beyond} mô tả danh sách top-10 (mục~\ref{subsec:beyond_accuracy}) và chi phí huấn luyện. Most Popular và MLP-F có độ phủ thấp nhất (\VBey{Pop}{cov} và \VBey{MLPF}{cov}): MLP-F gần như chỉ gợi ý các sản phẩm phổ biến; NeuMF-F có độ phủ \VBey{NeuMFF}{cov} và tỉ lệ sản phẩm mới trong top-10 là \VBey{NeuMFF}{new} (Content: \VBey{Cont}{new}). Thời gian huấn luyện trung bình mỗi seed của NeuMF-F là \VBey{NeuMFF}{time} phút, so với \VBey{NeuMF}{time} phút của NeuMF chỉ dùng ID và \VBey{BPR}{time} phút của BPR-MF.
 
 \subsection{Hội tụ và độ ổn định giữa hai mẫu}
 \label{subsec:curves}
