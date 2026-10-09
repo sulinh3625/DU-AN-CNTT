@@ -1,15 +1,15 @@
 """Entry point tổng hợp cho pipeline NeuMF — gom các lệnh trong scripts/ lại một chỗ.
 
 Giao thức v2 (audit/PREREG_v2.md) — kết quả chính của báo cáo:
-    python run.py v2-data                    # mẫu kiểm định B + đặc trưng (chạy 1 lần, cần dữ liệu gốc H&M)
+    python run.py sample-hm                  # mẫu phát triển (khối 0) -> data/processed/hm/mau_phat_trien.csv (chạy 1 lần)
+    python run.py v2-data                    # mẫu kiểm định (khối 2) + đặc trưng (chạy 1 lần, cần dữ liệu gốc H&M)
     python run.py v2-tune --resume           # tinh chỉnh trên tập xác thực của mẫu A (5–6 giờ CPU)
     python run.py v2-dry-run                 # thử trọn đường ống đánh giá cuối trên tập xác thực của A (không chấm test)
     python run.py v2-final --reason "..."    # đánh giá cuối trên tập kiểm thử của mẫu B (mở đúng một lần) + xuất báo cáo
     python run.py v2-report                  # chỉ tính lại kiểm định, bảng, hình, macro từ outputs/v2/final/
 
 Giao thức v1 (lịch sử phát triển; config mặc định: configs/hm500k.yaml, run tag mặc định: hm500k_seed<seed>):
-    python run.py sample-hm                  # tạo data/processed/hm/hm500k_transactions.csv (chạy 1 lần)
-    python run.py all                        # audit + train + evaluate, trọn gói (khám phá, bảng trên validation);
+    python run.py all                       # audit + train + evaluate, trọn gói (khám phá, bảng trên validation);
                                              #   xong thì hỏi y/N chạy tiếp multi-seed + aggregate (--multi-seed / --no-multi-seed để khỏi hỏi)
     python run.py preflight                  # kiểm tra sẵn sàng trước khi chạy lại (tree sạch, PREREG, dữ liệu, tái lập tuning)
     python run.py final --reason "..."       # chạy lại TOÀN BỘ số liệu báo cáo: 18 → 20 → 11 → 12 → 17 → 16 → 13 → 14 → 15 → 19
@@ -53,7 +53,7 @@ def _run(script: str, *args: str) -> None:
 
 
 def cmd_sample_hm(args):
-    _run("00_sample_hm.py")
+    _run("00_sample_hm.py", "--block", str(args.block))
 
 
 def cmd_audit(args):
@@ -146,8 +146,8 @@ def cmd_check_report(args):
 
 
 def cmd_v2_data(args):
-    """Mẫu kiểm định B (khách khác hẳn mẫu A) và đặc trưng danh mục/doanh số theo ngày."""
-    _run("00_sample_hm.py", "--holdout")
+    """Mẫu kiểm định (khối 2, khách khác hẳn mẫu phát triển) và đặc trưng danh mục/doanh số theo ngày."""
+    _run("00_sample_hm.py", "--block", "2")
     _run("21_build_features.py")
 
 
@@ -217,8 +217,9 @@ def main():
         .add_argument("--resume", action="store_true", help="chạy tiếp, bỏ qua cấu hình đã có")
     sub.add_parser("check-report", help="Đối chiếu câu chữ báo cáo/tài liệu với số liệu hiện có (19)") \
         .add_argument("--strict", action="store_true", help="trả mã lỗi nếu có khẳng định sai")
-    sub.add_parser("sample-hm", help="Tạo bộ dữ liệu hm500k từ transactions_train.csv gốc (chạy 1 lần)")
-    sub.add_parser("v2-data", help="v2: mẫu kiểm định B + đặc trưng (00 --holdout, 21)")
+    sub.add_parser("sample-hm", help="Lấy mẫu khách theo khối từ transactions_train.csv gốc (chạy 1 lần)") \
+        .add_argument("--block", type=int, default=0, help="0 = mẫu phát triển (mặc định), 2 = mẫu kiểm định")
+    sub.add_parser("v2-data", help="v2: mẫu kiểm định (khối 2) + đặc trưng (00 --block 2, 21)")
     p = sub.add_parser("v2-tune", help="v2: tinh chỉnh trên tập xác thực của mẫu A (22)")
     p.add_argument("--model", nargs="+", default=["all"], help="mặc định: mọi mô hình")
     p.add_argument("--resume", action="store_true", help="bỏ qua cấu hình đã có trong audit/v2/tuning_log.csv")

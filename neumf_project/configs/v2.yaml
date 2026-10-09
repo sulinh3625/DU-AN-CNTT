@@ -1,7 +1,8 @@
 # Giao thức v2 (audit/PREREG_v2.md): mô hình lai MF + DNN có đặc trưng, đánh giá trên mẫu khách hàng độc lập.
-samples:
-  dev: data/processed/hm/hm500k_transactions.csv        # mẫu phát triển: tinh chỉnh, chỉ dùng tập xác thực
-  holdout: data/processed/hm/hm500k_b_transactions.csv  # mẫu kiểm định: khách khác hẳn, tập kiểm thử mở đúng một lần
+samples:  # scripts/00_sample_hm.py --block 0 / --block 2 (khối 1 = hm500k_b cũ đã bị mở, không dùng)
+  dev: data/processed/hm/mau_phat_trien.csv     # mẫu phát triển (khối 0): tinh chỉnh, chỉ dùng tập xác thực
+  holdout: data/processed/hm/mau_kiem_dinh.csv  # mẫu kiểm định (khối 2): khách khác hẳn, tập kiểm thử mở đúng một lần
+data_dir: outputs/data    # dữ liệu đã lọc của từng mẫu (scripts/02_prepare_data.py): <tên mẫu>.csv.gz + manifest.json
 features:
   catalog: data/processed/hm/catalog_v2.npz             # scripts/21_build_features.py
   sales: data/processed/hm/daily_sales_v2.npz
