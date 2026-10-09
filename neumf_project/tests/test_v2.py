@@ -10,8 +10,8 @@ import torch
 from scipy import sparse
 
 from src.data_pipeline.feature_dataset import FeatureTrainDataset
-from src.data_pipeline.features import (Catalog, DailySales, ITEM_TIME_DIM, item_time_features, to_day,
-                                        user_time_features)
+from src.data_pipeline.features import (COLOUR_COLS, ITEM_CAT_COLS, ITEM_TIME_DIM, Catalog, DailySales,
+                                        group_by_product, item_time_features, to_day, user_time_features)
 from src.data_pipeline.protocol_v2 import build_v2
 from src.models.hybrid_features import ContentProfile, MaskedScoreFn, MaskedScorer, NeuMFF, RecentPopularity
 
@@ -50,6 +50,30 @@ def test_user_time_features_strictly_before_day():
     assert np.allclose(n_before, [0, 1, 3, 0])
     gap = np.expm1(f[:, 0] * 10)
     assert np.allclose(gap[[1, 2]], [4, 1]) and np.isclose(gap[0], 730)
+
+
+def test_group_by_product_merges_colour_variants():
+    ids = np.array([108775015, 108775044, 110065001], dtype=np.int64)  # hai màu của mẫu 108775 và một mẫu khác
+    cats = (np.arange(33, dtype=np.int32).reshape(3, 11) % 7) + 1  # thuộc tính khác nhau giữa các biến thể
+    cards = list(range(10, 21))
+    text = np.array([[0.6, 0.8, 0, 0], [0, 0, 0, 1], [0, 0, 0, 0]], dtype=np.float32)
+    counts = np.zeros((3, 10), dtype=np.int64)
+    counts[0, 4], counts[1, 2], counts[1, 4] = 2, 1, 3  # 108775015 bán ngày 4; 108775044 bán ngày 2 và 4
+    cat, ds = group_by_product(Catalog(ids, cats, cards, text), _sales(counts))
+    assert cat.article_ids.tolist() == [108775, 110065]
+    assert ds.counts.dtype == np.int32 and ds.counts.toarray().tolist() == [(counts[0] + counts[1]).tolist(),
+                                                                            counts[2].tolist()]
+    assert ds.first_day.tolist() == [2, 10]  # ngày bán đầu sớm nhất của các màu; 10 = chưa từng bán
+    colour = [ITEM_CAT_COLS.index(c) for c in COLOUR_COLS]
+    other = [k for k in range(len(ITEM_CAT_COLS)) if k not in colour]
+    assert cat.cats.shape == (2, len(ITEM_CAT_COLS)) and (cat.cats[:, colour] == 0).all()
+    assert [cat.cardinalities[k] for k in colour] == [1, 1, 1]
+    assert (cat.cats[0, other] == cats[0, other]).all()  # thuộc tính khác lấy theo biến thể có mã nhỏ nhất
+    assert (cat.cats[1, other] == cats[2, other]).all()
+    assert [cat.cardinalities[k] for k in other] == [cards[k] for k in other]
+    mean = (text[0] + text[1]) / 2
+    assert np.allclose(cat.text[0], mean / np.linalg.norm(mean)) and np.isclose(np.linalg.norm(cat.text[0]), 1.0)
+    assert (cat.text[1] == 0).all()  # hàng văn bản toàn 0 giữ 0
 
 
 # ------------------------------------------------------------ dữ liệu huấn luyện
