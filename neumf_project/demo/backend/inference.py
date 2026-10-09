@@ -80,6 +80,22 @@ def rank_from_scores(ctx, u: int, scores: np.ndarray, top_k: int, record) -> dic
     }
 
 
+def best_ranks(ctx, model_name: str, users=None, chunk: int = 256) -> dict[int, int]:
+    """Hạng tốt nhất của các sản phẩm đích (đúng evaluation.rank của recommend) cho từng khách có sản phẩm đích — để
+    lọc khách mà mô hình gợi ý trúng. Mạng PyTorch chấm mọi item theo lô khách rồi lấy hàng của từng khách."""
+    users = ctx.target_users if users is None else np.asarray(users, dtype=np.int64)
+    neural = model_name not in ctx.scorers
+    out = {}
+    for s in range(0, len(users), chunk):
+        batch = users[s:s + chunk]
+        rows = score_items(ctx, model_name, batch) if neural else [None] * len(batch)
+        for u, row in zip(batch, rows):
+            rec = eval_record(ctx, int(u))
+            res = rank_from_scores(ctx, int(u), candidate_scores(ctx, model_name, int(u), rec, row), 1, rec)
+            out[int(u)] = min(res["ranks"])
+    return out
+
+
 def recommend(ctx, model_name: str, u: int, k: int) -> dict:
     record = eval_record(ctx, u)
     res = rank_from_scores(ctx, u, candidate_scores(ctx, model_name, u, record), k, record)

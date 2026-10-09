@@ -36,7 +36,7 @@ python run.py demo           # hoặc: python -m demo
 
 | Màn hình | Nội dung |
 |---|---|
-| **Kiểm thử mô hình** (trang mặc định) | **Chọn khách**: thanh khách hiện mã, số món đã mua / món đích, nhóm giao dịch, khu vực mua nhiều nhất, tuổi, loại sản phẩm hay mua; nút ‹ › (phím ← →) sang khách trước / sau trong danh sách đang lọc, nút Ngẫu nhiên. Bảng chọn mở bằng **Ctrl K** hoặc **/**: tìm theo một đoạn `customer_id`, lọc nhóm giao dịch và khu vực, sắp xếp, ↑ ↓ Enter để chọn, mục "Xem gần đây" (lưu trong trình duyệt). URL giữ `?user=` nên tải lại hay gửi link vẫn mở đúng khách. **Sau khi chọn**: lịch sử mua (đúng dữ liệu mô hình đã học), top-K của một mô hình hoặc so sánh hai mô hình, hạng của từng sản phẩm đích, HR@K, NDCG@K, Recall@K. Sản phẩm mới có nhãn **"Mới"**. Thẻ **"10 khách tương đồng nhất"** (UserKNN): độ tương đồng, số món mua chung, láng giềng đã mua sản phẩm đích nào. |
+| **Kiểm thử mô hình** (trang mặc định) | **Chọn khách**: thanh khách hiện mã, số món đã mua / món đích, nhóm giao dịch, khu vực mua nhiều nhất, tuổi, loại sản phẩm hay mua; nút ‹ › (phím ← →) sang khách trước / sau trong danh sách đang lọc, nút Ngẫu nhiên. Bảng chọn mở bằng **Ctrl K** hoặc **/**: tìm theo một đoạn `customer_id`, lọc nhóm giao dịch và khu vực, lọc **Gợi ý trúng / Gợi ý trượt** (có / không có món đích trong top-K của mô hình và K đang chọn; lần đầu với mỗi mô hình chấm mọi khách mất vài giây, sau đó giữ lại), sắp xếp (kể cả theo hạng món đích tốt nhất), ↑ ↓ Enter để chọn, mục "Xem gần đây" (lưu trong trình duyệt). URL giữ `?user=` nên tải lại hay gửi link vẫn mở đúng khách. **Sau khi chọn**: lịch sử mua (đúng dữ liệu mô hình đã học), top-K của một mô hình hoặc so sánh hai mô hình, hạng của từng sản phẩm đích, HR@K, NDCG@K, Recall@K. Sản phẩm mới có nhãn **"Mới"**. Thẻ **"10 khách tương đồng nhất"** (UserKNN): độ tương đồng, số món mua chung, láng giềng đã mua sản phẩm đích nào. |
 | **Dashboard** | Chỉ đọc file kết quả đã chạy (chế độ v2: `outputs/v2/final/*.csv` — kết quả 5 seed, kiểm định họ 10 so sánh, NDCG@10 theo nhóm sản phẩm cũ/mới, độ phủ và tỉ lệ sản phẩm mới, ablation NeuMF-F). Thiếu file thì hiện lệnh cần chạy. |
 
 ## 4. Chế độ
@@ -124,9 +124,9 @@ demo/
 | `GET /api/context` | Chế độ, run, số khách/sản phẩm, giá trị K, mô hình khả dụng và mô hình bị ẩn kèm lý do |
 | `POST /api/reload` | Xoá cache, nạp lại |
 | `GET /api/users/facets` | Số khách có sản phẩm đích; ngưỡng và số khách của nhóm ít / trung bình / nhiều giao dịch; số khách theo khu vực mua nhiều nhất |
-| `GET /api/users/search?q=&bucket=&area=&sort=&offset=&limit=` | Danh sách khách có sản phẩm đích: `customer_id` chứa `q` (khớp ở đầu xếp trước), lọc nhóm / khu vực, sắp `train_desc` · `train_asc` · `targets_desc` · `id`; trả `total` và một trang |
-| `GET /api/users/random?bucket=&area=` | Khách ngẫu nhiên trong bộ lọc |
-| `GET /api/users/{customer_id}/position?q=&bucket=&area=&sort=` | Vị trí của khách trong danh sách đang lọc, kèm khách liền trước / liền sau |
+| `GET /api/users/search?q=&bucket=&area=&hit=&model=&k=&sort=&offset=&limit=` | Danh sách khách có sản phẩm đích: `customer_id` chứa `q` (khớp ở đầu xếp trước), lọc nhóm / khu vực, `hit=hit\|miss` theo top-`k` của `model` (kèm cột `best_rank`), sắp `train_desc` · `train_asc` · `targets_desc` · `rank` · `id`; trả `total` và một trang |
+| `GET /api/users/random?…` | Khách ngẫu nhiên trong bộ lọc (cùng tham số, bỏ qua `q`) |
+| `GET /api/users/{customer_id}/position?…` | Vị trí của khách trong danh sách đang lọc (cùng tham số), kèm khách liền trước / liền sau |
 | `GET /api/users/{customer_id}/history` | Thông tin khách (`profile`) và lịch sử mua mô hình đã học, sắp theo thời gian |
 | `GET /api/users/{customer_id}/recommend?model=&k=` | Top-K, hạng từng sản phẩm đích, số ứng viên, HR/NDCG/Recall@K |
 | `GET /api/users/{customer_id}/neighbors?k=10` | Khách tương đồng nhất theo UserKNN, số món mua chung, láng giềng đã mua sản phẩm đích nào |

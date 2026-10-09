@@ -281,3 +281,16 @@ def test_filter_users_search_sort_and_position():
     assert user_position(full, "bf04")["prev"] is None and user_position(full, "cd03")["next"] is None
     out = user_position(filter_users(df, bucket="high"), "ab01")  # ngoài bộ lọc: "sau" = khách đầu danh sách
     assert out["index"] is None and out["prev"] is None and out["next"]["customer_id"] == "bf04"
+    ranks = pd.Series({"ab01": 3, "ab02": 25, "cd03": 10, "bf04": 11})  # hạng món đích tốt nhất của một mô hình
+    assert filter_users(df, best_rank=ranks, hit="hit", k=10, sort="rank")["customer_id"].tolist() == ["ab01", "cd03"]
+    assert filter_users(df, best_rank=ranks, hit="miss", k=20)["customer_id"].tolist() == ["ab02"]
+    assert filter_users(df, best_rank=ranks)["best_rank"].tolist() == [11, 3, 25, 10]  # không lọc: chỉ thêm cột
+
+
+def test_final_best_ranks_match_recommend(fctx):
+    """Hạng dùng để lọc khách gợi ý trúng = đúng hạng mà màn Kiểm thử mô hình hiển thị cho từng khách."""
+    users = fctx.target_users[:12]
+    for m in ("GMF", "MostPopular", "LateFusion-GMF-MLP"):
+        if m in fctx.available_models:
+            got = inference.best_ranks(fctx, m, users, chunk=5)
+            assert got == {int(u): inference.recommend(fctx, m, int(u), 10)["evaluation"]["rank"] for u in users}, m

@@ -3,11 +3,12 @@ from __future__ import annotations
 import json
 import os
 from html import escape
+from threading import Lock
 from typing import Literal
 
 import numpy as np
 import pandas as pd
-from fastapi import APIRouter, HTTPException, Query
+from fastapi import APIRouter, Depends, HTTPException, Query
 from fastapi.responses import FileResponse, Response
 
 from . import inference, metrics_io
@@ -21,12 +22,16 @@ SORTS = {
     "train_asc": (["train_count", "customer_id"], [True, True]),
     "targets_desc": (["n_targets", "train_count", "customer_id"], [False, False, True]),
     "id": (["customer_id"], [True]),
+    "rank": (["best_rank", "train_count", "customer_id"], [True, False, True]),  # hạng món đích tốt nhất của mô hình
 }
 Bucket = Literal["low", "mid", "high"]
-Sort = Literal["train_desc", "train_asc", "targets_desc", "id"]
+Sort = Literal["train_desc", "train_asc", "targets_desc", "id", "rank"]
+Hit = Literal["hit", "miss"]
 
 router = APIRouter(prefix="/api")
 _cache: dict[str, DataContext] = {}
+_ranks: dict[tuple[str, str], pd.Series] = {}  # (run_tag, mô hình) -> hạng tốt nhất theo customer_id
+_ranks_lock = Lock()  # ponytail: một khoá chung, hai mô hình không chấm song song — đủ cho demo một người xem
 
 
 def ctx() -> DataContext:
@@ -48,20 +53,54 @@ def _user(c: DataContext, customer_id: str) -> int:
 
 
 def filter_users(df: pd.DataFrame, q: str = "", bucket: str | None = None, area: str | None = None,
-                 sort: str = "train_desc") -> pd.DataFrame:
-    """Lọc và sắp bảng khách (DataContext.users): customer_id chứa q (khớp ở đầu xếp trước), nhóm giao dịch, khu vực
-    mua nhiều nhất."""
+                 sort: str = "train_desc", best_rank: pd.Series | None = None, hit: str | None = None,
+                 k: int = 10) -> pd.DataFrame:
+    """Lọc và sắp bảng khách (DataContext.users): customer_id chứa q (không phân biệt hoa thường, khớp ở đầu xếp
+    trước), nhóm giao dịch, khu vực mua nhiều nhất; có best_rank (hạng món đích tốt nhất của một mô hình, index
+    customer_id) thì thêm cột best_rank và lọc hit = có món đích trong top-k / miss = không có."""
     q = q.strip().lower()
     if bucket:
         df = df[df["bucket"] == bucket]
     if area:
         df = df[df["area"] == area]
-    cols, asc = SORTS[sort]
+    if best_rank is not None:
+        df = df.assign(best_rank=best_rank.reindex(df.index).to_numpy())
+        if hit:
+            df = df[(df["best_rank"] <= k) == (hit == "hit")]
+    cols, asc = SORTS[sort if sort != "rank" or "best_rank" in df else "train_desc"]
     if q:
-        df = df[df["customer_id"].str.contains(q, regex=False)]
-        df = df.assign(_later=~df["customer_id"].str.startswith(q))
+        df = df[df["customer_id"].str.lower().str.contains(q, regex=False)]
+        df = df.assign(_later=~df["customer_id"].str.lower().str.startswith(q))
         cols, asc = ["_later", *cols], [True, *asc]
     return df.sort_values(cols, ascending=asc).drop(columns="_later", errors="ignore")
+
+
+def best_rank_series(c: DataContext, model: str) -> pd.Series:
+    """Hạng món đích tốt nhất của mô hình cho mọi khách (index customer_id) — chấm một lần (vài giây) rồi giữ lại."""
+    with _ranks_lock:
+        if (c.run_tag, model) not in _ranks:
+            r = inference.best_ranks(c, model)
+            _ranks[c.run_tag, model] = pd.Series(list(r.values()), index=c.customer_ids[list(r)].astype(str))
+    return _ranks[c.run_tag, model]
+
+
+def user_filter(q: str = "", bucket: Bucket | None = None, area: str | None = None, sort: Sort = "train_desc",
+                model: str | None = None, hit: Hit | None = None, k: int = 10) -> dict:
+    """Tham số lọc chung của danh sách chọn khách; model + k chỉ dùng khi lọc hit / sắp theo hạng (sort=rank)."""
+    return dict(q=q, bucket=bucket, area=area, sort=sort, model=model, hit=hit, k=k)
+
+
+def _filtered(f: dict) -> pd.DataFrame:
+    c = ctx()
+    ranks = None
+    if f["hit"] or f["sort"] == "rank":
+        model = f["model"] or c.available_models[0]
+        if model not in c.available_models:
+            raise HTTPException(404, f"Model '{model}' không khả dụng.")
+        if f["k"] not in c.k_values:
+            raise HTTPException(400, f"K phải thuộc {c.k_values}.")
+        ranks = best_rank_series(c, model)
+    return filter_users(c.users, f["q"], f["bucket"], f["area"], f["sort"], ranks, f["hit"], f["k"])
 
 
 def user_rows(df: pd.DataFrame) -> list[dict]:
@@ -97,6 +136,7 @@ def context():
 def reload():
     old = list(_cache)
     _cache.clear()
+    _ranks.clear()
     return {"previous_run_tags": old, "current_run_tag": ctx().run_tag}
 
 
@@ -116,25 +156,23 @@ def user_facets():
 
 
 @router.get("/users/search")
-def search_users(q: str = "", bucket: Bucket | None = None, area: str | None = None, sort: Sort = "train_desc",
-                 offset: int = Query(0, ge=0), limit: int = Query(30, ge=1, le=200)):
-    df = filter_users(ctx().users, q, bucket, area, sort)
+def search_users(f: dict = Depends(user_filter), offset: int = Query(0, ge=0), limit: int = Query(30, ge=1, le=200)):
+    df = _filtered(f)
     return {"total": len(df), "offset": offset, "items": user_rows(df.iloc[offset:offset + limit])}
 
 
 @router.get("/users/random")
-def random_user(bucket: Bucket | None = None, area: str | None = None):
-    df = filter_users(ctx().users, bucket=bucket, area=area)
+def random_user(f: dict = Depends(user_filter)):
+    df = _filtered({**f, "q": ""})  # ngẫu nhiên trong bộ lọc, bỏ qua chữ đang gõ trong ô tìm
     if df.empty:
         raise HTTPException(404, "Không có khách nào khớp bộ lọc.")
     return user_rows(df.sample(1))[0]
 
 
 @router.get("/users/{customer_id}/position")
-def position(customer_id: str, q: str = "", bucket: Bucket | None = None, area: str | None = None,
-             sort: Sort = "train_desc"):
+def position(customer_id: str, f: dict = Depends(user_filter)):
     """Vị trí của khách trong danh sách đang lọc (nút ‹ › trên thanh khách)."""
-    return user_position(filter_users(ctx().users, q, bucket, area, sort), customer_id)
+    return user_position(_filtered(f), customer_id)
 
 
 @router.get("/users/{customer_id}/history")

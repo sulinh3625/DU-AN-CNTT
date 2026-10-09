@@ -112,12 +112,15 @@ function renderProtocol() {
 // Tham khảo: thanh khách + bảng chọn mở bằng Ctrl K (kiểu bảng lệnh của Linear / Vercel), danh sách có ô lọc, tab
 // nhóm và avatar (SelectPanel của GitHub Primer, resource index của Shopify Polaris).
 const ad = { user: null, prev: null, next: null, facets: null, seq: 0 };
-const pk = { q: "", bucket: "", area: "", sort: "train_desc", items: [], total: 0, view: [], active: -1, loading: false,
-  seq: 0, timer: null, loadedQ: null };
+const pk = { q: "", bucket: "", area: "", hit: "", sort: "train_desc", items: [], total: 0, view: [], active: -1,
+  loading: false, seq: 0, timer: null, loadedQ: null };
 const BUCKET_SHORT = { low: "Ít giao dịch", mid: "Trung bình", high: "Nhiều giao dịch" };
 const AREA_VI = { "Ladieswear": "Đồ nữ", "Menswear": "Đồ nam", "Divided": "Divided", "Baby/Children": "Trẻ em", "Sport": "Thể thao" };
 const areaLabel = (a) => AREA_VI[a] || a;
-const SORT_LABELS = { train_desc: "Mua nhiều nhất", train_asc: "Mua ít nhất", targets_desc: "Nhiều món đích nhất", id: "Theo customer_id" };
+const SORT_LABELS = { train_desc: "Mua nhiều nhất", train_asc: "Mua ít nhất", targets_desc: "Nhiều món đích nhất",
+  rank: "Mô hình xếp món đích cao nhất", id: "Theo customer_id" };
+// Lọc / sắp theo kết quả gợi ý cần chấm mọi khách với mô hình đang chọn (lần đầu mỗi mô hình mất vài giây).
+const needsRanks = () => Boolean(pk.hit) || pk.sort === "rank";
 const COPY_ICON = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="9" y="9" width="12" height="12" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h10"/></svg>';
 
 // Avatar chữ cái: màu cố định theo customer_id (băm chuỗi), hai ký tự đầu của mã.
@@ -133,10 +136,11 @@ function idHtml(cid, q = "") {
 const userMeta = (r) => [`${num(r.train_count)} món đã mua`, `${num(r.n_targets)} món đích`,
   r.area && areaLabel(r.area), r.age != null && `${Math.round(r.age)} tuổi`].filter(Boolean).join(" · ");
 const filterParams = (extra = {}) => {
-  const p = new URLSearchParams({ sort: pk.sort, ...extra });
+  const p = new URLSearchParams({ sort: pk.sort, model: $("ad-model-a").value, k: $("ad-k").value, ...extra });
   if (pk.q) p.set("q", pk.q);
   if (pk.bucket) p.set("bucket", pk.bucket);
   if (pk.area) p.set("area", pk.area);
+  if (pk.hit) p.set("hit", pk.hit);
   return p;
 };
 
@@ -167,6 +171,11 @@ async function initAdmin() {
   $("ad-unavailable").innerHTML = un.map(([m, r]) => `<b>${esc(m)}</b> bị ẩn: ${esc(r)}`).join("<br>");
   $("ad-compare").addEventListener("change", () => { b.disabled = !$("ad-compare").checked; loadAdmin(); });
   [a, b, $("ad-k")].forEach((el) => el.addEventListener("change", loadAdmin));
+  [a, $("ad-k")].forEach((el) => el.addEventListener("change", () => {  // lọc trúng / trượt theo mô hình A và K
+    if (!needsRanks()) return;
+    pk.loadedQ = null;  // mở bảng chọn lần sau thì tải lại danh sách
+    if (ad.user) loadPosition();
+  }));
 
   renderCustomerEmpty();
   $("pk-sort").innerHTML = Object.entries(SORT_LABELS).map(([v, l]) => `<option value="${v}">${l}</option>`).join("");
@@ -240,6 +249,7 @@ function openPicker() {
   const dlg = $("picker");
   if (!dlg.open) dlg.showModal();
   $("pk-q").select();
+  if (ad.facets) renderFilters();  // nhãn "theo <mô hình> · top-K" theo lựa chọn hiện tại
   if (pk.loadedQ === null) loadUsers(); else renderPicker();  // vẽ lại: "đang xem", gần đây
 }
 
@@ -258,20 +268,35 @@ function renderFilters() {
   seg($("pk-area"), [{ value: "", label: "Mọi khu vực" },
     ...f.areas.map((x) => ({ value: x.key, label: areaLabel(x.key), n: x.n_users, title: `Mua nhiều nhất ở ${x.key}` }))],
   pk.area, (v) => { pk.area = v; renderFilters(); loadUsers(); });
+  const k = $("ad-k").value;
+  seg($("pk-hit"), [{ value: "", label: "Mọi kết quả" },
+    { value: "hit", label: "Gợi ý trúng", title: `Có ít nhất một món đích trong top-${k}` },
+    { value: "miss", label: "Gợi ý trượt", title: `Không có món đích nào trong top-${k}` }],
+  pk.hit, (v) => { pk.hit = v; renderFilters(); loadUsers(); });
+  $("pk-hit-note").textContent = `theo ${show($("ad-model-a").value)} · top-${k} (đổi ở ô Mô hình / K)`;
 }
 
 async function loadUsers(more = false) {
   const seq = ++pk.seq;
   const q = pk.q;
   pk.loading = true;
+  const slow = setTimeout(() => {  // chấm mọi khách lần đầu với một mô hình mất vài giây
+    if (seq === pk.seq && !more) {
+      $("pk-list").innerHTML = `<div class="pk-empty">${needsRanks()
+        ? `Đang chấm mọi khách với <b>${esc(show($("ad-model-a").value))}</b>… (lần đầu với mỗi mô hình mất khoảng 5–15 giây)`
+        : "Đang tải…"}</div>`;
+    }
+  }, 400);
   try {
     const res = await api(`/users/search?${filterParams({ offset: more ? pk.items.length : 0, limit: 40 })}`);
+    clearTimeout(slow);
     if (seq !== pk.seq) return;
     pk.items = more ? pk.items.concat(res.items) : res.items;
     pk.total = res.total;
     pk.loadedQ = q;
     renderPicker(more);
   } catch (e) {
+    clearTimeout(slow);
     if (seq === pk.seq) $("pk-list").innerHTML = `<div class="error" style="margin:8px">${esc(e.message)}</div>`;
   } finally {
     if (seq === pk.seq) pk.loading = false;
@@ -283,7 +308,7 @@ function loadMore() {
 }
 
 function renderPicker(keepActive = false) {
-  const recent = pk.q || pk.bucket || pk.area ? [] : recentUsers();
+  const recent = pk.q || pk.bucket || pk.area || pk.hit ? [] : recentUsers();
   pk.view = [...recent, ...pk.items];
   if (!keepActive) {
     const cur = pk.view.findIndex((r) => r.customer_id === ad.user);
@@ -294,9 +319,10 @@ function renderPicker(keepActive = false) {
       <div class="pk-text"><div class="pk-id" title="${esc(r.customer_id)}">${idHtml(r.customer_id, pk.q)}</div>
         <div class="pk-meta">${esc(userMeta(r))}</div></div>
       ${r.customer_id === ad.user ? '<span class="pk-check">Đang xem</span>' : ""}
+      ${r.best_rank != null ? rankBadge(r.best_rank) : ""}
       <span class="badge ${esc(r.bucket)}">${esc(BUCKET_SHORT[r.bucket] || "")}</span></div>`;
   const head = (t) => `<div class="pk-group">${t}</div>`;
-  const filtered = pk.bucket || pk.area;
+  const filtered = pk.bucket || pk.area || pk.hit;
   const empty = pk.q
     ? `Không có khách nào có customer_id chứa “${esc(pk.q)}”${filtered ? " trong bộ lọc đang chọn" : ""}.`
     : "Không có khách nào trong bộ lọc đang chọn.";
@@ -306,6 +332,12 @@ function renderPicker(keepActive = false) {
       : `<div class="pk-empty">${empty}<br>Thử bỏ bớt bộ lọc hoặc kiểm tra lại mã.</div>`);
   $("pk-count").textContent = `${num(pk.items.length)} / ${num(pk.total)} khách${pk.items.length < pk.total ? " · cuộn để xem thêm" : ""}`;
   paintActive(!keepActive);
+}
+
+// Hạng tốt nhất của món đích theo mô hình đang chọn: trong top-K = gợi ý trúng.
+function rankBadge(rank) {
+  const hit = rank <= Number($("ad-k").value);
+  return `<span class="badge ${hit ? "hit" : "miss"}" title="Món đích xếp cao nhất: hạng ${num(rank)}">${hit ? `Trúng · #${rank}` : `Hạng ${num(rank)}`}</span>`;
 }
 
 function paintActive(scroll = true) {

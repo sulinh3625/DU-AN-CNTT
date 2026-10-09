@@ -93,6 +93,8 @@ kbd { font: 600 10.5px/1 var(--mono); padding: 3px 5px; border-radius: 5px; bord
 .badge.low { background: #eef1f5; color: #4b596b; }
 .badge.mid { background: var(--info-soft); color: var(--info); }
 .badge.high { background: var(--accent-soft); color: var(--accent); }
+.badge.hit { background: var(--hit-soft); color: var(--hit); }
+.badge.miss { background: transparent; color: var(--muted); border: 1px solid var(--border); padding: 2px 7px; }
 .icon-btn { border: 0; background: transparent; color: var(--muted); border-radius: 6px; padding: 4px; cursor: pointer; line-height: 0;
   font-size: 13px; }
 .icon-btn:hover { background: var(--surface-2); color: var(--ink); }
