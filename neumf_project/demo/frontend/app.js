@@ -643,7 +643,9 @@ async function loadDashboard() {
   try { d = await api("/dashboard"); } catch (e) { dash.innerHTML = `<div class="error">${esc(e.message)}</div>`; return; }
   if (d.mode === "v2") { renderV2Dashboard(d, dash); return; }
   if (d.mode === "final") { renderFinalDashboard(d, dash); return; }
-  const metricCols = CTX.k_values.flatMap((k) => [`HR@${k}`, `NDCG@${k}`]);
+  // Chỉ các K có trong file kết quả của run (demo thêm K = 20 chỉ cho màn Kiểm thử mô hình).
+  const metricCols = CTX.k_values.flatMap((k) => [`HR@${k}`, `NDCG@${k}`])
+    .filter((c) => d.primary.status !== "ok" || c in d.primary.data[0]);
 
   dash.innerHTML = `
     <div class="card wide"><h2>Thống kê dữ liệu (sau k-core)</h2>${body(d.stats, (s) => `<div class="stats">${[

@@ -74,6 +74,9 @@ NEURAL_CHECKPOINTS = {
 TUNE_KEYS = {"NeuMF-Pretrained": "neumf_pretrained", "NeuMF-Scratch": "neumf_scratch", "GMF": "gmf", "MLP": "mlp"}
 BPR_CHECKPOINT = "bpr.npz"  # mảng P (users x d), Q (items x d)
 EXTENSION_MODELS = ["LateFusion-GMF-MLP", "LateFusion-BPR-MLP", "ItemKNN", "UserKNN"]
+# K của demo = K của cấu hình ∪ DEMO_EXTRA_K: chỉ để xem danh sách dài hơn, tính trên cùng thứ hạng nên số @5/@10 vẫn
+# khớp file kết quả; không sửa configs/ (cấu hình huấn luyện, đánh giá và mã băm v2).
+DEMO_EXTRA_K = (20,)
 ARTICLE_COLUMNS = [
     "article_id", "prod_name", "product_type_name", "product_group_name",
     "colour_group_name", "perceived_colour_master_name", "index_group_name", "garment_group_name",
@@ -217,6 +220,7 @@ class DataContext:
             self._init_final()
         else:
             self._init_explore(run_tag)
+        self.k_values = sorted({*self.k_values, *DEMO_EXTRA_K})
         self.target_users = np.array(sorted(self.target_items), dtype=np.int64)
         self.articles = self._load_articles()
         self.user_age = self._load_ages() if load_customers else pd.Series(dtype=float)

@@ -149,7 +149,7 @@ def history(customer_id: str):
 def recommend(customer_id: str, model: str = "", k: int = 10):
     c = ctx()
     if k not in c.k_values:
-        raise HTTPException(400, f"K phải thuộc {c.k_values} (evaluation.k_values trong config).")
+        raise HTTPException(400, f"K phải thuộc {c.k_values} (evaluation.k_values trong config + DEMO_EXTRA_K).")
     model = model or c.available_models[0]
     if model not in c.available_models:
         reason = c.unavailable.get(model, "Model không hỗ trợ.")

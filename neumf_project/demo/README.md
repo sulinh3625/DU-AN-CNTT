@@ -71,7 +71,8 @@ mẫu A, `python run.py v2-dry-run`).
 
 - Xếp theo điểm giảm dần; hoà điểm phá bằng cùng khoá tất định với lúc đánh giá (tie-break seed của cấu hình). Mạng
   nơ-ron xếp bằng logit (không qua sigmoid). LateFusion chuẩn hoá min–max điểm trên tập ứng viên của khách.
-- HR@K, NDCG@K, Recall@K, Precision@K tính với nhiều sản phẩm đích mỗi khách; K chọn trong các giá trị của cấu hình.
+- HR@K, NDCG@K, Recall@K, Precision@K tính với nhiều sản phẩm đích mỗi khách; K chọn trong các giá trị của cấu hình,
+  thêm K = 20 (`DEMO_EXTRA_K` trong `data_context.py`) để xem danh sách dài hơn — cùng thứ hạng nên số @5/@10 không đổi.
 - Nếu đánh giá cuối chạy trên GPU, logit tính lại trên CPU có thể làm vài cặp gần như hoà điểm ở hạng rất sâu (trên 100)
   đổi chỗ — không ảnh hưởng chỉ số @K.
 
