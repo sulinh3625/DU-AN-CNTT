@@ -14,7 +14,7 @@ from scripts.common import REPORT_HIDDEN_MODELS
 from src.evaluation.statistics import summarize, paired_wilcoxon
 from src.utils.io import ensure_dir, write_json
 
-# Các cặp so sánh chính cho multi-seed (protocol phụ, run.py aggregate):
+# Các cặp so sánh chính cho multi-seed (protocol phụ):
 # RQ1 (NeuMF vs MF/CF), RQ2 (vai trò GMF/MLP + fusion), RQ3 (pretraining).
 DEFAULT_COMPARISONS = [
     ("NeuMF-Pretrained", "BPR-MF"),

@@ -89,7 +89,7 @@ def run(config_path: str, run_tag: str | None = None, final: bool = False, reaso
         raise SystemExit("--final cần --reason (ghi vào test_access_log.csv).")
     cfg, adapter = build_adapter(config_path)
     if final and cfg.dataset.split == "global":
-        raise SystemExit("--final với split global: dùng `python run.py final --reason \"...\"` "
+        raise SystemExit("--final với split global: dùng chuỗi đánh giá cuối v1 ở README.md mục 7 "
                          "(scripts/11_final.py train lại trên train ∪ val trước khi chấm test).")
     seed_everything(cfg.training.seed)
 

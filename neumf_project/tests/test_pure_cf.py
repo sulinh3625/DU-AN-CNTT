@@ -24,7 +24,7 @@ V2_FEATURE_FILES = {ROOT / "src" / "data_pipeline" / f for f in ("features.py", 
     ROOT / "src" / "models" / "hybrid_features.py", ROOT / "src" / "evaluation" / "v2.py",
     ROOT / "scripts" / "02_prepare_data.py"}
 PIPELINE_FILES = sorted({*ROOT.joinpath("src").rglob("*.py"), *ROOT.joinpath("scripts").glob("0[1-6]_*.py"),
-                         ROOT / "scripts" / "common.py", ROOT / "scripts" / "run_all.py"} - V2_FEATURE_FILES)
+                         ROOT / "scripts" / "common.py"} - V2_FEATURE_FILES)
 METADATA = re.compile(r"articles\.csv|customers\.csv|side_features|detail_desc|prod_name")
 CF_BASELINES = {"random", "popularity", "bpr", "itemknn"}
 

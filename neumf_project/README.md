@@ -82,6 +82,10 @@ Mẫu lấy theo băm `customer_id` với khoá cố định nên chạy lại l
 | 3 | `python run.py v2-final --reason "..."` | Đánh giá cuối trên tập kiểm thử của mẫu B + xuất bảng, hình cho báo cáo | 12–17 giờ (GPU: 2–5 giờ) |
 | 4 | `python run.py check-report` | Đối chiếu câu chữ báo cáo với số liệu | dưới 1 phút |
 
+Chạy qua đêm một lệnh: `python run.py all` = `prepare` → bước 1 (`--resume`) → bước 2; thêm `--final --reason "..."`
+để chạy luôn bước 3 ở cuối (khoá kiểm thử của bước 3 vẫn áp dụng). Bị ngắt thì chạy lại đúng lệnh đó: tinh chỉnh đi
+tiếp từ cấu hình còn thiếu.
+
 ### 3.1 Tinh chỉnh — chỉ trên tập xác thực của mẫu A
 
 - Mỗi mô hình có học thử 6 cấu hình (seed 42); mô hình một tham số thử đủ lưới. Lưới: `audit/PREREG_v2.md` mục 4.
@@ -212,13 +216,22 @@ Most Popular, Random; mở rộng: late fusion, ItemKNN, UserKNN), một mốc t
 phẩm mới. Kế hoạch: `audit/PREREG.md`; kết quả: `outputs/final/`; báo cáo mục 4.5. Lý do thay bằng v2:
 `audit/PREREG_v2.md` mục 0.
 
-Không cần chạy lại v1. Lệnh tái lập giữ lại để đối chiếu — **mỗi lần chạy đều chấm tập kiểm thử của mẫu A và ghi vào
-`audit/test_access_log.csv`**:
+Không cần chạy lại v1; `run.py` không còn lệnh v1. Chuỗi tái lập giữ lại để đối chiếu, chạy tay đúng thứ tự — **các
+bước có `--reason` chấm tập kiểm thử của mẫu A và ghi vào `audit/test_access_log.csv`**:
 
 ```bash
-python run.py preflight                 # kiểm tra sẵn sàng (không chấm test)
-python run.py final --reason "..."      # chạy lại toàn bộ số liệu v1: 18 → 20 → 11 → 12 → 17 → 16 → 13 → 14 → 15 → 19
+python scripts/18_preflight.py                  # kiểm tra sẵn sàng (không chấm test)
+python scripts/20_ablation.py --resume          # ablation trên validation (không chấm test)
+python scripts/11_final.py --reason "..."
+python scripts/12_significance.py
+python scripts/17_extension.py --reason "... — mở rộng PREREG mục 9"
+python scripts/16_extra_k.py
+python scripts/13_plot_final.py
+python scripts/14_secondary.py --reason "... — phân tích phụ"
+python scripts/15_export_report.py
+python scripts/19_check_report.py
 ```
 
-Bản Colab của chuỗi này: `notebooks/colab_final.ipynb`. Các lệnh khám phá (`python run.py all`, `train`, `multi-seed`,
-`aggregate`) chạy cấu hình mặc định và chỉ cho bảng trên tập xác thực, không ra số liệu báo cáo — xem `python run.py -h`.
+Bản Colab của chuỗi này: `notebooks/colab_final.ipynb`. Các script khám phá (`03_run_experiment.py`, `04_multi_seed.py`,
+`05_evaluate.py`, `06_aggregate_seeds.py`) chạy cấu hình mặc định và chỉ cho bảng trên tập xác thực, không ra số liệu
+báo cáo.

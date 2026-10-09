@@ -1,8 +1,8 @@
-"""Kiểm tra sẵn sàng TRƯỚC khi chạy lại chuỗi đánh giá cuối (`python run.py final`) — không chấm test.
+"""Kiểm tra sẵn sàng TRƯỚC khi chạy lại chuỗi đánh giá cuối v1 (README.md mục 7) — không chấm test.
 
     python scripts/18_preflight.py                    # đầy đủ (khoảng 3–4 phút)
     python scripts/18_preflight.py --quick            # bỏ dựng lại dữ liệu và kiểm tra tái lập tuning mở rộng
-    python scripts/18_preflight.py --extension-only   # cho `run.py extension` (không chạy lại 11_final.py)
+    python scripts/18_preflight.py --extension-only   # trước 17_extension.py khi không chạy lại 11_final.py
 
 Dừng với mã lỗi 1 nếu một điều kiện bắt buộc không đạt (các khoá test của 11/14/17 cũng sẽ từ chối chạy):
   1. Working tree sạch (mọi file đã theo dõi đã commit) — 11_final.py từ chối khi tree bẩn.
@@ -124,7 +124,7 @@ def check_final_checkpoints(r: Report) -> None:
     bad = [p.parent.name for p in seeds if not all((p.parent / f).exists() for f in need)]
     if len(seeds) < 3 or bad:
         r.fail(f"outputs/final/seed*/ chưa đủ 3 seed kèm checkpoint (thiếu ở {bad or 'mọi seed'}) — "
-               "`run.py extension` cần checkpoint của 11_final.py.")
+               "17_extension.py cần checkpoint của 11_final.py.")
     else:
         r.ok(f"Checkpoint của 11_final.py có đủ ở {', '.join(p.parent.name for p in seeds)}")
 
@@ -226,7 +226,7 @@ def check_environment(r: Report, need_report: bool) -> None:
 def main():
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--quick", action="store_true", help="bỏ dựng lại dữ liệu và kiểm tra tái lập tuning mở rộng")
-    ap.add_argument("--extension-only", action="store_true", help="kiểm tra cho `run.py extension`")
+    ap.add_argument("--extension-only", action="store_true", help="kiểm tra trước 17_extension.py (không chạy lại 11)")
     args = ap.parse_args()
     r = Report()
     print("Kiểm tra trước khi chạy lại đánh giá cuối:", flush=True)

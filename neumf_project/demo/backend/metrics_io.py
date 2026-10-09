@@ -16,7 +16,7 @@ FINAL_DIR = PROJECT_ROOT / "outputs" / "final"
 ARTIFACTS_DIR = DEMO_ROOT / "artifacts"
 RANK_BIN_EDGES = [1, 2, 3, 5, 11, 21, 51, 101, 201, 501, 1001, 2001, 5001, 10001, 20001]
 OFFLINE_CMD = "python demo/scripts/build_offline_artifacts.py"
-TRAIN_CMD = "python run.py train"
+TRAIN_CMD = f"python scripts/03_run_experiment.py --config {CONFIG_PATH}"
 CONFIG_NAME = Path(CONFIG_PATH).stem
 
 
@@ -59,7 +59,8 @@ def primary_results(run_tag: str) -> dict:
 def multi_seed_summary() -> dict:
     out_dir = TABLES_DIR / f"{CONFIG_NAME}_multiseed"
     path, meta_path = out_dir / "multi_seed_summary_primary.csv", out_dir / "multi_seed_meta_primary.json"
-    cmd = "python run.py multi-seed rồi python run.py aggregate"
+    cmd = (f"python scripts/04_multi_seed.py --config {CONFIG_PATH} rồi "
+           f"python scripts/06_aggregate_seeds.py --config-name {CONFIG_NAME}")
     if not path.exists() or not meta_path.exists():
         return _missing(cmd)
     meta = json.loads(meta_path.read_text(encoding="utf-8"))
@@ -122,7 +123,7 @@ def data_stats(run_tag: str) -> dict:
     return _ok(path, run_tag, data)
 
 
-FINAL_RUN_CMD = 'python run.py final --reason "..."'
+FINAL_RUN_CMD = "chuỗi đánh giá cuối v1 (README.md mục 7, bắt đầu từ python scripts/11_final.py --reason ...)"
 
 
 def _final_csv(name: str) -> tuple[Path, pd.DataFrame | None]:

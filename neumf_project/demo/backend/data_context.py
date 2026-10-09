@@ -145,7 +145,7 @@ def resolve_latest_run_tag(prefix: str = RUN_PREFIX) -> str:
     if not candidates:
         raise FileNotFoundError(
             f"Không có run nào hoàn chỉnh với tiền tố '{prefix}' trong outputs/experiments/. "
-            f"Chạy scripts/run_all.py cho H&M trước."
+            f"Chạy python scripts/03_run_experiment.py --config {CONFIG_PATH} trước."
         )
     return max(candidates)[1]
 
