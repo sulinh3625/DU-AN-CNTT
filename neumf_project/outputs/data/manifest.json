@@ -1,0 +1,38 @@
+{
+  "mau_phat_trien": {
+    "file": "outputs/data/mau_phat_trien.csv.gz",
+    "md5": "f7e79f29e1535a2bf4d1feefeadee410",
+    "rows": 384519,
+    "customers": 8039,
+    "products": 6801,
+    "kcore_pairs": 245644,
+    "k_core": 10,
+    "test_start": "2020-07-29",
+    "before_test_start": {
+      "articles": 55971,
+      "products": 27370,
+      "article_pairs": 401293,
+      "product_pairs": 359181
+    },
+    "git_commit": "9fc97ab68285d8bcc5ac014ddab02f936d7ce76a",
+    "git_dirty": false
+  },
+  "mau_kiem_dinh": {
+    "file": "outputs/data/mau_kiem_dinh.csv.gz",
+    "md5": "ba5498d1071b903ef77a78b0e6125def",
+    "rows": 383591,
+    "customers": 7994,
+    "products": 6749,
+    "kcore_pairs": 243696,
+    "k_core": 10,
+    "test_start": "2020-07-29",
+    "before_test_start": {
+      "articles": 55683,
+      "products": 27291,
+      "article_pairs": 398653,
+      "product_pairs": 356740
+    },
+    "git_commit": "9fc97ab68285d8bcc5ac014ddab02f936d7ce76a",
+    "git_dirty": false
+  }
+}
