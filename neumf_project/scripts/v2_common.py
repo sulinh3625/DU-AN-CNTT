@@ -7,6 +7,7 @@ của giai đoạn (gồm sản phẩm mới) nhận điểm -inf, tức bị x�
 from __future__ import annotations
 
 import itertools
+import json
 import sys
 from pathlib import Path
 
@@ -20,8 +21,8 @@ sys.path.insert(0, str(PROJECT_ROOT))
 from src.baselines import BPRMFBaseline, ItemKNNBaseline, MostPopularBaseline, RandomBaseline, UserKNNBaseline  # noqa: E402
 from src.data_pipeline.dataset import TrainDataset  # noqa: E402
 from src.data_pipeline.feature_dataset import FeatureTrainDataset  # noqa: E402
-from src.data_pipeline.features import load_catalog, load_daily_sales  # noqa: E402
-from src.data_pipeline.protocol_v2 import DataV2, Stage, build_v2  # noqa: E402
+from src.data_pipeline.features import group_by_product, load_catalog, load_daily_sales  # noqa: E402
+from src.data_pipeline.protocol_v2 import DataV2, Stage, build_from_pairs, load_pairs  # noqa: E402
 from src.evaluation.full_ranking import evaluate_score_function, evaluate_torch_model  # noqa: E402
 from src.evaluation.v2 import evaluate_v2  # noqa: E402
 from src.models.hybrid_features import (ContentProfile, MaskedScoreFn, MaskedScorer, NeuMFF,  # noqa: E402
@@ -33,6 +34,8 @@ from src.utils.seed import seed_everything  # noqa: E402
 
 CFG = yaml.safe_load((PROJECT_ROOT / "configs" / "v2.yaml").read_text(encoding="utf-8"))
 AUDIT = PROJECT_ROOT / "audit" / "v2"
+DATA_DIR = PROJECT_ROOT / CFG["data_dir"]  # file dữ liệu đã lọc của scripts/02_prepare_data.py
+MANIFEST = DATA_DIR / "manifest.json"
 METRICS = ["NDCG@10", "Recall@10", "HR@10", "Precision@10", "NDCG@5", "NDCG@20", "NDCG@10_old", "NDCG@10_new"]
 
 DISPLAY = {"random": "Random", "popularity": "MostPopular", "recent_pop": "MostPopular-Recent", "content": "Content",
@@ -101,14 +104,36 @@ def configs_for(model: str, n: int) -> list[dict]:
 
 
 # ------------------------------------------------------------------ dữ liệu
+def data_name(sample: str) -> str:
+    """Tên file dữ liệu đã lọc của một mẫu = tên file CSV mẫu bỏ đuôi (mau_phat_trien, mau_kiem_dinh)."""
+    return Path(CFG["samples"][sample]).stem
+
+
 def load_data(sample: str, with_test: bool = False) -> DataV2:
+    """Dựng dữ liệu của mẫu từ file đã lọc outputs/data/<tên mẫu>.csv.gz — mọi mô hình đọc cùng file này — sau khi kiểm
+    MD5 (nội dung đã giải nén) với manifest.json; không dựng lại từ CSV mẫu thô."""
+    name = data_name(sample)
+    path = DATA_DIR / f"{name}.csv.gz"
+    entry = json.loads(MANIFEST.read_text(encoding="utf-8")).get(name) if MANIFEST.exists() else None
+    if entry is None or not path.exists():
+        raise SystemExit(f"Thiếu {path} hoặc mục '{name}' trong {MANIFEST} — chạy `python run.py prepare` trước.")
+    if (entry["k_core"], entry["test_start"]) != (CFG["k_core"], CFG["test_start"]):
+        raise SystemExit(f"{path} lọc với k_core={entry['k_core']}, test_start={entry['test_start']} khác "
+                         "configs/v2.yaml — chạy lại `python run.py prepare`.")
+    try:
+        pairs = load_pairs(path, entry["md5"])
+    except ValueError as e:
+        raise SystemExit(f"{e} — file bị sửa hoặc manifest cũ: chạy lại `python run.py prepare`.") from None
     f = CFG["features"]
     for p in (f["catalog"], f["sales"]):
         if not (PROJECT_ROOT / p).exists():
             raise SystemExit(f"Thiếu {p} — chạy `python scripts/21_build_features.py` trước.")
-    return build_v2(PROJECT_ROOT / CFG["samples"][sample], CFG["val_start"], CFG["test_start"], CFG["k_core"],
-                    load_catalog(PROJECT_ROOT / f["catalog"]), load_daily_sales(PROJECT_ROOT / f["sales"]),
-                    PROJECT_ROOT / f["customers"], with_test=with_test)
+    catalog, sales = group_by_product(load_catalog(PROJECT_ROOT / f["catalog"]),
+                                      load_daily_sales(PROJECT_ROOT / f["sales"]))
+    D = build_from_pairs(pairs, CFG["val_start"], CFG["test_start"], catalog, sales, PROJECT_ROOT / f["customers"],
+                         with_test=with_test)
+    D.meta.update(k_core=CFG["k_core"], sample=f"{CFG['data_dir']}/{name}.csv.gz", data_md5=entry["md5"])
+    return D
 
 
 def device():
@@ -132,7 +157,7 @@ def provenance() -> dict:
             "git_dirty": bool(git("status", "--porcelain", "--untracked-files=no"))}
 
 
-CODE_FILES = ["src", "scripts/v2_common.py", "scripts/22_tune_v2.py", "configs/v2.yaml"]
+CODE_FILES = ["src", "scripts/v2_common.py", "scripts/22_tune_v2.py", "scripts/02_prepare_data.py", "configs/v2.yaml"]
 
 
 def code_hash() -> str:
@@ -245,5 +270,6 @@ def evaluate(scorer, stage: Stage, dev, per_user=None, topk=None) -> dict:
 
 
 __all__ = ["CFG", "AUDIT", "METRICS", "DISPLAY", "GRIDS", "DEFAULTS", "ABLATIONS", "ABLATION_DISPLAY", "TORCH_ID",
-           "TORCH_FEAT", "LATE_PARTS", "configs_for", "load_data", "device", "build_torch", "torch_scorer",
-           "fit_torch", "score_fn", "late_fusion", "evaluate", "is_feature", "evaluate_score_function"]
+           "TORCH_FEAT", "LATE_PARTS", "DATA_DIR", "MANIFEST", "data_name", "configs_for", "load_data", "device",
+           "build_torch", "torch_scorer", "fit_torch", "score_fn", "late_fusion", "evaluate", "is_feature",
+           "evaluate_score_function"]

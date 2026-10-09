@@ -2,7 +2,8 @@
 
 Giao thức v2 (audit/PREREG_v2.md) — kết quả chính của báo cáo:
     python run.py sample-hm                  # mẫu phát triển (khối 0) -> data/processed/hm/mau_phat_trien.csv (chạy 1 lần)
-    python run.py v2-data                    # mẫu kiểm định (khối 2) + đặc trưng (chạy 1 lần, cần dữ liệu gốc H&M)
+    python run.py v2-data                    # mẫu kiểm định (khối 2) + đặc trưng + prepare (1 lần, cần dữ liệu gốc)
+    python run.py prepare                    # gộp màu theo product_code, k-core -> outputs/data/<mẫu>.csv.gz + MD5
     python run.py v2-tune --resume           # tinh chỉnh trên tập xác thực của mẫu A (5–6 giờ CPU)
     python run.py v2-dry-run                 # thử trọn đường ống đánh giá cuối trên tập xác thực của A (không chấm test)
     python run.py v2-final --reason "..."    # đánh giá cuối trên tập kiểm thử của mẫu B (mở đúng một lần) + xuất báo cáo
@@ -146,9 +147,16 @@ def cmd_check_report(args):
 
 
 def cmd_v2_data(args):
-    """Mẫu kiểm định (khối 2, khách khác hẳn mẫu phát triển) và đặc trưng danh mục/doanh số theo ngày."""
+    """Mẫu kiểm định (khối 2, khách khác hẳn mẫu phát triển), đặc trưng danh mục/doanh số theo ngày, rồi file dữ liệu
+    đã lọc của mọi mẫu."""
     _run("00_sample_hm.py", "--block", "2")
     _run("21_build_features.py")
+    cmd_prepare(args)
+
+
+def cmd_prepare(args):
+    """File dữ liệu đã lọc (gộp màu theo product_code, k-core trước mốc kiểm thử) + MD5 cho mọi mô hình v2."""
+    _run("02_prepare_data.py", *(["--sample", args.sample] if getattr(args, "sample", None) else []))
 
 
 def cmd_v2_tune(args):
@@ -219,7 +227,9 @@ def main():
         .add_argument("--strict", action="store_true", help="trả mã lỗi nếu có khẳng định sai")
     sub.add_parser("sample-hm", help="Lấy mẫu khách theo khối từ transactions_train.csv gốc (chạy 1 lần)") \
         .add_argument("--block", type=int, default=0, help="0 = mẫu phát triển (mặc định), 2 = mẫu kiểm định")
-    sub.add_parser("v2-data", help="v2: mẫu kiểm định (khối 2) + đặc trưng (00 --block 2, 21)")
+    sub.add_parser("v2-data", help="v2: mẫu kiểm định (khối 2) + đặc trưng + dữ liệu đã lọc (00 --block 2, 21, 02)")
+    sub.add_parser("prepare", help="v2: gộp màu theo product_code, k-core, xuất outputs/data/*.csv.gz + MD5 (02)") \
+        .add_argument("--sample", choices=["dev", "holdout"], help="chỉ một mẫu (mặc định: mọi mẫu)")
     p = sub.add_parser("v2-tune", help="v2: tinh chỉnh trên tập xác thực của mẫu A (22)")
     p.add_argument("--model", nargs="+", default=["all"], help="mặc định: mọi mô hình")
     p.add_argument("--resume", action="store_true", help="bỏ qua cấu hình đã có trong audit/v2/tuning_log.csv")
@@ -248,6 +258,7 @@ def main():
         "check-report": cmd_check_report,
         "sample-hm": cmd_sample_hm,
         "v2-data": cmd_v2_data,
+        "prepare": cmd_prepare,
         "v2-tune": cmd_v2_tune,
         "v2-dry-run": cmd_v2_dry_run,
         "v2-final": cmd_v2_final,

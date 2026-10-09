@@ -278,7 +278,8 @@ class Runner:
                 json.dump(topk, f)
         payload = dict(
             seed=seed, evaluated_on="dry-run: tập xác thực của mẫu A" if a.dry_run else "tập kiểm thử của mẫu B",
-            reason=a.reason, provenance={**self.prov, "tuning_code_hashes": sorted(tuning_code_hashes())},
+            reason=a.reason, provenance={**self.prov, "data_md5": self.D.meta["data_md5"],
+                                         "tuning_code_hashes": sorted(tuning_code_hashes())},
             machine=machine_info(self.dev),
             elapsed_min=round((time.perf_counter() - t_seed) / 60, 1),
             results=results, results_old_only=results_old, beyond=beyond_k, train_meta=meta,
@@ -324,10 +325,11 @@ def main():
         root = ensure_dir(Path(args.out or V.PROJECT_ROOT / "outputs" / "v2" / "final"))
     dev = V.device()
     info = describe(D)
-    (root / "data.json").write_text(json.dumps(dict(sample=D.meta["sample"], **info), indent=2, ensure_ascii=False),
-                                    encoding="utf-8")
-    pd.DataFrame(dict(item=np.arange(D.n_items), article_id=D.item_article, has_id=np.arange(D.n_items) < D.n_id_items,
-                      scoreable=ev.scoreable, new=ev.new)).to_csv(root / "items.csv.gz", index=False)
+    (root / "data.json").write_text(json.dumps(dict(sample=D.meta["sample"], data_md5=D.meta["data_md5"], **info),
+                                               indent=2, ensure_ascii=False), encoding="utf-8")
+    pd.DataFrame(dict(item=np.arange(D.n_items), product_code=D.item_product,
+                      has_id=np.arange(D.n_items) < D.n_id_items, scoreable=ev.scoreable, new=ev.new)
+                 ).to_csv(root / "items.csv.gz", index=False)
     print(f"{'CHẠY THỬ (A, xác thực)' if args.dry_run else 'ĐÁNH GIÁ CUỐI (B, kiểm thử)'}: {D.n_users:,} người dùng, "
           f"{D.n_items:,} sản phẩm | chấm {len(ev.records):,} người dùng, {len(ev.targets):,} cặp đúng "
           f"({int(ev.new[ev.targets['item'].to_numpy()].sum()):,} sản phẩm mới) | commit {prov['git_commit']} "

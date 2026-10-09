@@ -18,8 +18,11 @@ from src.data_pipeline.preprocessing import apply_feedback_weights
 ROOT = Path(__file__).resolve().parents[1]
 MAIN_CONFIGS = ["configs/hm500k.yaml", "configs/hm500k_global.yaml"]
 # Module chỉ dùng cho giao thức v2 (mô hình có đặc trưng) — được phép đọc articles.csv, customers.csv.
+# scripts/02_prepare_data.py là script v2 (gộp màu theo product_code, kiểm product_code trên articles.csv), chỉ trùng
+# tiền tố 0[1-6]_ với các script v1 nên phải liệt kê ở đây để không bị coi là pipeline v1.
 V2_FEATURE_FILES = {ROOT / "src" / "data_pipeline" / f for f in ("features.py", "protocol_v2.py", "feature_dataset.py")} | {
-    ROOT / "src" / "models" / "hybrid_features.py", ROOT / "src" / "evaluation" / "v2.py"}
+    ROOT / "src" / "models" / "hybrid_features.py", ROOT / "src" / "evaluation" / "v2.py",
+    ROOT / "scripts" / "02_prepare_data.py"}
 PIPELINE_FILES = sorted({*ROOT.joinpath("src").rglob("*.py"), *ROOT.joinpath("scripts").glob("0[1-6]_*.py"),
                          ROOT / "scripts" / "common.py", ROOT / "scripts" / "run_all.py"} - V2_FEATURE_FILES)
 METADATA = re.compile(r"articles\.csv|customers\.csv|side_features|detail_desc|prod_name")

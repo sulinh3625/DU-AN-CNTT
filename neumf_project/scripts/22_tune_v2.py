@@ -36,6 +36,12 @@ CKPT = V.PROJECT_ROOT / "outputs" / "v2" / "tuning"
 
 def log_row(path: Path, row: dict) -> None:
     new = not path.exists()
+    if not new:  # nhật ký cũ thiếu/thừa cột (vd. trước khi có data_md5) -> ghi nối sẽ lệch cột
+        with path.open(encoding="utf-8") as f:
+            header = next(csv.reader(f), [])
+        if header != list(row):
+            raise SystemExit(f"{path} có cột {header}, khác dòng sắp ghi {list(row)} — chuyển nhật ký cũ đi rồi "
+                             "chạy lại.")
     with path.open("a", newline="", encoding="utf-8") as f:
         w = csv.DictWriter(f, fieldnames=list(row))
         if new:
@@ -95,7 +101,8 @@ def main():
                 metrics = V.evaluate(V.score_fn(model, p, D, st, seed), st, dev)
             row = dict(timestamp=datetime.now().isoformat(timespec="seconds"), model=model, config_id=cid,
                        params=key, config_hash=hashlib.sha256(f"{model}{key}{seed}".encode()).hexdigest()[:16],
-                       git_commit=prov["git_commit"], git_dirty=prov["git_dirty"], code_hash=prov["code_hash"], seed=seed, best_epoch=best_epoch,
+                       git_commit=prov["git_commit"], git_dirty=prov["git_dirty"], code_hash=prov["code_hash"],
+                       data_md5=D.meta["data_md5"], seed=seed, best_epoch=best_epoch,
                        time_s=round(time.time() - t1, 1), **{f"val_{k}": round(metrics[k], 6) for k in V.METRICS})
             log_row(log_path, row)
             print(f"[{model} {cid + 1}/{len(configs)}] {key} -> NDCG@10 {metrics['NDCG@10']:.5f} "

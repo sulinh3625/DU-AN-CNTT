@@ -2,7 +2,8 @@
 
 Lấy mẫu THEO KHÁCH HÀNG trải đủ 2018-09-20 → 2020-09-22: băm customer_id (hash key cố định) vào --buckets bucket, chia
 dãy bucket thành các KHỐI liên tiếp, không giao nhau, mỗi khối vừa đủ --target-rows dòng, rồi giữ toàn bộ lịch sử mua
-của khách trong khối được chọn. Đọc file theo chunk 2 lượt nên RAM chỉ khoảng 0,5 GB. File ra giữ nguyên cột như file gốc.
+của khách trong khối được chọn. Đọc file theo chunk 2 lượt nên RAM chỉ khoảng 0,5 GB. File ra giữ nguyên cột như file
+gốc.
 
     python run.py sample-hm                    # khối 0 -> data/processed/hm/mau_phat_trien.csv
     python run.py sample-hm --block 2          # khối 2 -> data/processed/hm/mau_kiem_dinh.csv
@@ -33,9 +34,9 @@ def bucket_of(customer_ids: pd.Series, n_buckets: int, hash_key: str) -> np.ndar
 
 
 def select_buckets(counts: np.ndarray, target_rows: int, block: int = 0) -> tuple[int, int]:
-    """(bucket đầu, số bucket) của khối thứ `block`: các khối nối tiếp nhau từ bucket 0, không giao nhau, mỗi khối gồm số
-    bucket ít nhất để đủ target_rows dòng (khối chạm cuối mảng thì lấy hết phần còn lại). block=0 / block=1 trùng mẫu
-    hm500k / hm500k_b cũ."""
+    """(bucket đầu, số bucket) của khối thứ `block`: các khối nối tiếp nhau từ bucket 0, không giao nhau, mỗi khối gồm
+    số bucket ít nhất để đủ target_rows dòng (khối chạm cuối mảng thì lấy hết phần còn lại). block=0 / block=1 trùng
+    mẫu hm500k / hm500k_b cũ."""
     if block < 0:
         raise SystemExit(f"--block phải >= 0, nhận {block}")
 
@@ -69,7 +70,8 @@ def main():
             raise SystemExit(f"--block {args.block} không có file ra mặc định — truyền --output tường minh")
         args.output = DEFAULT_OUTPUT[args.block]
     if args.block == 1:
-        print("CẢNH BÁO: khối 1 (hm500k_b cũ) đã bị mở trong lúc phát triển — không dùng cho đánh giá cuối.", flush=True)
+        print("CẢNH BÁO: khối 1 (hm500k_b cũ) đã bị mở trong lúc phát triển — không dùng cho đánh giá cuối.",
+              flush=True)
 
     t0 = time.time()
     counts = np.zeros(args.buckets, dtype=np.int64)
