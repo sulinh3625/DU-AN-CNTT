@@ -51,7 +51,7 @@ Tải 3 file của cuộc thi Kaggle
 |---|---|
 | `transactions_train.csv` (3,5 GB) | Lịch sử mua; doanh số theo ngày của toàn H&M (đặc trưng) |
 | `articles.csv` | Thuộc tính và mô tả văn bản của sản phẩm (đặc trưng); tên, loại sản phẩm trên demo |
-| `customers.csv` | Thuộc tính khách (đặc trưng); lọc tuổi cho khách mới trên demo |
+| `customers.csv` | Thuộc tính khách (đặc trưng); tuổi trong danh sách chọn khách của demo |
 
 Không dùng bản `.xlsx`: Excel cắt ở 1.048.576 dòng. `customers.csv` đúng có 1.371.980 khách; bản chỉ có 1.048.575 dòng
 là bản đã bị Excel cắt, cần tải lại (code báo lỗi nếu thiếu dòng).

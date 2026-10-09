@@ -14,11 +14,9 @@
 
 <header>
   <div class="bar">
-    <a class="brand" href="#/">Demo Shop<small>gợi ý thời trang</small></a>
+    <a class="brand" href="#/admin">Demo Shop<small>gợi ý thời trang</small></a>
     <nav>
-      <a href="#/" data-view="home">Trang chủ</a>
-      <a href="#/new" data-view="new">Khách hàng mới</a>
-      <a href="#/admin" data-view="admin">Admin kiểm thử mô hình</a>
+      <a href="#/admin" data-view="admin">Kiểm thử mô hình</a>
       <a href="#/dashboard" data-view="dashboard">Dashboard kết quả</a>
     </nav>
   </div>
@@ -26,62 +24,35 @@
 </header>
 
 <main>
-  <!-- ============ HOME ============ -->
-  <section id="view-home">
-    <h1>Bạn là ai?</h1>
-    <p class="lede">Chọn một vai trò để bắt đầu.</p>
-    <div class="choices">
-      <a class="choice" href="#/new">
-        <div class="t">Tôi là khách hàng mới</div>
-        <div class="d">Trả lời vài câu hỏi về sở thích để nhận gợi ý. Mô hình chưa có dữ liệu về bạn nên gợi ý dùng quy tắc lọc theo lựa chọn và độ phổ biến sản phẩm.</div>
-        <div class="tag-line">Gợi ý rule-based →</div>
-      </a>
-      <a class="choice" href="#/admin">
-        <div class="t">Tôi là admin kiểm thử mô hình</div>
-        <div class="d">Chọn một khách hàng có trong dữ liệu, xem lịch sử mua, Top-K gợi ý của từng mô hình và cách chấm với sản phẩm bị giấu khỏi tập train.</div>
-        <div class="tag-line">Kiểm thử mô hình →</div>
-      </a>
-    </div>
-  </section>
-
-  <!-- ============ NEW CUSTOMER ============ -->
-  <section id="view-new" class="hidden">
-    <div class="banner">Bạn là khách hàng mới, mô hình NeuMF chưa có dữ liệu về bạn. Gợi ý dưới đây dùng quy tắc dựa trên lựa chọn của bạn và độ phổ biến sản phẩm.</div>
-    <div class="card">
-      <div class="form-row"><label>Khu vực mua sắm</label><div class="chips" id="ob-area"></div></div>
-      <div class="form-row"><label>Loại sản phẩm quan tâm (chọn nhiều)</label><div class="chips" id="ob-types"></div></div>
-      <div class="form-row"><label>Màu yêu thích (tuỳ chọn, chọn nhiều)</label><div class="chips" id="ob-colours"></div></div>
-      <div class="toolbar">
-        <div class="field"><span class="lbl">Độ tuổi (tuỳ chọn)</span><select id="ob-age"></select></div>
-        <div class="field"><span class="lbl">Số gợi ý (K)</span><select id="ob-k"></select></div>
-        <button class="btn" id="ob-go">Xem gợi ý</button>
-      </div>
-      <div class="note" id="ob-note" style="margin-top:12px"></div>
-    </div>
-    <div id="ob-result"></div>
-  </section>
-
   <!-- ============ ADMIN ============ -->
-  <section id="view-admin" class="hidden">
+  <section id="view-admin">
     <h1>Kiểm thử mô hình trên từng khách hàng</h1>
-    <div class="card">
-      <div class="toolbar">
-        <div class="field" style="flex:1;min-width:280px">
-          <span class="lbl">customer_id (dán ID đầy đủ hoặc tiền tố)</span>
-          <input type="text" id="ad-search" placeholder="vd. 0a1b2c...">
-          <div class="suggest hidden" id="ad-suggest"></div>
+    <p class="lede">Chọn một khách có sản phẩm đích, xem lịch sử mua, Top-K của từng mô hình và cách chấm.</p>
+
+    <!-- Khách đang xem: thông tin, chuyển khách trước / sau trong danh sách đang lọc, chọn ngẫu nhiên, mở bảng chọn -->
+    <div class="card cust-bar">
+      <div class="cust-current" id="cust-current"></div>
+      <div class="cust-actions">
+        <div class="pager" title="Khách trước / sau trong danh sách đang lọc (phím ← →)">
+          <button type="button" id="cust-prev" aria-label="Khách trước" disabled>‹</button>
+          <span id="cust-pos">—</span>
+          <button type="button" id="cust-next" aria-label="Khách sau" disabled>›</button>
         </div>
-        <div class="field"><span class="lbl">Số giao dịch train</span><div class="chips" id="ad-bucket"></div></div>
-        <button class="btn ghost" id="ad-random">Chọn ngẫu nhiên</button>
+        <button type="button" class="btn ghost" id="cust-random" title="Khách ngẫu nhiên trong bộ lọc đang chọn">Ngẫu nhiên</button>
+        <button type="button" class="btn" id="cust-open">Chọn khách <kbd>Ctrl K</kbd></button>
       </div>
-      <div class="toolbar" style="margin-top:14px">
+    </div>
+
+    <div class="card model-bar">
+      <div class="toolbar">
         <div class="field"><span class="lbl">Mô hình</span><select id="ad-model-a"></select></div>
         <div class="field"><span class="lbl"><label><input type="checkbox" id="ad-compare"> So sánh với</label></span><select id="ad-model-b" disabled></select></div>
         <div class="field"><span class="lbl">K</span><select id="ad-k"></select></div>
       </div>
-      <div class="note" id="ad-unavailable" style="margin-top:10px"></div>
+      <div class="note" id="ad-unavailable"></div>
     </div>
-    <div id="ad-empty" class="note" style="margin-top:16px">Chọn một khách hàng để bắt đầu.</div>
+
+    <div id="ad-empty" class="note" style="margin-top:16px"></div>
     <div class="admin-grid hidden" id="ad-grid">
       <div class="card">
         <h2 id="ad-history-title">Lịch sử mua (train)</h2>
@@ -102,6 +73,28 @@
       <h2>10 khách hàng tương đồng nhất (UserKNN)</h2>
       <div id="ad-neighbors"></div>
     </div>
+
+    <!-- Bảng chọn khách (Ctrl K hoặc /): tìm theo customer_id, lọc nhóm giao dịch / khu vực, sắp xếp, ↑ ↓ Enter -->
+    <dialog class="picker" id="picker" aria-label="Chọn khách hàng">
+      <div class="pk-search">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+        <input type="text" id="pk-q" autocomplete="off" spellcheck="false" autofocus placeholder="Tìm theo customer_id (dán đầy đủ hoặc vài ký tự)…"
+               role="combobox" aria-expanded="true" aria-controls="pk-list" aria-autocomplete="list">
+        <kbd>Esc</kbd>
+      </div>
+      <div class="pk-filters">
+        <div class="seg" id="pk-bucket" role="group" aria-label="Nhóm giao dịch"></div>
+        <div class="pk-row">
+          <div class="seg small" id="pk-area" role="group" aria-label="Khu vực mua nhiều nhất"></div>
+          <label class="pk-sort">Sắp xếp <select id="pk-sort"></select></label>
+        </div>
+      </div>
+      <div class="pk-list" id="pk-list" role="listbox" aria-label="Khách hàng"></div>
+      <div class="pk-foot">
+        <span id="pk-count" aria-live="polite"></span>
+        <span><kbd>↑</kbd> <kbd>↓</kbd> di chuyển · <kbd>Enter</kbd> chọn · <kbd>Esc</kbd> đóng</span>
+      </div>
+    </dialog>
   </section>
 
   <!-- ============ DASHBOARD ============ -->

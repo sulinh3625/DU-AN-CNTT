@@ -1,24 +1,32 @@
 from __future__ import annotations
 
+import json
 import os
-import random
 from html import escape
+from typing import Literal
 
 import numpy as np
-from fastapi import APIRouter, HTTPException
+import pandas as pd
+from fastapi import APIRouter, HTTPException, Query
 from fastapi.responses import FileResponse, Response
-from pydantic import BaseModel
 
 from . import inference, metrics_io
 from .data_context import DEMO_ROOT, DataContext, resolve_mode, resolve_run_tag
-from .onboarding import Onboarding, load_onboarding_config
 
 IMAGES_DIR = os.environ.get("DEMO_IMAGES_DIR", str(DEMO_ROOT / "static" / "images"))
 BUCKET_LABELS = {"low": "Ít giao dịch", "mid": "Trung bình", "high": "Nhiều giao dịch"}
+# Thứ tự danh sách chọn khách: khoá -> (cột, tăng dần?); hoà thì theo customer_id để thứ tự luôn tất định.
+SORTS = {
+    "train_desc": (["train_count", "customer_id"], [False, True]),
+    "train_asc": (["train_count", "customer_id"], [True, True]),
+    "targets_desc": (["n_targets", "train_count", "customer_id"], [False, False, True]),
+    "id": (["customer_id"], [True]),
+}
+Bucket = Literal["low", "mid", "high"]
+Sort = Literal["train_desc", "train_asc", "targets_desc", "id"]
 
 router = APIRouter(prefix="/api")
 _cache: dict[str, DataContext] = {}
-_onboarding: dict[str, Onboarding] = {}
 
 
 def ctx() -> DataContext:
@@ -27,13 +35,6 @@ def ctx() -> DataContext:
     if tag not in _cache:
         _cache[tag] = DataContext(tag, mode=mode)
     return _cache[tag]
-
-
-def onboarding() -> Onboarding:
-    c = ctx()
-    if c.run_tag not in _onboarding:
-        _onboarding[c.run_tag] = Onboarding(c.train_df, c.articles, c.user_age, load_onboarding_config())
-    return _onboarding[c.run_tag]
 
 
 def _user(c: DataContext, customer_id: str) -> int:
@@ -46,18 +47,40 @@ def _user(c: DataContext, customer_id: str) -> int:
     return u
 
 
-def _thresholds(c: DataContext) -> tuple[float, float]:
-    counts = c.train_user_counts[c.target_users]
-    return float(np.quantile(counts, 1 / 3)), float(np.quantile(counts, 2 / 3))
+def filter_users(df: pd.DataFrame, q: str = "", bucket: str | None = None, area: str | None = None,
+                 sort: str = "train_desc") -> pd.DataFrame:
+    """Lọc và sắp bảng khách (DataContext.users): customer_id chứa q (khớp ở đầu xếp trước), nhóm giao dịch, khu vực
+    mua nhiều nhất."""
+    q = q.strip().lower()
+    if bucket:
+        df = df[df["bucket"] == bucket]
+    if area:
+        df = df[df["area"] == area]
+    cols, asc = SORTS[sort]
+    if q:
+        df = df[df["customer_id"].str.contains(q, regex=False)]
+        df = df.assign(_later=~df["customer_id"].str.startswith(q))
+        cols, asc = ["_later", *cols], [True, *asc]
+    return df.sort_values(cols, ascending=asc).drop(columns="_later", errors="ignore")
 
 
-def _bucket(n: int, t: tuple[float, float]) -> str:
-    return "low" if n <= t[0] else ("mid" if n <= t[1] else "high")
+def user_rows(df: pd.DataFrame) -> list[dict]:
+    """Dòng của bảng khách dạng JSON (tuổi thiếu -> null)."""
+    return json.loads(df.to_json(orient="records"))
 
 
-def _user_row(c: DataContext, u: int, t) -> dict:
-    n = int(c.train_user_counts[u])
-    return {"customer_id": c.customer_ids[u], "train_count": n, "bucket": _bucket(n, t)}
+def user_position(df: pd.DataFrame, customer_id: str) -> dict:
+    """Vị trí (từ 0) của khách trong danh sách đã lọc, kèm khách liền trước / liền sau; khách ngoài danh sách thì
+    "liền sau" là khách đầu danh sách."""
+    hit = np.flatnonzero(df["customer_id"].to_numpy() == customer_id.strip())
+    i = int(hit[0]) if len(hit) else None
+
+    def at(j: int) -> dict | None:
+        return user_rows(df.iloc[[j]])[0] if 0 <= j < len(df) else None
+
+    if i is None:
+        return {"index": None, "total": len(df), "prev": None, "next": at(0)}
+    return {"index": i, "total": len(df), "prev": at(i - 1), "next": at(i + 1)}
 
 
 @router.get("/health")
@@ -74,52 +97,52 @@ def context():
 def reload():
     old = list(_cache)
     _cache.clear()
-    _onboarding.clear()
     return {"previous_run_tags": old, "current_run_tag": ctx().run_tag}
 
 
-@router.get("/users/buckets")
-def user_buckets():
+@router.get("/users/facets")
+def user_facets():
     c = ctx()
-    t = _thresholds(c)
-    counts = c.train_user_counts[c.target_users]
-    sizes = {b: int(sum(_bucket(int(n), t) == b for n in counts)) for b in BUCKET_LABELS}
+    df = c.users
     return {
-        "thresholds": t,
-        "buckets": [{"key": b, "label": l, "n_users": sizes[b]} for b, l in BUCKET_LABELS.items()],
-        "note": f"Chia theo tam phân vị số tương tác train của các user có item {c.evaluated_on}.",
+        "total": len(df),
+        "thresholds": df.attrs["thresholds"],
+        "buckets": [{"key": b, "label": label, "n_users": int((df["bucket"] == b).sum())}
+                    for b, label in BUCKET_LABELS.items()],
+        "areas": [{"key": a, "n_users": int(n)} for a, n in df["area"].value_counts().items()],
+        "has_age": bool(df["age"].notna().any()),
+        "note": f"Nhóm giao dịch chia theo tam phân vị số món đã mua của các khách có item {c.evaluated_on}.",
     }
 
 
 @router.get("/users/search")
-def search_users(q: str = "", bucket: str | None = None, limit: int = 20):
-    c, q = ctx(), q.strip().lower()
-    t = _thresholds(c)
-    out = []
-    for u in c.target_users:
-        row = _user_row(c, int(u), t)
-        if row["customer_id"].startswith(q) and (bucket is None or row["bucket"] == bucket):
-            out.append(row)
-            if len(out) >= limit:
-                break
-    return out
+def search_users(q: str = "", bucket: Bucket | None = None, area: str | None = None, sort: Sort = "train_desc",
+                 offset: int = Query(0, ge=0), limit: int = Query(30, ge=1, le=200)):
+    df = filter_users(ctx().users, q, bucket, area, sort)
+    return {"total": len(df), "offset": offset, "items": user_rows(df.iloc[offset:offset + limit])}
 
 
 @router.get("/users/random")
-def random_user(bucket: str | None = None):
-    c = ctx()
-    t = _thresholds(c)
-    pool = [int(u) for u in c.target_users if bucket is None or _bucket(int(c.train_user_counts[u]), t) == bucket]
-    if not pool:
-        raise HTTPException(404, "Không có user nào trong nhóm này.")
-    return _user_row(c, random.choice(pool), t)
+def random_user(bucket: Bucket | None = None, area: str | None = None):
+    df = filter_users(ctx().users, bucket=bucket, area=area)
+    if df.empty:
+        raise HTTPException(404, "Không có khách nào khớp bộ lọc.")
+    return user_rows(df.sample(1))[0]
+
+
+@router.get("/users/{customer_id}/position")
+def position(customer_id: str, q: str = "", bucket: Bucket | None = None, area: str | None = None,
+             sort: Sort = "train_desc"):
+    """Vị trí của khách trong danh sách đang lọc (nút ‹ › trên thanh khách)."""
+    return user_position(filter_users(ctx().users, q, bucket, area, sort), customer_id)
 
 
 @router.get("/users/{customer_id}/history")
 def history(customer_id: str):
     c = ctx()
     u = _user(c, customer_id)
-    return {"customer_id": customer_id, "items": c.history(u)}
+    return {"customer_id": customer_id, "profile": user_rows(c.users.loc[[c.customer_ids[u]]])[0],
+            "items": c.history(u)}
 
 
 @router.get("/users/{customer_id}/recommend")
@@ -150,33 +173,6 @@ def neighbors(customer_id: str, k: int = 10):
         raise HTTPException(404, "UserKNN không khả dụng ở chế độ này (cần chế độ final và tham số mở rộng).")
     return {"customer_id": customer_id, "k": len(rows), "params": getattr(c, "extension_params", {}).get("UserKNN"),
             "neighbors": rows}
-
-
-class OnboardingRequest(BaseModel):
-    area: str
-    product_groups: list[str] = []
-    colours: list[str] = []
-    age_group: str | None = None
-    k: int = 10
-
-
-@router.get("/onboarding/options")
-def onboarding_options():
-    return onboarding().options()
-
-
-@router.post("/onboarding/recommend")
-def onboarding_recommend(req: OnboardingRequest):
-    c, ob = ctx(), onboarding()
-    if req.k not in c.k_values:
-        raise HTTPException(400, f"K phải thuộc {c.k_values}.")
-    try:
-        res = ob.recommend(req.area, req.product_groups, req.colours, req.age_group, req.k)
-    except KeyError:
-        raise HTTPException(400, f"Khu vực '{req.area}' không có trong onboarding_config.yaml.")
-    for block in ("preferred", "hot_in_area"):
-        res[block] = [{**c.item_info(it["item_idx"]), **it} for it in res[block]]
-    return res
 
 
 @router.get("/dashboard")

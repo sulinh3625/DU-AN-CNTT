@@ -1,14 +1,16 @@
 """Chạy từ neumf_project/:  python -m pytest demo/tests -q"""
 from __future__ import annotations
 
+import json
+
 import numpy as np
 import pandas as pd
 import pytest
 
 from demo.backend import inference, metrics_io
-from demo.backend.data_context import (FINAL_DIR, FINAL_SEED, V2_DIR, DataContext, final_available,
-                                      resolve_latest_run_tag, v2_available)
-from demo.backend.onboarding import Onboarding, load_onboarding_config
+from demo.backend.data_context import (FINAL_DIR, FINAL_SEED, V2_DIR, DataContext, _v2_common, final_available,
+                                      resolve_latest_run_tag, user_table, v2_available, v2_data_mismatch)
+from demo.backend.routes import filter_users, user_position, user_rows
 from src.data_pipeline.splitting import assert_disjoint_splits
 
 TOL = 1e-6
@@ -39,7 +41,8 @@ def fctx():
 def vctx():
     """Chế độ v2: checkpoint seed 42 của đánh giá cuối giao thức v2 (outputs/v2/final/seed42) — kết quả chính."""
     if not v2_available():
-        pytest.skip("Chưa có outputs/v2/final/seed42 kèm checkpoint — chạy scripts/23_final_v2.py")
+        pytest.skip("Chưa có outputs/v2/final/seed42 kèm checkpoint tạo từ file dữ liệu đã lọc hiện tại — chạy "
+                    "scripts/23_final_v2.py")
     return DataContext(load_customers=False, mode="v2")
 
 
@@ -231,46 +234,50 @@ def test_v2_dashboard_reads_result_files(vctx):
     assert d["stats"]["data"]["n_test_users"] == len(vctx.target_users)
 
 
-# ------------------------------------------------------------- onboarding
-def _toy():
-    ts = pd.Timestamp("2020-01-10")
-    articles = pd.DataFrame({
-        "article_id": ["0000000001", "0000000002", "0000000003", "0000000004"],
-        "index_group_name": ["Ladieswear", "Ladieswear", "Ladieswear", "Menswear"],
-        "product_group_name": ["Garment Lower body", "Garment Lower body", "Accessories", "Shoes"],
-        "perceived_colour_master_name": ["Red", "Blue", "Red", "Black"],
-        "product_type_name": ["Trousers", "Trousers", "Bag", "Sneakers"],
-    })
-    train = pd.DataFrame({"user": [0, 1, 2, 3, 4], "item": [1, 1, 1, 2, 3],
-                          "last_timestamp": [ts] * 5})
-    return train, articles
+def test_v2_results_from_other_data_are_refused(tmp_path, monkeypatch):
+    """Kết quả v2 tạo từ dữ liệu khác file đã lọc hiện tại (thiếu / lệch data_md5) không được nạp: demo không dựng tập
+    kiểm thử của mẫu kiểm định cho một kết quả cũ."""
+    V = _v2_common()
+    (tmp_path / "seed42").mkdir()
+    (tmp_path / "seed42" / "results.json").write_text(json.dumps({"evaluated_on": "test"}), encoding="utf-8")
+    (tmp_path / "manifest.json").write_text(json.dumps({V.data_name("holdout"): {"md5": "abc"}}), encoding="utf-8")
+    monkeypatch.setattr(V, "MANIFEST", tmp_path / "manifest.json")
+    for data_md5, usable in ((None, False), ("xyz", False), ("abc", True)):
+        (tmp_path / "data.json").write_text(json.dumps({"data_md5": data_md5}), encoding="utf-8")
+        assert (v2_data_mismatch(tmp_path, 42) is None) == usable, data_md5
 
 
-def test_onboarding_uses_only_train_popularity():
-    train, articles = _toy()
-    ob = Onboarding(train, articles, pd.Series(dtype=float), load_onboarding_config())
-    res = ob.recommend("women", k=5)
-    counts = {it["item_idx"]: it["count"] for it in res["preferred"]}
-    assert counts == train["item"].value_counts().loc[[1, 2]].to_dict()
-    assert 0 not in counts  # item 0 không có lượt mua trong train -> không được gắn "bán chạy"
+# ------------------------------------------------------------- danh sách chọn khách (Admin)
+def _users() -> pd.DataFrame:
+    """5 khách, khách gh05 không có sản phẩm đích; mua nhiều nhất: ab01 đồ nữ 2/3, bf04 đồ nữ 2/4."""
+    days = (1, 5, 3, 2, 2, 9, 1, 2, 3, 4, 1)
+    train = pd.DataFrame({"user": [0, 0, 0, 1, 1, 2, 3, 3, 3, 3, 4], "item": [0, 1, 2, 0, 3, 3, 0, 1, 2, 3, 0],
+                          "last_timestamp": pd.to_datetime([f"2020-01-0{d}" for d in days])})
+    articles = pd.DataFrame({"index_group_name": ["Ladieswear", "Ladieswear", "Menswear", "Divided"]})
+    ids = np.array(["ab01", "ab02", "cd03", "bf04", "gh05"], dtype=object)
+    return user_table(ids, {0: [3], 1: [1, 2], 2: [0], 3: [5, 6, 7]}, train, articles, pd.Series({0: 31.0, 3: 22.0}))
 
 
-def test_onboarding_relaxes_conditions_in_order():
-    train, articles = _toy()
-    ob = Onboarding(train, articles, pd.Series(dtype=float), load_onboarding_config())
-    res = ob.recommend("women", ["Garment Lower body"], ["Red"], k=5)
-    # Không có item đỏ nào bán được -> nới màu, rồi nới loại sản phẩm.
-    assert res["relaxations"] == ["Đã bỏ điều kiện màu", "Đã bỏ điều kiện loại sản phẩm (chỉ giữ khu vực)"]
-    assert [it["item_idx"] for it in res["preferred"]] == [1, 2]
-    # Bậc "bỏ màu" không thêm được item nào vẫn phải được báo là đã nới.
-    res = ob.recommend("women", ["Shoes"], ["Red"], k=5)
-    assert res["relaxations"] == ["Đã bỏ điều kiện màu", "Đã bỏ điều kiện loại sản phẩm (chỉ giữ khu vực)"]
-    assert [it["relax_level"] for it in res["preferred"]] == [2, 2]
+def test_user_table_counts_area_age_and_buckets():
+    df = _users()
+    assert df.index.tolist() == ["ab01", "ab02", "cd03", "bf04"]
+    assert df["train_count"].tolist() == [3, 2, 1, 4] and df["n_targets"].tolist() == [1, 2, 1, 3]
+    assert (df.loc["ab01", "area"], df.loc["ab01", "area_share"]) == ("Ladieswear", round(2 / 3, 3))
+    assert (df.loc["ab01", "first_date"], df.loc["ab01", "last_date"]) == ("2020-01-01", "2020-01-05")
+    assert df.attrs["thresholds"] == (2.0, 3.0) and df["bucket"].tolist() == ["mid", "low", "low", "high"]
+    assert user_rows(df.loc[["ab01", "ab02"]])[0]["age"] == 31 and user_rows(df.loc[["ab02"]])[0]["age"] is None
 
 
-def test_onboarding_real_context_counts_train_window(ctx):
-    ob = Onboarding(ctx.train_df, ctx.articles, pd.Series(dtype=float), load_onboarding_config())
-    start, end = (pd.Timestamp(d) for d in ob.window_range)
-    in_window = ctx.train_df["last_timestamp"].between(start, end)
-    assert len(ob.window) == int(in_window.sum())
-    assert set(ob.window["item"]) <= set(ctx.train_df["item"])
+def test_filter_users_search_sort_and_position():
+    df = _users()
+    assert filter_users(df, " B")["customer_id"].tolist() == ["bf04", "ab01", "ab02"]  # khớp ở đầu xếp trước
+    assert filter_users(df, sort="train_asc")["customer_id"].tolist() == ["cd03", "ab02", "ab01", "bf04"]
+    assert filter_users(df, bucket="low", sort="id")["customer_id"].tolist() == ["ab02", "cd03"]
+    assert filter_users(df, area="Ladieswear")["customer_id"].tolist() == ["bf04", "ab01"]
+    full = filter_users(df)  # mua nhiều nhất trước: bf04, ab01, ab02, cd03
+    pos = user_position(full, "ab01")
+    assert (pos["index"], pos["total"]) == (1, 4)
+    assert (pos["prev"]["customer_id"], pos["next"]["customer_id"]) == ("bf04", "ab02")
+    assert user_position(full, "bf04")["prev"] is None and user_position(full, "cd03")["next"] is None
+    out = user_position(filter_users(df, bucket="high"), "ab01")  # ngoài bộ lọc: "sau" = khách đầu danh sách
+    assert out["index"] is None and out["prev"] is None and out["next"]["customer_id"] == "bf04"

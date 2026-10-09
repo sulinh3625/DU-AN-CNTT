@@ -30,14 +30,13 @@ const inited = {};
 let charts = [];
 
 /* ------------------------------------------------------------ routing */
-const VIEWS = ["home", "new", "admin", "dashboard"];
+const VIEWS = ["admin", "dashboard"];
 function route() {
-  const v = location.hash.replace(/^#\/?/, "") || "home";
-  const view = VIEWS.includes(v) ? v : "home";
+  const v = location.hash.replace(/^#\/?/, "");
+  const view = VIEWS.includes(v) ? v : "admin";
   VIEWS.forEach((x) => $("view-" + x).classList.toggle("hidden", x !== view));
   document.querySelectorAll("nav a").forEach((a) => a.classList.toggle("active", a.dataset.view === view));
   if (!CTX) return;
-  if (view === "new" && !inited.new) initNew();
   if (view === "admin" && !inited.admin) initAdmin();
   if (view === "dashboard") loadDashboard();
 }
@@ -75,93 +74,10 @@ const kOptions = (sel) => {
   sel.value = Math.max(...CTX.k_values);
 };
 
-function productCard(it, extra = "") {
-  return `<div class="product">${img(it)}<div class="body">
-    <div class="name">${esc(it.prod_name)}</div>
-    <div class="meta">${esc(it.product_type_name)} · ${esc(it.colour_group_name)}</div>
-    ${extra}</div></div>`;
-}
-
 function rowItem(it, left, right, cls = "") {
   return `<div class="row-item ${cls}">${left}${img(it)}
     <div class="txt"><div class="name" title="${esc(it.prod_name)}">${esc(it.prod_name)}</div>
       <div class="meta">${esc(it.product_type_name)} · ${esc(it.colour_group_name)}</div></div>${right}</div>`;
-}
-
-function chips(el, items, selected, onToggle) {
-  el.innerHTML = items.map((x) => `<button type="button" class="chip ${selected(x.value) ? "on" : ""}" data-v="${esc(x.value)}">${esc(x.label)}${x.small ? `<small>${esc(x.small)}</small>` : ""}</button>`).join("");
-  el.querySelectorAll(".chip").forEach((b) => b.addEventListener("click", () => onToggle(b.dataset.v)));
-}
-
-/* ------------------------------------------------------------ new customer */
-const ob = { options: null, area: null, types: new Set(), colours: new Set() };
-
-async function initNew() {
-  inited.new = true;
-  try {
-    ob.options = await api("/onboarding/options");
-  } catch (e) {
-    $("ob-result").innerHTML = `<div class="error">${esc(e.message)}</div>`;
-    return;
-  }
-  const o = ob.options;
-  ob.area = o.areas.find((a) => a.n_items > 0)?.key;
-  kOptions($("ob-k"));
-  const age = $("ob-age");
-  if (o.age_groups.length) {
-    age.innerHTML = `<option value="">Không chọn</option>` + o.age_groups.map((g) =>
-      `<option value="${g.key}">${g.label} (${num(g.n_transactions)} giao dịch train)</option>`).join("");
-  } else {
-    age.innerHTML = `<option value="">customers.csv không có tuổi</option>`;
-    age.disabled = true;
-  }
-  $("ob-note").textContent =
-    `Độ phổ biến = số khách mua mỗi sản phẩm trong tập TRAIN, cửa sổ tối đa ${o.popularity_window_days} ngày cuối của train ` +
-    `(thực tế ${o.popularity_window[0]} → ${o.popularity_window[1]}). Lọc tuổi chỉ áp dụng khi nhóm có ≥ ${o.min_age_group_transactions} giao dịch; ` +
-    `${Math.round(o.age_coverage * 100)}% giao dịch trong cửa sổ có thông tin tuổi. Không lưu thông tin của bạn.`;
-  renderObForm();
-  $("ob-go").addEventListener("click", runOnboarding);
-}
-
-function renderObForm() {
-  const o = ob.options;
-  const area = o.areas.find((a) => a.key === ob.area);
-  chips($("ob-area"), o.areas.map((a) => ({ value: a.key, label: a.label, small: `${a.index_group_names.join(", ")} · ${a.n_items} sp` })),
-    (v) => v === ob.area, (v) => { ob.area = v; ob.types.clear(); ob.colours.clear(); renderObForm(); });
-  const toggle = (set) => (v) => { set.has(v) ? set.delete(v) : set.add(v); renderObForm(); };
-  chips($("ob-types"), (area?.product_groups || []).map((v) => ({ value: v, label: v })), (v) => ob.types.has(v), toggle(ob.types));
-  chips($("ob-colours"), (area?.colours || []).map((v) => ({ value: v, label: v })), (v) => ob.colours.has(v), toggle(ob.colours));
-}
-
-async function runOnboarding() {
-  const btn = $("ob-go");
-  btn.disabled = true;
-  try {
-    const res = await api("/onboarding/recommend", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        area: ob.area, product_groups: [...ob.types], colours: [...ob.colours],
-        age_group: $("ob-age").value || null, k: Number($("ob-k").value),
-      }),
-    });
-    const notices = [
-      ...res.relaxations.map((r) => `<div class="missing">Không đủ sản phẩm khớp lựa chọn — ${esc(r.toLowerCase())}.</div>`),
-      ...res.notes.map((n) => `<div class="banner" style="margin:0;font-weight:500">${esc(n)}</div>`),
-    ].join("");
-    const card = (it) => productCard(it, `
-      <div><span class="tag rule">Rule-based</span> ${it.relax_level ? `<span class="tag relax">${esc(it.match)}</span>` : ""}</div>
-      <div class="reason">${esc(it.reason)}</div><div class="meta">${esc(it.detail)}</div>`);
-    $("ob-result").innerHTML = `
-      <div class="section-block"><h2>Hợp sở thích của bạn</h2><div class="notice-list">${notices}</div>
-        <div class="grid-products">${res.preferred.map(card).join("") || '<div class="note">Không có sản phẩm nào có lượt mua trong khu vực này.</div>'}</div></div>
-      <div class="section-block"><h2>Đang hot trong khu vực bạn chọn (${esc(res.area)})</h2>
-        <div class="grid-products">${res.hot_in_area.map(card).join("") || '<div class="note">Không còn sản phẩm nào khác.</div>'}</div></div>`;
-  } catch (e) {
-    $("ob-result").innerHTML = `<div class="error" style="margin-top:16px">${esc(e.message)}</div>`;
-  } finally {
-    btn.disabled = false;
-  }
 }
 
 /* ------------------------------------------------------------ admin */
@@ -192,7 +108,47 @@ function renderProtocol() {
     • <b>Item đích</b> = đúng tập mà run đã chấm: <i>validation item</i> nếu run chưa <code>--final</code> (khoá test), <i>test item</i> nếu run đã chấm test.<br>
     • <code>HR@K = 1[rank ≤ K]</code>; <code>NDCG@K = 1/log2(rank+1)</code> nếu rank ≤ K, ngược lại 0 (K tối đa ${k}).`;
 }
-const ad = { bucket: null, user: null, buckets: null };
+// ------------------------------------------------------------ chọn khách
+// Tham khảo: thanh khách + bảng chọn mở bằng Ctrl K (kiểu bảng lệnh của Linear / Vercel), danh sách có ô lọc, tab
+// nhóm và avatar (SelectPanel của GitHub Primer, resource index của Shopify Polaris).
+const ad = { user: null, prev: null, next: null, facets: null, seq: 0 };
+const pk = { q: "", bucket: "", area: "", sort: "train_desc", items: [], total: 0, view: [], active: -1, loading: false,
+  seq: 0, timer: null, loadedQ: null };
+const BUCKET_SHORT = { low: "Ít giao dịch", mid: "Trung bình", high: "Nhiều giao dịch" };
+const AREA_VI = { "Ladieswear": "Đồ nữ", "Menswear": "Đồ nam", "Divided": "Divided", "Baby/Children": "Trẻ em", "Sport": "Thể thao" };
+const areaLabel = (a) => AREA_VI[a] || a;
+const SORT_LABELS = { train_desc: "Mua nhiều nhất", train_asc: "Mua ít nhất", targets_desc: "Nhiều món đích nhất", id: "Theo customer_id" };
+const COPY_ICON = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="9" y="9" width="12" height="12" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h10"/></svg>';
+
+// Avatar chữ cái: màu cố định theo customer_id (băm chuỗi), hai ký tự đầu của mã.
+const hue = (cid) => [...cid].reduce((h, ch) => (h * 31 + ch.charCodeAt(0)) % 360, 7);
+const avatar = (cid, cls = "") => `<span class="avatar ${cls}" style="--h:${hue(cid)}" aria-hidden="true">${esc(cid.slice(0, 2).toUpperCase())}</span>`;
+// customer_id dài: hiện đầu…cuối; khi đang tìm thì hiện đoạn quanh chỗ khớp và tô đậm phần khớp.
+function idHtml(cid, q = "") {
+  const p = q ? cid.toLowerCase().indexOf(q.toLowerCase()) : -1;
+  if (p < 0) return `${esc(cid.slice(0, 12))}…${esc(cid.slice(-6))}`;
+  const s = Math.max(0, p - 6), e = Math.min(cid.length, p + q.length + 8);
+  return `${s ? "…" : ""}${esc(cid.slice(s, p))}<mark>${esc(cid.slice(p, p + q.length))}</mark>${esc(cid.slice(p + q.length, e))}${e < cid.length ? "…" : ""}`;
+}
+const userMeta = (r) => [`${num(r.train_count)} món đã mua`, `${num(r.n_targets)} món đích`,
+  r.area && areaLabel(r.area), r.age != null && `${Math.round(r.age)} tuổi`].filter(Boolean).join(" · ");
+const filterParams = (extra = {}) => {
+  const p = new URLSearchParams({ sort: pk.sort, ...extra });
+  if (pk.q) p.set("q", pk.q);
+  if (pk.bucket) p.set("bucket", pk.bucket);
+  if (pk.area) p.set("area", pk.area);
+  return p;
+};
+
+// Khách xem gần đây (theo từng chế độ / run), chỉ lưu trong trình duyệt.
+const recentKey = () => `demo.recent.${CTX.run_tag}`;
+function recentUsers() {
+  try { return JSON.parse(localStorage.getItem(recentKey())) || []; } catch { return []; }
+}
+function rememberUser(row) {
+  const list = [row, ...recentUsers().filter((r) => r.customer_id !== row.customer_id)].slice(0, 5);
+  try { localStorage.setItem(recentKey(), JSON.stringify(list)); } catch { /* trình duyệt chặn lưu: bỏ qua */ }
+}
 
 async function initAdmin() {
   inited.admin = true;
@@ -209,26 +165,39 @@ async function initAdmin() {
   kOptions($("ad-k"));
   const un = Object.entries(CTX.unavailable_models || {});
   $("ad-unavailable").innerHTML = un.map(([m, r]) => `<b>${esc(m)}</b> bị ẩn: ${esc(r)}`).join("<br>");
-
-  ad.buckets = await api("/users/buckets");
-  const [t1, t2] = ad.buckets.thresholds;
-  const range = { low: `≤ ${t1}`, mid: `${t1} < n ≤ ${t2}`, high: `> ${t2}` };
-  const renderBuckets = () => chips($("ad-bucket"),
-    [{ value: "", label: "Tất cả" }, ...ad.buckets.buckets.map((x) => ({ value: x.key, label: x.label, small: `${range[x.key]} · ${x.n_users} user` }))],
-    (v) => v === (ad.bucket || ""), (v) => { ad.bucket = v || null; renderBuckets(); });
-  renderBuckets();
-
-  let timer;
-  $("ad-search").addEventListener("input", () => { clearTimeout(timer); timer = setTimeout(suggest, 250); });
-  $("ad-search").addEventListener("keydown", (e) => { if (e.key === "Enter") selectUser($("ad-search").value.trim()); });
-  $("ad-random").addEventListener("click", async () => {
-    try {
-      const u = await api(`/users/random${ad.bucket ? `?bucket=${ad.bucket}` : ""}`);
-      selectUser(u.customer_id);
-    } catch (e) { showAdminError(e); }
-  });
   $("ad-compare").addEventListener("change", () => { b.disabled = !$("ad-compare").checked; loadAdmin(); });
   [a, b, $("ad-k")].forEach((el) => el.addEventListener("change", loadAdmin));
+
+  renderCustomerEmpty();
+  $("pk-sort").innerHTML = Object.entries(SORT_LABELS).map(([v, l]) => `<option value="${v}">${l}</option>`).join("");
+  $("pk-sort").addEventListener("change", () => { pk.sort = $("pk-sort").value; loadUsers(); });
+  $("pk-q").addEventListener("input", () => {
+    pk.q = $("pk-q").value.trim();
+    clearTimeout(pk.timer);
+    pk.timer = setTimeout(() => loadUsers(), 150);
+  });
+  $("pk-q").addEventListener("keydown", onPickerKey);
+  const list = $("pk-list");
+  list.addEventListener("click", (e) => { const el = e.target.closest(".pk-item"); if (el) pickUser(pk.view[+el.dataset.i]); });
+  list.addEventListener("mousemove", (e) => {
+    const el = e.target.closest(".pk-item");
+    if (el && +el.dataset.i !== pk.active) { pk.active = +el.dataset.i; paintActive(false); }
+  });
+  list.addEventListener("scroll", () => { if (list.scrollTop + list.clientHeight > list.scrollHeight - 160) loadMore(); });
+  $("picker").addEventListener("click", (e) => { if (e.target === $("picker")) $("picker").close(); });  // bấm ra nền
+  $("picker").addEventListener("close", () => { if (ad.user) loadPosition(); });  // bộ lọc có thể đã đổi
+  $("cust-open").addEventListener("click", openPicker);
+  $("cust-random").addEventListener("click", async () => {
+    try { selectUser((await api(`/users/random?${filterParams()}`)).customer_id); } catch (e) { showAdminError(e); }
+  });
+  $("cust-prev").addEventListener("click", () => ad.prev && selectUser(ad.prev.customer_id));
+  $("cust-next").addEventListener("click", () => ad.next && selectUser(ad.next.customer_id));
+  document.addEventListener("keydown", onAdminKey);
+
+  try {
+    ad.facets = await api("/users/facets");
+    renderFilters();
+  } catch (e) { showAdminError(e); }
 
   // Mở thẳng một khách (dùng khi chụp ảnh minh hoạ): ?user=<customer_id>&compare=1&a=<mô hình>&b=<mô hình>#admin
   const params = new URLSearchParams(location.search);
@@ -238,48 +207,228 @@ async function initAdmin() {
   if (params.get("user")) selectUser(params.get("user"));
 }
 
-async function suggest() {
-  const q = $("ad-search").value.trim();
-  const box = $("ad-suggest");
-  if (!q) { box.classList.add("hidden"); return; }
-  const rows = await api(`/users/search?q=${encodeURIComponent(q)}&limit=15${ad.bucket ? `&bucket=${ad.bucket}` : ""}`).catch(() => []);
-  box.innerHTML = rows.map((r) => `<div data-id="${r.customer_id}">${r.customer_id.slice(0, 24)}… · ${r.train_count} giao dịch train</div>`).join("")
-    || `<div>Không có user có ${targetLabel()} khớp tiền tố này.</div>`;
-  box.classList.remove("hidden");
-  box.querySelectorAll("[data-id]").forEach((d) => d.addEventListener("click", () => selectUser(d.dataset.id)));
+// Ctrl K: mở / đóng bảng chọn; "/": mở; ← →: khách trước / sau (khi không gõ trong ô nhập).
+function onAdminKey(e) {
+  if ($("view-admin").classList.contains("hidden")) return;
+  const dlg = $("picker");
+  if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "k") {
+    e.preventDefault();
+    if (dlg.open) dlg.close(); else openPicker();
+    return;
+  }
+  if (dlg.open || e.ctrlKey || e.metaKey || e.altKey || /^(INPUT|SELECT|TEXTAREA)$/.test(document.activeElement?.tagName)) return;
+  if (e.key === "/") { e.preventDefault(); openPicker(); }
+  else if (e.key === "ArrowLeft" && ad.prev) selectUser(ad.prev.customer_id);
+  else if (e.key === "ArrowRight" && ad.next) selectUser(ad.next.customer_id);
+}
+
+async function onPickerKey(e) {
+  if (e.key === "ArrowDown" || e.key === "ArrowUp") {
+    e.preventDefault();
+    if (!pk.view.length) return;
+    pk.active = Math.max(0, Math.min(pk.view.length - 1, pk.active + (e.key === "ArrowDown" ? 1 : -1)));
+    paintActive();
+    if (pk.active >= pk.view.length - 4) loadMore();
+  } else if (e.key === "Enter") {
+    e.preventDefault();
+    if (pk.loadedQ !== pk.q) { clearTimeout(pk.timer); await loadUsers(); }  // dán mã rồi Enter ngay
+    if (pk.view[pk.active]) pickUser(pk.view[pk.active]);
+  }
+}
+
+function openPicker() {
+  const dlg = $("picker");
+  if (!dlg.open) dlg.showModal();
+  $("pk-q").select();
+  if (pk.loadedQ === null) loadUsers(); else renderPicker();  // vẽ lại: "đang xem", gần đây
+}
+
+function seg(el, items, current, onPick) {
+  el.innerHTML = items.map((x) => `<button type="button" data-v="${esc(x.value)}" aria-pressed="${x.value === current}"${x.title ? ` title="${esc(x.title)}"` : ""}>${esc(x.label)}${x.n != null ? `<span class="n">${num(x.n)}</span>` : ""}</button>`).join("");
+  el.querySelectorAll("button").forEach((btn) => btn.addEventListener("click", () => onPick(btn.dataset.v)));
+}
+
+function renderFilters() {
+  const f = ad.facets;
+  const [lo, hi] = f.thresholds.map(Math.floor);
+  const range = { low: `≤ ${lo}`, mid: `${lo + 1}–${hi}`, high: `≥ ${hi + 1}` };
+  seg($("pk-bucket"), [{ value: "", label: "Tất cả", n: f.total },
+    ...f.buckets.map((x) => ({ value: x.key, label: `${x.label} (${range[x.key]} món)`, n: x.n_users }))],
+  pk.bucket, (v) => { pk.bucket = v; renderFilters(); loadUsers(); });
+  seg($("pk-area"), [{ value: "", label: "Mọi khu vực" },
+    ...f.areas.map((x) => ({ value: x.key, label: areaLabel(x.key), n: x.n_users, title: `Mua nhiều nhất ở ${x.key}` }))],
+  pk.area, (v) => { pk.area = v; renderFilters(); loadUsers(); });
+}
+
+async function loadUsers(more = false) {
+  const seq = ++pk.seq;
+  const q = pk.q;
+  pk.loading = true;
+  try {
+    const res = await api(`/users/search?${filterParams({ offset: more ? pk.items.length : 0, limit: 40 })}`);
+    if (seq !== pk.seq) return;
+    pk.items = more ? pk.items.concat(res.items) : res.items;
+    pk.total = res.total;
+    pk.loadedQ = q;
+    renderPicker(more);
+  } catch (e) {
+    if (seq === pk.seq) $("pk-list").innerHTML = `<div class="error" style="margin:8px">${esc(e.message)}</div>`;
+  } finally {
+    if (seq === pk.seq) pk.loading = false;
+  }
+}
+
+function loadMore() {
+  if (!pk.loading && pk.items.length < pk.total) loadUsers(true);
+}
+
+function renderPicker(keepActive = false) {
+  const recent = pk.q || pk.bucket || pk.area ? [] : recentUsers();
+  pk.view = [...recent, ...pk.items];
+  if (!keepActive) {
+    const cur = pk.view.findIndex((r) => r.customer_id === ad.user);
+    pk.active = pk.view.length ? Math.max(0, cur) : -1;
+  }
+  const opt = (r, i) => `<div class="pk-item" role="option" id="pk-opt-${i}" data-i="${i}" aria-selected="false">
+      ${avatar(r.customer_id)}
+      <div class="pk-text"><div class="pk-id" title="${esc(r.customer_id)}">${idHtml(r.customer_id, pk.q)}</div>
+        <div class="pk-meta">${esc(userMeta(r))}</div></div>
+      ${r.customer_id === ad.user ? '<span class="pk-check">Đang xem</span>' : ""}
+      <span class="badge ${esc(r.bucket)}">${esc(BUCKET_SHORT[r.bucket] || "")}</span></div>`;
+  const head = (t) => `<div class="pk-group">${t}</div>`;
+  const filtered = pk.bucket || pk.area;
+  const empty = pk.q
+    ? `Không có khách nào có customer_id chứa “${esc(pk.q)}”${filtered ? " trong bộ lọc đang chọn" : ""}.`
+    : "Không có khách nào trong bộ lọc đang chọn.";
+  $("pk-list").innerHTML = (recent.length ? head("Xem gần đây") + recent.map(opt).join("") : "")
+    + (pk.items.length
+      ? head(pk.q ? "Kết quả tìm" : "Khách có sản phẩm đích") + pk.items.map((r, i) => opt(r, i + recent.length)).join("")
+      : `<div class="pk-empty">${empty}<br>Thử bỏ bớt bộ lọc hoặc kiểm tra lại mã.</div>`);
+  $("pk-count").textContent = `${num(pk.items.length)} / ${num(pk.total)} khách${pk.items.length < pk.total ? " · cuộn để xem thêm" : ""}`;
+  paintActive(!keepActive);
+}
+
+function paintActive(scroll = true) {
+  $("pk-list").querySelectorAll(".pk-item").forEach((el) => {
+    const on = +el.dataset.i === pk.active;
+    el.classList.toggle("active", on);
+    el.setAttribute("aria-selected", on);
+    if (on && scroll) el.scrollIntoView({ block: "nearest" });
+  });
+  $("pk-q").setAttribute("aria-activedescendant", pk.active >= 0 ? `pk-opt-${pk.active}` : "");
+}
+
+function pickUser(row) {
+  $("picker").close();
+  selectUser(row.customer_id);
 }
 
 function selectUser(cid) {
+  cid = String(cid || "").trim();
   if (!cid) return;
   ad.user = cid;
-  $("ad-search").value = cid;
-  $("ad-suggest").classList.add("hidden");
+  ad.prev = ad.next = null;
+  $("cust-pos").textContent = "…";
+  $("cust-prev").disabled = $("cust-next").disabled = true;
   loadAdmin();
+  loadPosition();
+}
+
+// Vị trí của khách trong danh sách đang lọc + khách liền trước / liền sau cho nút ‹ ›.
+async function loadPosition() {
+  const cid = ad.user;
+  try {
+    const res = await api(`/users/${encodeURIComponent(cid)}/position?${filterParams()}`);
+    if (cid !== ad.user) return;
+    ad.prev = res.prev;
+    ad.next = res.next;
+    $("cust-pos").textContent = res.index == null ? "ngoài bộ lọc" : `${num(res.index + 1)} / ${num(res.total)}`;
+    $("cust-prev").disabled = !res.prev;
+    $("cust-next").disabled = !res.next;
+  } catch { if (cid === ad.user) $("cust-pos").textContent = "—"; }
+}
+
+function syncUrl() {
+  const p = new URLSearchParams(location.search);
+  p.set("user", ad.user);
+  p.set("a", $("ad-model-a").value);
+  if ($("ad-compare").checked) { p.set("compare", "1"); p.set("b", $("ad-model-b").value); }
+  else { p.delete("compare"); p.delete("b"); }
+  history.replaceState(null, "", `${location.pathname}?${p}${location.hash}`);
+}
+
+function renderCustomerEmpty() {
+  const recent = recentUsers();
+  $("cust-current").innerHTML = `<span class="avatar lg ghost" aria-hidden="true">?</span>
+    <div class="cust-info"><div class="cust-title">Chưa chọn khách hàng</div>
+      <div class="note">Bấm <b>Chọn khách</b> (<kbd>Ctrl K</kbd> hoặc <kbd>/</kbd>) để tìm theo customer_id, lọc theo nhóm giao dịch
+        hoặc khu vực mua sắm; hoặc bấm <b>Ngẫu nhiên</b>.</div>
+      ${recent.length ? `<div class="recent-row"><span>Xem gần đây</span>${recent.map((r) => `<button type="button" class="recent-chip" data-id="${esc(r.customer_id)}" title="${esc(r.customer_id)}">${avatar(r.customer_id)}${esc(r.customer_id.slice(0, 8))}…</button>`).join("")}</div>` : ""}
+    </div>`;
+  $("cust-current").querySelectorAll(".recent-chip").forEach((btn) => btn.addEventListener("click", () => selectUser(btn.dataset.id)));
+}
+
+function renderCustomer(hist) {
+  const p = hist.profile;
+  const counts = {};
+  hist.items.forEach((it) => { counts[it.product_type_name] = (counts[it.product_type_name] || 0) + 1; });
+  const top = Object.entries(counts).sort((x, y) => y[1] - x[1]).slice(0, 4).map(([t, n]) => `${t} ×${n}`).join(", ");
+  $("cust-current").innerHTML = `${avatar(p.customer_id, "lg")}
+    <div class="cust-info">
+      <div class="cust-id"><span class="mono" title="${esc(p.customer_id)}">${esc(p.customer_id)}</span>
+        <button type="button" class="icon-btn" id="cust-copy" title="Chép customer_id" aria-label="Chép customer_id">${COPY_ICON}</button></div>
+      <div class="cust-chips">
+        <span class="badge ${esc(p.bucket)}">${esc(BUCKET_SHORT[p.bucket] || "")}</span>
+        <span class="pill"><b>${num(p.train_count)}</b> món đã mua</span>
+        <span class="pill"><b>${num(p.n_targets)}</b> món đích</span>
+        ${p.area ? `<span class="pill">${esc(areaLabel(p.area))} <b>${pct(p.area_share, 0)}</b></span>` : ""}
+        ${p.age != null ? `<span class="pill"><b>${Math.round(p.age)}</b> tuổi</span>` : ""}
+        ${p.first_date ? `<span class="pill muted">mua ${esc(p.first_date)} → ${esc(p.last_date)}</span>` : ""}
+      </div>
+      ${top ? `<div class="cust-top">Hay mua: ${esc(top)}</div>` : ""}
+    </div>`;
+  $("cust-copy").addEventListener("click", async (e) => {
+    const btn = e.currentTarget;
+    try { await navigator.clipboard.writeText(p.customer_id); btn.textContent = "✓"; } catch { btn.textContent = "!"; }
+    setTimeout(() => { btn.innerHTML = COPY_ICON; }, 1200);
+  });
 }
 
 function showAdminError(e) {
   $("ad-grid").classList.add("hidden");
+  $("ad-neighbors-card").classList.add("hidden");
   $("ad-empty").classList.remove("hidden");
   $("ad-empty").innerHTML = `<div class="error">${esc(e.message)}</div>`;
 }
 
 async function loadAdmin() {
   if (!ad.user) return;
+  const seq = ++ad.seq;  // bấm ‹ › liên tục: chỉ vẽ kết quả của lần chọn sau cùng
   const k = $("ad-k").value;
   const models = [$("ad-model-a").value];
   if ($("ad-compare").checked && $("ad-model-b").value !== models[0]) models.push($("ad-model-b").value);
   const uid = encodeURIComponent(ad.user);
+  syncUrl();
+  $("ad-grid").classList.add("loading");
   try {
     const [hist, ...recs] = await Promise.all([
       api(`/users/${uid}/history`),
       ...models.map((m) => api(`/users/${uid}/recommend?model=${encodeURIComponent(m)}&k=${k}`)),
     ]);
+    if (seq !== ad.seq) return;
+    rememberUser(hist.profile);
+    renderCustomer(hist);
     $("ad-empty").classList.add("hidden");
     $("ad-grid").classList.remove("hidden");
     renderHistory(hist);
     renderRecs(recs, k);
     renderAnswer(recs, hist);
-  } catch (e) { showAdminError(e); return; }
+  } catch (e) {
+    if (seq === ad.seq) { renderCustomerEmpty(); showAdminError(e); }
+    return;
+  } finally {
+    if (seq === ad.seq) $("ad-grid").classList.remove("loading");
+  }
   loadNeighbors(uid);
 }
 
@@ -360,7 +509,6 @@ function renderAnswer(recs, hist) {
     ? `Candidates = ${num(CTX.n_candidates)} sản phẩm của train ∪ validation − ${hist.items.length} món khách đã mua.`
     : `Candidates = ${num(CTX.n_items)} item − ${hist.items.length} item train${v ? " − 1 item validation" : ""}.`;
   $("ad-answer").innerHTML = `
-    <div class="cid" style="margin-bottom:8px">${esc(ad.user)}</div>
     <h3>${title}</h3>
     ${targetRows}
     ${v ? `<div class="note" style="margin:8px 0 14px">Validation item (dùng cho early stopping, cũng bị loại khỏi candidates): ${esc(v.prod_name)} — ${esc(v.product_type_name)}</div>` : ""}

@@ -15,7 +15,7 @@ python run.py v2-data        # mẫu B + đặc trưng (chế độ v2)
 ```
 
 - `data/raw/hm/` cần đủ 3 file Kaggle: `transactions_train.csv`; `articles.csv` (tên, loại sản phẩm; đặc trưng);
-  `customers.csv` (đặc trưng; lọc tuổi cho khách mới).
+  `customers.csv` (đặc trưng; tuổi hiện trong danh sách chọn khách).
 - Chế độ v2 (mặc định) cần kết quả đánh giá cuối `outputs/v2/final/` — gồm `data.json` và `seed42/` kèm checkpoint —
   sinh bởi `python run.py v2-final` (`README.md` dự án, mục 3.3).
 
@@ -36,14 +36,15 @@ python run.py demo           # hoặc: python -m demo
 
 | Màn hình | Nội dung |
 |---|---|
-| **Khách hàng mới** | Gợi ý **theo luật** (lọc theo lựa chọn của khách + độ phổ biến trong dữ liệu huấn luyện). **Không phải** mô hình — có nhãn rõ trên giao diện. |
-| **Admin kiểm thử mô hình** | Chọn khách có sản phẩm đích: lịch sử mua (đúng dữ liệu mô hình đã học), top-K của một mô hình hoặc so sánh hai mô hình, hạng của từng sản phẩm đích, HR@K, NDCG@K, Recall@K. Sản phẩm mới có nhãn **"Mới"**. Thẻ **"10 khách tương đồng nhất"** (UserKNN): độ tương đồng, số món mua chung, láng giềng đã mua sản phẩm đích nào. |
+| **Kiểm thử mô hình** (trang mặc định) | **Chọn khách**: thanh khách hiện mã, số món đã mua / món đích, nhóm giao dịch, khu vực mua nhiều nhất, tuổi, loại sản phẩm hay mua; nút ‹ › (phím ← →) sang khách trước / sau trong danh sách đang lọc, nút Ngẫu nhiên. Bảng chọn mở bằng **Ctrl K** hoặc **/**: tìm theo một đoạn `customer_id`, lọc nhóm giao dịch và khu vực, sắp xếp, ↑ ↓ Enter để chọn, mục "Xem gần đây" (lưu trong trình duyệt). URL giữ `?user=` nên tải lại hay gửi link vẫn mở đúng khách. **Sau khi chọn**: lịch sử mua (đúng dữ liệu mô hình đã học), top-K của một mô hình hoặc so sánh hai mô hình, hạng của từng sản phẩm đích, HR@K, NDCG@K, Recall@K. Sản phẩm mới có nhãn **"Mới"**. Thẻ **"10 khách tương đồng nhất"** (UserKNN): độ tương đồng, số món mua chung, láng giềng đã mua sản phẩm đích nào. |
 | **Dashboard** | Chỉ đọc file kết quả đã chạy (chế độ v2: `outputs/v2/final/*.csv` — kết quả 5 seed, kiểm định họ 10 so sánh, NDCG@10 theo nhóm sản phẩm cũ/mới, độ phủ và tỉ lệ sản phẩm mới, ablation NeuMF-F). Thiếu file thì hiện lệnh cần chạy. |
 
 ## 4. Chế độ
 
 Chọn bằng biến môi trường `DEMO_MODE`; không đặt thì tự chọn theo thứ tự v2 → final → explore (chế độ đầu tiên có
-checkpoint).
+checkpoint). Chế độ v2 chỉ dùng được khi `data_md5` trong `data.json` của kết quả khớp `outputs/data/manifest.json`
+(kết quả được tạo từ đúng file dữ liệu đã lọc hiện tại); kết quả cũ thì tự chọn chế độ khác, còn `DEMO_MODE=v2` báo lỗi
+— kiểm trước khi dựng dữ liệu, để demo không dựng tập kiểm thử của mẫu kiểm định ngoài đánh giá cuối.
 
 | Chế độ | Nội dung |
 |---|---|
@@ -89,9 +90,6 @@ chế độ `explore` dựng theo `configs/hm500k.yaml` và đối chiếu `outp
 | `HM_IMAGES_DIR` | (không có) | Thư mục `images/` gốc của H&M, dùng cho `copy_images.py` |
 | `DEMO_IMAGES_DIR` | `demo/static/images` | Thư mục ảnh mà máy chủ phục vụ |
 
-Mapping khu vực mua sắm → `index_group_name`, cửa sổ độ phổ biến và ngưỡng nhóm tuổi của màn hình Khách hàng mới nằm
-trong `demo/backend/onboarding_config.yaml`.
-
 ## 7. Tuỳ chọn
 
 **Ảnh sản phẩm.** Ảnh H&M có dạng `images/<3 chữ số đầu>/<article_id 10 chữ số>.jpg`. Lệnh dưới chỉ chép ảnh của các
@@ -112,9 +110,8 @@ demo/
 ├── backend/
 │   ├── main.py              FastAPI, phục vụ frontend/
 │   ├── routes.py            các endpoint /api/*
-│   ├── data_context.py      ba chế độ: dựng dữ liệu, ánh xạ ID, nạp checkpoint, láng giềng UserKNN
+│   ├── data_context.py      ba chế độ: dựng dữ liệu, ánh xạ ID, nạp checkpoint, láng giềng UserKNN, bảng khách
 │   ├── inference.py         xếp hạng toàn bộ ứng viên cho một khách
-│   ├── onboarding.py        gợi ý theo luật cho khách hàng mới (+ onboarding_config.yaml)
 │   └── metrics_io.py        đọc file kết quả cho dashboard
 ├── frontend/                index.html, app.js, style.css (HTML tĩnh + Chart.js qua CDN)
 ├── scripts/                 copy_images.py, build_offline_artifacts.py
@@ -125,14 +122,13 @@ demo/
 |---|---|
 | `GET /api/context` | Chế độ, run, số khách/sản phẩm, giá trị K, mô hình khả dụng và mô hình bị ẩn kèm lý do |
 | `POST /api/reload` | Xoá cache, nạp lại |
-| `GET /api/users/buckets` | Ngưỡng nhóm khách ít / trung bình / nhiều giao dịch |
-| `GET /api/users/search?q=&bucket=&limit=` | Tìm khách có sản phẩm đích theo tiền tố `customer_id` |
-| `GET /api/users/random?bucket=` | Khách ngẫu nhiên có sản phẩm đích |
-| `GET /api/users/{customer_id}/history` | Lịch sử mua mô hình đã học, sắp theo thời gian |
+| `GET /api/users/facets` | Số khách có sản phẩm đích; ngưỡng và số khách của nhóm ít / trung bình / nhiều giao dịch; số khách theo khu vực mua nhiều nhất |
+| `GET /api/users/search?q=&bucket=&area=&sort=&offset=&limit=` | Danh sách khách có sản phẩm đích: `customer_id` chứa `q` (khớp ở đầu xếp trước), lọc nhóm / khu vực, sắp `train_desc` · `train_asc` · `targets_desc` · `id`; trả `total` và một trang |
+| `GET /api/users/random?bucket=&area=` | Khách ngẫu nhiên trong bộ lọc |
+| `GET /api/users/{customer_id}/position?q=&bucket=&area=&sort=` | Vị trí của khách trong danh sách đang lọc, kèm khách liền trước / liền sau |
+| `GET /api/users/{customer_id}/history` | Thông tin khách (`profile`) và lịch sử mua mô hình đã học, sắp theo thời gian |
 | `GET /api/users/{customer_id}/recommend?model=&k=` | Top-K, hạng từng sản phẩm đích, số ứng viên, HR/NDCG/Recall@K |
 | `GET /api/users/{customer_id}/neighbors?k=10` | Khách tương đồng nhất theo UserKNN, số món mua chung, láng giềng đã mua sản phẩm đích nào |
-| `GET /api/onboarding/options` | Lựa chọn cho màn hình Khách hàng mới (lấy từ `articles.csv`) |
-| `POST /api/onboarding/recommend` | Gợi ý theo luật cho khách hàng mới |
 | `GET /api/dashboard` | Các khối của dashboard, kèm file nguồn |
 | `GET /api/image/{article_id}` | Ảnh sản phẩm hoặc ô thay thế |
 

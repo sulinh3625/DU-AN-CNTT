@@ -5,6 +5,8 @@ Ba chế độ (biến môi trường DEMO_MODE; mặc định chọn chế đ�
 - "v2": checkpoint seed 42 của đánh giá cuối giao thức v2 (outputs/v2/final/seed42/, scripts/23_final_v2.py) — kết quả
   chính của báo cáo: mẫu kiểm định B, ứng viên gồm cả sản phẩm mới, NeuMF-F và các mô hình đối chiếu. Số per-user khớp
   outputs/v2/final/seed42/per_user.csv.gz. DEMO_V2_DIR=outputs/v2/dry_run để thử với bản chạy thử (mẫu A, xác thực).
+  Chỉ dùng khi kết quả được tạo từ đúng file dữ liệu đã lọc hiện tại (data_md5 khớp outputs/data/manifest.json) — kiểm
+  TRƯỚC khi dựng dữ liệu, để demo không dựng tập kiểm thử của mẫu kiểm định ngoài đánh giá cuối.
 - "final": checkpoint của đánh giá cuối (outputs/final/seed<DEMO_FINAL_SEED, mặc định 42>/) — đúng các mô hình của
   Chương 4: chia theo mốc thời gian chung, mô hình đã huấn luyện lại trên train ∪ val, chấm các sản phẩm đích của tập
   test (một khách có thể có nhiều sản phẩm đích). Số per-user khớp outputs/final/seed42/results_per_user.csv. Có thêm
@@ -20,6 +22,7 @@ import importlib.util
 import json
 import os
 import sys
+from functools import cached_property
 from pathlib import Path
 
 import numpy as np
@@ -83,9 +86,37 @@ def final_available(seed: int = FINAL_SEED) -> bool:
     return all((d / f).exists() for f in need)
 
 
+def _v2_common():
+    """scripts/v2_common.py: cấu hình, manifest dữ liệu đã lọc và hàm dựng dữ liệu của giao thức v2."""
+    scripts_dir = str(PROJECT_ROOT / "scripts")
+    if scripts_dir not in sys.path:
+        sys.path.insert(0, scripts_dir)
+    import v2_common
+    return v2_common
+
+
+def v2_data_mismatch(v2_dir: Path = V2_DIR, seed: int = FINAL_SEED) -> str | None:
+    """Lý do kết quả trong v2_dir không dùng được với file dữ liệu đã lọc hiện tại; None = dùng được.
+
+    So data_md5 mà 23_final_v2.py ghi vào data.json với MD5 trong outputs/data/manifest.json của đúng mẫu (bản chạy thử:
+    mẫu phát triển; đánh giá cuối: mẫu kiểm định). Gọi TRƯỚC khi dựng dữ liệu: dựng lại mẫu kiểm định kèm tập kiểm thử
+    cho một kết quả cũ là mở tập kiểm thử ngoài đánh giá cuối."""
+    V = _v2_common()
+    results = json.loads((v2_dir / f"seed{seed}" / "results.json").read_text(encoding="utf-8"))
+    info = json.loads((v2_dir / "data.json").read_text(encoding="utf-8"))
+    sample = "dev" if str(results.get("evaluated_on", "")).startswith("dry-run") else "holdout"
+    manifest = json.loads(V.MANIFEST.read_text(encoding="utf-8")) if V.MANIFEST.exists() else {}
+    want = manifest.get(V.data_name(sample), {}).get("md5")
+    if want and info.get("data_md5") == want:
+        return None
+    return (f"{v2_dir.as_posix()} được tạo từ dữ liệu khác file đã lọc hiện tại của mẫu {sample} (data_md5 "
+            f"{info.get('data_md5')} ≠ {want}) — chạy lại đánh giá cuối v2 trước, hoặc đặt DEMO_MODE=final.")
+
+
 def v2_available(seed: int = FINAL_SEED) -> bool:
     d = V2_DIR / f"seed{seed}"
-    return (d / "results.json").exists() and all((d / f"{k}.pt").exists() for k in V2_NEURAL.values())
+    files = [d / "results.json", V2_DIR / "data.json", *(d / f"{k}.pt" for k in V2_NEURAL.values())]
+    return all(f.exists() for f in files) and v2_data_mismatch(V2_DIR, seed) is None
 
 
 def resolve_mode() -> str:
@@ -123,6 +154,36 @@ def resolve_run_tag(mode: str | None = None) -> str:
     if mode == "final":
         return f"final_seed{FINAL_SEED}"
     return os.environ.get("DEMO_RUN_TAG") or resolve_latest_run_tag()
+
+
+def user_table(customer_ids: np.ndarray, target_items: dict, train_df: pd.DataFrame, articles: pd.DataFrame,
+               user_age: pd.Series) -> pd.DataFrame:
+    """Danh sách chọn khách của màn hình Admin: một dòng cho mỗi khách có sản phẩm đích, index = customer_id.
+
+    Cột: số món đã mua (cặp mô hình đã học), số món đích, nhóm giao dịch theo tam phân vị số món đã mua (low / mid /
+    high, ngưỡng ở attrs["thresholds"]), khu vực mua nhiều nhất (index_group_name) kèm tỉ lệ, tuổi (customers.csv, có
+    thể thiếu), ngày mua đầu tiên / gần nhất."""
+    users = np.array(sorted(target_items), dtype=np.int64)
+    tr = train_df[train_df["user"].isin(users)]
+    by_user = tr.groupby("user")
+    area = pd.crosstab(tr["user"].to_numpy(), articles["index_group_name"].to_numpy()[tr["item"].to_numpy()])
+    dates = by_user["last_timestamp"].agg(["min", "max"]).reindex(users)
+    df = pd.DataFrame({
+        "customer_id": customer_ids[users].astype(str),
+        "train_count": by_user.size().reindex(users, fill_value=0).to_numpy(),
+        "n_targets": [len(target_items[u]) for u in users],
+        "area": area.idxmax(axis=1).reindex(users).to_numpy(),
+        "area_share": (area.max(axis=1) / area.sum(axis=1)).reindex(users).round(3).to_numpy(),
+        "age": user_age.reindex(users).to_numpy(dtype=float),
+        "first_date": dates["min"].dt.strftime("%Y-%m-%d").to_numpy(),
+        "last_date": dates["max"].dt.strftime("%Y-%m-%d").to_numpy(),
+    })
+    t1, t2 = (float(x) for x in np.quantile(df["train_count"], [1 / 3, 2 / 3]))
+    n = df["train_count"]
+    df["bucket"] = np.where(n <= t1, "low", np.where(n <= t2, "mid", "high"))
+    df.index = df["customer_id"].to_numpy()
+    df.attrs["thresholds"] = (t1, t2)
+    return df
 
 
 def _build_model(name: str, n_users: int, n_items: int, cfg) -> torch.nn.Module:
@@ -308,11 +369,10 @@ class DataContext:
     def _init_v2(self) -> None:
         """Dựng lại dữ liệu giao thức v2 bằng đúng hàm của scripts/v2_common.py, đối chiếu với data.json của lần chạy,
         rồi nạp checkpoint seed 42. Mô hình chỉ dùng ID được bọc MaskedScorer/MaskedScoreFn như lúc chấm."""
-        scripts_dir = str(PROJECT_ROOT / "scripts")
-        if scripts_dir not in sys.path:
-            sys.path.insert(0, scripts_dir)
-        import v2_common as V
-
+        why = v2_data_mismatch(V2_DIR, FINAL_SEED)
+        if why:
+            raise ValueError(why)
+        V = _v2_common()
         seed_dir = V2_DIR / f"seed{FINAL_SEED}"
         results = json.loads((seed_dir / "results.json").read_text(encoding="utf-8"))
         info = json.loads((V2_DIR / "data.json").read_text(encoding="utf-8"))
@@ -401,7 +461,7 @@ class DataContext:
         return out.fillna("Unknown")
 
     def _load_ages(self) -> pd.Series:
-        """Tuổi theo user idx (chỉ user có trong dữ liệu); thiếu file thì trả rỗng."""
+        """Tuổi theo user idx (chỉ user có trong dữ liệu), hiện trong danh sách chọn khách; thiếu file thì trả rỗng."""
         if not CUSTOMERS_PATH.exists():
             return pd.Series(dtype=float)
         with CUSTOMERS_PATH.open(encoding="utf-8") as f:
@@ -422,6 +482,11 @@ class DataContext:
         out = [m for m in NEURAL_CHECKPOINTS if m in self.models]
         out += [m for m in ("BPR-MF", "MostPopular") if m in self.scorers]
         return out + [m for m in EXTENSION_MODELS if m in self.scorers]
+
+    @cached_property
+    def users(self) -> pd.DataFrame:
+        """Bảng khách cho danh sách chọn khách (user_table), dựng một lần khi cần."""
+        return user_table(self.customer_ids, self.target_items, self.train_df, self.articles, self.user_age)
 
     @property
     def bpr(self):
