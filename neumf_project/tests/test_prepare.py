@@ -7,6 +7,7 @@ import importlib.util
 import json
 import sys
 from pathlib import Path
+from types import SimpleNamespace
 
 import numpy as np
 import pandas as pd
@@ -116,6 +117,37 @@ def test_load_data_rejects_missing_file_and_md5_mismatch(tmp_path, monkeypatch):
         (tmp_path / "manifest.json").write_text(json.dumps({name: {**entry, **bad}}), encoding="utf-8")
         with pytest.raises(SystemExit, match="run.py prepare"):
             V.load_data("dev")
+
+
+def test_prepare_again_keeps_manifest_when_only_commit_differs(tmp_path, monkeypatch):
+    _hm_sample(tmp_path / "s.csv")
+    for attr, value in (("PROJECT_ROOT", tmp_path), ("DATA_DIR", tmp_path / "out"), ("MANIFEST", tmp_path / "m.json"),
+                        ("CFG", {**V.CFG, "samples": {"dev": "s.csv"}, "test_start": TEST, "k_core": K})):
+        monkeypatch.setattr(V, attr, value)
+    monkeypatch.setattr(prep, "ARTICLES", tmp_path / "khong_co.csv")
+    monkeypatch.setattr(sys, "argv", ["02_prepare_data.py"])
+
+    def run(commit, dirty):
+        monkeypatch.setattr(V, "provenance", lambda: {"git_commit": commit, "git_dirty": dirty})
+        prep.main()
+        return json.loads(V.MANIFEST.read_text(encoding="utf-8"))["s"]
+
+    first, second = run("a", True), run("b", False)
+    assert second == {**first, "git_commit": "b", "git_dirty": False}  # mục cũ từ mã chưa commit -> ghi lại
+    assert run("c", True) == second  # chỉ khác commit -> giữ mục cũ: chạy lại không làm đổi manifest
+
+
+def test_tune_refuses_log_from_other_data(tmp_path, monkeypatch):
+    spec = importlib.util.spec_from_file_location("tune_v2", ROOT / "scripts" / "22_tune_v2.py")
+    tune = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(tune)
+    (tmp_path / "tuning_log.csv").write_text("model,params,code_hash\npopularity,{},abc\n",  # trước khi có data_md5
+                                             encoding="utf-8")
+    monkeypatch.setattr(tune, "CKPT", tmp_path / "ckpt")
+    monkeypatch.setattr(V, "load_data", lambda *a, **k: SimpleNamespace(meta={"data_md5": "x"}))
+    monkeypatch.setattr(sys, "argv", ["22_tune_v2.py", "--resume", "--log-dir", str(tmp_path)])
+    with pytest.raises(SystemExit, match="1 dòng tinh chỉnh trên dữ liệu khác"):  # dừng trước khi bỏ qua / huấn luyện
+        tune.main()
 
 
 def test_data_from_file_matches_build_v2(tmp_path):

@@ -69,6 +69,10 @@ def main():
 
     t0 = time.time()
     D = V.load_data("dev", with_test=False)
+    other = [r for r in logged(log_path) if r.get("data_md5") != D.meta["data_md5"]]
+    if other:  # nhật ký của dữ liệu khác (vd. trước bản cuối): --resume sẽ bỏ qua nhầm, best_configs.json cũng cũ
+        raise SystemExit(f"{log_path} có {len(other)} dòng tinh chỉnh trên dữ liệu khác (data_md5) — chuyển "
+                         f"tuning_log.csv và best_configs.json trong {log_dir} sang chỗ khác rồi chạy lại.")
     st, dev, seed = D.val, V.device(), V.CFG["tuning"]["seed"]
     prov = V.provenance()
     print(f"mẫu phát triển: {D.n_users:,} người dùng, {D.n_items:,} sản phẩm ({D.n_id_items:,} có ID), "

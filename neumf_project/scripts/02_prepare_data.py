@@ -10,7 +10,8 @@ Với từng mẫu trong `samples` của configs/v2.yaml (chạy lại khi đổ
 3. ghi outputs/data/<tên mẫu>.csv.gz — cột user_id, item_id (product_code), first_day (chỉ số ngày, 0 = 2018-09-20),
    in_kcore; cùng dữ liệu luôn ra cùng bytes;
 4. ghi/cập nhật outputs/data/manifest.json: MD5 của CSV chưa nén, số dòng của file, số khách / sản phẩm / cặp trong
-   k-core, số sản phẩm và số cặp trước / sau khi gộp product_code, k_core, test_start, commit git.
+   k-core, số sản phẩm và số cặp trước / sau khi gộp product_code, k_core, test_start, commit git (chạy lại ra đúng
+   dữ liệu cũ thì giữ nguyên mục cũ, trừ khi mục cũ tạo từ mã chưa commit).
 
 Ngoài số dòng của file, chỉ in và ghi số liệu TRƯỚC test_start: không có gì về cửa sổ kiểm thử (số đáp án, số khách có
 đáp án) — tập kiểm thử của mẫu kiểm định chỉ được mở đúng một lần, ở đánh giá cuối.
@@ -67,7 +68,10 @@ def main():
         entry = dict(file=out.relative_to(V.PROJECT_ROOT).as_posix(),
                      **export(V.PROJECT_ROOT / V.CFG["samples"][sample], out, V.CFG["test_start"], V.CFG["k_core"]),
                      git_commit=prov["git_commit"], git_dirty=prov["git_dirty"])
-        old = manifest.get(name, {}).get("md5")
+        old = manifest.get(name, {})
+        if old.get("git_dirty") is False and {**old, "git_commit": entry["git_commit"],
+                                              "git_dirty": entry["git_dirty"]} == entry:
+            entry = old  # chỉ khác commit: cùng file, cùng số liệu -> giữ mục cũ, chạy lại không làm đổi manifest
         manifest[name] = entry
         write_json(V.MANIFEST, manifest)
         b = entry["before_test_start"]
@@ -76,8 +80,8 @@ def main():
               f"{b['article_pairs']:,} -> {b['product_pairs']:,} cặp\n"
               f"  k-core {entry['k_core']}: {entry['customers']:,} khách, {entry['products']:,} sản phẩm, "
               f"{entry['kcore_pairs']:,} cặp", flush=True)
-        if old and old != entry["md5"]:
-            print(f"  CẢNH BÁO: MD5 khác lần chuẩn bị trước ({old}) — dữ liệu đã đổi.", flush=True)
+        if old and old["md5"] != entry["md5"]:
+            print(f"  CẢNH BÁO: MD5 khác lần chuẩn bị trước ({old['md5']}) — dữ liệu đã đổi.", flush=True)
 
 
 if __name__ == "__main__":
