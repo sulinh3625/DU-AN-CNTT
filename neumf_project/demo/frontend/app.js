@@ -582,6 +582,35 @@ function simpleTable(rows, cols) {
     `<tr><td>${esc(show(r.model))}</td>${cols.map(([key, , f]) => `<td>${f(r[key])}</td>`).join("")}</tr>`).join("")}</table></div>`;
 }
 
+// Đánh giá theo K: NDCG@5 / @10 / @20 của từng mô hình (cột nhóm, một sắc xanh nhạt -> đậm theo K) + bảng mọi chỉ số @K
+// có trong file kết quả.
+const BY_K = [5, 10, 20];
+const K_SHADES = ["#8fadd8", "#4f7cbd", "#1f4785"];
+function byKCard(block, note) {
+  if (!block) return "";  // máy chủ demo cũ chưa có khối này: bỏ thẻ, không làm hỏng cả dashboard
+  return `<div class="card wide"><h2>Đánh giá theo K (5 · 10 · 20) — trung bình qua seed</h2>${body(block, (rows) => {
+    const cols = ["NDCG", "Recall", "HR", "Precision"].flatMap((m) => BY_K.map((k) => `${m}@${k}`))
+      .filter((c) => rows.some((r) => r[`${c}_mean`] != null));
+    return `<canvas id="c-byk"></canvas>
+      <div class="scroll"><table><tr><th>Mô hình</th>${cols.map((c) => `<th>${c}</th>`).join("")}</tr>${rows.map((r) =>
+        `<tr><td>${esc(show(r.model))}</td>${cols.map((c) => `<td>${fmt(r[`${c}_mean`], 4)}</td>`).join("")}</tr>`).join("")}</table></div>
+      <div class="note">K lớn hơn thì HR@K và Recall@K tăng (danh sách dài hơn dễ chứa món đích); so sánh các mô hình ở cùng một K. ${note}</div>`;
+  })}</div>`;
+}
+function byKChart(block) {
+  if (block?.status !== "ok") return;
+  const rows = block.data;
+  chart("c-byk", {
+    type: "bar",
+    data: { labels: rows.map((r) => show(r.model)),
+            datasets: BY_K.map((k, i) => ({ label: `NDCG@${k}`, data: rows.map((r) => r[`NDCG@${k}_mean`]),
+              backgroundColor: K_SHADES[i], borderRadius: 4, borderSkipped: "start" }))
+              .filter((ds) => ds.data.some((v) => v != null)) },
+    options: { plugins: { legend: { position: "bottom" } },
+               scales: { y: { beginAtZero: true, title: { display: true, text: "NDCG@K" } } } },
+  });
+}
+
 function renderFinalDashboard(d, dash) {
   const s = d.stats.data;
   const metrics = ["NDCG@10", "Recall@10", "HR@10", "Precision@10", "NDCG@5"];
@@ -599,6 +628,8 @@ function renderFinalDashboard(d, dash) {
         `<tr><td>${esc(show(r.model))}${r.extension ? " †" : ""}</td>${metrics.map((m) =>
           `<td>${fmt(r[m + "_mean"], 5)} ± ${fmt(r[m + "_std"], 5)}</td>`).join("")}</tr>`).join("")}</table></div>
       <div class="note">† Mô hình mở rộng, thêm sau khi đã xem test (PREREG mục 9), kiểm định trong họ so sánh riêng.</div>`)}</div>
+
+    ${byKCard(d.by_k, "Số @20 do scripts/16_extra_k.py tính lại từ hạng đã lưu của 3 seed — mô tả, không chấm lại tập test.")}
 
     <div class="card wide"><h2>Kiểm định cặp theo user (NDCG@10) — họ 8 so sánh chính</h2>${body(d.significance, sigTable)}</div>
     <div class="card wide"><h2>Kiểm định cặp — họ 7 so sánh mở rộng</h2>${body(d.ext_significance, sigTable)}</div>
@@ -623,6 +654,7 @@ function renderFinalDashboard(d, dash) {
       options: { plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true } } },
     });
   }
+  byKChart(d.by_k);
 }
 
 function renderV2Dashboard(d, dash) {
@@ -644,6 +676,8 @@ function renderV2Dashboard(d, dash) {
       <div class="scroll"><table><tr><th>Mô hình</th>${metrics.map((m) => `<th>${m}</th>`).join("")}</tr>${rows.map((r) =>
         `<tr><td>${esc(show(r.model))}</td>${metrics.map((m) => `<td>${fmt(r[m + "_mean"], 5)} ± ${fmt(r[m + "_std"], 5)}</td>`).join("")}</tr>`).join("")}</table></div>`)}</div>
 
+    ${byKCard(d.by_k, "Các chỉ số @K có trong outputs/v2/final/summary.csv.")}
+
     <div class="card wide"><h2>Kiểm định cặp theo khách hàng (NDCG@10) — họ 10 so sánh đăng ký trước</h2>${body(d.significance, sigTable)}</div>
 
     <div class="card"><h2>NDCG@10 theo nhóm sản phẩm đúng (mô tả)</h2>${body(d.groups, (rows) => simpleTable(rows,
@@ -664,6 +698,7 @@ function renderV2Dashboard(d, dash) {
       options: { plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true } } },
     });
   }
+  byKChart(d.by_k);
 }
 
 async function loadDashboard() {

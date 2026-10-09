@@ -130,6 +130,14 @@ def _final_csv(name: str) -> tuple[Path, pd.DataFrame | None]:
     return path, (pd.read_csv(path) if path.exists() else None)
 
 
+BY_K_COLS = [f"{m}@{k}_mean" for m in ("NDCG", "Recall", "HR", "Precision") for k in (5, 10, 20)]
+
+
+def _by_k(df: pd.DataFrame) -> pd.DataFrame:
+    """Bảng "đánh giá theo K": các cột trung bình @5 / @10 / @20 có trong file, sắp theo NDCG@10."""
+    return df[["model", *[c for c in BY_K_COLS if c in df.columns]]].sort_values("NDCG@10_mean", ascending=False)
+
+
 def final_dashboard(ctx) -> dict:
     """Dashboard chế độ final: đọc đúng các file kết quả của Chương 4 (outputs/final/), không tính lại."""
     out = {"mode": "final", "run_tag": ctx.run_tag}
@@ -144,6 +152,14 @@ def final_dashboard(ctx) -> dict:
             main = pd.concat([main, ext], ignore_index=True)
         out["summary"] = _ok(path, None, json.loads(main.sort_values("NDCG@10_mean", ascending=False)
                                                      .to_json(orient="records")))
+    # @20 do scripts/16_extra_k.py tính lại từ hạng đã lưu (qua seed, không chấm test lần nữa); @5 / @10 từ summary.csv.
+    k_path, extra = _final_csv("extra_k20.csv")
+    if main is None or extra is None:
+        out["by_k"] = _missing("python scripts/16_extra_k.py" if main is not None else FINAL_RUN_CMD)
+    else:
+        merged = main[~main["extension"]].merge(extra, on="model", how="left")
+        out["by_k"] = {**_ok(path, None, json.loads(_by_k(merged).to_json(orient="records"))),
+                       "source": f"{_rel(path)} + {_rel(k_path)}"}
     for key, name in (("significance", "significance.csv"), ("ext_significance", "extension/significance.csv")):
         p, df = _final_csv(name)
         out[key] = _missing(FINAL_RUN_CMD) if df is None else _ok(p, None, json.loads(df.to_json(orient="records")))
@@ -198,6 +214,7 @@ def v2_dashboard(ctx) -> dict:
     named = lambda df: df.assign(model=df["model"].map(V2_NAME).fillna(df["model"]))  # noqa: E731
     out = {"mode": "v2", "run_tag": ctx.run_tag, "dry_run": ctx.run_metadata["dry_run"]}
     out["summary"] = _v2_block("summary.csv", named)
+    out["by_k"] = _v2_block("summary.csv", lambda df: _by_k(named(df)))
     out["significance"] = _v2_block("significance.csv", lambda df: df.assign(
         A=df["A"].map(V2_NAME), B=df["B"].map(V2_NAME)))
     out["groups"] = _v2_block("groups.csv", named)

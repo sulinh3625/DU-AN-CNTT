@@ -194,6 +194,10 @@ def test_final_dashboard_reads_result_files(fctx):
     models = {r["model"] for r in d["summary"]["data"]}
     assert {"BPR-MF", "NeuMF-Pretrained", "Random"} <= models
     assert d["stats"]["data"]["n_test_users"] == len(fctx.target_users)
+    by_k = {r["model"]: r for r in d["by_k"]["data"]}  # @5 / @10 từ summary.csv, @20 từ extra_k20.csv
+    summary = {r["model"]: r for r in d["summary"]["data"]}
+    assert by_k["NeuMF-Pretrained"]["NDCG@10_mean"] == summary["NeuMF-Pretrained"]["NDCG@10_mean"]
+    assert all(r.get("NDCG@20_mean") is not None and r.get("HR@20_mean") is not None for r in by_k.values())
 
 
 # ------------------------------------------------------------- v2 (kết quả chính)
