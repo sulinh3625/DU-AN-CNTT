@@ -112,11 +112,11 @@ python run.py v2-final --reason "Đánh giá cuối v2 theo PREREG_v2"
 Lệnh chạy hai script:
 
 1. `scripts/23_final_v2.py` — 5 seed (42, 2024, 2025, 2026, 3407). Mỗi seed: mạng nơ-ron chọn số epoch trên tập xác thực
-   của B, huấn luyện lại từ đầu trên mọi cặp trước 29/07/2020, rồi chấm tập kiểm thử (tập ứng viên đầy đủ, và thêm bản
-   "chỉ sản phẩm cũ"). Seed 42 thêm 5 ablation của NeuMF-F, top-20 và checkpoint cho demo.
-   Ra: `outputs/v2/final/seed*/`.
-2. `scripts/24_report_v2.py` — trung bình ± độ lệch chuẩn, kiểm định (Wilcoxon + bootstrap + Holm, 10 so sánh), nhóm
-   sản phẩm cũ/mới, ablation, độ phủ. Ra: `outputs/v2/final/*.csv`, hình, bảng `.tex` và macro số liệu trong
+   của B, huấn luyện lại từ đầu trên mọi cặp trước 29/07/2020, rồi chấm tập kiểm thử. Seed 42 thêm ablation của NeuMF-F
+   (bỏ biến thể trùng NeuMF-F), top-20 và checkpoint cho demo. Ra: `outputs/v2/final/seed*/`; thư mục này còn kết quả
+   của dữ liệu khác thì script dừng (kết quả trên khối 1 đã cất ở `outputs/v2/final_cu/`).
+2. `scripts/24_report_v2.py` — trung bình ± độ lệch chuẩn, kiểm định (Wilcoxon + bootstrap + Holm, 10 so sánh), ablation,
+   độ phủ. Ra: `outputs/v2/final/*.csv`, hình, bảng `.tex` và macro số liệu trong
    `../Report DACNTT/`.
 
 **Khoá kiểm thử.** `23_final_v2.py` từ chối chạy nếu:
@@ -205,8 +205,9 @@ Script của giao thức v2:
 
 Các script `01`–`18`, `20` thuộc giao thức v1 (mục 7).
 
-`audit/` gồm: `PREREG_v2.md` (kế hoạch v2), `v2/tuning_log.csv`, `v2/best_configs.json`, `v2/data_dev.json` (tinh chỉnh
-v2), `test_access_log.csv` (mọi lần chấm tập kiểm thử của cả hai giao thức); v1: `PREREG.md`, `tuning_log.csv`,
+`audit/` gồm: `PREREG_v2.md` (kế hoạch v2, bản cuối), `v2/tuning_log.csv`, `v2/best_configs.json`, `v2/data_dev.json`
+(tinh chỉnh v2), `test_access_log.csv` (mọi lần chấm tập kiểm thử của cả hai giao thức); bản v2 trên khối 1:
+`PREREG_v2_cu.md`, `v2_cu/`; v1: `PREREG.md`, `tuning_log.csv`,
 `best_configs.json`. Code đọc/ghi trực tiếp các file này — không sửa tay, trừ khi chép nhật ký từ Colab về.
 
 ## 7. Giao thức v1 — lịch sử phát triển
