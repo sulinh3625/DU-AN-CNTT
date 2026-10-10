@@ -4,12 +4,14 @@
     python scripts/24_report_v2.py --final-dir outputs/v2/dry_run --report-dir <thư mục tạm>   # thử trên bản chạy thử
 
 Đọc outputs/v2/final/ (23_final_v2.py) và audit/v2/best_configs.json (tinh chỉnh trên mẫu A). Tính:
-- trung bình ± độ lệch chuẩn qua seed của mọi chỉ số, theo nhóm sản phẩm cũ/mới, và phân tích độ nhạy "chỉ sản phẩm cũ";
+- trung bình ± độ lệch chuẩn qua seed của mọi chỉ số;
 - họ 10 so sánh đã đăng ký: NDCG@10 theo người dùng trung bình qua seed, Wilcoxon signed-rank, khoảng tin cậy bootstrap
   ghép cặp 95% (10.000 lần, seed 0), hiệu chỉnh Holm; "tốt hơn" khi p Holm < 0,05, CI không chứa 0 và chênh lệch tương
   đối >= 5%;
-- ablation NeuMF-F (seed 42), mô tả top-10 (độ phủ, tỉ lệ sản phẩm mới), số epoch và thời gian huấn luyện.
-Ghi: <final-dir>/{summary,significance,groups,ablation,beyond}.csv, hình <final-dir>/figures/*.png; nếu có
+- ablation NeuMF-F (seed 42), mô tả top-10 (độ phủ), số epoch và thời gian huấn luyện.
+Không còn sản phẩm mới (một sản phẩm = product_code, ứng viên chỉ gồm sản phẩm đã có cặp huấn luyện) nên không còn phân
+tích theo nhóm sản phẩm cũ/mới.
+Ghi: <final-dir>/{summary,significance,ablation,beyond}.csv, hình <final-dir>/figures/*.png; nếu có
 --report-dir (mặc định: Report DACNTT) thì chép hình sang media/figures/v2/ và ghi bảng + macro LaTeX vào content/tables/v2/.
 Mọi số của giao thức v2 trong báo cáo lấy từ các file này, không gõ tay.
 """
@@ -55,7 +57,7 @@ GROUP_OF = {"neumf_f": "Mô hình đề tài (NeuMF-F)", **dict.fromkeys(("gmf_f
 COMPARISONS = [("neumf_f", "neumf"), ("neumf_f", "gmf_f"), ("neumf_f", "mlp_f"), ("neumf_f", "late_f"),
                ("neumf_f", "bpr"), ("neumf_f", "itemknn"), ("neumf_f", "userknn"), ("neumf_f", "recent_pop"),
                ("neumf_f", "content"), ("neumf", "bpr")]
-METRICS = ["NDCG@10", "Recall@10", "HR@10", "Precision@10", "NDCG@5", "NDCG@20", "NDCG@10_old", "NDCG@10_new"]
+METRICS = ["NDCG@10", "Recall@10", "HR@10", "Precision@10", "NDCG@5", "NDCG@20"]
 TABLE_METRICS = ["NDCG@10", "Recall@10", "HR@10", "Precision@10", "NDCG@5", "NDCG@20"]
 NOT_SIG = "không khác biệt có ý nghĩa"
 N_BOOT, BOOT_SEED, ALPHA, MIN_REL = 10_000, 0, 0.05, 0.05
@@ -106,8 +108,6 @@ def load(final_dir: Path):
         raise SystemExit(f"Chưa có kết quả trong {final_dir} — chạy scripts/23_final_v2.py trước.")
     res = {s: json.loads((final_dir / f"seed{s}" / "results.json").read_text(encoding="utf-8")) for s in seeds}
     per = pd.concat([pd.read_csv(final_dir / f"seed{s}" / "per_user.csv.gz") for s in seeds], ignore_index=True)
-    per_old = pd.concat([pd.read_csv(final_dir / f"seed{s}" / "per_user_old.csv.gz") for s in seeds],
-                        ignore_index=True)
     parts = []
     for s in seeds:
         try:
@@ -116,7 +116,7 @@ def load(final_dir: Path):
             pass
     hist = pd.concat(parts, ignore_index=True) if parts else pd.DataFrame()
     models = [m for m in MODELS if all(m in res[s]["results"] for s in seeds)]
-    return seeds, res, per, per_old, hist, models
+    return seeds, res, per, hist, models
 
 
 def summarize(seeds, res, models, best) -> pd.DataFrame:
@@ -126,8 +126,6 @@ def summarize(seeds, res, models, best) -> pd.DataFrame:
         for metric in METRICS:
             v = np.array([res[s]["results"][m][metric] for s in seeds], dtype=float)
             row[f"{metric}_mean"], row[f"{metric}_std"] = float(np.mean(v)), float(np.std(v, ddof=1)) if len(v) > 1 else 0.0
-        v = np.array([res[s]["results_old_only"][m]["NDCG@10"] for s in seeds], dtype=float)
-        row["oldonly_NDCG@10_mean"], row["oldonly_NDCG@10_std"] = float(v.mean()), float(v.std(ddof=1)) if len(v) > 1 else 0.0
         row["val_NDCG@10"] = best.get(m, {}).get("val", {}).get("NDCG@10", np.nan)
         rows.append(row)
     return pd.DataFrame(rows).sort_values("NDCG@10_mean", ascending=False).reset_index(drop=True)
@@ -158,27 +156,6 @@ def significance(um: pd.DataFrame) -> pd.DataFrame:
     return sig
 
 
-def groups(per: pd.DataFrame, per_old: pd.DataFrame, models: list[str]) -> pd.DataFrame:
-    """Theo nhóm sản phẩm đúng cũ/mới (trong cùng danh sách xếp hạng) và độ nhạy "chỉ sản phẩm cũ": trung bình theo
-    người dùng (mỗi người dùng trung bình qua seed) + CI 95% bootstrap; hiệu so với NeuMF-F ghép cặp theo người dùng."""
-    rows = []
-    cols = {"old": user_matrix(per, models, "NDCG@10_old"), "new": user_matrix(per, models, "NDCG@10_new"),
-            "oldonly": user_matrix(per_old, models, "NDCG@10")}
-    for m in models:
-        row = {"model": m}
-        for g, um in cols.items():
-            x = um[m].to_numpy(dtype=float)
-            row[f"{g}_mean"] = float(np.nanmean(x)) if np.any(~np.isnan(x)) else np.nan
-            row[f"{g}_lo"], row[f"{g}_hi"] = bootstrap_ci(x)
-            row[f"{g}_users"] = int(np.sum(~np.isnan(x)))
-            if "neumf_f" in um and m != "neumf_f":
-                d = (um["neumf_f"] - um[m]).to_numpy(dtype=float)
-                row[f"{g}_diff_neumf_f"] = float(np.nanmean(d))
-                row[f"{g}_diff_lo"], row[f"{g}_diff_hi"] = bootstrap_ci(d)
-        rows.append(row)
-    return pd.DataFrame(rows)
-
-
 def ablation(per: pd.DataFrame, res: dict) -> pd.DataFrame:
     s = 42 if 42 in res else min(res)
     present = [k for k in ABL if k in res[s]["results"]]
@@ -187,12 +164,11 @@ def ablation(per: pd.DataFrame, res: dict) -> pd.DataFrame:
     p = per[per["seed"] == s]
     um = p[p["model"].isin(["neumf_f", *present])].pivot(index="user", columns="model", values="NDCG@10")
     full = res[s]["results"]["neumf_f"]
-    rows = [dict(variant="neumf_f", seed=s, **{k: full[k] for k in ("NDCG@10", "NDCG@10_old", "NDCG@10_new")},
-                 rel=0.0, ci_low=0.0, ci_high=0.0)]
+    rows = [dict(variant="neumf_f", seed=s, **{"NDCG@10": full["NDCG@10"]}, rel=0.0, ci_low=0.0, ci_high=0.0)]
     for k in present:
         r = res[s]["results"][k]
         lo, hi = bootstrap_ci((um[k] - um["neumf_f"]).to_numpy())
-        rows.append(dict(variant=k, seed=s, **{c: r[c] for c in ("NDCG@10", "NDCG@10_old", "NDCG@10_new")},
+        rows.append(dict(variant=k, seed=s, **{"NDCG@10": r["NDCG@10"]},
                          rel=(r["NDCG@10"] - full["NDCG@10"]) / full["NDCG@10"], ci_low=lo, ci_high=hi))
     return pd.DataFrame(rows)
 
@@ -205,7 +181,7 @@ def beyond(seeds, res, models) -> pd.DataFrame:
         ep = [d["best_epoch"] for d in meta if "best_epoch" in d]
         t = [d.get("select_time_s", 0) + d.get("refit_time_s", 0) + d.get("fit_time_s", 0) for d in meta]
         b = res[s].get("beyond", {}).get(m, {})
-        rows.append(dict(model=m, coverage10=b.get("coverage@10", np.nan), new_share10=b.get("new_share@10", np.nan),
+        rows.append(dict(model=m, coverage10=b.get("coverage@10", np.nan),
                          best_epoch_mean=float(np.mean(ep)) if ep else np.nan,
                          best_epochs=";".join(map(str, ep)), train_min=float(np.mean(t)) / 60))
     return pd.DataFrame(rows)
@@ -286,6 +262,7 @@ def table(label: str, caption: str, colspec: str, header: list[str], rows: list[
 
 
 class Macros:
+    # vonly, vgrp (phân tích cũ/mới) không còn được ghi — giữ lệnh \VOnly, \VGrp để báo cáo cũ vẫn biên dịch được
     FAMILIES = {"vres": "VRes", "vsd": "VSd", "vonly": "VOnly", "vval": "VVal", "vrank": "VRank", "vsig": "VSig",
                 "vgrp": "VGrp", "vabl": "VAbl", "vbey": "VBey", "vdata": "VData", "vcfg": "VCfg"}
 
@@ -343,21 +320,15 @@ def export_data(m: Macros, tables: Path, info_a: dict, info_b: dict | None) -> N
             v = v[k]
         return fmt(v)
 
-    def pair(t, stage):
-        if stage not in t:
-            return "---"
-        return f"{thousands(t[stage]['targets'])} ({thousands(t[stage]['new_item_targets'])})"
-
     rows = [
         ["Người dùng sau lọc 10-core", cell(ta, "n_users"), cell(tb, "n_users")],
-        ["Sản phẩm có ID (có cặp trước mốc kiểm thử)", cell(ta, "n_id_items"), cell(tb, "n_id_items")],
-        ["Sản phẩm trong không gian ứng viên (có ID + mới)", cell(ta, "n_items"), cell(tb, "n_items")],
+        ["Sản phẩm (product\\_code) sau lọc 10-core", cell(ta, "n_items"), cell(tb, "n_items")],
         ["Cặp (khách, sản phẩm) trước mốc kiểm thử", cell(ta, "n_kept_pairs"), cell(tb, "n_kept_pairs")],
         ["Xác thực: cặp huấn luyện (trước 01/07/2020)", cell(ta, "val", "train_pairs"), cell(tb, "val", "train_pairs")],
         ["Xác thực: người dùng được đánh giá", cell(ta, "val", "users"), cell(tb, "val", "users")],
-        ["Xác thực: cặp đúng (trong đó sản phẩm mới)", pair(ta, "val"), pair(tb, "val")],
+        ["Xác thực: cặp đúng", cell(ta, "val", "targets"), cell(tb, "val", "targets")],
         ["Kiểm thử: người dùng được đánh giá", "---", cell(tb, "test", "users")],
-        ["Kiểm thử: cặp đúng (trong đó sản phẩm mới)", "---", pair(tb, "test")],
+        ["Kiểm thử: cặp đúng", "---", cell(tb, "test", "targets")],
         ["Kiểm thử: số ứng viên trung bình mỗi người dùng", "---",
          cell(tb, "test", "candidates_mean", fmt=lambda v: thousands(round(v)))],
     ]
@@ -366,16 +337,16 @@ def export_data(m: Macros, tables: Path, info_a: dict, info_b: dict | None) -> N
             if k in t:
                 m.add("vdata", nm, k.replace("_", ""), thousands(t[k]))
         if "val" in t:
-            for k in ("users", "targets", "new_item_targets", "train_pairs"):
+            for k in ("users", "targets", "train_pairs"):
                 m.add("vdata", f"{nm}val", k.replace("_", ""), thousands(t["val"][k]))
             m.add("vdata", f"{nm}val", "cand", thousands(round(t["val"]["candidates_mean"])))
     if "test" in tb:
-        for k in ("users", "targets", "new_item_targets", "scoreable", "new_items", "train_pairs"):
+        for k in ("users", "targets", "scoreable", "train_pairs"):
             m.add("vdata", "Btest", k.replace("_", ""), thousands(tb["test"][k]))
         m.add("vdata", "Btest", "cand", thousands(round(tb["test"]["candidates_mean"])))
-        m.add("vdata", "Btest", "newpct", vn(tb["test"]["new_item_targets"] / tb["test"]["targets"] * 100, 1))
-    note = ("Lọc 10-core chỉ trên các cặp trước mốc kiểm thử 29/07/2020. Sản phẩm mới: chưa từng bán trên toàn H\\&M "
-            "trước mốc của giai đoạn. Tập kiểm thử của mẫu A không được dựng.")
+    note = ("Một sản phẩm = một product\\_code (gộp mọi màu). Lọc 10-core chỉ trên các cặp trước mốc kiểm thử "
+            "29/07/2020. Ứng viên và cặp đúng chỉ gồm sản phẩm đã có cặp huấn luyện trước mốc của giai đoạn. Tập "
+            "kiểm thử của mẫu A không được dựng.")
     if not tb:
         note += " Mẫu B chỉ được dựng ở lần đánh giá cuối."
     (tables / "tab_v2_data.tex").write_text(table(
@@ -389,9 +360,8 @@ def export_tuning(m: Macros, tables: Path, best: dict) -> None:
     rows = []
     for mm in [x for x in MODELS if x in best]:
         v = best[mm]["val"]
-        rows.append([NAME[mm], params_text(mm, best[mm]["params"]), vn(v["NDCG@10"]), vn(v.get("NDCG@10_old")),
-                     vn(v.get("NDCG@10_new"))])
-        for c in ("NDCG@10", "NDCG@10_old", "NDCG@10_new", "Recall@10"):
+        rows.append([NAME[mm], params_text(mm, best[mm]["params"]), vn(v["NDCG@10"]), vn(v.get("HR@10"))])
+        for c in ("NDCG@10", "Recall@10", "HR@10"):
             if c in v:
                 m.add("vval", KEY[mm], mk(c), vn(v[c]))
         m.add("vcfg", KEY[mm], "params", params_text(mm, best[mm]["params"]))
@@ -410,10 +380,10 @@ def export_tuning(m: Macros, tables: Path, best: dict) -> None:
             m.add("vcfg", "all", "epochmedian", vn(float(neural["best_epoch"].median()), 0))
     (tables / "tab_v2_tuning.tex").write_text(table(
         "tab:v2tuning", "Cấu hình tốt nhất của từng mô hình trên tập xác thực của mẫu A (seed 42; 6 cấu hình mỗi mô "
-        "hình có học, mô hình một tham số thử đủ lưới)", "llrrr",
-        ["Mô hình", "Cấu hình chọn", "NDCG@10", "NDCG@10 (SP cũ)", "NDCG@10 (SP mới)"], rows,
+        "hình có học, mô hình một tham số thử đủ lưới)", "llrr",
+        ["Mô hình", "Cấu hình chọn", "NDCG@10", "HR@10"], rows,
         "d: số chiều embedding; neg: số mẫu âm mỗi mẫu dương; wd: weight decay; bỏ ID: xác suất bỏ embedding ID của "
-        "sản phẩm khi huấn luyện. SP: sản phẩm. Số trên tập xác thực dùng để chọn cấu hình, không dùng để kết luận."),
+        "sản phẩm khi huấn luyện. Số trên tập xác thực dùng để chọn cấu hình, không dùng để kết luận."),
         encoding="utf-8")
 
 
@@ -439,7 +409,7 @@ def export_run(m: Macros, seeds, res) -> None:
     m.add("vdata", "run", "seedlist", ", ".join(map(str, seeds)))
 
 
-def export_results(m: Macros, tables: Path, seeds, summary, sig, grp, abl, bey, info_b) -> None:
+def export_results(m: Macros, tables: Path, seeds, summary, sig, abl, bey, info_b) -> None:
     n_seed = len(seeds)
     models = summary["model"].tolist()
     by = summary.set_index("model")
@@ -460,39 +430,15 @@ def export_results(m: Macros, tables: Path, seeds, summary, sig, grp, abl, bey, 
         for c in METRICS:
             m.add("vres", KEY[mm], mk(c), vn(by.loc[mm, f"{c}_mean"]))
             m.add("vsd", KEY[mm], mk(c), vn(by.loc[mm, f"{c}_std"]))
-        m.add("vonly", KEY[mm], "NDCG10", vn(by.loc[mm, "oldonly_NDCG@10_mean"]))
         m.add("vrank", KEY[mm], "NDCG10", ORDINAL.get(rank[mm], str(rank[mm])))
     n_users = info_b.get("test", info_b["val"])["users"]
     (tables / "tab_v2_main.tex").write_text(table(
         "tab:v2main", f"Kết quả trên tập kiểm thử của mẫu B: trung bình $\\pm$ độ lệch chuẩn qua {n_seed} seed "
-        f"(xếp hạng trên toàn bộ tập ứng viên gồm cả sản phẩm mới; {thousands(n_users)} người dùng)",
+        f"(xếp hạng trên toàn bộ tập ứng viên; {thousands(n_users)} người dùng)",
         "l" + "r" * len(TABLE_METRICS), ["Mô hình", *TABLE_METRICS], rows,
         "In đậm: trung bình cao nhất mỗi cột. Mô hình tất định (Most Popular, MostPopular-Recent, Content, ItemKNN, "
         "UserKNN) cho cùng kết quả ở mọi seed."), encoding="utf-8")
     m.add("vdata", "run", "seeds", str(n_seed))
-
-    # Nhóm sản phẩm cũ/mới và độ nhạy
-    g = grp.set_index("model")
-    rows = []
-    for mm in models:
-        rows.append([NAME[mm], vn(g.loc[mm, "old_mean"]), vn(g.loc[mm, "new_mean"]),
-                     vn(by.loc[mm, "oldonly_NDCG@10_mean"]) + rf"\,{{\scriptsize$\pm$\,{vn(by.loc[mm, 'oldonly_NDCG@10_std'])}}}"])
-        for grp_name in ("old", "new", "oldonly"):
-            if f"{grp_name}_diff_neumf_f" in g.columns and mm != "neumf_f":
-                m.add("vgrp", KEY[mm], f"{grp_name}diff", vn(g.loc[mm, f"{grp_name}_diff_neumf_f"], sign=True))
-                m.add("vgrp", KEY[mm], f"{grp_name}lo", vn(g.loc[mm, f"{grp_name}_diff_lo"], sign=True))
-                m.add("vgrp", KEY[mm], f"{grp_name}hi", vn(g.loc[mm, f"{grp_name}_diff_hi"], sign=True))
-    nu_old, nu_new = int(g["old_users"].max()), int(g["new_users"].max())
-    m.add("vdata", "Btest", "usersold", thousands(nu_old))
-    m.add("vdata", "Btest", "usersnew", thousands(nu_new))
-    (tables / "tab_v2_groups.tex").write_text(table(
-        "tab:v2groups", "NDCG@10 theo nhóm sản phẩm đúng trên tập kiểm thử của mẫu B (trung bình qua seed) và phân "
-        "tích độ nhạy khi chỉ xét sản phẩm cũ", "lrrr",
-        ["Mô hình", f"SP cũ ({thousands(nu_old)} người dùng)", f"SP mới ({thousands(nu_new)} người dùng)",
-         "Chỉ SP cũ: ứng viên và sản phẩm đúng"], rows,
-        "Hai cột đầu: cùng danh sách xếp hạng với Bảng~\\ref{tab:v2main}, chỉ coi sản phẩm đúng của nhóm là liên quan; "
-        "người dùng không có sản phẩm đúng thuộc nhóm không được tính. Cột cuối: chấm lại cùng mô hình với tập ứng viên "
-        "chỉ gồm sản phẩm cũ (gần với giao thức v1)."), encoding="utf-8")
 
     # Kiểm định
     if not sig.empty:
@@ -525,8 +471,7 @@ def export_results(m: Macros, tables: Path, seeds, summary, sig, grp, abl, bey, 
             full = r["variant"] == "neumf_f"
             name = "NeuMF-F (đầy đủ)" if full else ABL[r["variant"]][1]
             ci = "---" if full else f"[{vn(r['ci_low'], sign=True)}; {vn(r['ci_high'], sign=True)}]"
-            rows.append([name, vn(r["NDCG@10"]), "---" if full else pct(r["rel"]), ci, vn(r["NDCG@10_old"]),
-                         vn(r["NDCG@10_new"])])
+            rows.append([name, vn(r["NDCG@10"]), "---" if full else pct(r["rel"]), ci])
             if not full:
                 key = ABL[r["variant"]][0]
                 m.add("vabl", key, "NDCG10", vn(r["NDCG@10"]))
@@ -536,26 +481,26 @@ def export_results(m: Macros, tables: Path, seeds, summary, sig, grp, abl, bey, 
         m.add("vabl", "Full", "NDCG10", vn(abl.iloc[0]["NDCG@10"]))
         (tables / "tab_v2_ablation.tex").write_text(table(
             "tab:v2ablation", f"Ablation của NeuMF-F trên tập kiểm thử của mẫu B (seed {int(abl.iloc[0]['seed'])}; "
-            "cùng siêu tham số, tắt một thành phần)", "lrrcrr",
-            ["Biến thể", "NDCG@10", "Thay đổi", "CI 95\\% của hiệu", "NDCG@10 (SP cũ)", "NDCG@10 (SP mới)"], rows,
+            "cùng siêu tham số, tắt một thành phần)", "lrrc",
+            ["Biến thể", "NDCG@10", "Thay đổi", "CI 95\\% của hiệu"], rows,
             "Thay đổi: (biến thể $-$ đầy đủ)/đầy đủ. CI: bootstrap theo người dùng của hiệu biến thể $-$ đầy đủ. Chỉ "
-            "mô tả, không kiểm định."), encoding="utf-8")
+            "mô tả, không kiểm định. Biến thể trùng NeuMF-F (vd. không bỏ ID ngẫu nhiên khi cấu hình chọn đã có "
+            "tỉ lệ bỏ ID bằng 0) không chạy."), encoding="utf-8")
 
     # Mô tả top-10 và thời gian
     b = bey.set_index("model")
     rows = []
     for mm in models:
         ep = b.loc[mm, "best_epoch_mean"]
-        rows.append([NAME[mm], vn(b.loc[mm, "coverage10"] * 100, 1) + r"\%", vn(b.loc[mm, "new_share10"] * 100, 1) + r"\%",
+        rows.append([NAME[mm], vn(b.loc[mm, "coverage10"] * 100, 1) + r"\%",
                      "---" if np.isnan(ep) else vn(ep, 1), vn(b.loc[mm, "train_min"], 1)])
         m.add("vbey", KEY[mm], "cov", vn(b.loc[mm, "coverage10"] * 100, 1) + r"\%")
-        m.add("vbey", KEY[mm], "new", vn(b.loc[mm, "new_share10"] * 100, 1) + r"\%")
         m.add("vbey", KEY[mm], "time", vn(b.loc[mm, "train_min"], 1))
         if not np.isnan(ep):
             m.add("vbey", KEY[mm], "epoch", vn(ep, 1))
     (tables / "tab_v2_beyond.tex").write_text(table(
-        "tab:v2beyond", "Mô tả danh sách gợi ý top-10 (seed 42) và chi phí huấn luyện (trung bình qua seed)", "lrrrr",
-        ["Mô hình", "Độ phủ ứng viên", "Tỉ lệ SP mới trong top-10", "Số epoch chọn", "Thời gian (phút)"], rows,
+        "tab:v2beyond", "Mô tả danh sách gợi ý top-10 (seed 42) và chi phí huấn luyện (trung bình qua seed)", "lrrr",
+        ["Mô hình", "Độ phủ ứng viên", "Số epoch chọn", "Thời gian (phút)"], rows,
         "Độ phủ: tỉ lệ sản phẩm của không gian ứng viên xuất hiện trong top-10 của ít nhất một người dùng. Số epoch "
         "chọn trên tập xác thực của B trước khi huấn luyện lại. Thời gian: chọn epoch + huấn luyện lại (mạng nơ-ron) "
         "hoặc khớp mô hình, không gồm thời gian chấm."), encoding="utf-8")
@@ -623,34 +568,8 @@ def plot_metrics(res, seeds, summary, fig_dir: Path, n_users: int):
     handles.append(Line2D([], [], marker="o", color=INK, linestyle="none", markersize=4, label="Từng seed"))
     fig.legend(handles=handles, loc="upper center", ncol=5, frameon=False, fontsize=9, bbox_to_anchor=(0.5, 1.0))
     fig.suptitle(f"Tập kiểm thử của mẫu B — trung bình ± độ lệch chuẩn qua {len(seeds)} seed "
-                 f"({thousands(n_users)} người dùng, ứng viên gồm cả sản phẩm mới)", fontsize=12, color=INK, y=1.07)
+                 f"({thousands(n_users)} người dùng)", fontsize=12, color=INK, y=1.07)
     fig.savefig(fig_dir / "v2_metrics.png", dpi=200, bbox_inches="tight", facecolor=SURFACE)
-    plt.close(fig)
-
-
-def plot_groups(grp: pd.DataFrame, summary: pd.DataFrame, fig_dir: Path):
-    models = summary["model"].tolist()
-    g = grp.set_index("model").loc[models]
-    fig, axes = plt.subplots(1, 3, figsize=(13.5, 5.2), sharey=True, facecolor=SURFACE)
-    y = np.arange(len(models))
-    titles = {"old": "Sản phẩm đúng cũ (cùng danh sách xếp hạng)", "new": "Sản phẩm đúng mới (cùng danh sách xếp hạng)",
-              "oldonly": "Độ nhạy: chỉ sản phẩm cũ trong ứng viên"}
-    for ax, (k, title) in zip(axes, titles.items()):
-        mean = g[f"{k}_mean"].to_numpy(dtype=float)
-        lo, hi = g[f"{k}_lo"].to_numpy(dtype=float), g[f"{k}_hi"].to_numpy(dtype=float)
-        ax.barh(y, mean, height=0.62, color=[GROUP_COLOR[group(mm)] for mm in models], edgecolor=SURFACE, linewidth=2)
-        ax.errorbar(mean, y, xerr=[mean - lo, hi - mean], fmt="none", ecolor=INK2, elinewidth=1.1, capsize=3)
-        top = np.nanmax(hi) if np.any(~np.isnan(hi)) else 1
-        for i in range(len(models)):
-            ax.text(hi[i] + top * 0.02, i, vn_plain(mean[i]), va="center", fontsize=8, color=INK)
-        ax.set_xlim(0, top * 1.3)
-        ax.set_title(title, fontsize=10.5, color=INK, loc="left")
-        style(ax, "x")
-    axes[0].set_yticks(y, [NAME[mm] for mm in models], fontsize=9.5, color=INK)
-    axes[0].invert_yaxis()
-    fig.suptitle("NDCG@10 theo nhóm sản phẩm (trung bình qua seed, thanh lỗi: CI 95% bootstrap theo người dùng)",
-                 fontsize=12, color=INK, y=1.02)
-    fig.savefig(fig_dir / "v2_groups.png", dpi=200, bbox_inches="tight", facecolor=SURFACE)
     plt.close(fig)
 
 
@@ -685,19 +604,17 @@ def plot_ablation(abl: pd.DataFrame, fig_dir: Path):
     if abl.empty:
         return
     names = ["NeuMF-F (đầy đủ)" if v == "neumf_f" else ABL[v][1] for v in abl["variant"]]
-    fig, axes = plt.subplots(1, 3, figsize=(13, 3.8), sharey=True, facecolor=SURFACE)
+    fig, ax = plt.subplots(figsize=(8, 3.8), facecolor=SURFACE)
     y = np.arange(len(abl))
-    for ax, (c, title) in zip(axes, (("NDCG@10", "Mọi sản phẩm đúng"), ("NDCG@10_old", "Sản phẩm đúng cũ"),
-                                     ("NDCG@10_new", "Sản phẩm đúng mới"))):
-        v = abl[c].to_numpy(dtype=float)
-        ax.barh(y, v, height=0.62, color=["#2a78d6"] + ["#8fb8ea"] * (len(abl) - 1), edgecolor=SURFACE, linewidth=2)
-        for i in range(len(abl)):
-            ax.text(v[i] + np.nanmax(v) * 0.02, i, vn_plain(v[i]), va="center", fontsize=8, color=INK)
-        ax.set_xlim(0, np.nanmax(v) * 1.25 if np.nanmax(v) > 0 else 0.001)
-        ax.set_title(f"NDCG@10 — {title}", fontsize=10.5, color=INK, loc="left")
-        style(ax, "x")
-    axes[0].set_yticks(y, names, fontsize=9.5, color=INK)
-    axes[0].invert_yaxis()
+    v = abl["NDCG@10"].to_numpy(dtype=float)
+    ax.barh(y, v, height=0.62, color=["#2a78d6"] + ["#8fb8ea"] * (len(abl) - 1), edgecolor=SURFACE, linewidth=2)
+    for i in range(len(abl)):
+        ax.text(v[i] + np.nanmax(v) * 0.02, i, vn_plain(v[i]), va="center", fontsize=8, color=INK)
+    ax.set_xlim(0, np.nanmax(v) * 1.25 if np.nanmax(v) > 0 else 0.001)
+    ax.set_title("NDCG@10", fontsize=10.5, color=INK, loc="left")
+    style(ax, "x")
+    ax.set_yticks(y, names, fontsize=9.5, color=INK)
+    ax.invert_yaxis()
     fig.suptitle(f"Ablation của NeuMF-F trên tập kiểm thử của mẫu B (seed {int(abl.iloc[0]['seed'])})", fontsize=12,
                  color=INK, y=1.04)
     fig.savefig(fig_dir / "v2_ablation.png", dpi=200, bbox_inches="tight", facecolor=SURFACE)
@@ -775,16 +692,14 @@ def main():
         print(f"Đã ghi bảng dữ liệu (mẫu A) và kết quả tinh chỉnh vào {tables}")
         return
     final_dir = Path(args.final_dir)
-    seeds, res, per, per_old, hist, models = load(final_dir)
+    seeds, res, per, hist, models = load(final_dir)
 
     summary = summarize(seeds, res, models, best)
     sig = significance(user_matrix(per, models))
-    grp = groups(per, per_old, models)
     abl = ablation(per, res)
     bey = beyond(seeds, res, models)
     summary.to_csv(final_dir / "summary.csv", index=False)
     sig.to_csv(final_dir / "significance.csv", index=False)
-    grp.to_csv(final_dir / "groups.csv", index=False)
     abl.to_csv(final_dir / "ablation.csv", index=False)
     bey.to_csv(final_dir / "beyond.csv", index=False)
 
@@ -792,15 +707,13 @@ def main():
     n_users = info_b.get("test", info_b["val"])["users"]
     fig_dir = ensure(final_dir / "figures")
     plot_metrics(res, seeds, summary, fig_dir, n_users)
-    plot_groups(grp, summary, fig_dir)
     plot_significance(sig, fig_dir)
     plot_ablation(abl, fig_dir)
     plot_curves(hist, fig_dir)
     plot_val_vs_test(summary, fig_dir)
 
     pd.set_option("display.width", 220)
-    cols = ["name", "NDCG@10_mean", "NDCG@10_std", "NDCG@10_old_mean", "NDCG@10_new_mean", "oldonly_NDCG@10_mean",
-            "Recall@10_mean", "val_NDCG@10"]
+    cols = ["name", "NDCG@10_mean", "NDCG@10_std", "Recall@10_mean", "HR@10_mean", "val_NDCG@10"]
     print(f"Seed: {seeds}\n\n{summary[cols].round(5).to_string(index=False)}\n")
     if not sig.empty:
         print(sig[["id", "A", "B", "mean_A", "mean_B", "rel_diff", "ci_low", "ci_high", "p_holm", "verdict"]]
@@ -814,7 +727,7 @@ def main():
         m = Macros()
         export_data(m, tables, dev_info(), info_b)
         export_tuning(m, tables, best)
-        export_results(m, tables, seeds, summary, sig, grp, abl, bey, info_b)
+        export_results(m, tables, seeds, summary, sig, abl, bey, info_b)
         export_run(m, seeds, res)
         m.write(tables / "results_v2_macros.tex")
         fig_out = ensure(report / "media" / "figures" / "v2")

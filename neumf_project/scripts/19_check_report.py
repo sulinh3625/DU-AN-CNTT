@@ -41,7 +41,7 @@ ID_ONLY = ["popularity", "itemknn", "userknn", "bpr", "gmf", "mlp", "neumf", "re
 PERSONALIZED = ["neumf_f", "late_f", "gmf_f", "mlp_f", "neumf", "gmf", "mlp", "bpr", "itemknn", "userknn", "content"]
 DOCS = [REPO_ROOT / "van_dap.md", PROJECT_ROOT / "pham_vi_du_an.md", PROJECT_ROOT / "README.md",
         REPO_ROOT / "README.md", PROJECT_ROOT / "notebooks" / "colab_final.ipynb"]
-V2_FILES = (("summary.csv", ["model"]), ("significance.csv", ["A", "B"]), ("groups.csv", ["model"]),
+V2_FILES = (("summary.csv", ["model"]), ("significance.csv", ["A", "B"]),
             ("ablation.csv", ["variant"]), ("beyond.csv", ["model"]))
 
 
