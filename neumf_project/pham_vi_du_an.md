@@ -271,8 +271,8 @@ Công thức cài ở `src/evaluation/metrics.py`, có unit test tính tay.
 | Kết quả | File | Báo cáo |
 |---|---|---|
 | Tinh chỉnh (mẫu A, tập xác thực) — chỉ để chọn cấu hình | `audit/v2/tuning_log.csv`, `audit/v2/best_configs.json` | Mục 4.3 |
-| Đánh giá cuối (mẫu B, tập kiểm thử) | `outputs/v2/final/` (`summary.csv`, `significance.csv`, `groups.csv`, `ablation.csv`, `beyond.csv`) | Mục 4.4 |
-| Lịch sử v1 | `outputs/final/` | Mục 4.5 |
+| Đánh giá cuối (mẫu B, tập kiểm thử) | `outputs/v2/final/` (`summary.csv`, `significance.csv`, `ablation.csv`, `beyond.csv`, `ket_qua.txt`) | Mục 4.4 |
+| Lịch sử v1 | lịch sử git, commit `9799f1a` | Mục 4.5 |
 
 **Tóm tắt kết quả đánh giá cuối** (test mẫu B, 04/10/2026, 5 seed, NDCG@10):
 
@@ -291,7 +291,7 @@ Công thức cài ở `src/evaluation/metrics.py`, có unit test tính tay.
 - Phần hơn của mô hình có đặc trưng nằm ở sản phẩm cũ; trên sản phẩm mới mọi mô hình đều rất thấp (cao nhất Content).
 - Ablation: đặc trưng thời gian đóng góp nhiều nhất (bỏ đi −30%).
 
-Bảng dạng chữ: `outputs/v2/final/bang2_v2.txt`. Tình trạng thực hiện và đối chiếu 17 góp ý: `../tong_hop_thay_doi_v2.md`.
+Bảng dạng chữ: `outputs/v2/final/ket_qua.txt`. Tình trạng thực hiện và đối chiếu 17 góp ý: `../tong_hop_thay_doi_v2.md`.
 
 ## 9. Hạn chế đã biết
 
@@ -324,7 +324,8 @@ v1 được thay bằng v2 vì bốn vấn đề (`audit/PREREG_v2.md` mục 0):
 giai đoạn kiểm thử; sản phẩm mới bị loại khỏi đánh giá; mô hình chỉ dùng ID không tận dụng thông tin sản phẩm, khách,
 thời gian. **Không đặt số v1 cạnh số v2** — khác tập ứng viên và khác sản phẩm đúng.
 
-Tài liệu v1: kế hoạch `audit/PREREG.md`, kết quả `outputs/final/`, báo cáo mục 4.5, lệnh tái lập `README.md` mục 7.
+Tài liệu v1: kế hoạch `audit/PREREG.md`, báo cáo mục 4.5; mã nguồn, kết quả và lệnh tái lập nằm trong lịch sử git
+(commit `9799f1a`).
 
 ## 11. Tài liệu tham khảo chính
 

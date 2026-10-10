@@ -5,8 +5,7 @@ import pandas as pd
 import pytest
 
 from src.data_pipeline.kcore import iterative_k_core
-from src.data_pipeline.preprocessing import aggregate_unique_user_item, build_interactions, apply_feedback_weights
-from src.data_pipeline.splitting import temporal_leave_one_out, assert_disjoint_splits
+from src.data_pipeline.preprocessing import aggregate_unique_user_item
 from src.data_pipeline.negative_sampling import build_user_positive_sets, sample_train_negatives
 from src.data_pipeline.dataset import TrainDataset
 from src.data_pipeline.adapters.hm import HMAdapter
@@ -26,43 +25,6 @@ def test_aggregate_before_kcore_counts_unique_edges():
     filtered = iterative_k_core(agg, 2)
     assert set(filtered.user_raw) == {"u1", "u2"}
     assert set(filtered.item_raw) == {"a", "b"}
-
-
-def test_temporal_loo_and_no_overlap():
-    df = pd.DataFrame({
-        "user_raw": ["u"] * 5,
-        "item_raw": ["a", "b", "c", "d", "e"],
-        "interaction_count": [1] * 5,
-        "value_sum": [1.0] * 5,
-        "first_timestamp": pd.date_range("2020-01-01", periods=5),
-        "last_timestamp": pd.date_range("2020-01-01", periods=5),
-        "last_source_order": np.arange(5),
-    })
-    data = build_interactions(
-        pd.DataFrame({
-            "user_raw": ["u"] * 5,
-            "item_raw": ["a", "b", "c", "d", "e"],
-            "timestamp": pd.date_range("2020-01-01", periods=5),
-            "value_raw": [1.0] * 5,
-            "source_order": np.arange(5),
-        }),
-        k_core=1,
-    )
-    train, val, test = temporal_leave_one_out(data.df, 3)
-    assert train.item.tolist() == [0, 1, 2]
-    assert val.item.tolist() == [3]
-    assert test.item.tolist() == [4]
-    assert_disjoint_splits(train, val, test)
-
-
-def test_weight_transform_fit_on_train_only():
-    base = pd.DataFrame({"value_sum": [1.0, 10.0]})
-    val = pd.DataFrame({"value_sum": [1e9]})
-    test = pd.DataFrame({"value_sum": [1e12]})
-    tr, va, te, meta = apply_feedback_weights(base, val, test, "weighted_confidence", 1.0)
-    assert meta["train_log_scale"] == pytest.approx(np.log1p(10.0))
-    assert va.sample_weight.iloc[0] <= 2.0
-    assert te.sample_weight.iloc[0] <= 2.0
 
 
 def test_negative_sampler_never_returns_positive():

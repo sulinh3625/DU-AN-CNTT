@@ -16,8 +16,6 @@ Giao thức v2 (audit/PREREG_v2.md) — kết quả chính của báo cáo:
     python run.py check-report               # đối chiếu câu chữ báo cáo + tài liệu với số liệu hiện có
     python run.py demo
 
-Giao thức v1 (lịch sử phát triển) không còn lệnh ở đây — các script v1 vẫn chạy tay được, xem README.md mục 7.
-
 Mỗi lệnh chỉ gọi lần lượt các script tương ứng trong scripts/ (chi tiết: README.md mục 3) — file này không chứa logic
 huấn luyện/đánh giá. Trước mỗi bước in thanh tiến trình [████░░░░] k/N kèm thời gian đã chạy; bước nào lỗi thì dừng
 ngay, in bảng tóm tắt (✓ xong / ✗ lỗi / ⏹ bị ngắt, thời gian từng bước) và lệnh chạy lại riêng bước đó — thông báo lỗi

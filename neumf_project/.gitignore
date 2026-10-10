@@ -14,10 +14,7 @@ data/processed/**/*
 data/splits/**/*
 !data/splits/**/.gitkeep
 
-# Kết quả và checkpoint (*.pt, *.npz — mỗi file < 5 MB) đều được push để chạy lại demo/phân tích không cần train.
-# Chỉ bỏ config tạm của multi-seed và thư mục kiểm tra tái lập tuning của scripts/18_preflight.py.
-outputs/experiments/_temp_configs/
-outputs/tuning_recheck/
+# Kết quả và checkpoint (*.pt, *.npz) đều được push để chạy lại demo/phân tích không cần train.
 # Chạy thử đánh giá cuối v2 trên tập xác thực của mẫu A (scripts/23_final_v2.py --dry-run) — số liệu không có ý nghĩa.
 outputs/v2/dry_run/
 outputs/v2/dry_run.log

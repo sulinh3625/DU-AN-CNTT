@@ -1,8 +1,7 @@
 # Chạy demo NeuMF trong Docker: docker compose up --build
 #
-# Yêu cầu trước khi chạy (giống hệt chạy không-Docker, xem demo/README.md):
-# đã có data/raw/hm/ + data/processed/hm/hm500k_transactions.csv và đã huấn luyện
-# xong ít nhất 1 run hm500k (outputs/checkpoints/, outputs/experiments/, outputs/tables/).
+# Yêu cầu trước khi chạy (giống hệt chạy không-Docker, xem demo/README.md): đã có data/raw/hm/, đặc trưng
+# data/processed/hm/*_v2.npz, outputs/data/ (python run.py prepare) và kết quả đánh giá cuối outputs/v2/final/.
 # Container chỉ đọc 2 thư mục này qua volume, không tự huấn luyện.
 services:
   demo:

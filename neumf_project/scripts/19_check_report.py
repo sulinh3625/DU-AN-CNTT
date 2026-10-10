@@ -6,11 +6,10 @@
 Bốn phần:
   1. Tái lập: outputs/v2/final/{summary,significance,groups,ablation,beyond}.csv so với bản đã commit (git HEAD) — độ
      lệch tuyệt đối lớn nhất (chạy lại đánh giá cuối trên cùng máy kỳ vọng lệch 0).
-  2. Khẳng định bằng chữ trong báo cáo mà macro số liệu không tự cập nhật — mỗi khẳng định là một điều kiện trên CSV;
-     sai thì in tệp:dòng cần sửa. Gồm khẳng định về kết quả giao thức v2 (outputs/v2/final/) và về lịch sử phát triển
-     giao thức v1 (outputs/final/, không còn thay đổi).
-  3. Số chép tay trong van_dap.md, pham_vi_du_an.md, README.md, notebook: nếu số v2 khác bản đã commit, liệt kê các dòng
-     còn ghi số cũ.
+  2. Khẳng định bằng chữ trong báo cáo mà macro số liệu không tự cập nhật — mỗi khẳng định là một điều kiện trên CSV
+     của outputs/v2/final/; sai thì in tệp:dòng cần sửa.
+  3. Số chép tay trong van_dap.md, pham_vi_du_an.md, README.md: nếu số v2 khác bản đã commit, liệt kê các dòng còn ghi
+     số cũ.
   4. Mọi macro (\\VRes, \\VSig, ... của v2; \\Res, \\Sig, ... của v1), mọi bảng \\bangketqua / \\bangketquaV và hình
      \\hinhketqua mà báo cáo dùng đều đã được sinh (nếu không, PDF hiện "[chưa có]" / khung "Chưa có số liệu").
 """
@@ -27,26 +26,20 @@ import pandas as pd
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 REPO_ROOT = PROJECT_ROOT.parent
-FINAL = PROJECT_ROOT / "outputs" / "final"           # giao thức v1 (lịch sử phát triển)
-FINAL_V2 = PROJECT_ROOT / "outputs" / "v2" / "final"  # giao thức v2 (kết quả chính)
+FINAL_V2 = PROJECT_ROOT / "outputs" / "v2" / "final"
 REPORT = REPO_ROOT / "Report DACNTT"
 TABLES = REPORT / "content" / "tables"
-NOT_SIG = "không khác biệt có ý nghĩa"
-# v1
-MAIN = ["NeuMF-Pretrained", "NeuMF-Scratch", "GMF", "MLP", "BPR-MF", "MostPopular", "Random"]
-NEURAL = ["NeuMF-Pretrained", "NeuMF-Scratch", "GMF", "MLP"]
-SECONDARY = ["NeuMF-Pretrained", "NeuMF-Scratch", "GMF", "MLP", "BPR-MF", "MostPopular"]
-# v2 (mã mô hình của scripts/v2_common.py)
+# mã mô hình của scripts/v2_common.py
 ID_ONLY = ["popularity", "itemknn", "userknn", "bpr", "gmf", "mlp", "neumf", "recent_pop"]
 PERSONALIZED = ["neumf_f", "late_f", "gmf_f", "mlp_f", "neumf", "gmf", "mlp", "bpr", "itemknn", "userknn", "content"]
 DOCS = [REPO_ROOT / "van_dap.md", PROJECT_ROOT / "pham_vi_du_an.md", PROJECT_ROOT / "README.md",
-        REPO_ROOT / "README.md", PROJECT_ROOT / "notebooks" / "colab_final.ipynb"]
+        REPO_ROOT / "README.md"]
 V2_FILES = (("summary.csv", ["model"]), ("significance.csv", ["A", "B"]),
             ("ablation.csv", ["variant"]), ("beyond.csv", ["model"]))
 
 
 # ---------------------------------------------------------------- dữ liệu
-def read_csv(name: str, committed: bool = False, root: Path = FINAL, **kw) -> pd.DataFrame | None:
+def read_csv(name: str, committed: bool = False, root: Path = FINAL_V2, **kw) -> pd.DataFrame | None:
     if not committed:
         path = root / name
         if not path.exists():
@@ -62,62 +55,22 @@ def read_csv(name: str, committed: bool = False, root: Path = FINAL, **kw) -> pd
 
 class Data:
     def __init__(self):
-        # v1 — lịch sử phát triển
-        self.S = read_csv("summary.csv", index_col=0)
-        g = read_csv("significance.csv")
-        self.G = None if g is None else g.set_index(["A", "B"])
-        st = read_csv("stratified.csv")
-        self.ST = None if st is None else st.groupby(["model", "subset"])["NDCG@10"].mean()
-        sp = read_csv("sampled99.csv")
-        self.SP = None if sp is None else sp.groupby("model").mean(numeric_only=True)
-        # v2 — kết quả chính
-        s2 = read_csv("summary.csv", root=FINAL_V2)
+        s2 = read_csv("summary.csv")
         self.S2 = None if s2 is None else s2.set_index("model")
-        g2 = read_csv("significance.csv", root=FINAL_V2)
+        g2 = read_csv("significance.csv")
         self.G2 = None if g2 is None or g2.empty else g2.set_index(["A", "B"])
-        b2 = read_csv("beyond.csv", root=FINAL_V2)
+        b2 = read_csv("beyond.csv")
         self.B2 = None if b2 is None else b2.set_index("model")
         info = FINAL_V2 / "data.json"
         self.info2 = json.loads(info.read_text(encoding="utf-8")) if info.exists() else None
-
-    def ndcg(self, models=MAIN) -> dict:
-        return {m: self.S.loc[m, "NDCG@10_mean"] for m in models}
-
-    def not_sig(self, *pairs) -> bool:
-        return all(self.G.loc[p, "verdict"] == NOT_SIG for p in pairs)
-
-
-def argmax(d: dict):
-    return max(d, key=d.get)
-
-
-def curves(H: pd.DataFrame) -> dict[str, pd.DataFrame]:
-    """Phase chọn epoch của từng mạng nơ-ron trong history.csv."""
-    sel = H[H["phase"] == "select"]
-    return {m: g.sort_values("epoch") for m, g in sel.groupby("model")}
-
-
-def stopped_early(H: pd.DataFrame) -> bool:
-    """Mỗi mô hình: epoch tốt nhất (NDCG@10 val cao nhất) nằm trước epoch cuối của bước chọn — tức đã dừng sớm."""
-    return all(int(g.loc[g["NDCG@10"].idxmax(), "epoch"]) < int(g["epoch"].max()) for g in curves(H).values())
-
-
-def loss_keeps_falling(H: pd.DataFrame) -> bool:
-    """Mỗi mô hình: loss huấn luyện ở epoch cuối thấp hơn ở epoch tốt nhất (vẫn giảm sau đỉnh NDCG@10 val)."""
-    return all(float(g["loss"].iloc[-1]) < float(g.loc[g["NDCG@10"].idxmax(), "loss"]) for g in curves(H).values())
 
 
 # ---------------------------------------------------------- khẳng định
 # (tệp, đoạn văn bản neo để tìm dòng, mô tả, điều kiện, các nguồn dữ liệu cần có)
 def claims(d: Data):
-    S, G, ST, SP, S2, B2, info = d.S, d.G, d.ST, d.SP, d.S2, d.B2, d.info2
-    main_pairs = list(G.index) if G is not None else []
+    S2, B2, info = d.S2, d.B2, d.info2
     id_new_zero = lambda: all(S2.loc[m, "NDCG@10_new_mean"] == 0 for m in ID_ONLY if m in S2.index)  # noqa: E731
-    v1_no_neumf_win = lambda: (all(G.loc[p, "verdict"] != "A tốt hơn"  # noqa: E731
-                                   for p in (("NeuMF-Pretrained", "BPR-MF"), ("NeuMF-Scratch", "BPR-MF")))
-                               and argmax(d.ndcg()) == "BPR-MF")
     return [
-        # ---- giao thức v2 (kết quả chính)
         ("content/C4.tex", "các mô hình chỉ dùng ID đạt NDCG@10 bằng 0 theo cấu tạo",
          "v2: mọi mô hình chỉ dùng ID có NDCG@10 = 0 trên sản phẩm mới", id_new_zero, ["S2"]),
         ("frontmatter/abstract.tex", "trong khi mọi mô hình chỉ dùng ID bằng 0 theo cấu tạo",
@@ -133,26 +86,6 @@ def claims(d: Data):
         ("content/C4.tex", "mỗi khách có vài sản phẩm đúng giữa khoảng",
          "v2: trung bình số sản phẩm đúng mỗi khách < 10",
          lambda: info["test"]["targets"] / info["test"]["users"] < 10, ["info2"]),
-        # ---- giao thức v1 (lịch sử phát triển, mục Lịch sử phát triển của Chương 4)
-        ("content/C4.tex", "BPR-MF có NDCG@10 trung bình cao nhất", "BPR-MF cao nhất NDCG@10",
-         lambda: argmax(d.ndcg()) == "BPR-MF", ["S"]),
-        ("content/C4.tex", "đăng ký trước đạt tiêu chí", "v1: mọi so sánh chính không có ý nghĩa",
-         lambda: d.not_sig(*main_pairs), ["G"]),
-        ("content/C4.tex", "Tiền huấn luyện không mang lại lợi ích đo được",
-         "v1: NeuMF-Pretrained vs NeuMF-Scratch không có ý nghĩa",
-         lambda: d.not_sig(("NeuMF-Pretrained", "NeuMF-Scratch")), ["G"]),
-        ("content/C4.tex", "Gần như toàn bộ độ chính xác đến từ nhóm sản phẩm phổ biến nhất",
-         "v1: NDCG@10 nhóm head trong [0,02; 0,04], nhóm tail < 0,0003",
-         lambda: all(0.02 <= ST[(m, "head")] <= 0.04 for m in SECONDARY)
-         and max(ST[(m, "tail")] for m in SECONDARY) < 0.0003, ["ST"]),
-        ("content/C4.tex", "Most Popular đứng đầu", "v1: Most Popular cao nhất theo Sampled-99",
-         lambda: SP["NDCG@10"].idxmax() == "MostPopular", ["SP"]),
-        ("content/C1.tex", "NeuMF chỉ dùng mã ID không vượt được MF được tinh chỉnh tốt",
-         "v1: BPR-MF cao nhất và không biến thể NeuMF nào tốt hơn có ý nghĩa BPR-MF", v1_no_neumf_win, ["S", "G"]),
-        ("frontmatter/abstract.tex", "NeuMF không vượt MF đã tinh chỉnh",
-         "v1: BPR-MF cao nhất và không biến thể NeuMF nào tốt hơn có ý nghĩa BPR-MF", v1_no_neumf_win, ["S", "G"]),
-        ("frontmatter/abstract_english.tex", "NeuMF did not outperform a tuned MF baseline",
-         "v1: BPR-MF cao nhất và không biến thể NeuMF nào tốt hơn có ý nghĩa BPR-MF", v1_no_neumf_win, ["S", "G"]),
     ]
 
 
@@ -195,7 +128,7 @@ def compare_with_committed() -> dict[str, float]:
     print("1. Tái lập (giao thức v2): so với bản đã commit (git HEAD)")
     out = {}
     for name, key in V2_FILES:
-        new, old = read_csv(name, root=FINAL_V2), read_csv(name, committed=True, root=FINAL_V2)
+        new, old = read_csv(name), read_csv(name, committed=True)
         if new is None or old is None:
             print(f"   {name}: {'chưa có file mới' if new is None else 'chưa có bản commit'} — bỏ qua")
             continue
@@ -233,8 +166,8 @@ def stale_doc_numbers() -> int:
     print("\n3. Số chép tay trong tài liệu (giao thức v2)")
 
     def load(committed):
-        s = read_csv("summary.csv", committed, root=FINAL_V2)
-        g = read_csv("significance.csv", committed, root=FINAL_V2)
+        s = read_csv("summary.csv", committed)
+        g = read_csv("significance.csv", committed)
         return key_numbers(None if s is None else s.set_index("model"),
                            None if g is None or g.empty else g.set_index(["A", "B"]))
     new, old = load(False), load(True)

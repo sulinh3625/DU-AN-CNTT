@@ -4,18 +4,19 @@
 **Sinh viên:** Lê Minh Lý (52300220), Sử Thị Yến Linh (52300218). **GVHD:** TS. Hồ Thị Linh.
 
 Mô hình đề tài **NeuMF-F** giữ hai nhánh của NeuMF — GMF (nhân tử hoá ma trận) và MLP (mạng nơ-ron sâu), hợp nhất sớm —
-và bổ sung đặc trưng sản phẩm, khách hàng, thời gian để chấm được cả sản phẩm mới. Cấu hình được tinh chỉnh trên mẫu
-khách hàng A; kết luận lấy trên mẫu khách hàng B độc lập, mở tập kiểm thử đúng một lần (giao thức v2).
+và bổ sung đặc trưng sản phẩm, khách hàng, thời gian. Cấu hình được tinh chỉnh trên mẫu phát triển; kết luận lấy trên
+mẫu kiểm định độc lập, mở tập kiểm thử đúng một lần (giao thức v2).
 
-**Trạng thái (04/10/2026):** đánh giá cuối trên mẫu B đã chạy xong (5 seed). NeuMF-F đứng 3/14 (NDCG@10 = 0,01470),
-tốt hơn 6/9 đối thủ trong họ so sánh đăng ký trước, ngang GMF-F và UserKNN, thua LateFusion-F (0,01753). Chi tiết, mức
-độ hoàn thành và đối chiếu 17 góp ý của GVHD: [`tong_hop_thay_doi_v2.md`](tong_hop_thay_doi_v2.md).
+**Trạng thái (10/10/2026):** đánh giá cuối trên mẫu kiểm định đã chạy xong (5 seed). NeuMF-F đứng 2/14
+(NDCG@10 = 0,04003), tốt hơn có ý nghĩa 7/9 đối thủ trong họ so sánh đăng ký trước, không khác biệt có ý nghĩa với
+GMF-F (0,03902) và LateFusion-F (0,04093, cao nhất). Kết quả: `neumf_project/outputs/v2/final/ket_qua.txt`.
+`tong_hop_thay_doi_v2.md` và `van_dap.md` còn ghi số của lần đánh giá trước (04/10/2026).
 
 ## Thư mục
 
 | Thư mục / file | Nội dung |
 |---|---|
-| `neumf_project/` | Mã nguồn, dữ liệu, kết quả, demo web, notebook Colab |
+| `neumf_project/` | Mã nguồn, dữ liệu, kết quả, demo web |
 | `Report DACNTT/` | Báo cáo LaTeX (`main.tex`, biên dịch bằng `compile.bat`) |
 | `tai_lieu/` | Tài liệu tham khảo (luận án của GVHD) |
 | `van_dap.md` | Chuẩn bị vấn đáp: trả lời 17 góp ý của GVHD |
@@ -32,5 +33,5 @@ tốt hơn 6/9 đối thủ trong họ so sánh đăng ký trước, ngang GMF-F
 | Tình hình hiện tại | [`tong_hop_thay_doi_v2.md`](tong_hop_thay_doi_v2.md) |
 | Chuẩn bị vấn đáp | [`van_dap.md`](van_dap.md) |
 
-Giao thức v1 (mẫu A, mô hình chỉ dùng ID) là **lịch sử phát triển**: kế hoạch ở `neumf_project/audit/PREREG.md`, kết
-quả ở `neumf_project/outputs/final/`, báo cáo mục 4.5.
+Giao thức v1 (mẫu phát triển, mô hình chỉ dùng ID) là **lịch sử phát triển**: kế hoạch ở
+`neumf_project/audit/PREREG.md`, báo cáo mục 4.5; mã nguồn và kết quả nằm trong lịch sử git (commit `9799f1a`).

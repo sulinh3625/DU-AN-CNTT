@@ -1,9 +1,5 @@
-"""Mở rộng PREREG mục 9: ItemKNN/UserKNN thưa top-K, late fusion MF + DNN, chỉ số @K từ hạng đã lưu, khoá test."""
+"""ItemKNN / UserKNN thưa top-K (src/baselines/neighborhood.py) và late fusion (src/models/late_fusion.py)."""
 from __future__ import annotations
-
-import importlib.util
-import sys
-from pathlib import Path
 
 import numpy as np
 import pandas as pd
@@ -12,19 +8,8 @@ import torch
 
 from src.baselines import ItemKNNBaseline, UserKNNBaseline
 from src.baselines.neighborhood import interaction_matrix, topk_cosine
-from src.evaluation.full_ranking import EvalRecord, evaluate_score_function
-from src.evaluation.metrics import multi_ranking_metrics
-from src.models.late_fusion import CachedLateFusion, LateFusion, fusion_cache, minmax
+from src.models.late_fusion import LateFusion, minmax
 from src.models.neumf import GMF, MLP
-
-ROOT = Path(__file__).resolve().parents[1]
-
-
-def _load(name, file):
-    spec = importlib.util.spec_from_file_location(name, ROOT / "scripts" / file)
-    mod = importlib.util.module_from_spec(spec)
-    spec.loader.exec_module(mod)
-    return mod
 
 
 def _toy():
@@ -89,13 +74,9 @@ def test_minmax_constant_is_zero():
     assert np.allclose(minmax(np.array([1.0, 3.0, 2.0])), [0.0, 1.0, 0.5])
 
 
-def _nets(nu=6, ni=9):
-    torch.manual_seed(0)
-    return GMF(nu, ni, 4).eval(), MLP(nu, ni, 4, [8, 4, 2, 1], 0.0).eval()
-
-
 def test_late_fusion_extremes_reproduce_component_ranking():
-    gmf, mlp = _nets()
+    torch.manual_seed(0)
+    gmf, mlp = GMF(6, 9, 4).eval(), MLP(6, 9, 4, [8, 4, 2, 1], 0.0).eval()
     items = np.arange(9)
     for user in range(6):
         with torch.no_grad():
@@ -108,47 +89,3 @@ def test_late_fusion_extremes_reproduce_component_ranking():
                               np.argsort(-m, kind="stable"))
     with pytest.raises(ValueError):
         LateFusion(gmf, mlp, 1.5)
-
-
-def test_cached_late_fusion_equals_direct():
-    gmf, mlp = _nets()
-    records = [EvalRecord(user=u, positive_item=u, candidates=np.arange(9)) for u in range(6)]
-    cache = fusion_cache(gmf, mlp, records)
-    for w in (0.0, 0.3, 1.0):
-        direct = evaluate_score_function(LateFusion(gmf, mlp, w), records, [5])
-        cached = evaluate_score_function(CachedLateFusion(cache, w), records, [5])
-        assert direct == cached
-
-
-def test_extra_k_matches_metric_formula():
-    extra = _load("extra_k", "16_extra_k.py")
-    per = pd.DataFrame([{"model": "A", "seed": 1, "user": 0, "ranks": "2;7;40"},
-                        {"model": "A", "seed": 1, "user": 1, "ranks": "25"}])
-    got = extra.metrics_at_k(per, 20)
-    for row, ranks in zip(got.itertuples(index=False), ([2, 7, 40], [25])):
-        m = multi_ranking_metrics(ranks, 20)
-        assert row._3 == pytest.approx(m["NDCG"]) and row._6 == pytest.approx(m["Precision"])
-
-
-def test_extension_refuses_without_registered_prereg(monkeypatch):
-    ext = _load("ext", "17_extension.py")
-    monkeypatch.setattr(sys, "argv", ["17_extension.py", "--reason", "x"])
-    monkeypatch.setattr(ext, "prereg_committed", lambda p: False)
-    with pytest.raises(SystemExit, match="PREREG"):
-        ext.main()
-
-
-def test_extension_refuses_without_reason(monkeypatch):
-    ext = _load("ext", "17_extension.py")
-    monkeypatch.setattr(sys, "argv", ["17_extension.py"])
-    monkeypatch.setattr(ext, "prereg_committed", lambda p: True)
-    monkeypatch.setattr(ext, "PREREG_MARKER", "")  # coi như mục 9 đã có
-    with pytest.raises(SystemExit, match="--reason"):
-        ext.main()
-
-
-def test_extension_comparisons_use_known_models():
-    ext = _load("ext", "17_extension.py")
-    known = set(ext.MODELS) | {"NeuMF-Scratch", "NeuMF-Pretrained", "GMF", "MLP", "BPR-MF"}
-    assert all(a in known and b in known for a, b in ext.EXT_COMPARISONS)
-    assert len(ext.EXT_COMPARISONS) == 7
