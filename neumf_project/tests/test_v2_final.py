@@ -130,6 +130,8 @@ def test_report_runs_end_to_end_on_tiny_results(tmp_path, monkeypatch):
     report.main()
     assert sorted(p.name for p in final_dir.glob("*.csv")) == ["ablation.csv", "beyond.csv", "significance.csv",
                                                                 "summary.csv"]
+    txt = (final_dir / "ket_qua.txt").read_text(encoding="utf-8")
+    assert "Kiểm định 10 so sánh" in txt and "Bỏ vector văn bản" in txt and "NeuMF-F (đầy đủ)" in txt
     tex = tmp_path / "bc" / "content" / "tables" / "v2"
     assert not (tex / "tab_v2_groups.tex").exists() and (tex / "tab_v2_ablation.tex").exists()
     assert "old" not in (tex / "results_v2_macros.tex").read_text(encoding="utf-8")

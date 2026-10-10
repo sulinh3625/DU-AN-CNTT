@@ -674,6 +674,55 @@ def plot_val_vs_test(summary: pd.DataFrame, fig_dir: Path):
     plt.close(fig)
 
 
+# ------------------------------------------------------------------ ket_qua.txt
+def text_report(seeds, summary, sig, abl, bey, info_b) -> str:
+    """Bản tóm tắt dễ đọc (<final-dir>/ket_qua.txt): cùng số với các file CSV, không tính lại gì."""
+    f = lambda x, nd=5: "—" if pd.isna(x) else vn_plain(x, nd)  # noqa: E731
+    pc = lambda x: "—" if pd.isna(x) else f"{x * 100:+.1f}%".replace(".", ",")  # noqa: E731
+    s = summary.set_index("model")
+    ms = lambda m, c: f"{f(s.loc[m, f'{c}_mean'])} ± {f(s.loc[m, f'{c}_std'])}"  # noqa: E731
+    stage = info_b.get("test", info_b["val"])
+    out = [f"KẾT QUẢ ĐÁNH GIÁ CUỐI — GIAO THỨC V2 ({len(seeds)} seed: {', '.join(map(str, seeds))})",
+           f"{thousands(stage['users'])} khách được đánh giá, trung bình {thousands(round(stage['candidates_mean']))} "
+           "ứng viên mỗi khách. Xếp theo NDCG@10 (độ đo chính); ± là độ lệch chuẩn qua seed.", ""]
+
+    def block(title, header, rows, notes=()):
+        w = [max(len(str(r[i])) for r in [header, *rows]) for i in range(len(header))]
+        line = lambda r: "  ".join(str(c).ljust(n) for c, n in zip(r, w)).rstrip()  # noqa: E731
+        out.extend([title, "", line(header), "-" * len(line(header)), *map(line, rows), *notes, "", ""])
+
+    block("1. Kết quả chính trên tập kiểm thử", ["Mô hình", "NDCG@10", "Recall@10", "HR@10", "Precision@10",
+                                                "NDCG@10 lúc tinh chỉnh"],
+          [[NAME[m], *(ms(m, c) for c in TABLE_METRICS[:4]), f(s.loc[m, "val_NDCG@10"])] for m in s.index],
+          ["NDCG@10: món đúng càng ở trên trong top-10 càng được nhiều điểm. Recall@10: số món đúng trong top-10 / "
+           "tổng số món đúng.", "HR@10: tỉ lệ khách có ít nhất một món đúng trong top-10. Precision@10: số món đúng "
+           "trong top-10 / 10.", "NDCG@10 lúc tinh chỉnh: tập xác thực của mẫu phát triển (seed 42), chỉ để đối chiếu."])
+    block("2. NDCG theo K", ["Mô hình", "NDCG@5", "NDCG@10", "NDCG@20"],
+          [[NAME[m], *(ms(m, c) for c in ("NDCG@5", "NDCG@10", "NDCG@20"))] for m in s.index])
+    if not sig.empty:
+        block("3. Kiểm định 10 so sánh đã đăng ký (NDCG@10; Wilcoxon, hiệu chỉnh Holm, CI bootstrap 95%)",
+              ["#", "A", "B", "Chênh (A−B)/B", "CI 95% của A−B", "p Holm", "Kết luận"],
+              [[r.id, NAME[r.A], NAME[r.B], pc(r.rel_diff), f"[{f(r.ci_low)}; {f(r.ci_high)}]",
+                "< 0,001" if r.p_holm < 0.001 else f(r.p_holm, 3), phrase(r._asdict())] for r in sig.itertuples()],
+              ["\"Tốt hơn có ý nghĩa\" khi đồng thời p Holm < 0,05, CI không chứa 0 và chênh lệch ≥ 5%."])
+    if not abl.empty:
+        block(f"4. Ablation NeuMF-F (seed {int(abl.iloc[0]['seed'])}; cùng siêu tham số, tắt một thành phần)",
+              ["Biến thể", "NDCG@10", "Thay đổi", "CI 95% của hiệu"],
+              [["NeuMF-F (đầy đủ)", f(r["NDCG@10"]), "—", "—"] if r["variant"] == "neumf_f" else
+               [ABL[r["variant"]][1], f(r["NDCG@10"]), pc(r["rel"]), f"[{f(r['ci_low'])}; {f(r['ci_high'])}]"]
+               for _, r in abl.iterrows()],
+              ["Chỉ mô tả, không kiểm định."])
+    b = bey.set_index("model")
+    block("5. Độ phủ top-10 (seed 42), số epoch chọn và thời gian huấn luyện", ["Mô hình", "Độ phủ ứng viên",
+                                                                           "Epoch chọn theo seed", "Phút / seed"],
+          [[NAME[m], f(b.loc[m, "coverage10"] * 100, 1) + "%", str(b.loc[m, "best_epochs"] or "—").replace(";", ", "),
+            f(b.loc[m, "train_min"], 1)] for m in s.index if m in b.index],
+          ["Độ phủ: tỉ lệ sản phẩm ứng viên xuất hiện trong top-10 của ít nhất một khách. Epoch chọn = 1 ở một seed: "
+           "seed đó dừng ngay, thường chỉ gợi ý sản phẩm phổ biến."])
+    out.append("Nguồn: summary.csv, significance.csv, ablation.csv, beyond.csv cùng thư mục (scripts/24_report_v2.py).")
+    return "\n".join(out) + "\n"
+
+
 # ---------------------------------------------------------------------- main
 def main():
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
@@ -705,6 +754,7 @@ def main():
 
     info_b = json.loads((final_dir / "data.json").read_text(encoding="utf-8"))
     n_users = info_b.get("test", info_b["val"])["users"]
+    (final_dir / "ket_qua.txt").write_text(text_report(seeds, summary, sig, abl, bey, info_b), encoding="utf-8")
     fig_dir = ensure(final_dir / "figures")
     plot_metrics(res, seeds, summary, fig_dir, n_users)
     plot_significance(sig, fig_dir)
