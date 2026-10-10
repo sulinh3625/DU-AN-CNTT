@@ -1,0 +1,26 @@
+{
+  "sample": "outputs/data/mau_kiem_dinh.csv.gz",
+  "data_md5": "ba5498d1071b903ef77a78b0e6125def",
+  "n_users": 7994,
+  "n_items": 6749,
+  "n_id_items": 6749,
+  "n_kept_pairs": 243696,
+  "val": {
+    "train_pairs": 234610,
+    "scoreable": 6744,
+    "new_items": 0,
+    "users": 2579,
+    "targets": 8985,
+    "new_item_targets": 0,
+    "candidates_mean": 6707.9185730903455
+  },
+  "test": {
+    "train_pairs": 243696,
+    "scoreable": 6749,
+    "new_items": 0,
+    "users": 3165,
+    "targets": 10285,
+    "new_item_targets": 0,
+    "candidates_mean": 6709.73112164297
+  }
+}

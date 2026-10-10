@@ -1,0 +1,16 @@
+{
+  "sample": "outputs/data/mau_phat_trien.csv.gz",
+  "n_users": 8039,
+  "n_items": 6801,
+  "n_id_items": 6801,
+  "n_kept_pairs": 245644,
+  "val": {
+    "train_pairs": 236845,
+    "scoreable": 6798,
+    "new_items": 0,
+    "users": 2569,
+    "targets": 8636,
+    "new_item_targets": 0,
+    "candidates_mean": 6761.597898014792
+  }
+}
