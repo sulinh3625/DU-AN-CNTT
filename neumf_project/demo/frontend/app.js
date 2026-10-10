@@ -4,18 +4,12 @@ const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "
 const fmt = (v, d = 4) => (v == null || Number.isNaN(Number(v)) ? "—" : Number(v).toFixed(d));
 const num = (v) => Number(v).toLocaleString("vi-VN");
 const MODEL_COLORS = {
-  "NeuMF-Pretrained": "#b3261e", "NeuMF-Scratch": "#e07a5f", "GMF": "#28528f", "MLP": "#6a8fc7",
-  "MostPopular": "#9a9a9a", "BPR-MF": "#1d7a46", "Random": "#d4d0ca",
-  "LateFusion-GMF-MLP": "#7b4fa3", "LateFusion-BPR-MLP": "#a97fd0", "ItemKNN": "#b07d12", "UserKNN": "#d9a425",
-  // Giao thức v2
   "NeuMF-F": "#2a78d6", "GMF-F": "#5b9be6", "MLP-F": "#173f7a", "LateFusion-F": "#7b4fa3", "NeuMF": "#e07a5f",
-  "MostPopular-Recent": "#6b6b6b", "Content": "#1baf7a",
+  "GMF": "#28528f", "MLP": "#6a8fc7", "BPR-MF": "#1d7a46", "ItemKNN": "#b07d12", "UserKNN": "#d9a425",
+  "MostPopular-Recent": "#6b6b6b", "Content": "#1baf7a", "MostPopular": "#9a9a9a", "Random": "#d4d0ca",
 };
-const SHOW = { "MostPopular": "Most Popular", "LateFusion-GMF-MLP": "Late Fusion GMF + MLP", "LateFusion-BPR-MLP": "Late Fusion BPR-MF + MLP" };
+const SHOW = { "MostPopular": "Most Popular" };
 const show = (m) => SHOW[m] || m;
-// Chế độ đánh giá cuối: "final" (giao thức v1) hoặc "v2" (kết quả chính) — nhiều sản phẩm đích mỗi khách, ứng viên theo pool.
-const isV2 = () => CTX && CTX.mode === "v2";
-const isFinal = () => CTX && (CTX.mode === "final" || CTX.mode === "v2");
 const color = (m) => MODEL_COLORS[m] || "#555";
 
 async function api(path, opts) {
@@ -50,25 +44,16 @@ async function init() {
     $("info-strip").innerHTML = `<span class="error">${esc(e.message)}</span>`;
     return;
   }
-  const slice = CTX.nrows ? `lát cắt ${num(CTX.nrows)} dòng đầu transactions_train`
-    : /hm500k/.test(CTX.config || "") ? "mẫu hm500k theo khách hàng" : "toàn bộ transactions_train";
-  const run = isV2()
-    ? `<span>Mô hình của <b>đánh giá cuối giao thức v2</b> (${CTX.dry_run ? "bản chạy thử trên mẫu A" : "mẫu kiểm định B"}, seed ${esc(CTX.run_tag.replace("v2_seed", ""))}, commit ${esc(CTX.commit)}) · ứng viên gồm cả ${num(CTX.n_new_items)} sản phẩm mới</span>`
-    : isFinal()
-    ? `<span>Mô hình của <b>đánh giá cuối</b> (outputs/final/seed${esc(CTX.run_tag.replace("final_seed", ""))}, commit ${esc(CTX.commit)}) · chia theo mốc thời gian chung</span>`
-    : `<span>run_tag <b>${esc(CTX.run_tag)}</b> (khám phá, leave-one-out)</span>`;
+  const sample = CTX.dry_run ? "mẫu phát triển (bản chạy thử, tập xác thực)" : "mẫu kiểm định";
   $("info-strip").innerHTML = `
-    <span>Dataset <b>H&amp;M</b> · ${slice} (${CTX.date_min} → ${CTX.date_max}) · k-core ${CTX.k_core}</span>
-    ${run}
-    <span><b>${num(CTX.n_users)}</b> users · <b>${num(CTX.n_items)}</b> items sau k-core</span>`;
+    <span>Dataset <b>H&amp;M</b> · ${sample} (${CTX.date_min} → ${CTX.date_max}) · k-core ${CTX.k_core}</span>
+    <span>Mô hình của <b>đánh giá cuối</b> (seed ${esc(CTX.run_tag.replace("v2_seed", ""))}, commit ${esc(CTX.commit)})</span>
+    <span><b>${num(CTX.n_users)}</b> khách · <b>${num(CTX.n_items)}</b> sản phẩm sau k-core</span>`;
   route();
 }
 
 /* ------------------------------------------------------------ shared UI */
 const img = (it) => `<img loading="lazy" src="${API}/image/${esc(it.article_id)}" alt="${esc(it.product_type_name)}">`;
-const headTag = (isHead) => (isHead ? '<span class="tag head">Head</span>' : '<span class="tag tail">Long-tail</span>');
-// Sản phẩm mới (giao thức v2): chưa từng bán trước mốc dự đoán — mô hình chỉ dùng ID không chấm được.
-const itemTag = (it) => (it.is_new ? '<span class="tag new">Mới</span>' : headTag(it.is_head));
 const kOptions = (sel) => {
   sel.innerHTML = CTX.k_values.map((k) => `<option value="${k}">${k}</option>`).join("");
   sel.value = Math.max(...CTX.k_values);
@@ -77,36 +62,20 @@ const kOptions = (sel) => {
 function rowItem(it, left, right, cls = "") {
   return `<div class="row-item ${cls}">${left}${img(it)}
     <div class="txt"><div class="name" title="${esc(it.prod_name)}">${esc(it.prod_name)}</div>
-      <div class="meta">${esc(it.product_type_name)} · ${esc(it.colour_group_name)}</div></div>${right}</div>`;
+      <div class="meta">${esc(it.product_type_name)} · ${num(it.n_colours)} màu</div></div>${right}</div>`;
 }
 
 /* ------------------------------------------------------------ admin */
-// Item đích = tập mà run đã chấm. Chế độ final: các sản phẩm khách mua lần đầu trong giai đoạn test (có thể nhiều).
-// Chế độ explore: validation (run chưa --final, test bị khoá) hoặc test.
-const targetLabel = () => (isFinal() ? "sản phẩm đích (test)" : CTX.evaluated_on === "test" ? "test item" : "validation item");
+const targetLabel = () => "sản phẩm đích";
 
 function renderProtocol() {
-  const k = Math.max(...CTX.k_values);
-  if (isV2()) {
-    $("ad-protocol").innerHTML = `<b>Giao thức v2 (đúng Chương 4)</b><br>
+  $("ad-protocol").innerHTML = `<b>Cách chấm (đúng Chương 4)</b><br>
+    • <b>Một sản phẩm</b> = một mẫu (<code>product_code</code>), mọi màu gộp lại; ảnh và tên lấy theo màu đầu tiên của mẫu.<br>
     • <b>Chia theo mốc thời gian</b>: mô hình đã được huấn luyện lại trên mọi cặp trước ${esc(CTX.test_start)}; lịch sử bên trái là đúng dữ liệu mô hình đã học.<br>
-    • <b>Sản phẩm đích</b> = mọi sản phẩm khách mua <i>lần đầu</i> sau mốc (có thể nhiều món), gồm cả <span class="tag new">Mới</span> sản phẩm chưa từng bán trước mốc.<br>
-    • <b>Full ranking</b> trên ${num(CTX.n_candidates)} ứng viên = sản phẩm cũ (có dữ liệu huấn luyện) ∪ ${num(CTX.n_new_items)} sản phẩm mới, trừ những món khách đã mua. Mô hình chỉ dùng ID (NeuMF, GMF, MLP, BPR-MF, KNN, Most Popular) xếp sản phẩm mới cuối danh sách; NeuMF-F, GMF-F, MLP-F, LateFusion-F và Content chấm được sản phẩm mới nhờ đặc trưng.<br>
+    • <b>Sản phẩm đích</b> = mọi sản phẩm khách mua <i>lần đầu</i> sau mốc (có thể nhiều món).<br>
+    • <b>Full ranking</b> trên ${num(CTX.n_candidates)} sản phẩm có dữ liệu huấn luyện, trừ những món khách đã mua.<br>
     • <code>HR@K = 1</code> nếu có ít nhất một món đích trong top-K; <code>Recall@K</code> = số món đích trong top-K / số món đích; <code>NDCG@K = DCG/IDCG</code>.<br>
     • Số trên màn hình khớp file per-user của đánh giá cuối (seed 42); đây là hiển thị lại, không phải một lần chấm mới.`;
-    return;
-  }
-  $("ad-protocol").innerHTML = isFinal() ? `<b>Protocol đánh giá (đúng Chương 4)</b><br>
-    • <b>Chia theo một mốc thời gian chung</b>: train &lt; ${esc(CTX.val_start)} ≤ validation &lt; ${esc(CTX.test_start)} ≤ test. Mô hình đã được huấn luyện lại trên train ∪ validation; lịch sử bên trái là đúng dữ liệu mô hình đã học.<br>
-    • <b>Sản phẩm đích</b> = mọi sản phẩm khách mua <i>lần đầu</i> trong giai đoạn test (có thể nhiều món).<br>
-    • <b>Full ranking</b>: chấm toàn bộ ${num(CTX.n_candidates)} sản phẩm có trong train ∪ validation, trừ những món khách đã mua.<br>
-    • <code>HR@K = 1</code> nếu có ít nhất một món đích trong top-K; <code>Recall@K</code> = số món đích trong top-K / số món đích; <code>NDCG@K = DCG/IDCG</code>.<br>
-    • Số trên màn hình khớp file per-user của đánh giá cuối; đây là hiển thị lại, không phải một lần chấm mới.`
-    : `<b>Protocol đánh giá (run khám phá)</b><br>
-    • <b>Temporal leave-one-out</b>: với mỗi khách, giao dịch cuối theo thời gian là <i>test item</i>, giao dịch áp chót là <i>validation item</i>, phần còn lại là train. Test item bị giấu khỏi train.<br>
-    • <b>Full ranking</b>: mô hình chấm điểm toàn bộ item trong catalog, trừ các item khách đã mua; item đích được xếp hạng trong tập candidates đó.<br>
-    • <b>Item đích</b> = đúng tập mà run đã chấm: <i>validation item</i> nếu run chưa <code>--final</code> (khoá test), <i>test item</i> nếu run đã chấm test.<br>
-    • <code>HR@K = 1[rank ≤ K]</code>; <code>NDCG@K = 1/log2(rank+1)</code> nếu rank ≤ K, ngược lại 0 (K tối đa ${k}).`;
 }
 // ------------------------------------------------------------ chọn khách
 // Tham khảo: thanh khách + bảng chọn mở bằng Ctrl K (kiểu bảng lệnh của Linear / Vercel), danh sách có ô lọc, tab
@@ -158,14 +127,12 @@ async function initAdmin() {
   inited.admin = true;
   const [a, b] = [$("ad-model-a"), $("ad-model-b")];
   renderProtocol();
-  if (isFinal()) $("ad-history-title").textContent = "Lịch sử mua (train ∪ validation)";
-  const ext = new Set(CTX.extension_models || []);
-  const opts = CTX.models.map((m) => `<option value="${esc(m)}">${esc(show(m))}${ext.has(m) ? " (mở rộng)" : ""}</option>`).join("");
+  const opts = CTX.models.map((m) => `<option value="${esc(m)}">${esc(show(m))}</option>`).join("");
   a.innerHTML = opts;
   b.innerHTML = opts;
   const pick = (prefs, fallback) => prefs.find((m) => CTX.models.includes(m)) || fallback;
-  a.value = pick(["NeuMF-F", "NeuMF-Pretrained"], CTX.models[0]);
-  b.value = pick(isV2() ? ["NeuMF", "BPR-MF"] : ["GMF"], CTX.models[1] || CTX.models[0]);
+  a.value = pick(["NeuMF-F"], CTX.models[0]);
+  b.value = pick(["NeuMF", "BPR-MF"], CTX.models[1] || CTX.models[0]);
   kOptions($("ad-k"));
   const un = Object.entries(CTX.unavailable_models || {});
   $("ad-unavailable").innerHTML = un.map(([m, r]) => `<b>${esc(m)}</b> bị ẩn: ${esc(r)}`).join("<br>");
@@ -478,8 +445,8 @@ async function loadNeighbors(uid) {
       <table class="nb-table"><tr><th>#</th><th>Khách tương đồng</th><th>Độ tương đồng</th><th>Mua chung</th><th>Ví dụ món mua chung</th><th>Đã mua ${esc(targetLabel())}</th></tr>
       ${res.neighbors.map((n, i) => `<tr><td>${i + 1}</td><td class="cid">${esc(n.customer_id.slice(0, 16))}…<br><span class="meta">${num(n.train_count)} món đã mua</span></td>
         <td>${fmt(n.similarity, 3)}</td><td>${num(n.n_common)}</td>
-        <td style="text-align:left">${n.common_items.map((it) => `${esc(it.prod_name)} <span class="meta">(${esc(it.product_type_name)} · ${esc(it.colour_group_name)})</span>`).join("<br>")}</td>
-        <td style="text-align:left">${n.bought_target.map((it) => `<span class="tag head">${esc(it.prod_name)} · ${esc(it.colour_group_name)}</span>`).join(" ") || "—"}</td></tr>`).join("")}
+        <td style="text-align:left">${n.common_items.map((it) => `${esc(it.prod_name)} <span class="meta">(${esc(it.product_type_name)})</span>`).join("<br>")}</td>
+        <td style="text-align:left">${n.bought_target.map((it) => `<span class="tag head">${esc(it.prod_name)}</span>`).join(" ") || "—"}</td></tr>`).join("")}
       </table>`;
   } catch (e) {
     card.classList.remove("hidden");
@@ -488,9 +455,8 @@ async function loadNeighbors(uid) {
 }
 
 function renderHistory(hist) {
-  const label = isFinal() ? `sản phẩm mô hình đã học (train ∪ validation, trước ${esc(CTX.test_start)}), sắp theo ngày mua đầu` : "sản phẩm trong train, sắp theo ngày mua";
-  $("ad-history").innerHTML = `<div class="note" style="margin-bottom:8px">${hist.items.length} ${label}.</div>` +
-    hist.items.map((it) => rowItem(it, "", `<div class="score">${it.t_dat}${it.interaction_count > 1 ? `<br>×${it.interaction_count}` : ""}<br>${itemTag(it)}</div>`)).join("");
+  $("ad-history").innerHTML = `<div class="note" style="margin-bottom:8px">${hist.items.length} sản phẩm mô hình đã học (mua trước ${esc(CTX.test_start)}), sắp theo ngày mua đầu.</div>` +
+    hist.items.map((it) => rowItem(it, "", `<div class="score">${it.t_dat}</div>`)).join("");
 }
 
 function renderRecs(recs, k) {
@@ -506,7 +472,7 @@ function renderRecs(recs, k) {
     return `<div>
       <h3 style="color:${color(r.model)}">${esc(show(r.model))}</h3>
       ${r.items.map((it) => rowItem(it, `<div class="rank">#${it.rank}</div>`,
-        `<div class="score">${esc(r.score_kind)} ${fmt(it.score, r.model === "MostPopular" ? 0 : 3)}<br>${itemTag(it)}${it.is_target ? `<br><span class="tag tail">ĐÍCH</span>` : ""}</div>`,
+        `<div class="score">${esc(r.score_kind)} ${fmt(it.score, r.model === "MostPopular" ? 0 : 3)}${it.is_target ? `<br><span class="tag tail">ĐÍCH</span>` : ""}</div>`,
         it.is_target ? "hit" : "")).join("")}
       <div class="note" style="margin-top:8px">${note}</div>
     </div>`;
@@ -514,11 +480,10 @@ function renderRecs(recs, k) {
 }
 
 function renderAnswer(recs, hist) {
-  const v = recs[0].val_item;
-  const targets = recs[0].targets || [recs[0].target_item];
+  const targets = recs[0].targets;
   // Hạng của từng sản phẩm đích theo từng mô hình đang xem.
-  const rankOf = recs.map((r) => Object.fromEntries((r.targets || []).map((t) => [t.item_idx, t.rank])));
-  const metricCols = ["HR", "NDCG", ...(isFinal() ? ["Recall"] : [])];
+  const rankOf = recs.map((r) => Object.fromEntries(r.targets.map((t) => [t.item_idx, t.rank])));
+  const metricCols = ["HR", "NDCG", "Recall"];
   const blocks = recs.map((r) => {
     const e = r.evaluation;
     const rows = CTX.k_values.map((k) => `<tr><td>K = ${k}</td>${metricCols.map((m) =>
@@ -528,37 +493,24 @@ function renderAnswer(recs, hist) {
       <dt>Số candidates</dt><dd>${num(e.n_candidates)}</dd></dl>
       <table style="margin-top:8px"><tr><th></th>${metricCols.map((m) => `<th>${m}@K</th>`).join("")}</tr>${rows}</table></div>`;
   }).join("");
-  const title = isFinal()
-    ? `${targets.length} ${targetLabel()}: sản phẩm khách mua lần đầu trong giai đoạn test (từ ${esc(CTX.test_start)})`
-    : CTX.evaluated_on === "test" ? "Test item (giao dịch cuối, bị giấu khỏi train)"
-      : "Validation item (giao dịch áp chót, bị giấu khỏi train) — run chưa chấm test nên test item được giữ kín";
+  const title = `${targets.length} ${targetLabel()}: sản phẩm khách mua lần đầu từ ${esc(CTX.test_start)}`;
   const targetRows = targets.map((t) => rowItem(t, "",
-    `<div class="score">${recs.map((r, i) => rankOf[i][t.item_idx] ? `<span style="color:${color(r.model)}">#${num(rankOf[i][t.item_idx])}</span>` : "").join("<br>")}<br>${itemTag(t)}</div>`,
+    `<div class="score">${recs.map((r, i) => rankOf[i][t.item_idx] ? `<span style="color:${color(r.model)}">#${num(rankOf[i][t.item_idx])}</span>` : "").join("<br>")}</div>`,
     "hit")).join("");
-  const cand = isV2()
-    ? `Candidates = ${num(CTX.n_candidates)} sản phẩm (cũ ∪ ${num(CTX.n_new_items)} mới) − ${hist.items.length} món khách đã mua.`
-    : isFinal()
-    ? `Candidates = ${num(CTX.n_candidates)} sản phẩm của train ∪ validation − ${hist.items.length} món khách đã mua.`
-    : `Candidates = ${num(CTX.n_items)} item − ${hist.items.length} item train${v ? " − 1 item validation" : ""}.`;
+  const cand = `Candidates = ${num(CTX.n_candidates)} sản phẩm − ${hist.items.length} món khách đã mua.`;
   $("ad-answer").innerHTML = `
     <h3>${title}</h3>
     ${targetRows}
-    ${v ? `<div class="note" style="margin:8px 0 14px">Validation item (dùng cho early stopping, cũng bị loại khỏi candidates): ${esc(v.prod_name)} — ${esc(v.product_type_name)}</div>` : ""}
     <div class="note" style="margin-bottom:10px">${cand}</div>
     ${blocks}`;
 }
 
 /* ------------------------------------------------------------ dashboard */
 function srcLine(block) {
-  return `<div class="source">Nguồn: ${esc(block.source)}${block.run_tag ? ` · run_tag ${esc(block.run_tag)}` : ""}</div>`;
+  return `<div class="source">Nguồn: ${esc(block.source)}</div>`;
 }
 function body(block, render) {
   return block.status === "ok" ? render(block.data) + srcLine(block) : `<div class="missing">${esc(block.message)}</div>`;
-}
-function metricTable(rows, cols, digits = 4) {
-  const best = Object.fromEntries(cols.map((c) => [c, Math.max(...rows.map((r) => Number(r[c])).filter((x) => !Number.isNaN(x)))]));
-  return `<table><tr><th>Model</th>${cols.map((c) => `<th>${esc(c)}</th>`).join("")}</tr>${rows.map((r) =>
-    `<tr><td>${esc(r.model)}</td>${cols.map((c) => `<td class="${Number(r[c]) === best[c] ? "best" : ""}">${fmt(r[c], digits)}</td>`).join("")}</tr>`).join("")}</table>`;
 }
 function chart(id, config) {
   const el = $(id);
@@ -611,64 +563,17 @@ function byKChart(block) {
   });
 }
 
-function renderFinalDashboard(d, dash) {
-  const s = d.stats.data;
-  const metrics = ["NDCG@10", "Recall@10", "HR@10", "Precision@10", "NDCG@5"];
-  dash.innerHTML = `
-    <div class="card wide"><h2>Dữ liệu và giao thức của đánh giá cuối</h2><div class="stats">${[
-      ["Users", num(s.n_users)], ["Items", num(s.n_items)], ["Tương tác", num(s.n_interactions)],
-      ["Mật độ", `${(100 * s.density).toFixed(3)}%`], ["Train (cặp)", num(s.train)], ["Validation (cặp)", num(s.validation)],
-      ["Train ∪ val (huấn luyện lại)", num(s.train_val)], ["Test (cặp)", num(s.test)], ["User test", num(s.n_test_users)],
-      ["Ứng viên mỗi user", `≤ ${num(s.n_candidates)}`], ["k-core", s.k_core], ["Commit", esc(s.commit)],
-    ].map(([l, n]) => `<div class="stat"><div class="n">${n}</div><div class="l">${l}</div></div>`).join("")}</div>${srcLine(d.stats)}</div>
-
-    <div class="card wide"><h2>Kết quả trên tập test — trung bình ± độ lệch chuẩn qua 3 seed</h2>${body(d.summary, (rows) => `
-      <canvas id="c-final"></canvas>
-      <div class="scroll"><table><tr><th>Mô hình</th>${metrics.map((m) => `<th>${m}</th>`).join("")}</tr>${rows.map((r) =>
-        `<tr><td>${esc(show(r.model))}${r.extension ? " †" : ""}</td>${metrics.map((m) =>
-          `<td>${fmt(r[m + "_mean"], 5)} ± ${fmt(r[m + "_std"], 5)}</td>`).join("")}</tr>`).join("")}</table></div>
-      <div class="note">† Mô hình mở rộng, thêm sau khi đã xem test (PREREG mục 9), kiểm định trong họ so sánh riêng.</div>`)}</div>
-
-    ${byKCard(d.by_k, "Số @20 do scripts/16_extra_k.py tính lại từ hạng đã lưu của 3 seed — mô tả, không chấm lại tập test.")}
-
-    <div class="card wide"><h2>Kiểm định cặp theo user (NDCG@10) — họ 8 so sánh chính</h2>${body(d.significance, sigTable)}</div>
-    <div class="card wide"><h2>Kiểm định cặp — họ 7 so sánh mở rộng</h2>${body(d.ext_significance, sigTable)}</div>
-
-    <div class="card"><h2>NDCG@10 theo nhóm (mô tả, không kiểm định)</h2>${body(d.stratified, (rows) => simpleTable(rows,
-      [["all", "Tất cả", (v) => fmt(v, 5)], ["head", "Head", (v) => fmt(v, 5)], ["tail", "Tail", (v) => fmt(v, 5)],
-       ["cold", "Cold", (v) => fmt(v, 5)], ["warm", "Warm", (v) => fmt(v, 5)]]))}</div>
-    <div class="card"><h2>Ngoài độ chính xác (top-10)</h2>${body(d.beyond, (rows) => simpleTable(rows,
-      [["coverage", "Coverage", (v) => pct(v)], ["novelty", "Novelty (bit)", (v) => fmt(v, 2)], ["ARP", "ARP", (v) => fmt(v, 1)],
-       ["HRR", "Tỉ lệ head", (v) => pct(v)]]))}</div>
-    <div class="card"><h2>Sampled-99 (chỉ đối chiếu)</h2>${body(d.sampled, (rows) => simpleTable(rows,
-      [["NDCG@10", "NDCG@10", (v) => fmt(v, 4)], ["HR@10", "HR@10", (v) => fmt(v, 4)]]))}
-      <div class="note">Xếp 1 món đúng giữa 100 ứng viên dễ hơn nhiều so với giữa ~10.000 — không dùng để so sánh mô hình.</div></div>
-    <div class="card"><h2>Độ trễ gợi ý top-10 trên CPU (ms)</h2>${body(d.latency, (rows) => simpleTable(rows,
-      [["p50_ms", "p50", (v) => fmt(v, 2)], ["p95_ms", "p95", (v) => fmt(v, 2)], ["mean_ms", "Trung bình", (v) => fmt(v, 2)]]))}</div>`;
-  if (d.summary.status === "ok") {
-    const rows = d.summary.data;
-    chart("c-final", {
-      type: "bar",
-      data: { labels: rows.map((r) => show(r.model) + (r.extension ? " †" : "")),
-              datasets: [{ label: "NDCG@10 (test, TB 3 seed)", data: rows.map((r) => r["NDCG@10_mean"]), backgroundColor: rows.map((r) => color(r.model)) }] },
-      options: { plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true } } },
-    });
-  }
-  byKChart(d.by_k);
-}
-
-function renderV2Dashboard(d, dash) {
+function renderDashboard(d, dash) {
   const s = d.stats.data;
   const metrics = ["NDCG@10", "Recall@10", "HR@10", "Precision@10", "NDCG@5", "NDCG@20"];
   const ablName = { "neumf_f": "NeuMF-F (đầy đủ)", "neumf_f-text": "Bỏ vector văn bản", "neumf_f-time": "Bỏ đặc trưng thời gian",
-    "neumf_f-user": "Bỏ thông tin khách hàng", "neumf_f-attr": "Bỏ thuộc tính sản phẩm", "neumf_f-iddrop": "Không bỏ ID ngẫu nhiên" };
+    "neumf_f-user": "Bỏ thông tin khách hàng", "neumf_f-attr": "Bỏ thuộc tính sản phẩm" };
   dash.innerHTML = `
-    ${d.dry_run ? '<div class="card wide"><div class="error">Đang hiển thị bản <b>chạy thử</b> (mẫu A, tập xác thực, 1 epoch) — số liệu không có ý nghĩa, chỉ để kiểm tra đường ống.</div></div>' : ""}
-    <div class="card wide"><h2>Dữ liệu của đánh giá cuối (giao thức v2)</h2><div class="stats">${[
-      ["Khách sau k-core", num(s.n_users)], ["Sản phẩm (có ID + mới)", num(s.n_items)], ["Cặp trước mốc kiểm thử", num(s.n_interactions)],
+    ${d.dry_run ? '<div class="card wide"><div class="error">Đang hiển thị bản <b>chạy thử</b> (mẫu phát triển, tập xác thực, 1 epoch) — số liệu không có ý nghĩa, chỉ để kiểm tra đường ống.</div></div>' : ""}
+    <div class="card wide"><h2>Dữ liệu của đánh giá cuối</h2><div class="stats">${[
+      ["Khách sau k-core", num(s.n_users)], ["Sản phẩm (product_code)", num(s.n_items)], ["Cặp trước mốc kiểm thử", num(s.n_interactions)],
       ["Cặp huấn luyện", num(s.train_pairs)], ["Khách được chấm", num(s.n_test_users)], ["Cặp đúng", num(s.targets)],
-      ["Cặp đúng là SP mới", num(s.new_item_targets)], ["Ứng viên", num(s.n_candidates)], ["Sản phẩm mới", num(s.n_new_items)],
-      ["k-core", s.k_core], ["Commit", esc(s.commit)],
+      ["Ứng viên", num(s.n_candidates)], ["k-core", s.k_core], ["Commit", esc(s.commit)],
     ].map(([l, n]) => `<div class="stat"><div class="n">${n}</div><div class="l">${l}</div></div>`).join("")}</div>${srcLine(d.stats)}</div>
 
     <div class="card wide"><h2>Kết quả — trung bình ± độ lệch chuẩn qua seed</h2>${body(d.summary, (rows) => `
@@ -680,15 +585,13 @@ function renderV2Dashboard(d, dash) {
 
     <div class="card wide"><h2>Kiểm định cặp theo khách hàng (NDCG@10) — họ 10 so sánh đăng ký trước</h2>${body(d.significance, sigTable)}</div>
 
-    <div class="card"><h2>NDCG@10 theo nhóm sản phẩm đúng (mô tả)</h2>${body(d.groups, (rows) => simpleTable(rows,
-      [["old_mean", "SP cũ", (v) => fmt(v, 5)], ["new_mean", "SP mới", (v) => fmt(v, 5)], ["oldonly_mean", "Chỉ SP cũ trong ứng viên", (v) => fmt(v, 5)]]))}</div>
-    <div class="card"><h2>Danh sách top-10 và chi phí huấn luyện</h2>${body(d.beyond, (rows) => simpleTable(rows,
-      [["coverage10", "Độ phủ", (v) => pct(v)], ["new_share10", "Tỉ lệ SP mới", (v) => pct(v)], ["best_epoch_mean", "Số epoch", (v) => fmt(v, 1)],
+    <div class="card"><h2>Độ phủ top-10 và chi phí huấn luyện</h2>${body(d.beyond, (rows) => simpleTable(rows,
+      [["coverage10", "Độ phủ", (v) => pct(v)], ["best_epoch_mean", "Số epoch", (v) => fmt(v, 1)],
        ["train_min", "Phút / seed", (v) => fmt(v, 1)]]))}</div>
-    <div class="card wide"><h2>Ablation NeuMF-F (seed 42, mô tả)</h2>${body(d.ablation, (rows) => `<div class="scroll"><table>
-      <tr><th>Biến thể</th><th>NDCG@10</th><th>Thay đổi</th><th>CI 95% của hiệu</th><th>SP cũ</th><th>SP mới</th></tr>${rows.map((r) =>
+    <div class="card"><h2>Ablation NeuMF-F (seed 42, mô tả)</h2>${body(d.ablation, (rows) => `<div class="scroll"><table>
+      <tr><th>Biến thể</th><th>NDCG@10</th><th>Thay đổi</th><th>CI 95% của hiệu</th></tr>${rows.map((r) =>
         `<tr><td>${esc(ablName[r.variant] || r.variant)}</td><td>${fmt(r["NDCG@10"], 5)}</td><td>${r.variant === "neumf_f" ? "—" : (r.rel >= 0 ? "+" : "") + pct(r.rel)}</td>
-        <td>${r.variant === "neumf_f" ? "—" : `[${fmt(r.ci_low, 5)}; ${fmt(r.ci_high, 5)}]`}</td><td>${fmt(r["NDCG@10_old"], 5)}</td><td>${fmt(r["NDCG@10_new"], 5)}</td></tr>`).join("")}</table></div>`)}</div>`;
+        <td>${r.variant === "neumf_f" ? "—" : `[${fmt(r.ci_low, 5)}; ${fmt(r.ci_high, 5)}]`}</td></tr>`).join("")}</table></div>`)}</div>`;
   if (d.summary.status === "ok") {
     const rows = d.summary.data;
     chart("c-final", {
@@ -706,80 +609,7 @@ async function loadDashboard() {
   charts = [];
   const dash = $("dash");
   dash.innerHTML = '<div class="note">Đang đọc file kết quả...</div>';
-  let d;
-  try { d = await api("/dashboard"); } catch (e) { dash.innerHTML = `<div class="error">${esc(e.message)}</div>`; return; }
-  if (d.mode === "v2") { renderV2Dashboard(d, dash); return; }
-  if (d.mode === "final") { renderFinalDashboard(d, dash); return; }
-  // Chỉ các K có trong file kết quả của run (demo thêm K = 20 chỉ cho màn Kiểm thử mô hình).
-  const metricCols = CTX.k_values.flatMap((k) => [`HR@${k}`, `NDCG@${k}`])
-    .filter((c) => d.primary.status !== "ok" || c in d.primary.data[0]);
-
-  dash.innerHTML = `
-    <div class="card wide"><h2>Thống kê dữ liệu (sau k-core)</h2>${body(d.stats, (s) => `<div class="stats">${[
-      ["Users", num(s.n_users)], ["Items", num(s.n_items)], ["Interactions", num(s.n_interactions)],
-      ["Độ thưa", `${(100 * (1 - s.density)).toFixed(3)}%`], ["Train", num(s.train)], ["Validation", num(s.validation)],
-      ["Test", num(s.test)], ["k-core", s.k_core], ["Head items (10%)", num(s.n_head_items)],
-    ].map(([l, n]) => `<div class="stat"><div class="n">${n}</div><div class="l">${l}</div></div>`).join("")}</div>`)}</div>
-
-    <div class="card wide"><h2>HR@K / NDCG@K — full ranking (1 run)</h2>${body(d.primary, (rows) =>
-      `<canvas id="c-primary"></canvas>${metricTable(rows, metricCols)}`)}
-      <h2 style="margin-top:20px">Multi-seed (mean ± std)</h2>${body(d.multi_seed, (m) => `<div class="note">${m.seeds.length} seed: ${m.seeds.join(", ")}</div>
-        <table><tr><th>Model</th>${metricCols.map((c) => `<th>${c}</th>`).join("")}</tr>${m.rows.map((r) =>
-          `<tr><td>${esc(r.model)}</td>${metricCols.map((c) => `<td>${fmt(r[c + "_mean"])} ± ${fmt(r[c + "_std"])}</td>`).join("")}</tr>`).join("")}</table>`)}</div>
-
-    <div class="card wide"><h2>Phân phối rank của ${targetLabel()}</h2>${body(d.rank_distribution, (r) =>
-      `<canvas id="c-rank"></canvas><div class="note">Bin theo thang log của rank (1, 2, 3–4, 5–10, ...). Không vẽ histogram HR per-user vì giá trị chỉ là 0/1.</div>
-       <table style="margin-top:8px"><tr><th>Model</th><th>Median rank</th><th>Số user</th></tr>${Object.entries(r.series).map(([m, s]) =>
-         `<tr><td>${esc(m)}</td><td>${num(s.median_rank)}</td><td>${num(s.n_users)}</td></tr>`).join("")}</table>`)}</div>
-
-    <div class="card"><h2>Beyond-accuracy</h2>${body(d.beyond, (rows) =>
-      `<canvas id="c-beyond"></canvas>${metricTable(rows.map((r) => ({ ...r, Coverage: r.coverage, Novelty: r.novelty, "Head Rec Rate": r.head_rec_rate })), ["Coverage", "Novelty", "Head Rec Rate"])}
-       <div class="note">Head Rec Rate cao = gợi ý tập trung vào 10% item phổ biến nhất trong train.</div>`)}</div>
-
-    <div class="card"><h2>Popularity bias — top 20 item được gợi ý nhiều nhất</h2>${body(d.popularity_bias, (rows) => {
-      const models = [...new Set(rows.map((r) => r.model))];
-      return `<select id="pb-model">${models.map((m) => `<option ${m === "NeuMF-Pretrained" ? "selected" : ""}>${esc(m)}</option>`).join("")}</select>
-        <div class="note" style="margin:6px 0">Đếm trong top-${rows[0]?.top_k} của toàn bộ user được chấm; so với số lượt mua trong train.</div><div id="pb-table"></div>`;
-    })}</div>`;
-
-  if (d.primary.status === "ok") {
-    const rows = d.primary.data;
-    chart("c-primary", {
-      type: "bar",
-      data: { labels: rows.map((r) => r.model), datasets: metricCols.map((c, i) => ({ label: c, data: rows.map((r) => r[c]), backgroundColor: ["#e3b5a4", "#b3261e", "#a9bfdf", "#28528f"][i % 4] })) },
-      options: { plugins: { legend: { position: "bottom" } }, scales: { y: { beginAtZero: true } } },
-    });
-  }
-  if (d.rank_distribution.status === "ok") {
-    const r = d.rank_distribution.data;
-    chart("c-rank", {
-      type: "bar",
-      data: { labels: r.bins, datasets: Object.entries(r.series).map(([m, s]) => ({ label: m, data: s.counts, backgroundColor: color(m) })) },
-      options: { plugins: { legend: { position: "bottom" } }, scales: { x: { title: { display: true, text: `rank của ${targetLabel()} (bin log)` } }, y: { title: { display: true, text: "số user" } } } },
-    });
-  }
-  if (d.beyond.status === "ok") {
-    const rows = d.beyond.data;
-    chart("c-beyond", {
-      type: "bar",
-      data: { labels: rows.map((r) => r.model), datasets: [
-        { label: "Coverage", data: rows.map((r) => r.coverage), backgroundColor: "#28528f" },
-        { label: "Head Rec Rate", data: rows.map((r) => r.head_rec_rate), backgroundColor: "#b3261e" },
-      ] },
-      options: { plugins: { legend: { position: "bottom" } }, scales: { y: { beginAtZero: true, max: 1 } } },
-    });
-  }
-  if (d.popularity_bias.status === "ok") {
-    const rows = d.popularity_bias.data;
-    const render = () => {
-      const m = $("pb-model").value;
-      $("pb-table").innerHTML = `<div class="scroll" style="max-height:420px"><table><tr><th>#</th><th>Sản phẩm</th><th>% user</th><th>Lượt mua train</th><th>Hạng phổ biến train</th></tr>${rows.filter((r) => r.model === m).map((r) =>
-        `<tr><td>${r.position}</td><td style="text-align:left">${esc(r.prod_name)} <span class="meta">(${esc(r.product_type_name)})</span> ${headTag(r.is_head)}</td>
-         <td>${(100 * r.share_of_users).toFixed(1)}%</td><td>${num(r.train_count)}</td><td>${num(r.train_popularity_rank)}</td></tr>`).join("")}</table></div>`;
-    };
-    $("pb-model").addEventListener("change", render);
-    render();
-  }
+  try { renderDashboard(await api("/dashboard"), dash); } catch (e) { dash.innerHTML = `<div class="error">${esc(e.message)}</div>`; }
 }
 
 init();

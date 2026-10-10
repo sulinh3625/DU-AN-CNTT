@@ -197,4 +197,3 @@ canvas { max-height: 300px; }
 footer { max-width: 1320px; margin: 0 auto; padding: 0 20px 30px; font-size: 11.5px; color: var(--muted); }
 
 /* Sản phẩm mới (giao thức v2) */
-.tag.new { background: #e8f1fc; color: #1d5fae; }

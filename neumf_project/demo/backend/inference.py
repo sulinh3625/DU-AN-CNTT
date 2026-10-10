@@ -1,4 +1,4 @@
-"""Xếp hạng full-ranking cho một user, đúng protocol của src/evaluation/full_ranking.py."""
+"""Xếp hạng toàn bộ ứng viên cho một khách, đúng cách chấm của src/evaluation/v2.py."""
 from __future__ import annotations
 
 import numpy as np
@@ -10,8 +10,7 @@ from src.evaluation.ranking_utils import deterministic_tie_key
 
 MAX_PAIRS_PER_BATCH = 400_000
 SCORE_KIND = {"MostPopular": "lượt mua train", "BPR-MF": "điểm", "ItemKNN": "Σ sim", "UserKNN": "Σ sim",
-              "LateFusion-GMF-MLP": "điểm trộn", "LateFusion-BPR-MLP": "điểm trộn", "LateFusion-F": "điểm trộn",
-              "MostPopular-Recent": "giao dịch gần đây", "Content": "cosine"}
+              "LateFusion-F": "điểm trộn", "MostPopular-Recent": "giao dịch gần đây", "Content": "cosine"}
 METRIC_NAMES = ("HR", "NDCG", "Recall", "Precision")
 
 
@@ -37,20 +36,13 @@ def score_items(ctx, model_name: str, users: np.ndarray) -> np.ndarray:
 
 
 def eval_record(ctx, u: int) -> EvalRecord:
-    """Record của user u, cùng quy tắc với build_full_ranking_records_multi: ứng viên = item trong pool (final:
-    item của train ∪ val; explore: mọi item) trừ item đã mua, luôn giữ đủ các item đích."""
-    positives = np.asarray(sorted(ctx.target_items[u]), dtype=np.int64)
-    mask = ctx.pool_mask.copy()
-    mask[positives] = True
-    seen = ctx.seen_pos[u] - set(positives.tolist())
-    if seen:
-        mask[np.fromiter(seen, dtype=np.int64)] = False
-    return EvalRecord(u, int(positives[0]), np.arange(ctx.n_items, dtype=np.int64)[mask], positives)
+    """Record của khách u lúc chấm: ứng viên = sản phẩm chấm được trừ món đã mua, giữ đủ các sản phẩm đích."""
+    return ctx.records[u]
 
 
 def candidate_scores(ctx, model_name: str, u: int, record, all_items_row=None) -> np.ndarray:
-    """Điểm trên record.candidates. Mô hình không phải mạng PyTorch chấm thẳng trên candidates (đúng như
-    evaluate_score_function — late fusion chuẩn hoá min-max trên chính tập này). all_items_row: hàng điểm mọi item
+    """Điểm trên record.candidates. Mô hình không phải mạng PyTorch chấm thẳng trên candidates (đúng như lúc chấm —
+    late fusion chuẩn hoá min-max trên chính tập này). all_items_row: hàng điểm mọi item
     của mạng PyTorch đã tính sẵn theo lô."""
     scorer = ctx.scorers.get(model_name)
     if scorer is not None:

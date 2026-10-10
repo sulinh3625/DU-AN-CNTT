@@ -12,7 +12,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 from fastapi.responses import FileResponse, Response
 
 from . import inference, metrics_io
-from .data_context import DEMO_ROOT, DataContext, resolve_mode, resolve_run_tag
+from .data_context import DEMO_ROOT, DataContext
 
 IMAGES_DIR = os.environ.get("DEMO_IMAGES_DIR", str(DEMO_ROOT / "static" / "images"))
 BUCKET_LABELS = {"low": "Ít giao dịch", "mid": "Trung bình", "high": "Nhiều giao dịch"}
@@ -29,17 +29,15 @@ Sort = Literal["train_desc", "train_asc", "targets_desc", "id", "rank"]
 Hit = Literal["hit", "miss"]
 
 router = APIRouter(prefix="/api")
-_cache: dict[str, DataContext] = {}
-_ranks: dict[tuple[str, str], pd.Series] = {}  # (run_tag, mô hình) -> hạng tốt nhất theo customer_id
+_cache: dict[str, DataContext] = {}  # "ctx" -> dữ liệu và mô hình đã nạp (nạp lần đầu khi cần)
+_ranks: dict[str, pd.Series] = {}  # mô hình -> hạng tốt nhất theo customer_id
 _ranks_lock = Lock()  # ponytail: một khoá chung, hai mô hình không chấm song song — đủ cho demo một người xem
 
 
 def ctx() -> DataContext:
-    mode = resolve_mode()
-    tag = resolve_run_tag(mode)
-    if tag not in _cache:
-        _cache[tag] = DataContext(tag, mode=mode)
-    return _cache[tag]
+    if "ctx" not in _cache:
+        _cache["ctx"] = DataContext()
+    return _cache["ctx"]
 
 
 def _user(c: DataContext, customer_id: str) -> int:
@@ -78,10 +76,10 @@ def filter_users(df: pd.DataFrame, q: str = "", bucket: str | None = None, area:
 def best_rank_series(c: DataContext, model: str) -> pd.Series:
     """Hạng món đích tốt nhất của mô hình cho mọi khách (index customer_id) — chấm một lần (vài giây) rồi giữ lại."""
     with _ranks_lock:
-        if (c.run_tag, model) not in _ranks:
+        if model not in _ranks:
             r = inference.best_ranks(c, model)
-            _ranks[c.run_tag, model] = pd.Series(list(r.values()), index=c.customer_ids[list(r)].astype(str))
-    return _ranks[c.run_tag, model]
+            _ranks[model] = pd.Series(list(r.values()), index=c.customer_ids[list(r)].astype(str))
+    return _ranks[model]
 
 
 def user_filter(q: str = "", bucket: Bucket | None = None, area: str | None = None, sort: Sort = "train_desc",
@@ -124,7 +122,7 @@ def user_position(df: pd.DataFrame, customer_id: str) -> dict:
 
 @router.get("/health")
 def health():
-    return {"status": "ok", "loaded_run_tags": list(_cache)}
+    return {"status": "ok", "loaded": bool(_cache)}
 
 
 @router.get("/context")
@@ -134,10 +132,9 @@ def context():
 
 @router.post("/reload")
 def reload():
-    old = list(_cache)
     _cache.clear()
     _ranks.clear()
-    return {"previous_run_tags": old, "current_run_tag": ctx().run_tag}
+    return {"run_tag": ctx().run_tag}
 
 
 @router.get("/users/facets")
@@ -192,13 +189,7 @@ def recommend(customer_id: str, model: str = "", k: int = 10):
     if model not in c.available_models:
         reason = c.unavailable.get(model, "Model không hỗ trợ.")
         raise HTTPException(404, f"Model '{model}' không khả dụng: {reason}")
-    u = _user(c, customer_id)
-    out = inference.recommend(c, model, u, k)
-    out["target_item"] = c.item_info(c.target_item[u])
-    # Chế độ explore: chỉ khi chấm test mới hiện thêm item validation (cũng bị loại khỏi candidates); chấm validation
-    # thì test giữ kín. Chế độ final: validation đã gộp vào dữ liệu huấn luyện lại nên không có val_item riêng.
-    out["val_item"] = c.item_info(c.val_item[u]) if c.evaluated_on == "test" and u in c.val_item else None
-    return out
+    return inference.recommend(c, model, _user(c, customer_id), k)
 
 
 @router.get("/users/{customer_id}/neighbors")
@@ -208,17 +199,13 @@ def neighbors(customer_id: str, k: int = 10):
     u = _user(c, customer_id)
     rows = c.neighbors(u, max(1, min(int(k), 50)))
     if rows is None:
-        raise HTTPException(404, "UserKNN không khả dụng ở chế độ này (cần chế độ final và tham số mở rộng).")
-    return {"customer_id": customer_id, "k": len(rows), "params": getattr(c, "extension_params", {}).get("UserKNN"),
-            "neighbors": rows}
+        raise HTTPException(404, "UserKNN không khả dụng (thiếu cấu hình userknn trong results.json).")
+    return {"customer_id": customer_id, "k": len(rows), "params": c.userknn_params, "neighbors": rows}
 
 
 @router.get("/dashboard")
 def dashboard():
-    c = ctx()
-    if c.mode == "v2":
-        return metrics_io.v2_dashboard(c)
-    return metrics_io.final_dashboard(c) if c.mode == "final" else metrics_io.dashboard(c.run_tag)
+    return metrics_io.dashboard(ctx())
 
 
 @router.get("/image/{article_id}")
