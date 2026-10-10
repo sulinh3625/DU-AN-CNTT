@@ -693,12 +693,17 @@ def text_report(seeds, summary, sig, abl, bey, info_b) -> str:
         line = lambda r: "  ".join(str(c).ljust(n) for c, n in zip(r, w)).rstrip()  # noqa: E731
         out.extend([title, "", line(header), "-" * len(line(header)), *map(line, rows), *notes, "", ""])
 
+    tuned = bool(s["val_NDCG@10"].notna().any())
     block("1. Kết quả chính trên tập kiểm thử", ["Mô hình", "NDCG@10", "Recall@10", "HR@10", "Precision@10",
-                                                "NDCG@10 lúc tinh chỉnh"],
-          [[NAME[m], *(ms(m, c) for c in TABLE_METRICS[:4]), f(s.loc[m, "val_NDCG@10"])] for m in s.index],
+                                                *(["NDCG@10 lúc tinh chỉnh"] if tuned else [])],
+          [[NAME[m], *(ms(m, c) for c in TABLE_METRICS[:4]), *([f(s.loc[m, "val_NDCG@10"])] if tuned else [])]
+           for m in s.index],
           ["NDCG@10: món đúng càng ở trên trong top-10 càng được nhiều điểm. Recall@10: số món đúng trong top-10 / "
            "tổng số món đúng.", "HR@10: tỉ lệ khách có ít nhất một món đúng trong top-10. Precision@10: số món đúng "
-           "trong top-10 / 10.", "NDCG@10 lúc tinh chỉnh: tập xác thực của mẫu phát triển (seed 42), chỉ để đối chiếu."])
+           "trong top-10 / 10.",
+           "NDCG@10 lúc tinh chỉnh: tập xác thực của mẫu phát triển (seed 42), chỉ để đối chiếu." if tuned else
+           f"Không tinh chỉnh trên {V.NAME}: cấu hình lấy từ {V.CFG.get('best_configs')} (chọn trên H&M); số epoch "
+           "chọn trên tập xác thực của bộ này."])
     block("2. NDCG theo K", ["Mô hình", "NDCG@5", "NDCG@10", "NDCG@20"],
           [[NAME[m], *(ms(m, c) for c in ("NDCG@5", "NDCG@10", "NDCG@20"))] for m in s.index])
     if not sig.empty:
@@ -734,7 +739,8 @@ def main():
     ap.add_argument("--tuning-only", action="store_true",
                     help="trước đánh giá cuối: chỉ xuất bảng dữ liệu mẫu A và kết quả tinh chỉnh (không đọc mẫu B)")
     args = ap.parse_args()
-    best = json.loads((AUDIT / "best_configs.json").read_text(encoding="utf-8"))
+    # NDCG@10 lúc tinh chỉnh chỉ có khi tinh chỉnh trên chính bộ này (Amazon dùng cấu hình H&M: không có cột đó)
+    best = json.loads(V.BEST_CONFIGS.read_text(encoding="utf-8")) if V.TUNED_HERE else {}
     if args.tuning_only:
         if not args.report_dir:  # Amazon: mặc định "", không được rơi về REPORT rồi ghi đè bảng H&M
             raise SystemExit("--tuning-only ghi bảng vào báo cáo — cần --report-dir")

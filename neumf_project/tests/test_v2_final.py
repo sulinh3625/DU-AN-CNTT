@@ -74,6 +74,20 @@ def test_lock_passes_and_overrides_are_explicit(monkeypatch):
     assert final.lock_errors(_args(seeds=[2024], allow_code_change=True), changed, best) == []
 
 
+def test_lock_skips_tuning_hash_when_configs_come_from_other_dataset(monkeypatch):
+    """Amazon (best_configs = cấu hình chọn trên H&M): không có nhật ký tinh chỉnh để so mã băm; các khoá khác giữ nguyên."""
+    monkeypatch.setattr(final, "prereg_committed", lambda p: True)
+    monkeypatch.setattr(final, "git", lambda *a: "")
+    monkeypatch.setattr(final, "tuning_code_hashes", lambda: set())
+    monkeypatch.setattr(final, "opened_seeds", lambda: {42})
+    monkeypatch.setattr(final, "dirty_files", lambda: [])
+    best, prov = {m: {} for m in final.TUNED}, {"git_dirty": False, "code_hash": "abc"}
+    assert final.lock_errors(_args(seeds=[2024]), prov, best)  # H&M: phải có nhật ký tinh chỉnh cùng mã
+    monkeypatch.setattr(final.V, "TUNED_HERE", False)
+    assert final.lock_errors(_args(seeds=[2024]), prov, best) == []
+    assert final.lock_errors(_args(seeds=[42]), prov, best)  # seed đã mở vẫn bị chặn
+
+
 def test_dirty_files_ignores_outputs_and_test_log(monkeypatch):
     status = (' M neumf_project/audit/test_access_log.csv\n M neumf_project/outputs/v2/final/summary.csv\n'
               ' M neumf_project/scripts/v2_common.py\n M "Report DACNTT/content/C4.tex"\n D .vscode/settings.json\n')

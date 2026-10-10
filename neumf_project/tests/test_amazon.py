@@ -112,6 +112,16 @@ def test_load_data_amazon_config_without_customers(tmp_path):
     assert cp.X.shape == (D.n_items, 2 + D.item_cards[1] + D.item_cards[2])  # one-hot danh mục cấp 1, cấp 2
 
 
+def test_amazon_config_uses_hm_configs_without_tuning():
+    """Amazon dùng cấu hình đã chọn trên H&M: không tinh chỉnh, đủ cấu hình cho mọi mô hình của đánh giá cuối."""
+    cfg = V.read_config(ROOT / "configs" / "amazon.yaml")
+    assert "tuning" not in cfg and cfg["best_configs"] == "audit/v2/best_configs.json"
+    best = json.loads((ROOT / cfg["best_configs"]).read_text(encoding="utf-8"))
+    final = importlib.util.module_from_spec(importlib.util.spec_from_file_location("f", ROOT / "scripts" / "23_final_v2.py"))
+    final.__spec__.loader.exec_module(final)
+    assert set(final.TUNED) <= set(best)
+
+
 def test_content_profile_uses_given_onehot_columns():
     text = np.eye(3, dtype=np.float32)
     cats = np.array([[1, 2], [1, 1], [2, 2]])
@@ -124,11 +134,10 @@ def test_content_profile_uses_given_onehot_columns():
 
 def test_run_amazon_commands_use_amazon_config(monkeypatch):
     ns = run.argparse.Namespace
-    steps = run.cmd_all(ns(final=True, reason="đêm", command="amazon-all"))
-    assert steps[:3] == [["scripts/21_build_features.py"], ["scripts/02_prepare_data.py"],
-                         ["scripts/22_tune_v2.py", "--model", "all", "--resume"]]
-    assert ["scripts/24_report_v2.py", "--final-dir", "outputs/amazon/dry_run", "--report-dir", ""] in steps
-    assert steps[-2:] == [["scripts/23_final_v2.py", "--reason", "đêm"], ["scripts/24_report_v2.py"]]
+    assert run.cmd_amazon_data(ns()) == [["scripts/21_build_features.py"], ["scripts/02_prepare_data.py"]]
+    assert run.cmd_v2_dry_run(ns(max_epochs=1, seeds=[42], command="amazon-dry-run"))[-1] == [
+        "scripts/24_report_v2.py", "--final-dir", "outputs/amazon/dry_run", "--report-dir", ""]
+    assert "amazon-tune" not in run.COMMANDS  # Amazon không tinh chỉnh (PREREG_amazon mục 4)
     got = {}
     monkeypatch.setattr(run, "run_steps", lambda name, steps, config=None: got.setdefault(name, config) and 0)
     for cmd, cfg in (("amazon-report", "configs/amazon.yaml"), ("v2-report", "configs/v2.yaml")):

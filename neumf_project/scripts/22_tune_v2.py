@@ -9,8 +9,7 @@
 - Mỗi cấu hình ghi một dòng vào audit/v2/tuning_log.csv; cấu hình tốt nhất theo NDCG@10 vào audit/v2/best_configs.json
   (kèm checkpoint của GMF-F, MLP-F tốt nhất cho Late Fusion-F). --resume bỏ qua cấu hình đã có trong nhật ký.
 - Không dựng tập kiểm thử của bất kỳ mẫu nào.
-- Amazon Beauty (NEUMF_CONFIG=configs/amazon.yaml, `python run.py amazon-tune`): cùng lưới, nhật ký ở audit/amazon/,
-  checkpoint ở outputs/amazon/tuning/.
+- Amazon Beauty (configs/amazon.yaml) không tinh chỉnh: dùng cấu hình đã chọn trên H&M (audit/PREREG_amazon.md mục 4).
 """
 from __future__ import annotations
 
@@ -65,6 +64,8 @@ def main():
     ap.add_argument("--log-dir", default=str(V.AUDIT))
     ap.add_argument("--max-epochs", type=int, default=V.CFG["training"]["max_epochs"])
     args = ap.parse_args()
+    if not V.TUNED_HERE:
+        raise SystemExit(f"{V.NAME} không tinh chỉnh — dùng cấu hình {V.CFG['best_configs']} (PREREG mục 4).")
     log_dir = ensure_dir(Path(args.log_dir))
     log_path, best_path = log_dir / "tuning_log.csv", log_dir / "best_configs.json"
     ensure_dir(CKPT)

@@ -21,7 +21,8 @@ ghi lẫn.
 --dry-run dùng mẫu phát triển, giai đoạn xác thực đóng cả vai chọn epoch lẫn chấm, ghi ra outputs/v2/dry_run/, không ghi
 nhật ký kiểm thử: chỉ để kiểm tra đường ống chạy trọn vẹn, số liệu không có ý nghĩa.
 Amazon Beauty (NEUMF_CONFIG=configs/amazon.yaml, `python run.py amazon-final`): cùng khoá với audit/PREREG_amazon.md,
-audit/amazon/, run_tag amazon_kiemdinh_seed<N>, ra outputs/amazon/final/ (dry-run: outputs/amazon/dry_run/).
+run_tag amazon_kiemdinh_seed<N>, ra outputs/amazon/final/ (dry-run: outputs/amazon/dry_run/). Không tinh chỉnh trên
+Amazon: cấu hình lấy từ audit/v2/best_configs.json (H&M), nên không so mã băm với nhật ký tinh chỉnh.
 """
 from __future__ import annotations
 
@@ -142,7 +143,7 @@ def lock_errors(args, prov: dict, best: dict) -> list[str]:
     if missing:
         errs.append("chưa tinh chỉnh xong: " + ", ".join(missing))
     hashes = tuning_code_hashes()
-    if hashes != {prov["code_hash"]} and not args.allow_code_change:
+    if V.TUNED_HERE and hashes != {prov["code_hash"]} and not args.allow_code_change:
         errs.append(f"mã nguồn khác lúc tinh chỉnh (tinh chỉnh: {sorted(hashes)}, hiện tại: {prov['code_hash']}); "
                     f"nếu thay đổi không ảnh hưởng kết quả, chạy với --allow-code-change và ghi lý do vào {PREREG.name} "
                     "(mục lệch kế hoạch)")
@@ -186,7 +187,7 @@ class Runner:
         if model in self.best:
             return self.best[model]["params"]
         if not self.args.dry_run:
-            raise SystemExit(f"Thiếu cấu hình của {model} trong {V.AUDIT / 'best_configs.json'}")
+            raise SystemExit(f"Thiếu cấu hình của {model} trong {V.BEST_CONFIGS}")
         return dict(V.DEFAULTS.get(model, {}))  # chạy thử khi tinh chỉnh chưa xong
 
     def evaluate(self, scorer, want_top: bool):
@@ -281,7 +282,8 @@ class Runner:
             seed=seed, dataset=V.DATASET, evaluated_on=("dry-run: tập xác thực của mẫu phát triển" if a.dry_run
                                                          else "tập kiểm thử của mẫu kiểm định"),
             reason=a.reason, provenance={**self.prov, "data_md5": self.D.meta["data_md5"],
-                                         "tuning_code_hashes": sorted(tuning_code_hashes())},
+                                         "tuning_code_hashes": sorted(tuning_code_hashes()),
+                                         "configs_from": V.BEST_CONFIGS.relative_to(V.PROJECT_ROOT).as_posix()},
             machine=machine_info(self.dev),
             elapsed_min=round((time.perf_counter() - t_seed) / 60, 1),
             results=results, beyond=beyond_k, train_meta=meta,
@@ -304,7 +306,7 @@ def main():
     ap.add_argument("--mirror-log", default="", help="ghi thêm mỗi dòng nhật ký truy cập test vào file này (vd. Drive)")
     args = ap.parse_args()
 
-    best_path = V.AUDIT / "best_configs.json"
+    best_path = V.BEST_CONFIGS
     best = json.loads(best_path.read_text(encoding="utf-8")) if best_path.exists() else {}
     prov = V.provenance()
     if not args.dry_run:

@@ -47,6 +47,10 @@ CFG = read_config(CONFIG)
 DATASET = CFG.get("dataset", "hm")  # "hm" | "amazon"
 NAME = CFG.get("name", "H&M")
 AUDIT = PROJECT_ROOT / CFG.get("audit_dir", "audit/v2")  # nhật ký tinh chỉnh, cấu hình tốt nhất
+# Cấu hình tốt nhất dùng cho đánh giá cuối. Amazon: best_configs trỏ tới cấu hình đã chọn trên H&M — không tinh chỉnh
+# trên bộ này (TUNED_HERE = False: 22 không chạy, 23 không so mã băm với nhật ký tinh chỉnh).
+TUNED_HERE = "best_configs" not in CFG
+BEST_CONFIGS = PROJECT_ROOT / CFG.get("best_configs", f"{CFG.get('audit_dir', 'audit/v2')}/best_configs.json")
 OUT = PROJECT_ROOT / CFG.get("out_dir", "outputs/v2")  # checkpoint tinh chỉnh, dry_run/, final/
 DATA_DIR = PROJECT_ROOT / CFG["data_dir"]  # file dữ liệu đã lọc của scripts/02_prepare_data.py
 MANIFEST = DATA_DIR / "manifest.json"
@@ -98,7 +102,7 @@ DEFAULTS = {
 LATE_PARTS = ("gmf_f", "mlp_f")  # Late Fusion-F = trộn điểm GMF-F và MLP-F huấn luyện riêng
 
 
-def sample_configs(grid: dict, default: dict, n: int, seed: int = CFG["tuning"]["grid_seed"]) -> list[dict]:
+def sample_configs(grid: dict, default: dict, n: int, seed: int = CFG.get("tuning", {}).get("grid_seed", 0)) -> list[dict]:
     """default + (n-1) cấu hình rút không lặp từ lưới bằng numpy seed cố định (lưới nhỏ hơn n -> lấy hết)."""
     combos = [dict(zip(grid, vals)) for vals in itertools.product(*grid.values())]
     if default not in combos:
