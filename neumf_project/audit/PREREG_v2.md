@@ -225,4 +225,10 @@ chạy** và ablation còn 4 biến thể.
 
 ## 10. Lệch kế hoạch
 
-(Chưa có.)
+1. **Seed 42 chạy lại (10/10/2026).** Lần chạy `scripts/23_final_v2.py` đầu tiên (commit `406b62c`, `code_hash`
+   `0f1ea1eec5a86c31`) ghi dòng `v2_kiemdinh_seed42` lúc 08:56:03 rồi bắt đầu chấm seed 42. Tiến trình dừng sau vài phút
+   — sau khi chấm xong UserKNN, trước khi lưu checkpoint BPR-MF — nên không có kết quả hay checkpoint nào được ghi.
+   Trước khi dừng, màn hình đã hiện NDCG@10 trên tập kiểm thử của Random và năm mô hình tất định (Most Popular,
+   MostPopular-Recent, Content, ItemKNN, UserKNN) ở seed 42. Seed 42 được chạy lại với `--allow-rerun` (dòng nhật ký
+   `v2_kiemdinh_seed42_rerun`), cùng mã nguồn, cấu hình và dữ liệu; các seed khác chưa mở. Không quyết định nào được
+   đưa ra sau khi xem các số trên: cấu hình đã cố định ở mục 4, và năm mô hình tất định cho cùng kết quả ở lần chạy lại.
