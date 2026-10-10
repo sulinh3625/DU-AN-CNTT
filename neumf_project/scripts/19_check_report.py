@@ -4,14 +4,14 @@
     python scripts/19_check_report.py --strict   # trả mã 1 nếu có khẳng định sai / macro, bảng, hình thiếu
 
 Bốn phần:
-  1. Tái lập: outputs/v2/final/{summary,significance,groups,ablation,beyond}.csv so với bản đã commit (git HEAD) — độ
+  1. Tái lập: outputs/v2/final/{summary,significance,ablation,beyond}.csv so với bản đã commit (git HEAD) — độ
      lệch tuyệt đối lớn nhất (chạy lại đánh giá cuối trên cùng máy kỳ vọng lệch 0).
   2. Khẳng định bằng chữ trong báo cáo mà macro số liệu không tự cập nhật — mỗi khẳng định là một điều kiện trên CSV
-     của outputs/v2/final/; sai thì in tệp:dòng cần sửa.
+     của outputs/v2/final/ (hoặc audit/v2/best_configs.json); sai thì in tệp:dòng cần sửa.
   3. Số chép tay trong van_dap.md, pham_vi_du_an.md, README.md: nếu số v2 khác bản đã commit, liệt kê các dòng còn ghi
      số cũ.
-  4. Mọi macro (\\VRes, \\VSig, ... của v2; \\Res, \\Sig, ... của v1), mọi bảng \\bangketqua / \\bangketquaV và hình
-     \\hinhketqua mà báo cáo dùng đều đã được sinh (nếu không, PDF hiện "[chưa có]" / khung "Chưa có số liệu").
+  4. Mọi macro (\\VRes, \\VSig, ... của v2; \\Res, \\Sig của lịch sử v1), mọi bảng \\bangketquaV và hình \\hinhketqua
+     mà báo cáo dùng đều đã được sinh (nếu không, PDF hiện "[chưa có]" / khung "Chưa có số liệu").
 """
 from __future__ import annotations
 
@@ -29,9 +29,13 @@ REPO_ROOT = PROJECT_ROOT.parent
 FINAL_V2 = PROJECT_ROOT / "outputs" / "v2" / "final"
 REPORT = REPO_ROOT / "Report DACNTT"
 TABLES = REPORT / "content" / "tables"
+BEST = PROJECT_ROOT / "audit" / "v2" / "best_configs.json"
 # mã mô hình của scripts/v2_common.py
-ID_ONLY = ["popularity", "itemknn", "userknn", "bpr", "gmf", "mlp", "neumf", "recent_pop"]
-PERSONALIZED = ["neumf_f", "late_f", "gmf_f", "mlp_f", "neumf", "gmf", "mlp", "bpr", "itemknn", "userknn", "content"]
+FEAT = {"late_f", "neumf_f", "gmf_f", "mlp_f"}  # mô hình có đặc trưng
+NEURAL = ["neumf_f", "late_f", "gmf_f", "mlp_f", "neumf", "gmf", "mlp"]
+BASELINES = ["popularity", "recent_pop", "content", "itemknn", "userknn", "bpr"]
+COMPARED_BASELINES = ["bpr", "itemknn", "userknn", "recent_pop", "content"]  # so sánh 5–9 của họ đăng ký trước
+NOT_SIG, BETTER = "không khác biệt có ý nghĩa", "A tốt hơn"
 DOCS = [REPO_ROOT / "van_dap.md", PROJECT_ROOT / "pham_vi_du_an.md", PROJECT_ROOT / "README.md",
         REPO_ROOT / "README.md"]
 V2_FILES = (("summary.csv", ["model"]), ("significance.csv", ["A", "B"]),
@@ -61,31 +65,124 @@ class Data:
         self.G2 = None if g2 is None or g2.empty else g2.set_index(["A", "B"])
         b2 = read_csv("beyond.csv")
         self.B2 = None if b2 is None else b2.set_index("model")
+        a2 = read_csv("ablation.csv")
+        self.A2 = None if a2 is None or a2.empty else a2.set_index("variant")
         info = FINAL_V2 / "data.json"
         self.info2 = json.loads(info.read_text(encoding="utf-8")) if info.exists() else None
+        self.best = json.loads(BEST.read_text(encoding="utf-8")) if BEST.exists() else None
+
+
+def order(s: pd.Series) -> list:
+    """Mã mô hình xếp theo giá trị giảm dần."""
+    return list(s.sort_values(ascending=False).index)
 
 
 # ---------------------------------------------------------- khẳng định
 # (tệp, đoạn văn bản neo để tìm dòng, mô tả, điều kiện, các nguồn dữ liệu cần có)
 def claims(d: Data):
-    S2, B2, info = d.S2, d.B2, d.info2
-    id_new_zero = lambda: all(S2.loc[m, "NDCG@10_new_mean"] == 0 for m in ID_ONLY if m in S2.index)  # noqa: E731
+    S2, G2, B2, A2, info, best = d.S2, d.G2, d.B2, d.A2, d.info2, d.best
+    test = lambda: order(S2["NDCG@10_mean"].drop("random", errors="ignore"))  # noqa: E731
+    val = lambda: order(S2["val_NDCG@10"].dropna())  # noqa: E731  mô hình có tinh chỉnh (không có Random)
+    verdict = lambda a, b: G2.loc[(a, b), "verdict"]  # noqa: E731
+    rel = lambda a, b: abs(G2.loc[(a, b), "rel_diff"])  # noqa: E731
+    abl = lambda: A2["rel"].drop("neumf_f").sort_values()  # noqa: E731  thay đổi khi tắt từng thành phần, tăng dần
+    cov = lambda: B2["coverage10"]  # noqa: E731
+    personal = lambda: cov().drop(["random", "popularity", "recent_pop"])  # noqa: E731
+
+    def rank_shift():
+        """(hạng lúc tinh chỉnh, hạng ở đánh giá cuối) của từng mô hình có tinh chỉnh."""
+        v = val()
+        t = [m for m in test() if m in v]
+        return {m: (v.index(m) + 1, t.index(m) + 1) for m in v}
+
+    top_late_neumf = lambda: test()[:2] == ["late_f", "neumf_f"]  # noqa: E731
+    fusion = lambda: (verdict("neumf_f", "mlp_f") == BETTER and verdict("neumf_f", "gmf_f") == NOT_SIG  # noqa: E731
+                      and verdict("neumf_f", "late_f") == NOT_SIG)
+    not_gmf_late = lambda: verdict("neumf_f", "gmf_f") == NOT_SIG == verdict("neumf_f", "late_f")  # noqa: E731
+    time_most = lambda: abl().index[0] == "neumf_f-time"  # noqa: E731
+    rho0 = lambda: best["neumf_f"]["params"].get("id_dropout") == 0  # noqa: E731
     return [
-        ("content/C4.tex", "các mô hình chỉ dùng ID đạt NDCG@10 bằng 0 theo cấu tạo",
-         "v2: mọi mô hình chỉ dùng ID có NDCG@10 = 0 trên sản phẩm mới", id_new_zero, ["S2"]),
-        ("frontmatter/abstract.tex", "trong khi mọi mô hình chỉ dùng ID bằng 0 theo cấu tạo",
-         "v2: mọi mô hình chỉ dùng ID có NDCG@10 = 0 trên sản phẩm mới", id_new_zero, ["S2"]),
-        ("frontmatter/abstract_english.tex", "whereas every ID-only model scores zero by construction",
-         "v2: mọi mô hình chỉ dùng ID có NDCG@10 = 0 trên sản phẩm mới", id_new_zero, ["S2"]),
-        ("content/C4.tex", "Most Popular và MLP-F có độ phủ thấp nhất",
-         "v2: Most Popular và MLP-F có độ phủ top-10 thấp nhất (so với các mô hình cá nhân hoá)",
-         lambda: set(B2.loc[[m for m in ["popularity", *PERSONALIZED] if m in B2.index], "coverage10"]
-                     .nsmallest(2).index) == {"popularity", "mlp_f"}, ["B2"]),
+        # ---- C4: kết quả
         ("content/C4.tex", "Thang giá trị tuyệt đối thấp", "v2: NDCG@10 cao nhất < 0,05",
          lambda: S2["NDCG@10_mean"].max() < 0.05, ["S2"]),
         ("content/C4.tex", "mỗi khách có vài sản phẩm đúng giữa khoảng",
          "v2: trung bình số sản phẩm đúng mỗi khách < 10",
          lambda: info["test"]["targets"] / info["test"]["users"] < 10, ["info2"]),
+        ("content/C4.tex", "Trên tập xác thực của mẫu A, bốn mô hình có đặc trưng đứng đầu",
+         "v2: 4 mô hình có đặc trưng đứng đầu NDCG@10 xác thực", lambda: set(val()[:4]) == FEAT, ["S2"]),
+        ("content/C4.tex", "Trong các baseline, cao nhất là UserKNN",
+         "v2: baseline cao nhất lúc tinh chỉnh: UserKNN, rồi BPR-MF, ItemKNN",
+         lambda: [m for m in val() if m in BASELINES][:3] == ["userknn", "bpr", "itemknn"], ["S2"]),
+        ("content/C4.tex", "LateFusion-F đạt NDCG@10 cao nhất", "v2: LateFusion-F cao nhất, NeuMF-F thứ hai",
+         top_late_neumf, ["S2"]),
+        ("content/C4.tex", "bốn mô hình có đặc trưng đứng đầu, như trên tập xác thực",
+         "v2: 4 mô hình có đặc trưng đứng đầu NDCG@10 kiểm thử", lambda: set(test()[:4]) == FEAT, ["S2"]),
+        ("content/C4.tex", "khoảng 15\\% số khách", "v2: HR@10 của NeuMF-F làm tròn 15%",
+         lambda: round(100 * S2.loc["neumf_f", "HR@10_mean"]) == 15, ["S2"]),
+        ("content/C4.tex", "trùng với chính NeuMF-F, vì cấu hình được chọn của NeuMF-F",
+         "v2: cấu hình NeuMF-F đã chọn có id_dropout = 0", rho0, ["best"]),
+        ("content/C4.tex", "vì vậy đóng góp nhiều nhất", "v2: ablation — bỏ đặc trưng thời gian giảm nhiều nhất",
+         time_most, ["A2"]),
+        ("content/C4.tex", "Khoảng tin cậy của hiệu khi bỏ thuộc tính sản phẩm hoặc vector văn bản chứa 0",
+         "v2: ablation — khoảng tin cậy của bỏ thuộc tính, bỏ văn bản chứa 0",
+         lambda: all(A2.loc[v, "ci_low"] < 0 < A2.loc[v, "ci_high"] for v in ("neumf_f-attr", "neumf_f-text")),
+         ["A2"]),
+        ("content/C4.tex", "tiếp theo là thông tin khách hàng",
+         "v2: ablation — bỏ thông tin khách giảm nhiều thứ hai", lambda: abl().index[1] == "neumf_f-user", ["A2"]),
+        ("content/C4.tex", "Most Popular và MostPopular-Recent có độ phủ thấp nhất",
+         "v2: Most Popular, MostPopular-Recent có độ phủ top-10 thấp nhất",
+         lambda: set(cov().nsmallest(2).index) == {"popularity", "recent_pop"}, ["B2"]),
+        ("content/C4.tex", "MLP chỉ dùng ID có độ phủ thấp nhất",
+         "v2: độ phủ — MLP thấp nhất trong mô hình cá nhân hoá; NeuMF-F cao nhất trong mạng nơ-ron, sau ItemKNN, Content",
+         lambda: personal().idxmin() == "mlp" and cov()[NEURAL].idxmax() == "neumf_f"
+         and order(personal())[:3] == ["content", "itemknn", "neumf_f"], ["B2"]),
+        ("content/C4.tex", "LateFusion-F và NeuMF-F giữ hai vị trí đầu",
+         "v2: LateFusion-F, NeuMF-F dẫn đầu cả lúc tinh chỉnh lẫn đánh giá cuối",
+         lambda: val()[:2] == ["late_f", "neumf_f"] and top_late_neumf() and set(test()[:4]) == FEAT, ["S2"]),
+        ("content/C4.tex", "từ thứ năm và thứ bảy lúc tinh chỉnh",
+         "v2: GMF, MLP tụt từ hạng 5, 7 (tinh chỉnh); ItemKNN lên từ hạng 10; đổi hạng lớn nhất; chỉ GMF, MLP giảm",
+         lambda: (lambda r: (r["gmf"][0], r["mlp"][0], r["itemknn"][0]) == (5, 7, 10)
+                  and {m for m, (a, b) in r.items() if abs(a - b) == max(abs(x - y) for x, y in r.values())}
+                  == {"gmf", "mlp", "itemknn"}
+                  and set(S2.index[S2["NDCG@10_mean"] < S2["val_NDCG@10"]]) == {"gmf", "mlp"})(rank_shift()),
+         ["S2"]),
+        ("content/C4.tex", "NeuMF-F vượt cả năm baseline trong họ so sánh",
+         "v2: NeuMF-F tốt hơn có ý nghĩa cả 5 baseline; chênh nhỏ nhất UserKNN, lớn nhất Content",
+         lambda: all(verdict("neumf_f", b) == BETTER for b in COMPARED_BASELINES)
+         and min(COMPARED_BASELINES, key=lambda b: rel("neumf_f", b)) == "userknn"
+         and max(COMPARED_BASELINES, key=lambda b: rel("neumf_f", b)) == "content", ["G2"]),
+        ("content/C4.tex", "đây là chênh lệch lớn nhất giữa hai mô hình học sâu",
+         "v2: NeuMF-F vs NeuMF chênh lớn nhất trong các so sánh 1–4",
+         lambda: rel("neumf_f", "neumf") > max(rel("neumf_f", b) for b in ("gmf_f", "mlp_f", "late_f")), ["G2"]),
+        ("content/C4.tex", "khi chỉ dùng ID, mô hình lai NeuMF không khác biệt có ý nghĩa với BPR-MF",
+         "v2: NeuMF vs BPR-MF không khác biệt có ý nghĩa", lambda: verdict("neumf", "bpr") == NOT_SIG, ["G2"]),
+        ("content/C4.tex", "hợp nhất sớm hai nhánh vượt nhánh phi tuyến MLP-F",
+         "v2: NeuMF-F tốt hơn MLP-F, không khác biệt với GMF-F và LateFusion-F", fusion, ["G2"]),
+        ("content/C4.tex", "LateFusion-F có NDCG@10 trung bình cao nhất nhưng không khác biệt có ý nghĩa",
+         "v2: LateFusion-F cao nhất, không khác biệt có ý nghĩa với NeuMF-F",
+         lambda: test()[0] == "late_f" and verdict("neumf_f", "late_f") == NOT_SIG, ["S2", "G2"]),
+        ("content/C4.tex", "chỉ được ủng hộ so với nhánh MLP-F", "v2: NeuMF-F tốt hơn MLP-F, không khác biệt với GMF-F "
+         "và LateFusion-F", fusion, ["G2"]),
+        # ---- C3, C5, tóm tắt
+        ("content/C3.tex", "cấu hình NeuMF-F được chọn có $\\rho = 0$", "v2: cấu hình NeuMF-F đã chọn có id_dropout = 0",
+         rho0, ["best"]),
+        ("content/C5.tex", "sau LateFusion-F với", "v2: LateFusion-F cao nhất, NeuMF-F thứ hai", top_late_neumf, ["S2"]),
+        ("content/C5.tex", "trong đó đặc trưng thời gian đóng góp nhiều nhất",
+         "v2: ablation — bỏ đặc trưng thời gian giảm nhiều nhất", time_most, ["A2"]),
+        ("content/C5.tex", "Hợp nhất sớm hai nhánh vượt nhánh MLP-F đứng riêng",
+         "v2: NeuMF-F tốt hơn MLP-F, không khác biệt với GMF-F và LateFusion-F", fusion, ["G2"]),
+        ("frontmatter/abstract.tex", "trong 14 mô hình, sau LateFusion-F", "v2: LateFusion-F cao nhất, NeuMF-F thứ hai",
+         top_late_neumf, ["S2"]),
+        ("frontmatter/abstract.tex", "NeuMF-F không khác biệt có ý nghĩa với nhánh GMF-F đứng riêng",
+         "v2: NeuMF-F không khác biệt có ý nghĩa với GMF-F và LateFusion-F", not_gmf_late, ["G2"]),
+        ("frontmatter/abstract.tex", "đặc trưng thời gian đóng góp nhiều nhất trong ablation",
+         "v2: ablation — bỏ đặc trưng thời gian giảm nhiều nhất", time_most, ["A2"]),
+        ("frontmatter/abstract_english.tex", "second of 14 models after LateFusion-F",
+         "v2: LateFusion-F cao nhất, NeuMF-F thứ hai", top_late_neumf, ["S2"]),
+        ("frontmatter/abstract_english.tex", "is not significantly different from its GMF-F branch alone",
+         "v2: NeuMF-F không khác biệt có ý nghĩa với GMF-F và LateFusion-F", not_gmf_late, ["G2"]),
+        ("frontmatter/abstract_english.tex", "time features matter most in the ablation",
+         "v2: ablation — bỏ đặc trưng thời gian giảm nhiều nhất", time_most, ["A2"]),
     ]
 
 
@@ -125,7 +222,7 @@ def check_claims(d: Data) -> tuple[int, int]:
 
 # ------------------------------------------------------------- tái lập
 def compare_with_committed() -> dict[str, float]:
-    print("1. Tái lập (giao thức v2): so với bản đã commit (git HEAD)")
+    print("1. Tái lập: so với bản đã commit (git HEAD)")
     out = {}
     for name, key in V2_FILES:
         new, old = read_csv(name), read_csv(name, committed=True)
@@ -163,7 +260,7 @@ def key_numbers(S2, G2) -> dict[str, str]:
 
 
 def stale_doc_numbers() -> int:
-    print("\n3. Số chép tay trong tài liệu (giao thức v2)")
+    print("\n3. Số chép tay trong tài liệu")
 
     def load(committed):
         s = read_csv("summary.csv", committed)
@@ -189,8 +286,7 @@ def stale_doc_numbers() -> int:
 
 
 # ------------------------------------------------- macro và bảng của báo cáo
-MACRO_RE = re.compile(r"\\(Res|Sd|Sig|Strat|Beyond|Samp|Lat|Val|Kx|Ext|Esig|Abl|VRes|VSd|VOnly|VVal|VRank|VSig|"
-                      r"VGrp|VAbl|VBey|VData|VCfg)\{([^{}]*)\}\{([^{}]*)\}")
+MACRO_RE = re.compile(r"\\(Res|Sig|VRes|VSd|VVal|VRank|VSig|VAbl|VBey|VData|VCfg)\{([^{}]*)\}\{([^{}]*)\}")
 
 
 def defined_macros() -> set[str]:
@@ -210,9 +306,6 @@ def check_macros_and_tables() -> int:
         for fam, a, b in MACRO_RE.findall(text):
             if f"{fam.lower()}-{a}-{b}" not in defined:
                 missing_m.add(f"\\{fam}{{{a}}}{{{b}}} ({tex.name})")
-        for t in re.findall(r"\\bangketqua\{([^}]+)\}", text):
-            if not (TABLES / t).exists():
-                missing_t.add(f"{t} ({tex.name})")
         for t in re.findall(r"\\bangketquaV\{([^}]+)\}", text):
             if not (TABLES / "v2" / t).exists():
                 missing_t.add(f"v2/{t} ({tex.name})")

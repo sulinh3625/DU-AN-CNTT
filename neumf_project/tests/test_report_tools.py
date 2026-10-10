@@ -54,15 +54,16 @@ def test_report_claims_detect_changed_results(data):
 
 
 def test_check_flags_missing_generated_tables_and_figures(tmp_path, monkeypatch):
+    # Lệnh \bangketqua (bảng v1) đã bỏ khỏi preamble của báo cáo; bảng sinh tự động dùng \bangketquaV (content/tables/v2/).
     report = tmp_path / "report"
     tables = report / "content" / "tables"
-    tables.mkdir(parents=True)
+    (tables / "v2").mkdir(parents=True)
     (report / "content" / "C4.tex").write_text(
-        r"\bangketqua{tab_x.tex}{a} \hinhketqua{media/figures/v2/x.png}{\textwidth}{c}{fig:x}{b}", encoding="utf-8")
+        r"\bangketquaV{tab_x.tex}{a} \hinhketqua{media/figures/v2/x.png}{\textwidth}{c}{fig:x}{b}", encoding="utf-8")
     monkeypatch.setattr(check, "REPORT", report)
     monkeypatch.setattr(check, "TABLES", tables)
     assert check.check_macros_and_tables() == 2
-    (tables / "tab_x.tex").write_text("", encoding="utf-8")
+    (tables / "v2" / "tab_x.tex").write_text("", encoding="utf-8")
     (report / "media" / "figures" / "v2").mkdir(parents=True)
     (report / "media" / "figures" / "v2" / "x.png").write_bytes(b"")
     assert check.check_macros_and_tables() == 0

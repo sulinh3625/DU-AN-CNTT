@@ -262,9 +262,8 @@ def table(label: str, caption: str, colspec: str, header: list[str], rows: list[
 
 
 class Macros:
-    # vonly, vgrp (phân tích cũ/mới) không còn được ghi — giữ lệnh \VOnly, \VGrp để báo cáo cũ vẫn biên dịch được
-    FAMILIES = {"vres": "VRes", "vsd": "VSd", "vonly": "VOnly", "vval": "VVal", "vrank": "VRank", "vsig": "VSig",
-                "vgrp": "VGrp", "vabl": "VAbl", "vbey": "VBey", "vdata": "VData", "vcfg": "VCfg"}
+    FAMILIES = {"vres": "VRes", "vsd": "VSd", "vval": "VVal", "vrank": "VRank", "vsig": "VSig", "vabl": "VAbl",
+                "vbey": "VBey", "vdata": "VData", "vcfg": "VCfg"}
 
     def __init__(self):
         self.lines = [HEADER, r"\providecommand{\resultmacro}[3]{\ifcsname #1-#2-#3\endcsname\csname #1-#2-#3\endcsname"
