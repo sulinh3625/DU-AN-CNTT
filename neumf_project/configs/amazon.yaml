@@ -1,0 +1,38 @@
+# Dữ liệu đối chứng (audit/PREREG_amazon.md): Amazon Beauty 2014 5-core (McAuley) chạy lại đúng giao thức v2 — cùng mã,
+# cùng mô hình, cùng lưới tinh chỉnh, cùng họ 10 so sánh; chỉ khác dữ liệu. Chọn bằng NEUMF_CONFIG=configs/amazon.yaml
+# (các lệnh `python run.py amazon-...` tự đặt).
+dataset: amazon
+name: Amazon Beauty
+samples:  # một bộ dữ liệu: tinh chỉnh trên tập xác thực, đánh giá cuối trên tập kiểm thử của cùng bộ (chia theo thời gian)
+  dev: data/raw/amazon/reviews_Beauty_5.json.gz
+  holdout: data/raw/amazon/reviews_Beauty_5.json.gz
+data_dir: outputs/amazon/data   # dữ liệu đã lọc (scripts/02_prepare_data.py): <tên>.csv.gz + manifest.json
+audit_dir: audit/amazon         # nhật ký tinh chỉnh, cấu hình tốt nhất
+out_dir: outputs/amazon         # checkpoint tinh chỉnh, dry_run/, final/
+prereg: audit/PREREG_amazon.md
+run_tag: amazon_kiemdinh_seed   # dòng nhật ký audit/test_access_log.csv
+features:
+  meta: data/raw/amazon/meta_Beauty.json.gz
+  catalog: data/processed/amazon/catalog.npz       # scripts/21_build_features.py
+  sales: data/processed/amazon/daily_reviews.npz   # số đánh giá mỗi (sản phẩm, ngày) — thay doanh số H&M
+  items: data/processed/amazon/items.csv.gz        # tên, thương hiệu, danh mục, giá, ảnh — cho demo
+  customers: null                                  # Amazon không có thông tin khách
+content_onehot: [1, 2]    # Content: one-hot danh mục cấp 1 và cấp 2 (cột của ITEM_CAT_COLS trong adapters/amazon.py)
+day0: "2002-01-01"        # ngày 0 của chỉ số ngày (đánh giá sớm nhất: 12/06/2002)
+val_start: "2013-10-01"   # tập xác thực: 01/10–31/12/2013
+test_start: "2014-01-01"  # tập kiểm thử: 01/01–23/07/2014 (ngày cuối của dữ liệu)
+k_core: 5                 # lọc trên các cặp trước test_start (bằng k của bộ 5-core gốc)
+training:
+  batch_size: 512
+  max_epochs: 20
+  patience: 5
+  device: auto
+tuning:
+  seed: 42
+  grid_seed: 0
+  n_configs: 6
+evaluation:
+  tie_break_seed: 2026
+  k_values: [5, 10, 20]
+final:
+  seeds: [42, 2024, 2025, 2026, 3407]

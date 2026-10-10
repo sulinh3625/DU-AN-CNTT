@@ -14,6 +14,8 @@ tích theo nhóm sản phẩm cũ/mới.
 Ghi: <final-dir>/{summary,significance,ablation,beyond}.csv, hình <final-dir>/figures/*.png; nếu có
 --report-dir (mặc định: Report DACNTT) thì chép hình sang media/figures/v2/ và ghi bảng + macro LaTeX vào content/tables/v2/.
 Mọi số của giao thức v2 trong báo cáo lấy từ các file này, không gõ tay.
+Amazon Beauty (NEUMF_CONFIG=configs/amazon.yaml, `python run.py amazon-report`): đọc outputs/amazon/final/ và
+audit/amazon/, mặc định không ghi vào báo cáo (chỉ CSV, hình, ket_qua.txt).
 """
 from __future__ import annotations
 
@@ -33,8 +35,10 @@ from matplotlib.patches import Patch
 from matplotlib.ticker import FuncFormatter, MaxNLocator
 from scipy.stats import wilcoxon
 
-PROJECT_ROOT = Path(__file__).resolve().parents[1]
-AUDIT = PROJECT_ROOT / "audit" / "v2"
+import v2_common as V
+
+PROJECT_ROOT = V.PROJECT_ROOT
+AUDIT = V.AUDIT  # audit/v2 (H&M) hoặc audit/amazon
 REPORT = PROJECT_ROOT.parent / "Report DACNTT"
 
 MODELS = ["neumf_f", "late_f", "gmf_f", "mlp_f", "neumf", "gmf", "mlp", "bpr", "itemknn", "userknn", "content",
@@ -191,7 +195,6 @@ def dev_info() -> dict:
     """Mô tả mẫu A ở giai đoạn xác thực (lưu đệm audit/v2/data_dev.json; không dựng tập kiểm thử của A)."""
     path = AUDIT / "data_dev.json"
     if not path.exists():
-        import v2_common as V
         from src.data_pipeline.protocol_v2 import describe
 
         D = V.load_data("dev", with_test=False)
@@ -681,7 +684,7 @@ def text_report(seeds, summary, sig, abl, bey, info_b) -> str:
     s = summary.set_index("model")
     ms = lambda m, c: f"{f(s.loc[m, f'{c}_mean'])} ± {f(s.loc[m, f'{c}_std'])}"  # noqa: E731
     stage = info_b.get("test", info_b["val"])
-    out = [f"KẾT QUẢ ĐÁNH GIÁ CUỐI — GIAO THỨC V2 ({len(seeds)} seed: {', '.join(map(str, seeds))})",
+    out = [f"KẾT QUẢ ĐÁNH GIÁ CUỐI — {V.NAME.upper()} — GIAO THỨC V2 ({len(seeds)} seed: {', '.join(map(str, seeds))})",
            f"{thousands(stage['users'])} khách được đánh giá, trung bình {thousands(round(stage['candidates_mean']))} "
            "ứng viên mỗi khách. Xếp theo NDCG@10 (độ đo chính); ± là độ lệch chuẩn qua seed.", ""]
 
@@ -725,14 +728,17 @@ def text_report(seeds, summary, sig, abl, bey, info_b) -> str:
 # ---------------------------------------------------------------------- main
 def main():
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    ap.add_argument("--final-dir", default=str(PROJECT_ROOT / "outputs" / "v2" / "final"))
-    ap.add_argument("--report-dir", default=str(REPORT), help="'' để không ghi vào báo cáo")
+    ap.add_argument("--final-dir", default=str(V.OUT / "final"))
+    ap.add_argument("--report-dir", default=str(REPORT) if V.DATASET == "hm" else "",
+                    help="'' để không ghi vào báo cáo (mặc định với Amazon)")
     ap.add_argument("--tuning-only", action="store_true",
                     help="trước đánh giá cuối: chỉ xuất bảng dữ liệu mẫu A và kết quả tinh chỉnh (không đọc mẫu B)")
     args = ap.parse_args()
     best = json.loads((AUDIT / "best_configs.json").read_text(encoding="utf-8"))
     if args.tuning_only:
-        tables = ensure(Path(args.report_dir or REPORT) / "content" / "tables" / "v2")
+        if not args.report_dir:  # Amazon: mặc định "", không được rơi về REPORT rồi ghi đè bảng H&M
+            raise SystemExit("--tuning-only ghi bảng vào báo cáo — cần --report-dir")
+        tables = ensure(Path(args.report_dir) / "content" / "tables" / "v2")
         m = Macros()
         export_data(m, tables, dev_info(), None)
         export_tuning(m, tables, best)

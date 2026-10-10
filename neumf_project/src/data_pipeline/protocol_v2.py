@@ -30,8 +30,8 @@ import pandas as pd
 from src.evaluation.full_ranking import EvalRecord, build_full_ranking_records_multi
 
 from .adapters import HMAdapter
-from .features import (Catalog, DailySales, build_user_profile, group_by_product, item_time_features, product_code_of,
-                       to_day, user_time_features)
+from .features import (DAY0, Catalog, DailySales, build_user_profile, group_by_product, item_time_features,
+                       product_code_of, to_day, user_time_features)
 from .kcore import iterative_k_core
 from .negative_sampling import build_user_positive_sets
 from .preprocessing import aggregate_unique_user_item
@@ -78,18 +78,18 @@ class DataV2:
         return item_time_features(self.item_cum, self.item_first_day, items, day)
 
 
-def prepare_pairs(events: pd.DataFrame, test_start: str, k_core: int, item_map=None) -> pd.DataFrame:
+def prepare_pairs(events: pd.DataFrame, test_start: str, k_core: int, item_map=None, day0=DAY0) -> pd.DataFrame:
     """Mọi cặp (khách, sản phẩm) đã gộp từ sự kiện theo schema DatasetAdapter (user_raw, item_raw, timestamp,
     value_raw, source_order), cột PAIR_COLUMNS, sắp xếp ổn định theo (user_id, item_id).
 
     item_map (nếu có) đổi mã sản phẩm TRƯỚC khi gộp cặp — với H&M là product_code_of: hai màu của cùng một mẫu do một
     khách mua chỉ còn một cặp, first_day là lần mua sớm nhất. k-core lặp chỉ trên các cặp có ngày mua đầu < test_start;
-    in_kcore = cặp nằm trong kết quả k-core."""
+    in_kcore = cặp nằm trong kết quả k-core. first_day tính từ day0 (to_day)."""
     if item_map is not None:
         events = events.assign(item_raw=item_map(events["item_raw"]))
     agg = aggregate_unique_user_item(events)
-    agg["day"] = to_day(agg["first_timestamp"].to_numpy())
-    kept = iterative_k_core(agg[agg["day"] < int(to_day(np.datetime64(test_start)))], k_core)
+    agg["day"] = to_day(agg["first_timestamp"].to_numpy(), day0)
+    kept = iterative_k_core(agg[agg["day"] < int(to_day(np.datetime64(test_start), day0))], k_core)
     if kept.empty:
         raise ValueError(f"Không còn dữ liệu sau k-core={k_core}")
     key = ["user_raw", "item_raw"]
@@ -119,11 +119,11 @@ def load_pairs(path: str | Path, md5: str) -> pd.DataFrame:
 
 
 def build_from_pairs(pairs: pd.DataFrame, val_start: str, test_start: str, catalog: Catalog, sales: DailySales,
-                     customers_path: str | Path | None = None, with_test: bool = False) -> DataV2:
+                     customers_path: str | Path | None = None, with_test: bool = False, day0=DAY0) -> DataV2:
     """Dựng DataV2 từ bảng cặp của prepare_pairs: khách và sản phẩm lấy từ các cặp in_kcore; sản phẩm đúng lấy từ mọi
     cặp của các khách đó. catalog, sales phải là bản đã gộp theo sản phẩm (group_by_product) — mã sản phẩm của chúng
-    là item_id."""
-    vd, td = int(to_day(np.datetime64(val_start))), int(to_day(np.datetime64(test_start)))
+    là item_id. day0 phải trùng day0 lúc prepare_pairs (first_day) và lúc dựng sales."""
+    vd, td = int(to_day(np.datetime64(val_start), day0)), int(to_day(np.datetime64(test_start), day0))
     if not vd < td:
         raise ValueError(f"Cần val_start < test_start, nhận {val_start} / {test_start}")
     core = pairs[pairs["in_kcore"]]
@@ -150,7 +150,7 @@ def build_from_pairs(pairs: pd.DataFrame, val_start: str, test_start: str, catal
         item_cats=catalog.cats[rows], item_text=catalog.text[rows], item_cum=sales.cumulative(rows),
         item_first_day=sales.first_day[rows], item_cards=list(catalog.cardinalities),
         user_cats=None, user_cards=[], val=None,  # type: ignore[arg-type]
-        meta=dict(val_day=vd, test_day=td, n_days=sales.n_days))
+        meta=dict(val_day=vd, test_day=td, n_days=sales.n_days, day0=str(np.datetime64(day0, "D"))))
     if customers_path is not None:
         prof = build_user_profile(customers_path, users)
         data.user_cats, data.user_cards = prof.cats, prof.cardinalities

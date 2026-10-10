@@ -142,7 +142,7 @@ class NeuMFF(nn.Module):
         parts = [emb(cats[..., k]) for k, emb in enumerate(self.user_attr)]
         if self.use_time:
             parts.append(utime)
-        return torch.cat(parts, dim=-1)
+        return torch.cat(parts, dim=-1) if parts else None  # không có thuộc tính khách (Amazon) và tắt thời gian
 
     def _vectors(self, br, users, items, has_id, fi, fu):
         id_idx = torch.where(has_id, items, torch.full_like(items, self.n_id))
@@ -264,17 +264,20 @@ CONTENT_ONEHOT = {"product_group_name": 1, "index_group_no": 8, "garment_group_n
 class ContentProfile:
     """Gợi ý theo nội dung (không dùng ID, không cần lấy mẫu âm): vector sản phẩm = [vector văn bản ; one-hot nhóm sản
     phẩm, nhóm chỉ mục, nhóm may mặc], chuẩn hoá L2; hồ sơ user = trung bình (có trọng số theo độ mới nếu đặt
-    half_life ngày) vector các sản phẩm đã mua trong tập huấn luyện; điểm = cosine. Chấm được cả sản phẩm mới."""
+    half_life ngày) vector các sản phẩm đã mua trong tập huấn luyện; điểm = cosine. Chấm được cả sản phẩm mới.
+    onehot_cols: chỉ số cột thuộc tính lấy one-hot (mặc định của H&M: CONTENT_ONEHOT; Amazon: content_onehot trong
+    configs/amazon.yaml)."""
 
     def __init__(self, item_text, item_cats, item_cards, train_df, n_users: int, cutoff: int,
-                 half_life: float | None = None):
+                 half_life: float | None = None, onehot_cols=None):
+        cols = list(CONTENT_ONEHOT.values()) if onehot_cols is None else list(onehot_cols)
         parts = [np.asarray(item_text, dtype=np.float32)]
-        for col_idx in CONTENT_ONEHOT.values():
+        for col_idx in cols:
             card = int(item_cards[col_idx])
             oh = np.zeros((len(item_text), card), dtype=np.float32)
             oh[np.arange(len(item_text)), np.asarray(item_cats)[:, col_idx]] = 1.0
             oh[:, 0] = 0.0  # "không biết" không mang thông tin
-            parts.append(oh / np.sqrt(len(CONTENT_ONEHOT)))
+            parts.append(oh / np.sqrt(len(cols)))
         x = np.concatenate(parts, axis=1)
         self.X = x / np.maximum(np.linalg.norm(x, axis=1, keepdims=True), 1e-12)
         u = train_df["user"].to_numpy(np.int64)

@@ -20,6 +20,8 @@ topk.json.gz và checkpoint mạng nơ-ron (*.pt). Thư mục ra còn kết qu�
 ghi lẫn.
 --dry-run dùng mẫu phát triển, giai đoạn xác thực đóng cả vai chọn epoch lẫn chấm, ghi ra outputs/v2/dry_run/, không ghi
 nhật ký kiểm thử: chỉ để kiểm tra đường ống chạy trọn vẹn, số liệu không có ý nghĩa.
+Amazon Beauty (NEUMF_CONFIG=configs/amazon.yaml, `python run.py amazon-final`): cùng khoá với audit/PREREG_amazon.md,
+audit/amazon/, run_tag amazon_kiemdinh_seed<N>, ra outputs/amazon/final/ (dry-run: outputs/amazon/dry_run/).
 """
 from __future__ import annotations
 
@@ -55,9 +57,10 @@ TUNED = [m for m in MODELS if m != "random"]
 ABLATION_SEED = TOPK_SEED = 42
 PER_USER_COLS = ["user", "n_candidates", "n_positives", "ranks", "NDCG@10", "Recall@10", "HR@10", "Precision@10",
                  "NDCG@5", "NDCG@20"]
-PREREG = V.PROJECT_ROOT / "audit" / "PREREG_v2.md"
+PREREG = V.PROJECT_ROOT / V.CFG.get("prereg", "audit/PREREG_v2.md")
 TEST_LOG = V.PROJECT_ROOT / "audit" / "test_access_log.csv"
-RUN_TAG = "v2_kiemdinh_seed"  # "v2_final_seed<N>" là lần mở khối 1 (hm500k_b, 04/10/2026) — mẫu khác, không tính
+# H&M: "v2_final_seed<N>" là lần mở khối 1 (hm500k_b, 04/10/2026) — mẫu khác, không tính
+RUN_TAG = V.CFG.get("run_tag", "v2_kiemdinh_seed")
 
 
 def git(*a) -> str:
@@ -124,7 +127,7 @@ def tuning_code_hashes() -> set[str]:
 def lock_errors(args, prov: dict, best: dict) -> list[str]:
     errs = []
     if not prereg_committed(PREREG):
-        errs.append("audit/PREREG_v2.md chưa commit (hoặc đang bị sửa)")
+        errs.append(f"{PREREG.relative_to(V.PROJECT_ROOT).as_posix()} chưa commit (hoặc đang bị sửa)")
     if not args.reason.strip():
         errs.append("thiếu --reason (ghi vào audit/test_access_log.csv)")
     dirty = dirty_files()
@@ -141,10 +144,12 @@ def lock_errors(args, prov: dict, best: dict) -> list[str]:
     hashes = tuning_code_hashes()
     if hashes != {prov["code_hash"]} and not args.allow_code_change:
         errs.append(f"mã nguồn khác lúc tinh chỉnh (tinh chỉnh: {sorted(hashes)}, hiện tại: {prov['code_hash']}); "
-                    "nếu thay đổi không ảnh hưởng kết quả, chạy với --allow-code-change và ghi lý do vào PREREG_v2 mục 10")
+                    f"nếu thay đổi không ảnh hưởng kết quả, chạy với --allow-code-change và ghi lý do vào {PREREG.name} "
+                    "(mục lệch kế hoạch)")
     again = sorted(set(args.seeds) & opened_seeds())
     if again and not args.allow_rerun:
-        errs.append(f"seed {again} đã mở tập kiểm thử v2 — chỉ chạy lại với --allow-rerun và ghi vào PREREG_v2 mục 10")
+        errs.append(f"seed {again} đã mở tập kiểm thử ({V.NAME}) — chỉ chạy lại với --allow-rerun và ghi vào "
+                    f"{PREREG.name} (mục lệch kế hoạch)")
     if args.max_epochs != V.CFG["training"]["max_epochs"] or args.models or args.skip_ablation:
         errs.append("--max-epochs/--models/--skip-ablation chỉ dùng với --dry-run")
     return errs
@@ -181,7 +186,7 @@ class Runner:
         if model in self.best:
             return self.best[model]["params"]
         if not self.args.dry_run:
-            raise SystemExit(f"Thiếu cấu hình của {model} trong audit/v2/best_configs.json")
+            raise SystemExit(f"Thiếu cấu hình của {model} trong {V.AUDIT / 'best_configs.json'}")
         return dict(V.DEFAULTS.get(model, {}))  # chạy thử khi tinh chỉnh chưa xong
 
     def evaluate(self, scorer, want_top: bool):
@@ -273,8 +278,8 @@ class Runner:
             with gzip.open(out / "topk.json.gz", "wt", encoding="utf-8") as f:
                 json.dump(topk, f)
         payload = dict(
-            seed=seed, evaluated_on=("dry-run: tập xác thực của mẫu phát triển" if a.dry_run
-                                     else "tập kiểm thử của mẫu kiểm định"),
+            seed=seed, dataset=V.DATASET, evaluated_on=("dry-run: tập xác thực của mẫu phát triển" if a.dry_run
+                                                         else "tập kiểm thử của mẫu kiểm định"),
             reason=a.reason, provenance={**self.prov, "data_md5": self.D.meta["data_md5"],
                                          "tuning_code_hashes": sorted(tuning_code_hashes())},
             machine=machine_info(self.dev),
@@ -305,7 +310,7 @@ def main():
     if not args.dry_run:
         errs = lock_errors(args, prov, best)
         if errs:
-            raise SystemExit("Khoá kiểm thử v2 — không chạy:\n  - " + "\n  - ".join(errs))
+            raise SystemExit(f"Khoá kiểm thử ({V.NAME}) — không chạy:\n  - " + "\n  - ".join(errs))
     models = [m for m in MODELS if not args.models or m in args.models]
     if "late_f" in models:
         models += [k for k in V.LATE_PARTS if k not in models]
@@ -315,22 +320,22 @@ def main():
     if args.dry_run:
         D = V.load_data("dev")
         sel = ev = D.val
-        root = ensure_dir(Path(args.out or V.PROJECT_ROOT / "outputs" / "v2" / "dry_run"))
+        root = ensure_dir(Path(args.out or V.OUT / "dry_run"))
     else:
         D = V.load_data("holdout", with_test=True)
         sel, ev = D.val, D.test
-        root = ensure_dir(Path(args.out or V.PROJECT_ROOT / "outputs" / "v2" / "final"))
+        root = ensure_dir(Path(args.out or V.OUT / "final"))
     other = foreign_results(root, D.meta["data_md5"])
     if other:
         raise SystemExit(f"{root} còn kết quả của dữ liệu khác ({', '.join(other)}) — chuyển thư mục này sang chỗ khác "
-                         "(vd. git mv outputs/v2/final outputs/v2/final_cu) rồi chạy lại.")
+                         f"(vd. git mv {root.name} {root.name}_cu trong {root.parent.name}/) rồi chạy lại.")
     dev = V.device()
     info = describe(D)
     (root / "data.json").write_text(json.dumps(dict(sample=D.meta["sample"], data_md5=D.meta["data_md5"], **info),
                                                indent=2, ensure_ascii=False), encoding="utf-8")
     pd.DataFrame(dict(item=np.arange(D.n_items), product_code=D.item_product, scoreable=ev.scoreable)
                  ).to_csv(root / "items.csv.gz", index=False)
-    print(f"{'CHẠY THỬ (phát triển, xác thực)' if args.dry_run else 'ĐÁNH GIÁ CUỐI (kiểm định, kiểm thử)'}: "
+    print(f"[{V.NAME}] {'CHẠY THỬ (phát triển, xác thực)' if args.dry_run else 'ĐÁNH GIÁ CUỐI (kiểm định, kiểm thử)'}: "
           f"{D.n_users:,} người dùng, {D.n_items:,} sản phẩm | chấm {len(ev.records):,} người dùng, "
           f"{len(ev.targets):,} cặp đúng | commit {prov['git_commit']} code {prov['code_hash']} "
           f"({time.time() - t0:.0f}s)", flush=True)

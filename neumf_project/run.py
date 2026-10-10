@@ -14,7 +14,12 @@ Giao thức v2 (audit/PREREG_v2.md) — kết quả chính của báo cáo:
     python run.py v2-final --reason "..."    # đánh giá cuối trên tập kiểm thử của mẫu kiểm định (mở đúng một lần)
     python run.py v2-report                  # chỉ tính lại kiểm định, bảng, hình, macro từ outputs/v2/final/
     python run.py check-report               # đối chiếu câu chữ báo cáo + tài liệu với số liệu hiện có
-    python run.py demo
+    python run.py demo                       # H&M và Amazon (chọn trên thanh đầu trang), chỉ nạp checkpoint
+
+Dữ liệu đối chứng Amazon Beauty (audit/PREREG_amazon.md) — cùng script, NEUMF_CONFIG=configs/amazon.yaml:
+    python run.py amazon-data                # đặc trưng + dữ liệu đã lọc (cần data/raw/amazon/)
+    python run.py amazon-all                 # qua đêm: dữ liệu -> tinh chỉnh -> chạy thử đánh giá cuối
+    python run.py amazon-final --reason "..."  # đánh giá cuối Amazon (sau khi commit audit/PREREG_amazon.md)
 
 Mỗi lệnh chỉ gọi lần lượt các script tương ứng trong scripts/ (chi tiết: README.md mục 3) — file này không chứa logic
 huấn luyện/đánh giá. Trước mỗi bước in thanh tiến trình [████░░░░] k/N kèm thời gian đã chạy; bước nào lỗi thì dừng
@@ -40,6 +45,11 @@ sys.stderr.reconfigure(encoding="utf-8", errors="replace")
 _ENV = {**os.environ, "PYTHONIOENCODING": "utf-8", "PYTHONUNBUFFERED": "1"}
 
 ROOT = Path(__file__).resolve().parent
+CONFIGS = {"hm": "configs/v2.yaml", "amazon": "configs/amazon.yaml"}  # NEUMF_CONFIG của script con (v2_common.py)
+
+
+def _amazon(args) -> bool:
+    return str(getattr(args, "command", "")).startswith("amazon")
 
 # Màu chỉ khi in ra terminal (tắt bằng biến môi trường NO_COLOR); os.system("") bật mã màu ANSI trên console Windows cũ.
 _COLOR = sys.stdout.isatty() and "NO_COLOR" not in os.environ
@@ -56,9 +66,11 @@ def _s(script: str, *args) -> list[str]:
     return [f"scripts/{script}", *map(str, args)]
 
 
-def _show(step: list[str]) -> str:
-    """Dòng lệnh để in và chạy lại tay (tham số có dấu cách đặt trong ngoặc kép)."""
-    return "python " + " ".join(f'"{a}"' if " " in a or not a else a for a in step)
+def _show(step: list[str], config: str = CONFIGS["hm"]) -> str:
+    """Dòng lệnh để in và chạy lại tay (tham số có dấu cách đặt trong ngoặc kép; Amazon: kèm NEUMF_CONFIG, cú pháp
+    bash / Git Bash)."""
+    env = "" if config == CONFIGS["hm"] else f"NEUMF_CONFIG={config} "
+    return env + "python " + " ".join(f'"{a}"' if " " in a or not a else a for a in step)
 
 
 def _hms(seconds: float) -> str:
@@ -66,16 +78,19 @@ def _hms(seconds: float) -> str:
 
 
 # ------------------------------------------------------------------ chạy các bước
-def run_steps(name: str, steps: list[list[str]]) -> int:
-    """Chạy lần lượt các bước, in thanh tiến trình trước mỗi bước; dừng ở bước lỗi đầu tiên. Trả về mã thoát."""
+def run_steps(name: str, steps: list[list[str]], config: str = CONFIGS["hm"]) -> int:
+    """Chạy lần lượt các bước với NEUMF_CONFIG=config, in thanh tiến trình trước mỗi bước; dừng ở bước lỗi đầu tiên.
+    Trả về mã thoát."""
     n, t0, done = len(steps), time.monotonic(), []  # done: (giây, mã thoát; None = bị ngắt)
+    env = {**_ENV, "NEUMF_CONFIG": config}
+    show = lambda step: _show(step, config)  # noqa: E731
     for i, step in enumerate(steps, 1):
         k = round(20 * (i - 1) / n)
         bar = "█" * k + "░" * (20 - k)
-        print(_c(f"\n━━ [{bar}] bước {i}/{n} · {_show(step)} · đã chạy {_hms(time.monotonic() - t0)}", "1;36"))
+        print(_c(f"\n━━ [{bar}] bước {i}/{n} · {show(step)} · đã chạy {_hms(time.monotonic() - t0)}", "1;36"))
         t1 = time.monotonic()
         try:
-            rc = subprocess.run([sys.executable, *step], cwd=ROOT, env=_ENV).returncode
+            rc = subprocess.run([sys.executable, *step], cwd=ROOT, env=env).returncode
         except KeyboardInterrupt:
             rc = None
         done.append((time.monotonic() - t1, rc))
@@ -89,17 +104,17 @@ def run_steps(name: str, steps: list[list[str]]) -> int:
         print(_c(f"\n━━ {name}: {state} sau {_hms(time.monotonic() - t0)}", "1;32" if ok else "1;31"))
         for i, step in enumerate(steps, 1):
             if i > len(done):
-                print(_c(f"  · {f'{i}/{n}':>5}  {'chưa chạy':>9}  {_show(step)}", "2"))
+                print(_c(f"  · {f'{i}/{n}':>5}  {'chưa chạy':>9}  {show(step)}", "2"))
                 continue
             secs, rc = done[i - 1]
             mark = _c("✓", "32") if rc == 0 else _c("⏹", "33") if rc is None else _c("✗", "31")
-            print(f"  {mark} {f'{i}/{n}':>5}  {_hms(secs):>9}  {_show(step)}")
+            print(f"  {mark} {f'{i}/{n}':>5}  {_hms(secs):>9}  {show(step)}")
     if ok:
         return 0
     rc = done[-1][1]
     why = "bị ngắt (Ctrl+C)" if rc is None else f"lỗi, mã thoát {rc} — thông báo lỗi của script nằm ngay phía trên"
     print(_c(f"\n✗ Dừng ở bước {len(done)}/{n}: {why}.", "1;31"))
-    print(f"  Chạy lại riêng bước này:  {_show(steps[len(done) - 1])}")
+    print(f"  Chạy lại riêng bước này:  {show(steps[len(done) - 1])}")
     return 130 if rc is None else rc
 
 
@@ -131,11 +146,17 @@ def cmd_v2_tune(args):
     return [_s("22_tune_v2.py", "--model", *args.model, *(["--resume"] if args.resume else []))]
 
 
+def cmd_amazon_data(args):
+    """Amazon Beauty: catalog, số đánh giá theo ngày, thông tin sản phẩm (21) rồi file dữ liệu đã lọc + MD5 (02)."""
+    return [_s("21_build_features.py"), _s("02_prepare_data.py")]
+
+
 def cmd_v2_dry_run(args):
     """Chạy thử 23_final_v2.py trên tập xác thực của mẫu phát triển (1 epoch) rồi 24_report_v2.py, không ghi vào báo
     cáo."""
+    out = "outputs/amazon/dry_run" if _amazon(args) else "outputs/v2/dry_run"
     return [_s("23_final_v2.py", "--dry-run", "--max-epochs", args.max_epochs, "--seeds", *args.seeds),
-            _s("24_report_v2.py", "--final-dir", "outputs/v2/dry_run", "--report-dir", "")]
+            _s("24_report_v2.py", "--final-dir", out, "--report-dir", "")]
 
 
 def cmd_v2_final(args):
@@ -153,10 +174,11 @@ def cmd_all(args):
     chạy thử đánh giá cuối trên tập xác thực (bắt lỗi đường ống, không chấm test). --final: chấm luôn tập kiểm thử ở
     cuối — khoá kiểm thử của 23_final_v2.py vẫn áp dụng (PREREG_v2 đã commit, tree sạch, cùng mã băm lúc tinh chỉnh)."""
     if args.final and not args.reason.strip():
-        raise SystemExit("all --final cần --reason (ghi vào audit/test_access_log.csv)")
+        raise SystemExit(f"{getattr(args, 'command', 'all')} --final cần --reason (ghi vào audit/test_access_log.csv)")
     ns = argparse.Namespace
-    steps = [*cmd_prepare(ns(sample=None)), *cmd_v2_tune(ns(model=["all"], resume=True)),
-             *cmd_v2_dry_run(ns(max_epochs=1, seeds=[42]))]
+    data = cmd_amazon_data(args) if _amazon(args) else cmd_prepare(ns(sample=None))
+    steps = [*data, *cmd_v2_tune(ns(model=["all"], resume=True)),
+             *cmd_v2_dry_run(ns(max_epochs=1, seeds=[42], command=getattr(args, "command", "all")))]
     return steps + (cmd_v2_final(ns(reason=args.reason, seeds=None)) if args.final else [])
 
 
@@ -164,6 +186,8 @@ COMMANDS = {
     "sample-hm": cmd_sample_hm, "v2-data": cmd_v2_data, "prepare": cmd_prepare, "all": cmd_all,
     "v2-tune": cmd_v2_tune, "v2-dry-run": cmd_v2_dry_run, "v2-final": cmd_v2_final, "v2-report": cmd_v2_report,
     "check-report": cmd_check_report, "demo": cmd_demo,
+    "amazon-data": cmd_amazon_data, "amazon-all": cmd_all, "amazon-tune": cmd_v2_tune, "amazon-dry-run": cmd_v2_dry_run,
+    "amazon-final": cmd_v2_final, "amazon-report": cmd_v2_report,
 }
 
 # ------------------------------------------------------------------ menu
@@ -171,9 +195,11 @@ MENU = (
     ("Dữ liệu (chạy 1 lần, cần dữ liệu gốc H&M)", ("sample-hm", "v2-data", "prepare")),
     ("Huấn luyện và đánh giá (giao thức v2)",
      ("all", "v2-tune", "v2-dry-run", "v2-final", "v2-report", "check-report")),
+    ("Dữ liệu đối chứng Amazon Beauty (audit/PREREG_amazon.md)",
+     ("amazon-data", "amazon-all", "amazon-tune", "amazon-dry-run", "amazon-final", "amazon-report")),
     ("Khác", ("demo",)),
 )
-OPENS_TEST = ("v2-final",)  # chấm tập kiểm thử: menu hỏi lại, mặc định Không (all --final cũng vậy)
+OPENS_TEST = ("v2-final", "amazon-final")  # chấm tập kiểm thử: menu hỏi lại, mặc định Không (all --final cũng vậy)
 
 
 def menu(sub) -> list[str] | None:
@@ -233,6 +259,21 @@ def main():
     add("check-report", "Đối chiếu câu chữ báo cáo/tài liệu với số liệu hiện có (19)") \
         .add_argument("--strict", action="store_true", help="trả mã lỗi nếu có khẳng định sai")
     add("demo", "Chạy giao diện demo (http://localhost:8000)")
+    add("amazon-data", "Amazon: đặc trưng + dữ liệu đã lọc + MD5 (21, 02) — cần data/raw/amazon/")
+    p = add("amazon-all", "Amazon chạy qua đêm: dữ liệu → tinh chỉnh → chạy thử đánh giá cuối (21, 02, 22, 23 --dry-run, 24)")
+    p.add_argument("--final", action="store_true",
+                   help="chấm luôn tập kiểm thử Amazon ở cuối (23, 24) — cần --reason và audit/PREREG_amazon.md đã commit")
+    p.add_argument("--reason", default="", help="lý do chấm test (ghi vào audit/test_access_log.csv), dùng với --final")
+    p = add("amazon-tune", "Amazon: tinh chỉnh trên tập xác thực, cùng lưới với H&M (22)")
+    p.add_argument("--model", nargs="+", default=["all"], help="mặc định: mọi mô hình")
+    p.add_argument("--resume", action="store_true", help="bỏ qua cấu hình đã có trong audit/amazon/tuning_log.csv")
+    p = add("amazon-dry-run", "Amazon: chạy thử đánh giá cuối trên tập xác thực (23 --dry-run, 24; không chấm test)")
+    p.add_argument("--max-epochs", type=int, default=1)
+    p.add_argument("--seeds", nargs="+", type=int, default=[42])
+    p = add("amazon-final", "Amazon: đánh giá cuối trên tập kiểm thử (23) + kiểm định, ket_qua.txt (24)")
+    p.add_argument("--reason", required=True, help="Lý do chấm test (ghi vào audit/test_access_log.csv)")
+    p.add_argument("--seeds", nargs="+", type=int, default=None, help="mặc định: 5 seed của configs/amazon.yaml")
+    add("amazon-report", "Amazon: kiểm định, hình, ket_qua.txt từ outputs/amazon/final (24)")
 
     argv = sys.argv[1:]
     interactive = not argv and sys.stdin.isatty()
@@ -245,7 +286,7 @@ def main():
     if len(steps) > 1 or interactive:  # xem trước các bước
         print(_c(f"▶ {args.command}: {len(steps)} bước", "1"))
         for i, step in enumerate(steps, 1):
-            print(f"  {i}. {_show(step)}")
+            print(f"  {i}. {_show(step, CONFIGS['amazon' if _amazon(args) else 'hm'])}")
     if interactive:
         print(f"Lệnh tương đương (chạy thẳng, bỏ qua menu): {_show(['run.py', *argv])}")
         if args.command in OPENS_TEST or getattr(args, "final", False):
@@ -255,7 +296,7 @@ def main():
             go = input("Chạy? [Y/n] ").strip().lower() not in ("n", "no", "k", "không")
         if not go:
             return
-    sys.exit(run_steps(args.command, steps))
+    sys.exit(run_steps(args.command, steps, CONFIGS["amazon" if _amazon(args) else "hm"]))
 
 
 if __name__ == "__main__":

@@ -9,6 +9,8 @@
 - Mỗi cấu hình ghi một dòng vào audit/v2/tuning_log.csv; cấu hình tốt nhất theo NDCG@10 vào audit/v2/best_configs.json
   (kèm checkpoint của GMF-F, MLP-F tốt nhất cho Late Fusion-F). --resume bỏ qua cấu hình đã có trong nhật ký.
 - Không dựng tập kiểm thử của bất kỳ mẫu nào.
+- Amazon Beauty (NEUMF_CONFIG=configs/amazon.yaml, `python run.py amazon-tune`): cùng lưới, nhật ký ở audit/amazon/,
+  checkpoint ở outputs/amazon/tuning/.
 """
 from __future__ import annotations
 
@@ -31,7 +33,7 @@ from src.utils.io import ensure_dir
 
 ORDER = ["popularity", "recent_pop", "content", "itemknn", "userknn", "bpr", "gmf", "mlp", "neumf",
          "gmf_f", "mlp_f", "neumf_f", "late_f"]
-CKPT = V.PROJECT_ROOT / "outputs" / "v2" / "tuning"
+CKPT = V.OUT / "tuning"
 
 
 def log_row(path: Path, row: dict) -> None:
@@ -75,7 +77,7 @@ def main():
                          f"tuning_log.csv và best_configs.json trong {log_dir} sang chỗ khác rồi chạy lại.")
     st, dev, seed = D.val, V.device(), V.CFG["tuning"]["seed"]
     prov = V.provenance()
-    print(f"mẫu phát triển: {D.n_users:,} người dùng, {D.n_items:,} sản phẩm, {len(st.records):,} người dùng xác "
+    print(f"[{V.NAME}] mẫu phát triển: {D.n_users:,} người dùng, {D.n_items:,} sản phẩm, {len(st.records):,} người dùng xác "
           f"thực, {len(st.targets):,} cặp đúng | commit {prov['git_commit']} dirty={prov['git_dirty']} "
           f"code {prov['code_hash']} ({time.time() - t0:.0f}s)", flush=True)
     best = json.loads(best_path.read_text(encoding="utf-8")) if best_path.exists() else {}

@@ -42,7 +42,8 @@ def _menu(monkeypatch, answers):
     monkeypatch.setattr(sys, "argv", ["run.py"])
     monkeypatch.setattr(sys, "stdin", type("Tty", (), {"isatty": lambda self: True})())
     monkeypatch.setattr("builtins.input", lambda prompt="": next(it))
-    monkeypatch.setattr(run, "run_steps", lambda name, steps: ran.append(steps) or 0)
+    # run_steps nhận thêm cấu hình (NEUMF_CONFIG: configs/v2.yaml hoặc configs/amazon.yaml) từ khi có lệnh amazon-*
+    monkeypatch.setattr(run, "run_steps", lambda name, steps, config=None: ran.append(steps) or 0)
     try:
         run.main()
     except SystemExit as e:

@@ -33,9 +33,9 @@ USER_TIME_DIM = 2  # log1p(số ngày từ lần mua gần nhất), log1p(số c
 LOG_SCALE = 10.0  # chia log1p(·) cho hằng số để đặc trưng số nằm cỡ [0, 1]
 
 
-def to_day(ts) -> np.ndarray:
-    """Chỉ số ngày (0 = 2018-09-20) của một mảng thời điểm."""
-    return (np.asarray(ts, dtype="datetime64[D]") - DAY0).astype(np.int64)
+def to_day(ts, day0=DAY0) -> np.ndarray:
+    """Chỉ số ngày của một mảng thời điểm, 0 = day0 (mặc định 2018-09-20 của H&M; Amazon: day0 trong configs/amazon.yaml)."""
+    return (np.asarray(ts, dtype="datetime64[D]") - np.datetime64(day0, "D")).astype(np.int64)
 
 
 # ------------------------------------------------------------------ catalogue
@@ -57,25 +57,31 @@ class Catalog:
         return pos
 
 
-def build_catalog(articles_path: str | Path, text_dim: int = 64, seed: int = 0) -> Catalog:
+def category_codes(values: pd.Series) -> tuple[np.ndarray, int]:
+    """Mã hoá một thuộc tính: giá trị theo thứ tự từ điển -> 1, 2, ...; trống / thiếu -> 0. Trả về (mã, cardinality)."""
+    values = values.astype("string").fillna("")
+    vocab = sorted(set(values) - {""})
+    code = {v: k + 1 for k, v in enumerate(vocab)}
+    return values.map(lambda v: code.get(v, 0)).to_numpy(dtype=np.int32), len(vocab) + 1
+
+
+def text_vectors(corpus: pd.Series, text_dim: int = 64, seed: int = 0) -> np.ndarray:
+    """Vector mô tả văn bản: TF-IDF (1–2 gram) giảm chiều bằng SVD, chuẩn hoá L2."""
     from sklearn.decomposition import TruncatedSVD
     from sklearn.feature_extraction.text import TfidfVectorizer
     from sklearn.preprocessing import normalize
 
-    a = pd.read_csv(articles_path, dtype={"article_id": "int64"}).sort_values("article_id").reset_index(drop=True)
-    cats, cards = [], []
-    for col in ITEM_CAT_COLS:
-        values = a[col].astype("string").fillna("")
-        vocab = sorted(set(values) - {""})
-        code = {v: k + 1 for k, v in enumerate(vocab)}
-        cats.append(values.map(lambda v: code.get(v, 0)).to_numpy(dtype=np.int32))
-        cards.append(len(vocab) + 1)
-    corpus = (a["prod_name"].fillna("") + " " + a["detail_desc"].fillna("")).str.lower()
     tfidf = TfidfVectorizer(min_df=3, max_features=30_000, ngram_range=(1, 2), sublinear_tf=True,
                             stop_words="english", dtype=np.float32)
     svd = TruncatedSVD(n_components=text_dim, random_state=seed, n_iter=7)
-    text = normalize(svd.fit_transform(tfidf.fit_transform(corpus))).astype(np.float32)
-    return Catalog(a["article_id"].to_numpy(np.int64), np.stack(cats, axis=1), cards, text)
+    return normalize(svd.fit_transform(tfidf.fit_transform(corpus.str.lower()))).astype(np.float32)
+
+
+def build_catalog(articles_path: str | Path, text_dim: int = 64, seed: int = 0) -> Catalog:
+    a = pd.read_csv(articles_path, dtype={"article_id": "int64"}).sort_values("article_id").reset_index(drop=True)
+    cats, cards = zip(*(category_codes(a[col]) for col in ITEM_CAT_COLS))
+    text = text_vectors(a["prod_name"].fillna("") + " " + a["detail_desc"].fillna(""), text_dim, seed)
+    return Catalog(a["article_id"].to_numpy(np.int64), np.stack(cats, axis=1), list(cards), text)
 
 
 def save_catalog(cat: Catalog, path: str | Path) -> None:
