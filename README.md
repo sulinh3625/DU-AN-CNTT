@@ -9,8 +9,8 @@ mẫu kiểm định độc lập, mở tập kiểm thử đúng một lần (g
 
 **Trạng thái (10/10/2026):** đánh giá cuối trên mẫu kiểm định đã chạy xong (5 seed). NeuMF-F đứng 2/14
 (NDCG@10 = 0,04003), tốt hơn có ý nghĩa 7/9 đối thủ trong họ so sánh đăng ký trước, không khác biệt có ý nghĩa với
-GMF-F (0,03902) và LateFusion-F (0,04093, cao nhất). Kết quả: `neumf_project/outputs/v2/final/ket_qua.txt`.
-`tong_hop_thay_doi_v2.md` và `van_dap.md` còn ghi số của lần đánh giá trước (04/10/2026).
+GMF-F (0,03902) và LateFusion-F (0,04093, cao nhất). Kết quả: `neumf_project/outputs/v2/final/ket_qua.txt`. Chi tiết,
+mức độ hoàn thành và đối chiếu 17 góp ý của GVHD: [`tong_hop_thay_doi_v2.md`](tong_hop_thay_doi_v2.md).
 
 ## Thư mục
 
