@@ -1,4 +1,4 @@
-"""Tinh chỉnh CHỈ trên tập xác thực của mẫu phát triển hm500k theo giao thức v2 (audit/PREREG_v2.md).
+"""Tinh chỉnh CHỈ trên tập xác thực của mẫu phát triển theo giao thức v2 (audit/PREREG_v2.md).
 
     python scripts/22_tune_v2.py                       # mọi mô hình, theo thứ tự ORDER
     python scripts/22_tune_v2.py --model neumf_f --resume
@@ -75,10 +75,9 @@ def main():
                          f"tuning_log.csv và best_configs.json trong {log_dir} sang chỗ khác rồi chạy lại.")
     st, dev, seed = D.val, V.device(), V.CFG["tuning"]["seed"]
     prov = V.provenance()
-    print(f"mẫu phát triển: {D.n_users:,} người dùng, {D.n_items:,} sản phẩm ({D.n_id_items:,} có ID), "
-          f"{len(st.records):,} người dùng xác thực, {len(st.targets):,} cặp đúng "
-          f"({int(st.new[st.targets['item']].sum()):,} sản phẩm mới) | commit {prov['git_commit']} "
-          f"dirty={prov['git_dirty']} code {prov['code_hash']} ({time.time() - t0:.0f}s)", flush=True)
+    print(f"mẫu phát triển: {D.n_users:,} người dùng, {D.n_items:,} sản phẩm, {len(st.records):,} người dùng xác "
+          f"thực, {len(st.targets):,} cặp đúng | commit {prov['git_commit']} dirty={prov['git_dirty']} "
+          f"code {prov['code_hash']} ({time.time() - t0:.0f}s)", flush=True)
     best = json.loads(best_path.read_text(encoding="utf-8")) if best_path.exists() else {}
     models = ORDER if "all" in args.model else [m for m in ORDER if m in args.model]
     late_parts = {}
@@ -109,8 +108,7 @@ def main():
                        data_md5=D.meta["data_md5"], seed=seed, best_epoch=best_epoch,
                        time_s=round(time.time() - t1, 1), **{f"val_{k}": round(metrics[k], 6) for k in V.METRICS})
             log_row(log_path, row)
-            print(f"[{model} {cid + 1}/{len(configs)}] {key} -> NDCG@10 {metrics['NDCG@10']:.5f} "
-                  f"(cũ {metrics['NDCG@10_old']:.5f} / mới {metrics['NDCG@10_new']:.5f}), epoch {best_epoch}, "
+            print(f"[{model} {cid + 1}/{len(configs)}] {key} -> NDCG@10 {metrics['NDCG@10']:.5f}, epoch {best_epoch}, "
                   f"{row['time_s']:.0f}s", flush=True)
             if state is not None and model in V.LATE_PARTS:
                 prev = best.get(model, {}).get("val", {}).get("NDCG@10", -1.0)

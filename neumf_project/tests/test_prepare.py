@@ -76,7 +76,7 @@ def test_candidates_and_targets_only_items_with_training_pairs(tmp_path):
         has_train = np.zeros(data.n_items, dtype=bool)
         has_train[st.train["item"].to_numpy()] = True  # có ít nhất 1 cặp huấn luyện trước mốc cắt
         assert (st.train["day"] < st.cutoff).all() and np.array_equal(st.scoreable, has_train)
-        assert not st.new.any() and np.array_equal(st.pool, np.flatnonzero(st.scoreable))
+        assert np.array_equal(st.pool, np.flatnonzero(st.scoreable))
         assert st.records and st.scoreable[st.targets["item"].to_numpy()].all()
         for r in st.records:
             assert st.scoreable[r.candidates].all() and st.scoreable[r.positives].all()
@@ -85,8 +85,9 @@ def test_candidates_and_targets_only_items_with_training_pairs(tmp_path):
         def score_items(self, user, items):
             return np.asarray(items, dtype=float)
 
-    res = evaluate_v2(ByIndex(), data.test.records, data.test.new)  # không có sản phẩm mới: _new là NaN, không lỗi
-    assert np.isfinite(res["NDCG@10"]) and np.isnan(res["NDCG@10_new"]) and res["users_new"] == 0
+    # Stage.new (luôn toàn False) và chỉ số _old/_new đã bỏ khỏi evaluate_v2: không còn sản phẩm mới nào để tách nhóm.
+    res = evaluate_v2(ByIndex(), data.test.records)
+    assert np.isfinite(res["NDCG@10"]) and res["users"] == len(data.test.records)
 
 
 # ------------------------------------------------------------- file dữ liệu

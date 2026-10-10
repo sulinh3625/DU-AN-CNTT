@@ -8,7 +8,7 @@ Khác giao thức cũ:
    - sản phẩm "chấm được" (scoreable) = sản phẩm có ít nhất một cặp huấn luyện;
    - ứng viên của một người dùng = sản phẩm chấm được, trừ sản phẩm người dùng đã mua trước mốc;
    - sản phẩm đúng = các cặp mua lần đầu trong cửa sổ sau mốc cắt của người dùng đã có lịch sử, sản phẩm chấm được.
-   Sản phẩm chưa có người mua trước mốc cắt không nằm trong tập ứng viên lẫn đáp án (Stage.new giữ trường, toàn False).
+   Sản phẩm chưa có người mua trước mốc cắt không nằm trong tập ứng viên lẫn đáp án.
 
 Dữ liệu đi qua một file chung để mọi mô hình đọc cùng dữ liệu (scripts/02_prepare_data.py, kiểm bằng MD5):
 - prepare_pairs: sự kiện theo schema DatasetAdapter -> mọi cặp đã gộp kèm cờ in_kcore (không riêng H&M);
@@ -46,7 +46,6 @@ class Stage:
     train: pd.DataFrame  # user, item, day, sample_weight
     train_pos: list
     scoreable: np.ndarray  # bool [n_items]
-    new: np.ndarray  # bool [n_items], toàn False: không còn sản phẩm mới trong tập ứng viên
     targets: pd.DataFrame  # user, item, day — cặp mua lần đầu trong cửa sổ đánh giá
     records: list[EvalRecord]
     user_time: np.ndarray  # float32 [n_users, USER_TIME_DIM] tại mốc cắt
@@ -185,8 +184,7 @@ def make_stage(name: str, cutoff: int, window_end: int, kept: pd.DataFrame, pair
     train_pos = build_user_positive_sets(train, data.n_users)
     records = build_full_ranking_records_multi(targets, data.n_items, train_pos, item_pool=np.flatnonzero(pool))
     utime = user_time_features(train["user"].to_numpy(), train["day"].to_numpy(), np.arange(data.n_users), cutoff)
-    new = np.zeros(data.n_items, dtype=bool)
-    return Stage(name, cutoff, train, train_pos, scoreable, new, targets, records, utime)
+    return Stage(name, cutoff, train, train_pos, scoreable, targets, records, utime)
 
 
 def describe(data: DataV2) -> dict:
@@ -194,8 +192,7 @@ def describe(data: DataV2) -> dict:
     for st in (data.val, data.test):
         if st is None:
             continue
-        new_targets = st.new[st.targets["item"].to_numpy()]
-        out[st.name] = dict(train_pairs=len(st.train), scoreable=int(st.scoreable.sum()), new_items=int(st.new.sum()),
-                            users=len(st.records), targets=len(st.targets), new_item_targets=int(new_targets.sum()),
+        out[st.name] = dict(train_pairs=len(st.train), scoreable=int(st.scoreable.sum()), users=len(st.records),
+                            targets=len(st.targets),
                             candidates_mean=float(np.mean([len(r.candidates) for r in st.records])))
     return out

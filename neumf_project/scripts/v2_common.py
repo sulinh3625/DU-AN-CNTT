@@ -2,7 +2,7 @@
 
 Mọi mô hình được huấn luyện và đánh giá bằng cùng các hàm ở đây, cả khi tinh chỉnh (22_tune_v2.py) lẫn khi đánh giá
 cuối (23_final_v2.py). Mô hình chỉ dùng ID được bọc MaskedScorer/MaskedScoreFn: sản phẩm không có dữ liệu huấn luyện
-của giai đoạn (gồm sản phẩm mới) nhận điểm -inf, tức bị xếp cuối.
+của giai đoạn nhận điểm -inf, tức bị xếp cuối (tập ứng viên vốn chỉ gồm sản phẩm có dữ liệu huấn luyện).
 """
 from __future__ import annotations
 
@@ -36,7 +36,7 @@ CFG = yaml.safe_load((PROJECT_ROOT / "configs" / "v2.yaml").read_text(encoding="
 AUDIT = PROJECT_ROOT / "audit" / "v2"
 DATA_DIR = PROJECT_ROOT / CFG["data_dir"]  # file dữ liệu đã lọc của scripts/02_prepare_data.py
 MANIFEST = DATA_DIR / "manifest.json"
-METRICS = ["NDCG@10", "Recall@10", "HR@10", "Precision@10", "NDCG@5", "NDCG@20", "NDCG@10_old", "NDCG@10_new"]
+METRICS = ["NDCG@10", "Recall@10", "HR@10", "Precision@10", "NDCG@5", "NDCG@20"]
 
 DISPLAY = {"random": "Random", "popularity": "MostPopular", "recent_pop": "MostPopular-Recent", "content": "Content",
            "itemknn": "ItemKNN", "userknn": "UserKNN", "bpr": "BPR-MF", "gmf": "GMF", "mlp": "MLP", "neumf": "NeuMF",
@@ -266,7 +266,7 @@ def late_fusion(parts: dict, w: float) -> LateFusion:
 
 
 def evaluate(scorer, stage: Stage, dev, per_user=None, topk=None) -> dict:
-    return evaluate_v2(scorer, stage.records, stage.new, device=dev, per_user=per_user, topk=topk, **eval_kw())
+    return evaluate_v2(scorer, stage.records, device=dev, per_user=per_user, topk=topk, **eval_kw())
 
 
 __all__ = ["CFG", "AUDIT", "METRICS", "DISPLAY", "GRIDS", "DEFAULTS", "ABLATIONS", "ABLATION_DISPLAY", "TORCH_ID",

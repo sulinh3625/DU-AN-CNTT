@@ -129,8 +129,7 @@ def test_v2_kcore_before_test_and_candidates_have_training_pairs(tmp_path):
     assert "z" not in set(data.user_raw)  # k-core chỉ trên dữ liệu trước mốc kiểm thử
     assert data.n_items == data.n_id_items == 4
     prod = lambda i: int(data.item_product[i])  # noqa: E731
-    st = data.test
-    assert not st.new.any()
+    st = data.test  # (trường Stage.new, luôn toàn False, đã bỏ; ứng viên chỉ gồm sản phẩm có cặp huấn luyện — kiểm dưới)
     assert {prod(i) for i in np.flatnonzero(st.scoreable)} == {108775, 110065, 111565, 111586}
     tg = {(data.user_raw[u], prod(i)) for u, i in zip(st.targets["user"], st.targets["item"])}
     # p5 chưa ai mua trước mốc; p6 đã bán trên toàn H&M nhưng không có cặp huấn luyện; p1b của c là mua lại mẫu p1
@@ -169,7 +168,7 @@ def test_neumff_eval_matches_training_path_and_time_features():
     assert torch.allclose(ev, tr, atol=1e-5)  # sản phẩm 4, 5 (>= n_id) không có ID ở cả hai đường
 
 
-def test_neumff_branch_flags_and_new_items_scored():
+def test_neumff_branch_flags_and_items_without_id_scored():
     for kw in (dict(use_gmf=False), dict(use_mlp=False), dict(use_text=False, use_time=False), dict(id_dropout=0.5)):
         m, _ = _toy_model(**kw)
         m.set_stage(20, np.zeros((3, 2), np.float32), np.ones(6, dtype=bool))

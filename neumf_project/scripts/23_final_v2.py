@@ -187,7 +187,7 @@ class Runner:
     def evaluate(self, scorer, want_top: bool):
         per, top = [], ({} if want_top else None)
         t0 = time.perf_counter()
-        res = evaluate_v2(scorer, self.ev.records, self.ev.new, device=self.dev, per_user=per, topk=top, **self.kw)
+        res = evaluate_v2(scorer, self.ev.records, device=self.dev, per_user=per, topk=top, **self.kw)
         return dict(res=res, per=per, top=top, eval_time_s=time.perf_counter() - t0)
 
     def static_scores(self, model: str) -> dict:
@@ -328,8 +328,7 @@ def main():
     info = describe(D)
     (root / "data.json").write_text(json.dumps(dict(sample=D.meta["sample"], data_md5=D.meta["data_md5"], **info),
                                                indent=2, ensure_ascii=False), encoding="utf-8")
-    pd.DataFrame(dict(item=np.arange(D.n_items), product_code=D.item_product,
-                      has_id=np.arange(D.n_items) < D.n_id_items, scoreable=ev.scoreable, new=ev.new)
+    pd.DataFrame(dict(item=np.arange(D.n_items), product_code=D.item_product, scoreable=ev.scoreable)
                  ).to_csv(root / "items.csv.gz", index=False)
     print(f"{'CHẠY THỬ (phát triển, xác thực)' if args.dry_run else 'ĐÁNH GIÁ CUỐI (kiểm định, kiểm thử)'}: "
           f"{D.n_users:,} người dùng, {D.n_items:,} sản phẩm | chấm {len(ev.records):,} người dùng, "

@@ -6,8 +6,8 @@ NeuMF-F giữ cấu trúc hai nhánh của NeuMF (He et al., 2017) — nhánh GM
   - item: 11 thuộc tính danh mục (embedding), vector mô tả văn bản, đặc trưng thời gian tại ngày t (doanh số toàn H&M
     trong 7/28/91 ngày trước t, tuổi sản phẩm, cờ chưa từng bán);
   - user: 5 thuộc tính tĩnh (embedding) và đặc trưng thời gian (khoảng cách tới lần mua gần nhất, số cặp đã mua).
-Sản phẩm không có dữ liệu huấn luyện (sản phẩm mới) không có embedding ID, chỉ dùng đặc trưng; khi huấn luyện, ID của
-item bị bỏ ngẫu nhiên với xác suất id_dropout để mô hình học được cách chấm khi thiếu ID.
+Item có chỉ số >= n_id_items không có embedding ID, chỉ dùng đặc trưng (với dữ liệu hiện tại mọi sản phẩm đều có ID);
+khi huấn luyện, ID của item bị bỏ ngẫu nhiên với xác suất id_dropout để mô hình học được cách chấm khi thiếu ID.
 Các cờ use_* tắt từng nhánh/nhóm đặc trưng cho ablation (GMF-F, MLP-F, bỏ văn bản, ...).
 """
 from __future__ import annotations
@@ -207,9 +207,9 @@ class NeuMFF(nn.Module):
 
 
 class MaskedScorer(nn.Module):
-    """Bọc mô hình PyTorch chỉ dùng ID cho tập ứng viên có sản phẩm mới: item không có dữ liệu huấn luyện của giai đoạn
-    (scoreable = False) nhận điểm -inf, tức bị xếp cuối (thứ tự giữa chúng do khoá phá hoà quyết định). Chỉ số item vượt
-    bảng embedding của mô hình được kẹp về 0 trước khi gọi mô hình (điểm đó bị thay bằng -inf)."""
+    """Bọc mô hình PyTorch chỉ dùng ID: item không có dữ liệu huấn luyện của giai đoạn (scoreable = False) nhận điểm -inf,
+    tức bị xếp cuối (thứ tự giữa chúng do khoá phá hoà quyết định). Chỉ số item vượt bảng embedding của mô hình được kẹp
+    về 0 trước khi gọi mô hình (điểm đó bị thay bằng -inf)."""
 
     def __init__(self, model: nn.Module, scoreable, n_model_items: int):
         super().__init__()
