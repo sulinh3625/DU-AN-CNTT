@@ -35,6 +35,8 @@ header { background: var(--surface); border-bottom: 1px solid var(--border); pos
 nav { display: flex; gap: 4px; flex-wrap: wrap; }
 nav a { text-decoration: none; padding: 7px 12px; border-radius: 999px; color: var(--ink-2); font-weight: 600; font-size: 13px; }
 nav a.active, nav a:hover { background: var(--surface-2); color: var(--ink); }
+.ds-nav { margin-left: auto; }
+.ds-nav .muted-tag { font-weight: 500; font-size: 11px; color: var(--muted); }
 .info-strip { background: var(--ink); color: #e9e4dc; font-size: 12px; }
 .info-strip .bar { padding: 7px 20px; gap: 18px; }
 .info-strip b { color: #fff; font-weight: 600; }

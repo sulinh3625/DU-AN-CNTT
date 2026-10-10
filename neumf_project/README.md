@@ -143,6 +143,33 @@ v2 dùng giữ nguyên. Chạy lại `23_final_v2.py` vì vậy cần `--allow-c
 
 Cần tính lại bảng/hình mà không chấm lại: `python run.py v2-report`.
 
+### 3.5 Kiểm chứng trên Amazon Beauty (dữ liệu đối chứng)
+
+Chạy lại đúng giao thức v2 trên Amazon Beauty 2014 5-core: cùng mã, cùng 14 mô hình, cùng lưới tinh chỉnh, cùng họ 10
+so sánh. Chỉ khác dữ liệu và phần đặc trưng: Amazon không có thông tin khách; đặc trưng sản phẩm gồm thương hiệu, danh
+mục, giá và văn bản. Kế hoạch đăng ký trước: `audit/PREREG_amazon.md`; cấu hình: `configs/amazon.yaml`.
+
+Mọi script đọc bộ dữ liệu từ biến môi trường `NEUMF_CONFIG`, mặc định `configs/v2.yaml` (H&M). Các lệnh `amazon-*`
+tự đặt biến này cho script con, nên không cần đặt tay.
+
+```bash
+python run.py amazon-data                     # đặc trưng + dữ liệu đã lọc + MD5 (cần data/raw/amazon/, ~1 phút)
+python run.py amazon-all                      # qua đêm: dữ liệu -> tinh chỉnh -> chạy thử đánh giá cuối (không chấm test)
+python run.py amazon-final --reason "..."     # đánh giá cuối: mở tập kiểm thử Amazon đúng một lần
+python run.py amazon-report                   # chỉ tính lại kiểm định, hình, ket_qua.txt
+```
+
+- **Dữ liệu thô:** `data/raw/amazon/reviews_Beauty_5.json.gz` và `meta_Beauty.json.gz`, tải từ
+  `http://snap.stanford.edu/data/amazon/productGraph/categoryFiles/`.
+- **Nơi ghi:**
+  - nhật ký tinh chỉnh: `audit/amazon/`;
+  - kết quả: `outputs/amazon/final/`, gồm `ket_qua.txt`, các CSV, hình và checkpoint seed 42 cho demo.
+- **Khoá kiểm thử:** như H&M — `PREREG_amazon.md` phải được commit trước, cùng mã băm với lúc tinh chỉnh Amazon; nhật ký
+  ghi `amazon_kiemdinh_seed<N>`.
+- **Báo cáo LaTeX:** `24_report_v2.py` không ghi vào báo cáo khi chạy với Amazon, để không ghi đè bảng H&M.
+- **Gọi thẳng script (Git Bash):** thêm `NEUMF_CONFIG=configs/amazon.yaml` trước lệnh, ví dụ
+  `NEUMF_CONFIG=configs/amazon.yaml python scripts/22_tune_v2.py`.
+
 ## 4. Kiểm thử
 
 ```bash
@@ -156,7 +183,11 @@ pytest demo/tests -q   # demo — test nạp checkpoint bỏ qua cho tới khi c
 python run.py demo     # http://localhost:8000
 ```
 
-Dùng đúng các mô hình của đánh giá cuối (`outputs/v2/final/seed42/`). Chi tiết: `demo/README.md`.
+Dùng đúng các mô hình của đánh giá cuối, chỉ nạp checkpoint, không huấn luyện lại:
+- H&M: `outputs/v2/final/seed42/`;
+- Amazon Beauty: `outputs/amazon/final/seed42/`, có sau khi chạy `amazon-final`.
+
+Chọn bộ dữ liệu trên thanh đầu trang. Chi tiết: `demo/README.md`.
 
 ## 6. Cấu trúc thư mục
 

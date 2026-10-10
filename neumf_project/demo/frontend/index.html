@@ -15,10 +15,11 @@
 <header>
   <div class="bar">
     <a class="brand" href="#/admin">Demo Shop<small>gợi ý thời trang</small></a>
-    <nav>
+    <nav id="main-nav">
       <a href="#/admin" data-view="admin">Kiểm thử mô hình</a>
       <a href="#/dashboard" data-view="dashboard">Dashboard kết quả</a>
     </nav>
+    <nav class="ds-nav" id="ds-nav" aria-label="Bộ dữ liệu"></nav>
   </div>
   <div class="info-strip"><div class="bar" id="info-strip">Đang nạp dữ liệu và mô hình (lần đầu mất khoảng 10 giây)...</div></div>
 </header>
@@ -56,7 +57,7 @@
     <div class="admin-grid hidden" id="ad-grid">
       <div class="card">
         <h2 id="ad-history-title">Lịch sử mua</h2>
-        <div class="note" style="margin:-6px 0 10px">Dataset H&amp;M chỉ có lịch sử mua, không có lịch sử xem.</div>
+        <div class="note" id="ad-history-note" style="margin:-6px 0 10px"></div>
         <div class="scroll" id="ad-history"></div>
       </div>
       <div class="card">

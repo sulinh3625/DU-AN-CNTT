@@ -161,3 +161,36 @@ def test_filter_users_search_sort_and_position():
     assert filter_users(df, best_rank=ranks, hit="hit", k=10, sort="rank")["customer_id"].tolist() == ["ab01", "cd03"]
     assert filter_users(df, best_rank=ranks, hit="miss", k=20)["customer_id"].tolist() == ["ab02"]
     assert filter_users(df, best_rank=ranks)["best_rank"].tolist() == [11, 3, 25, 10]  # không lọc: chỉ thêm cột
+
+
+# ------------------------------------------------------------- Amazon Beauty (dữ liệu đối chứng)
+def test_amazon_table_maps_metadata_to_item_columns():
+    items = pd.DataFrame({"asin": ["B01", "B02", "B03"], "title": ["Lip balm", None, "Serum"],
+                          "brand": ["Acme", None, ""], "category_1": ["Makeup", "Skin Care", None],
+                          "category_2": ["Lips", "Face", None], "category_3": ["Lip Balm", None, None],
+                          "price": [3.5, None, 20.0], "imUrl": ["http://x/1.jpg", None, ""]},
+                         index=pd.Index([0, 1, 2], name="item"))
+    df = data_context.amazon_table(items, np.array([2, 0, 1]))
+    assert df["article_id"].tolist() == ["B03", "B01", "B02"]
+    assert df["prod_name"].tolist() == ["Serum", "Lip balm", "B02"]  # thiếu tên -> asin
+    assert df["product_type_name"].tolist() == ["Beauty", "Lip Balm", "Face"]  # danh mục sâu nhất có giá trị
+    assert df["index_group_name"].tolist() == ["Khác", "Makeup", "Skin Care"]  # khu vực = danh mục cấp 1
+    assert df["subtitle"].tolist() == ["Beauty · $20.00", "Acme · Lip Balm · $3.50", "Face"]
+    assert df["image_url"].tolist() == ["", "http://x/1.jpg", ""]
+
+
+def test_dataset_without_final_results_reports_command_not_training(tmp_path, monkeypatch):
+    """Chưa có kết quả đánh giá cuối Amazon: demo báo lệnh cần chạy (HTTP 503), không dựng dữ liệu, không huấn luyện."""
+    from fastapi import HTTPException
+
+    from demo.backend import routes
+
+    monkeypatch.setitem(data_context.CONFIGS["amazon"], "out_dir", str(tmp_path))
+    monkeypatch.setattr(routes, "_cache", {})
+    why = data_context.unavailable_reason("amazon")
+    assert "amazon-final" in why and not data_context.v2_available(dataset="amazon")
+    with pytest.raises(HTTPException) as e:
+        routes.ctx("amazon")
+    assert e.value.status_code == 503 and "amazon-final" in e.value.detail
+    listed = {d["key"]: d for d in routes.datasets()}
+    assert listed["amazon"]["label"] == "Amazon Beauty" and listed["amazon"]["reason"] == why

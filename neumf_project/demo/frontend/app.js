@@ -1,4 +1,6 @@
 const API = "/api";
+// Bộ dữ liệu đang xem (?ds=amazon), gửi kèm mọi lời gọi API; đổi bộ dữ liệu = tải lại trang với ?ds= mới.
+const DS = new URLSearchParams(location.search).get("ds") === "amazon" ? "amazon" : "hm";
 const $ = (id) => document.getElementById(id);
 const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 const fmt = (v, d = 4) => (v == null || Number.isNaN(Number(v)) ? "—" : Number(v).toFixed(d));
@@ -13,7 +15,7 @@ const show = (m) => SHOW[m] || m;
 const color = (m) => MODEL_COLORS[m] || "#555";
 
 async function api(path, opts) {
-  const res = await fetch(API + path, opts);
+  const res = await fetch(`${API}${path}${path.includes("?") ? "&" : "?"}dataset=${DS}`, opts);
   const body = await res.json().catch(() => ({}));
   if (!res.ok) throw new Error(body.detail || `Lỗi HTTP ${res.status}`);
   return body;
@@ -29,31 +31,47 @@ function route() {
   const v = location.hash.replace(/^#\/?/, "");
   const view = VIEWS.includes(v) ? v : "admin";
   VIEWS.forEach((x) => $("view-" + x).classList.toggle("hidden", x !== view));
-  document.querySelectorAll("nav a").forEach((a) => a.classList.toggle("active", a.dataset.view === view));
+  document.querySelectorAll("#main-nav a").forEach((a) => a.classList.toggle("active", a.dataset.view === view));
   if (!CTX) return;
   if (view === "admin" && !inited.admin) initAdmin();
   if (view === "dashboard") loadDashboard();
 }
 window.addEventListener("hashchange", route);
 
+// Thanh chọn bộ dữ liệu: liên kết ?ds=..., bộ chưa có kết quả đánh giá cuối ghi rõ lý do (di chuột để xem lệnh cần chạy).
+async function renderDatasets() {
+  try {
+    const list = await api("/datasets");
+    $("ds-nav").innerHTML = list.map((d) => `<a href="?${new URLSearchParams({ ds: d.key })}${location.hash}"
+      class="${d.key === DS ? "active" : ""}"${d.reason ? ` title="${esc(d.reason)}"` : ""}>${esc(d.label)}${d.reason
+        ? ' <span class="muted-tag">chưa có kết quả</span>' : ""}</a>`).join("");
+  } catch { /* không đọc được danh sách: chỉ còn bộ dữ liệu đang xem */ }
+}
+
 async function init() {
   route();
+  renderDatasets();
   try {
     CTX = await api("/context");
   } catch (e) {
     $("info-strip").innerHTML = `<span class="error">${esc(e.message)}</span>`;
     return;
   }
+  document.title = `Demo Shop — ${CTX.dataset_label}`;
+  document.querySelector(".brand small").textContent = CTX.tagline;
+  $("ad-history-note").textContent = CTX.history_note;
   const sample = CTX.dry_run ? "mẫu phát triển (bản chạy thử, tập xác thực)" : "mẫu kiểm định";
   $("info-strip").innerHTML = `
-    <span>Dataset <b>H&amp;M</b> · ${sample} (${CTX.date_min} → ${CTX.date_max}) · k-core ${CTX.k_core}</span>
-    <span>Mô hình của <b>đánh giá cuối</b> (seed ${esc(CTX.run_tag.replace("v2_seed", ""))}, commit ${esc(CTX.commit)})</span>
+    <span>Dataset <b>${esc(CTX.dataset_label)}</b> · ${sample} (${CTX.date_min} → ${CTX.date_max}) · k-core ${CTX.k_core}</span>
+    <span>Mô hình của <b>đánh giá cuối</b> (seed ${esc(CTX.seed)}, commit ${esc(CTX.commit)})</span>
     <span><b>${num(CTX.n_users)}</b> khách · <b>${num(CTX.n_items)}</b> sản phẩm sau k-core</span>`;
   route();
 }
 
 /* ------------------------------------------------------------ shared UI */
-const img = (it) => `<img loading="lazy" src="${API}/image/${esc(it.article_id)}" alt="${esc(it.product_type_name)}">`;
+// Ảnh: H&M từ máy chủ demo, Amazon từ imUrl gốc; ảnh lỗi -> ô thay thế của máy chủ.
+const img = (it) => `<img loading="lazy" src="${esc(it.image_url)}" alt="${esc(it.product_type_name)}"
+  onerror="this.onerror=null;this.src='${API}/image/${esc(it.article_id)}?dataset=${DS}'">`;
 const kOptions = (sel) => {
   sel.innerHTML = CTX.k_values.map((k) => `<option value="${k}">${k}</option>`).join("");
   sel.value = Math.max(...CTX.k_values);
@@ -62,7 +80,7 @@ const kOptions = (sel) => {
 function rowItem(it, left, right, cls = "") {
   return `<div class="row-item ${cls}">${left}${img(it)}
     <div class="txt"><div class="name" title="${esc(it.prod_name)}">${esc(it.prod_name)}</div>
-      <div class="meta">${esc(it.product_type_name)} · ${num(it.n_colours)} màu</div></div>${right}</div>`;
+      <div class="meta">${esc(it.subtitle)}</div></div>${right}</div>`;
 }
 
 /* ------------------------------------------------------------ admin */
@@ -70,7 +88,7 @@ const targetLabel = () => "sản phẩm đích";
 
 function renderProtocol() {
   $("ad-protocol").innerHTML = `<b>Cách chấm (đúng Chương 4)</b><br>
-    • <b>Một sản phẩm</b> = một mẫu (<code>product_code</code>), mọi màu gộp lại; ảnh và tên lấy theo màu đầu tiên của mẫu.<br>
+    • ${CTX.item_note}<br>
     • <b>Chia theo mốc thời gian</b>: mô hình đã được huấn luyện lại trên mọi cặp trước ${esc(CTX.test_start)}; lịch sử bên trái là đúng dữ liệu mô hình đã học.<br>
     • <b>Sản phẩm đích</b> = mọi sản phẩm khách mua <i>lần đầu</i> sau mốc (có thể nhiều món).<br>
     • <b>Full ranking</b> trên ${num(CTX.n_candidates)} sản phẩm có dữ liệu huấn luyện, trừ những món khách đã mua.<br>
@@ -84,7 +102,10 @@ const ad = { user: null, prev: null, next: null, facets: null, seq: 0 };
 const pk = { q: "", bucket: "", area: "", hit: "", sort: "train_desc", items: [], total: 0, view: [], active: -1,
   loading: false, seq: 0, timer: null, loadedQ: null };
 const BUCKET_SHORT = { low: "Ít giao dịch", mid: "Trung bình", high: "Nhiều giao dịch" };
-const AREA_VI = { "Ladieswear": "Đồ nữ", "Menswear": "Đồ nam", "Divided": "Divided", "Baby/Children": "Trẻ em", "Sport": "Thể thao" };
+const AREA_VI = { "Ladieswear": "Đồ nữ", "Menswear": "Đồ nam", "Divided": "Divided", "Baby/Children": "Trẻ em", "Sport": "Thể thao",
+  // Amazon Beauty: danh mục cấp 1
+  "Skin Care": "Chăm sóc da", "Makeup": "Trang điểm", "Hair Care": "Chăm sóc tóc", "Fragrance": "Nước hoa",
+  "Tools & Accessories": "Dụng cụ & phụ kiện", "Bath & Body": "Tắm & cơ thể" };
 const areaLabel = (a) => AREA_VI[a] || a;
 const SORT_LABELS = { train_desc: "Mua nhiều nhất", train_asc: "Mua ít nhất", targets_desc: "Nhiều món đích nhất",
   rank: "Mô hình xếp món đích cao nhất", id: "Theo customer_id" };
@@ -571,7 +592,7 @@ function renderDashboard(d, dash) {
   dash.innerHTML = `
     ${d.dry_run ? '<div class="card wide"><div class="error">Đang hiển thị bản <b>chạy thử</b> (mẫu phát triển, tập xác thực, 1 epoch) — số liệu không có ý nghĩa, chỉ để kiểm tra đường ống.</div></div>' : ""}
     <div class="card wide"><h2>Dữ liệu của đánh giá cuối</h2><div class="stats">${[
-      ["Khách sau k-core", num(s.n_users)], ["Sản phẩm (product_code)", num(s.n_items)], ["Cặp trước mốc kiểm thử", num(s.n_interactions)],
+      ["Khách sau k-core", num(s.n_users)], ["Sản phẩm", num(s.n_items)], ["Cặp trước mốc kiểm thử", num(s.n_interactions)],
       ["Cặp huấn luyện", num(s.train_pairs)], ["Khách được chấm", num(s.n_test_users)], ["Cặp đúng", num(s.targets)],
       ["Ứng viên", num(s.n_candidates)], ["k-core", s.k_core], ["Commit", esc(s.commit)],
     ].map(([l, n]) => `<div class="stat"><div class="n">${n}</div><div class="l">${l}</div></div>`).join("")}</div>${srcLine(d.stats)}</div>
@@ -581,7 +602,7 @@ function renderDashboard(d, dash) {
       <div class="scroll"><table><tr><th>Mô hình</th>${metrics.map((m) => `<th>${m}</th>`).join("")}</tr>${rows.map((r) =>
         `<tr><td>${esc(show(r.model))}</td>${metrics.map((m) => `<td>${fmt(r[m + "_mean"], 5)} ± ${fmt(r[m + "_std"], 5)}</td>`).join("")}</tr>`).join("")}</table></div>`)}</div>
 
-    ${byKCard(d.by_k, "Các chỉ số @K có trong outputs/v2/final/summary.csv.")}
+    ${byKCard(d.by_k, "Các chỉ số @K có trong summary.csv của đánh giá cuối.")}
 
     <div class="card wide"><h2>Kiểm định cặp theo khách hàng (NDCG@10) — họ 10 so sánh đăng ký trước</h2>${body(d.significance, sigTable)}</div>
 

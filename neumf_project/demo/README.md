@@ -1,4 +1,14 @@
-# Demo web — shop thời trang H&M
+# Demo web — shop thời trang H&M (kèm Amazon Beauty)
+
+Chọn bộ dữ liệu trên thanh đầu trang (`?ds=hm` / `?ds=amazon`):
+- **H&M:** kết quả chính.
+- **Amazon Beauty:** dữ liệu đối chứng (`audit/PREREG_amazon.md`). Demo nạp checkpoint seed 42 của
+  `outputs/amazon/final/`. Chưa có thư mục này thì demo hiện lệnh cần chạy (`python run.py amazon-final --reason "..."`);
+  demo không tự huấn luyện.
+- **Sản phẩm Amazon:** một sản phẩm là một `asin`. Tên, thương hiệu, danh mục và giá lấy từ
+  `data/processed/amazon/items.csv.gz` (do `python run.py amazon-data` tạo); ảnh lấy theo `imUrl` gốc của Amazon (trình
+  duyệt tải thẳng từ máy chủ ảnh của Amazon); ảnh lỗi thì hiện ô thay thế.
+- **Khách Amazon:** không có tuổi. "Khu vực mua nhiều nhất" là danh mục cấp 1, ví dụ Makeup hay Skin Care.
 
 Web mô phỏng shop thời trang trên dữ liệu H&M. Demo chỉ **suy diễn** trên checkpoint của đánh giá cuối: không huấn luyện
 lại, không sửa code huấn luyện (`src/`, `scripts/`), chỉ import hàm từ đó. Số liệu trên demo là **hiển thị lại** kết quả
@@ -95,6 +105,7 @@ demo/
 
 | Endpoint | Chức năng |
 |---|---|
+| `GET /api/datasets` | Bộ dữ liệu của demo (H&M, Amazon Beauty) và lý do chưa nạp được (thiếu kết quả đánh giá cuối) |
 | `GET /api/context` | Mẫu, số khách/sản phẩm, giá trị K, mô hình khả dụng và mô hình bị ẩn kèm lý do |
 | `POST /api/reload` | Xoá cache, nạp lại |
 | `GET /api/users/facets` | Số khách có sản phẩm đích; ngưỡng và số khách của nhóm ít / trung bình / nhiều giao dịch; số khách theo khu vực mua nhiều nhất |
@@ -106,5 +117,7 @@ demo/
 | `GET /api/users/{customer_id}/neighbors?k=10` | Khách tương đồng nhất theo UserKNN, số món mua chung, láng giềng đã mua sản phẩm đích nào |
 | `GET /api/dashboard` | Các khối của dashboard, kèm file nguồn |
 | `GET /api/image/{article_id}` | Ảnh sản phẩm hoặc ô thay thế |
+
+Mọi endpoint (trừ `/api/datasets`) nhận thêm `?dataset=hm|amazon`, mặc định `hm`.
 
 Bản đóng gói Docker (`Dockerfile`, `docker-compose.yml`) chưa được kiểm tra với dữ liệu hiện tại.

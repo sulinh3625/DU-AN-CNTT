@@ -9,6 +9,11 @@ bản chạy thử (mẫu phát triển, tập xác thực).
 Một "sản phẩm" là một product_code (mọi màu của một mẫu gộp lại). Tên, loại và ảnh lấy theo biến thể có article_id nhỏ
 nhất — đúng biến thể mà features.group_by_product lấy thuộc tính.
 
+Hai bộ dữ liệu (DATASETS), chọn trên thanh đầu trang: H&M (configs/v2.yaml, outputs/v2/final/) và Amazon Beauty
+(configs/amazon.yaml, outputs/amazon/final/ — dữ liệu đối chứng, audit/PREREG_amazon.md). Cả hai chỉ nạp checkpoint
+seed 42 của đánh giá cuối, không huấn luyện lại; chưa có kết quả thì demo báo lệnh cần chạy. Amazon: một sản phẩm là
+một asin; tên, thương hiệu, danh mục, giá, ảnh lấy từ data/processed/amazon/items.csv.gz (scripts/21_build_features.py).
+
 Chỉ import hàm từ src/ và scripts/, không sửa code huấn luyện.
 """
 from __future__ import annotations
@@ -31,12 +36,29 @@ for p in (PROJECT_ROOT, PROJECT_ROOT / "scripts"):
 
 import v2_common as V  # noqa: E402
 from src.baselines import BPRMFBaseline  # noqa: E402
-from src.data_pipeline.features import DAY0  # noqa: E402
 from src.models.late_fusion import LateFusion  # noqa: E402
 
 V2_DIR = Path(os.environ.get("DEMO_V2_DIR", str(PROJECT_ROOT / "outputs" / "v2" / "final")))
 if not V2_DIR.is_absolute():
     V2_DIR = PROJECT_ROOT / V2_DIR
+# Bộ dữ liệu của demo: cấu hình, thư mục kết quả đánh giá cuối, chữ hiển thị.
+DATASETS = {
+    "hm": dict(config="configs/v2.yaml", label="H&M", tagline="gợi ý thời trang", final_cmd="v2-final",
+               history_note="Dataset H&M chỉ có lịch sử mua, không có lịch sử xem.",
+               item_note="Một sản phẩm = một mẫu (<code>product_code</code>), mọi màu gộp lại; ảnh và tên lấy theo màu "
+                         "đầu tiên của mẫu."),
+    "amazon": dict(config="configs/amazon.yaml", label="Amazon Beauty", tagline="gợi ý mỹ phẩm (dữ liệu đối chứng)",
+                   final_cmd="amazon-final",
+                   history_note="Amazon chỉ có đánh giá sản phẩm: mỗi đánh giá coi là một lần mua (phản hồi ẩn).",
+                   item_note="Một sản phẩm = một <code>asin</code>; tên, thương hiệu, danh mục, giá và ảnh lấy từ "
+                             "metadata Amazon 2014."),
+}
+CONFIGS = {k: V.read_config(PROJECT_ROOT / d["config"]) for k, d in DATASETS.items()}
+
+
+def results_dir(dataset: str) -> Path:
+    """Thư mục kết quả đánh giá cuối của bộ dữ liệu (H&M: V2_DIR, đổi được bằng DEMO_V2_DIR)."""
+    return V2_DIR if dataset == "hm" else PROJECT_ROOT / CONFIGS[dataset]["out_dir"] / "final"
 SEED = 42  # 23_final_v2.py chỉ lưu checkpoint của seed 42
 # tên hiển thị -> mã mô hình trong scripts/v2_common.py
 V2_NEURAL = {"NeuMF-F": "neumf_f", "GMF-F": "gmf_f", "MLP-F": "mlp_f", "NeuMF": "neumf", "GMF": "gmf", "MLP": "mlp"}
@@ -54,27 +76,40 @@ ARTICLE_COLUMNS = ["article_id", "product_code", "prod_name", "product_type_name
                    "index_group_name"]
 
 
-def v2_data_mismatch(v2_dir: Path = V2_DIR, seed: int = SEED) -> str | None:
+def v2_data_mismatch(v2_dir: Path = V2_DIR, seed: int = SEED, cfg: dict | None = None) -> str | None:
     """Lý do kết quả trong v2_dir không dùng được với file dữ liệu đã lọc hiện tại; None = dùng được.
 
     So data_md5 mà 23_final_v2.py ghi vào data.json với MD5 trong outputs/data/manifest.json của đúng mẫu (bản chạy thử:
     mẫu phát triển; đánh giá cuối: mẫu kiểm định). Gọi TRƯỚC khi dựng dữ liệu: dựng lại mẫu kiểm định kèm tập kiểm thử
-    cho một kết quả cũ là mở tập kiểm thử ngoài đánh giá cuối."""
+    cho một kết quả cũ là mở tập kiểm thử ngoài đánh giá cuối. cfg: cấu hình của bộ dữ liệu (mặc định của tiến trình)."""
     results = json.loads((v2_dir / f"seed{seed}" / "results.json").read_text(encoding="utf-8"))
     info = json.loads((v2_dir / "data.json").read_text(encoding="utf-8"))
     sample = "dev" if str(results.get("evaluated_on", "")).startswith("dry-run") else "holdout"
-    manifest = json.loads(V.MANIFEST.read_text(encoding="utf-8")) if V.MANIFEST.exists() else {}
-    want = manifest.get(V.data_name(sample), {}).get("md5")
+    path = V.MANIFEST if cfg is None else V.manifest_path(cfg)
+    manifest = json.loads(path.read_text(encoding="utf-8")) if path.exists() else {}
+    want = manifest.get(V.data_name(sample, cfg), {}).get("md5")
     if want and info.get("data_md5") == want:
         return None
     return (f"{v2_dir.as_posix()} được tạo từ dữ liệu khác file đã lọc hiện tại của mẫu {sample} (data_md5 "
             f"{info.get('data_md5')} ≠ {want}) — chạy lại đánh giá cuối trước.")
 
 
-def v2_available(seed: int = SEED) -> bool:
-    d = V2_DIR / f"seed{seed}"
-    files = [d / "results.json", V2_DIR / "data.json", *(d / f"{k}.pt" for k in V2_NEURAL.values())]
-    return all(f.exists() for f in files) and v2_data_mismatch(V2_DIR, seed) is None
+def unavailable_reason(dataset: str = "hm", seed: int = SEED) -> str | None:
+    """Vì sao demo chưa nạp được bộ dữ liệu (thiếu kết quả / checkpoint, hoặc kết quả của dữ liệu khác); None = nạp được.
+    Demo không huấn luyện gì: thiếu thì chỉ báo lệnh cần chạy."""
+    root = results_dir(dataset)
+    d = root / f"seed{seed}"
+    files = [d / "results.json", root / "data.json", *(d / f"{k}.pt" for k in V2_NEURAL.values())]
+    missing = [f.relative_to(PROJECT_ROOT).as_posix() for f in files if not f.exists()]
+    if missing:
+        return (f"Chưa có kết quả đánh giá cuối {DATASETS[dataset]['label']} ({missing[0]}"
+                f"{f' và {len(missing) - 1} file khác' if len(missing) > 1 else ''}) — chạy "
+                f"`python run.py {DATASETS[dataset]['final_cmd']} --reason \"...\"` trước; demo không tự huấn luyện.")
+    return v2_data_mismatch(root, seed, CONFIGS[dataset])
+
+
+def v2_available(seed: int = SEED, dataset: str = "hm") -> bool:
+    return unavailable_reason(dataset, seed) is None
 
 
 def product_table(articles: pd.DataFrame, item_product: np.ndarray) -> pd.DataFrame:
@@ -84,6 +119,28 @@ def product_table(articles: pd.DataFrame, item_product: np.ndarray) -> pd.DataFr
     out = a.drop_duplicates("product_code").set_index("product_code").reindex(item_product)
     out["n_colours"] = a.groupby("product_code").size().reindex(item_product, fill_value=0).to_numpy()
     out = out.reset_index(drop=True).fillna("Unknown")
+    out.index.name = "item"
+    return out
+
+
+def amazon_table(items: pd.DataFrame, item_product: np.ndarray) -> pd.DataFrame:
+    """Như product_table cho Amazon (items.csv.gz của 21_build_features.py, index = mã asin): article_id = asin, tên =
+    title, loại = danh mục sâu nhất, nhóm = danh mục cấp 2, khu vực (index_group_name) = danh mục cấp 1; thêm subtitle
+    (thương hiệu · loại · giá) và image_url (imUrl của Amazon)."""
+    it = items.reindex(item_product)
+    cat = it[["category_1", "category_2", "category_3"]].fillna("").astype(str)
+    leaf = (cat["category_3"].where(cat["category_3"] != "", cat["category_2"]).where(lambda s: s != "", cat["category_1"])
+            .replace("", "Beauty"))
+    asin = it["asin"].fillna("").astype(str)
+    title = it["title"].fillna("").astype(str)
+    price = it["price"].map(lambda p: f"${p:.2f}" if pd.notna(p) else "")
+    brand = it["brand"].fillna("").astype(str)
+    out = pd.DataFrame({
+        "article_id": asin.to_numpy(), "prod_name": title.where(title != "", asin).to_numpy(),
+        "product_type_name": leaf.to_numpy(), "product_group_name": cat["category_2"].to_numpy(),
+        "index_group_name": cat["category_1"].replace("", "Khác").to_numpy(), "n_colours": 1,
+        "subtitle": [" · ".join(x for x in row if x) for row in zip(brand, leaf, price)],
+        "image_url": it["imUrl"].fillna("").astype(str).to_numpy()})
     out.index.name = "item"
     return out
 
@@ -119,27 +176,30 @@ def user_table(customer_ids: np.ndarray, target_items: dict, train_df: pd.DataFr
 
 
 class DataContext:
-    def __init__(self, load_customers: bool = True):
-        why = v2_data_mismatch(V2_DIR, SEED)
+    def __init__(self, load_customers: bool = True, dataset: str = "hm"):
+        why = unavailable_reason(dataset, SEED)
         if why:
             raise ValueError(why)
-        seed_dir = V2_DIR / f"seed{SEED}"
+        self.dataset, cfg = dataset, CONFIGS[dataset]
+        self.results_dir = root = results_dir(dataset)
+        seed_dir = root / f"seed{SEED}"
         results = json.loads((seed_dir / "results.json").read_text(encoding="utf-8"))
-        info = json.loads((V2_DIR / "data.json").read_text(encoding="utf-8"))
+        info = json.loads((root / "data.json").read_text(encoding="utf-8"))
         dry = str(results.get("evaluated_on", "")).startswith("dry-run")
-        self.run_tag = f"v2_seed{SEED}"
-        self.k_values = sorted({*(int(k) for k in V.CFG["evaluation"]["k_values"]), *DEMO_EXTRA_K})
-        self.tie_seed = V.CFG["evaluation"]["tie_break_seed"]
+        self.run_tag = f"{'v2' if dataset == 'hm' else dataset}_seed{SEED}"
+        self.k_values = sorted({*(int(k) for k in cfg["evaluation"]["k_values"]), *DEMO_EXTRA_K})
+        self.tie_seed = cfg["evaluation"]["tie_break_seed"]
         print(f"[demo] checkpoint {seed_dir.relative_to(PROJECT_ROOT).as_posix()} "
               f"({'chạy thử trên mẫu phát triển' if dry else 'mẫu kiểm định'}, commit "
               f"{str(results['provenance'].get('git_commit'))[:7]})")
 
-        D = V.load_data("dev" if dry else "holdout", with_test=not dry)
+        D = V.load_data("dev" if dry else "holdout", with_test=not dry, cfg=cfg)
         ev = D.val if dry else D.test
         stage = info["val" if dry else "test"]
         if (len(ev.records), len(ev.targets)) != (stage["users"], stage["targets"]):
             raise ValueError(f"Dữ liệu tái tạo ({len(ev.records)} user, {len(ev.targets)} cặp đúng) không khớp "
-                             f"{V2_DIR.name}/data.json ({stage['users']}, {stage['targets']}).")
+                             f"{root.name}/data.json ({stage['users']}, {stage['targets']}).")
+        day0 = np.datetime64(D.meta["day0"], "D")
         self.evaluated_on = "validation" if dry else "test"
         self.n_users, self.n_items = D.n_users, D.n_items
         self.customer_ids = np.asarray([str(c) for c in D.user_raw], dtype=object)
@@ -151,14 +211,14 @@ class DataContext:
         self.target_users = np.array(sorted(self.target_items), dtype=np.int64)
         # Lịch sử hiển thị = đúng dữ liệu mô hình đã học (mọi cặp trước mốc), ngày = ngày mua đầu.
         tr = ev.train
-        self.train_df = tr.assign(date=DAY0 + tr["day"].to_numpy().astype("timedelta64[D]"))
+        self.train_df = tr.assign(date=day0 + tr["day"].to_numpy().astype("timedelta64[D]"))
         self.train_item_counts = np.bincount(tr["item"].to_numpy(), minlength=self.n_items)
         self.train_user_counts = np.bincount(tr["user"].to_numpy(), minlength=self.n_users)
         self.run_metadata = {"evaluated_on": self.evaluated_on, "provenance": results["provenance"], "dry_run": dry,
                              "n_test_users": len(ev.records), "n_candidates": int(ev.scoreable.sum()),
                              "targets": len(ev.targets), "train_pairs": len(tr), "n_kept_pairs": len(D.kept),
-                             "date_min": str(DAY0 + int(D.kept["day"].min())), "val_start": V.CFG["val_start"],
-                             "test_start": V.CFG["test_start"], "k_core": V.CFG["k_core"]}
+                             "date_min": str(day0 + int(D.kept["day"].min())), "val_start": cfg["val_start"],
+                             "test_start": cfg["test_start"], "k_core": cfg["k_core"]}
 
         self.models: dict[str, torch.nn.Module] = {}
         self.scorers: dict = {}  # mô hình không phải mạng PyTorch: tên -> đối tượng có score_items(user, items)
@@ -186,15 +246,24 @@ class DataContext:
         self.userknn_params = configs.get("userknn")
 
         self.articles = self._load_articles()
-        self.user_age = self._load_ages() if load_customers else pd.Series(dtype=float)
+        self.user_age = self._load_ages() if load_customers and dataset == "hm" else pd.Series(dtype=float)
 
     def _load_articles(self) -> pd.DataFrame:
+        if self.dataset != "hm":
+            path = PROJECT_ROOT / CONFIGS[self.dataset]["features"]["items"]
+            if not path.exists():
+                raise FileNotFoundError(f"Thiếu {path.relative_to(PROJECT_ROOT).as_posix()} — chạy `python run.py "
+                                        "amazon-data`.")
+            return amazon_table(pd.read_csv(path, index_col="item", dtype={"asin": str}), self.item_product)
         if not ARTICLES_PATH.exists():
             raise FileNotFoundError(f"Thiếu {ARTICLES_PATH} — chép articles.csv (và customers.csv) của bộ H&M "
                                     "vào data/raw/hm/ cạnh transactions_train.csv (demo/README.md mục 1).")
         arts = pd.read_csv(ARTICLES_PATH, dtype={"article_id": "string"}, usecols=ARTICLE_COLUMNS)
         arts["article_id"] = arts["article_id"].str.zfill(10)
-        return product_table(arts, self.item_product)
+        out = product_table(arts, self.item_product)
+        out["subtitle"] = out["product_type_name"].astype(str) + " · " + out["n_colours"].astype(str) + " màu"
+        out["image_url"] = "/api/image/" + out["article_id"].astype(str)
+        return out
 
     def _load_ages(self) -> pd.Series:
         """Tuổi theo user idx (chỉ user có trong dữ liệu), hiện trong danh sách chọn khách; thiếu file thì trả rỗng."""
@@ -237,6 +306,9 @@ class DataContext:
             "product_group_name": a["product_group_name"],
             "index_group_name": a["index_group_name"],
             "n_colours": int(a["n_colours"]),
+            "subtitle": a["subtitle"],
+            # Amazon thiếu imUrl -> ô thay thế của máy chủ
+            "image_url": a["image_url"] or f"/api/image/{a['article_id']}?dataset={self.dataset}",
         }
 
     def history(self, u: int) -> list[dict]:
@@ -267,8 +339,11 @@ class DataContext:
 
     def summary(self) -> dict:
         m = self.run_metadata
+        d = DATASETS[self.dataset]
         return {
-            "dataset": "H&M Personalized Fashion Recommendations", "config": "configs/v2.yaml", "run_tag": self.run_tag,
+            "dataset": self.dataset, "dataset_label": d["label"], "tagline": d["tagline"],
+            "history_note": d["history_note"], "item_note": d["item_note"], "seed": SEED,
+            "config": d["config"], "run_tag": self.run_tag,
             "evaluated_on": self.evaluated_on, "dry_run": m["dry_run"], "k_core": m["k_core"],
             "date_min": m["date_min"], "date_max": m["test_start"], "val_start": m["val_start"],
             "test_start": m["test_start"], "n_users": self.n_users, "n_items": self.n_items,

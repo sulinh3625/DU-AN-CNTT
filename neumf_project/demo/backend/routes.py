@@ -12,7 +12,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 from fastapi.responses import FileResponse, Response
 
 from . import inference, metrics_io
-from .data_context import DEMO_ROOT, DataContext
+from .data_context import DATASETS, DEMO_ROOT, DataContext, unavailable_reason
 
 IMAGES_DIR = os.environ.get("DEMO_IMAGES_DIR", str(DEMO_ROOT / "static" / "images"))
 BUCKET_LABELS = {"low": "Ít giao dịch", "mid": "Trung bình", "high": "Nhiều giao dịch"}
@@ -27,17 +27,21 @@ SORTS = {
 Bucket = Literal["low", "mid", "high"]
 Sort = Literal["train_desc", "train_asc", "targets_desc", "id", "rank"]
 Hit = Literal["hit", "miss"]
+Dataset = Literal["hm", "amazon"]  # mọi API nhận ?dataset=, mặc định H&M
 
 router = APIRouter(prefix="/api")
-_cache: dict[str, DataContext] = {}  # "ctx" -> dữ liệu và mô hình đã nạp (nạp lần đầu khi cần)
-_ranks: dict[str, pd.Series] = {}  # mô hình -> hạng tốt nhất theo customer_id
+_cache: dict[str, DataContext] = {}  # bộ dữ liệu -> dữ liệu và mô hình đã nạp (nạp lần đầu khi cần)
+_ranks: dict[tuple[str, str], pd.Series] = {}  # (bộ dữ liệu, mô hình) -> hạng tốt nhất theo customer_id
 _ranks_lock = Lock()  # ponytail: một khoá chung, hai mô hình không chấm song song — đủ cho demo một người xem
 
 
-def ctx() -> DataContext:
-    if "ctx" not in _cache:
-        _cache["ctx"] = DataContext()
-    return _cache["ctx"]
+def ctx(dataset: str = "hm") -> DataContext:
+    if dataset not in _cache:
+        why = unavailable_reason(dataset)
+        if why:  # chưa có kết quả đánh giá cuối: báo lệnh cần chạy, không huấn luyện gì
+            raise HTTPException(503, why)
+        _cache[dataset] = DataContext(dataset=dataset)
+    return _cache[dataset]
 
 
 def _user(c: DataContext, customer_id: str) -> int:
@@ -75,21 +79,22 @@ def filter_users(df: pd.DataFrame, q: str = "", bucket: str | None = None, area:
 
 def best_rank_series(c: DataContext, model: str) -> pd.Series:
     """Hạng món đích tốt nhất của mô hình cho mọi khách (index customer_id) — chấm một lần (vài giây) rồi giữ lại."""
+    key = (c.dataset, model)
     with _ranks_lock:
-        if model not in _ranks:
+        if key not in _ranks:
             r = inference.best_ranks(c, model)
-            _ranks[model] = pd.Series(list(r.values()), index=c.customer_ids[list(r)].astype(str))
-    return _ranks[model]
+            _ranks[key] = pd.Series(list(r.values()), index=c.customer_ids[list(r)].astype(str))
+    return _ranks[key]
 
 
 def user_filter(q: str = "", bucket: Bucket | None = None, area: str | None = None, sort: Sort = "train_desc",
-                model: str | None = None, hit: Hit | None = None, k: int = 10) -> dict:
+                model: str | None = None, hit: Hit | None = None, k: int = 10, dataset: Dataset = "hm") -> dict:
     """Tham số lọc chung của danh sách chọn khách; model + k chỉ dùng khi lọc hit / sắp theo hạng (sort=rank)."""
-    return dict(q=q, bucket=bucket, area=area, sort=sort, model=model, hit=hit, k=k)
+    return dict(q=q, bucket=bucket, area=area, sort=sort, model=model, hit=hit, k=k, dataset=dataset)
 
 
 def _filtered(f: dict) -> pd.DataFrame:
-    c = ctx()
+    c = ctx(f["dataset"])
     ranks = None
     if f["hit"] or f["sort"] == "rank":
         model = f["model"] or c.available_models[0]
@@ -125,21 +130,27 @@ def health():
     return {"status": "ok", "loaded": bool(_cache)}
 
 
+@router.get("/datasets")
+def datasets():
+    """Bộ dữ liệu của demo và đã nạp được chưa (chỉ kiểm file kết quả, không dựng dữ liệu)."""
+    return [{"key": k, "label": d["label"], "reason": unavailable_reason(k)} for k, d in DATASETS.items()]
+
+
 @router.get("/context")
-def context():
-    return ctx().summary()
+def context(dataset: Dataset = "hm"):
+    return ctx(dataset).summary()
 
 
 @router.post("/reload")
-def reload():
+def reload(dataset: Dataset = "hm"):
     _cache.clear()
     _ranks.clear()
-    return {"run_tag": ctx().run_tag}
+    return {"run_tag": ctx(dataset).run_tag}
 
 
 @router.get("/users/facets")
-def user_facets():
-    c = ctx()
+def user_facets(dataset: Dataset = "hm"):
+    c = ctx(dataset)
     df = c.users
     return {
         "total": len(df),
@@ -173,16 +184,16 @@ def position(customer_id: str, f: dict = Depends(user_filter)):
 
 
 @router.get("/users/{customer_id}/history")
-def history(customer_id: str):
-    c = ctx()
+def history(customer_id: str, dataset: Dataset = "hm"):
+    c = ctx(dataset)
     u = _user(c, customer_id)
     return {"customer_id": customer_id, "profile": user_rows(c.users.loc[[c.customer_ids[u]]])[0],
             "items": c.history(u)}
 
 
 @router.get("/users/{customer_id}/recommend")
-def recommend(customer_id: str, model: str = "", k: int = 10):
-    c = ctx()
+def recommend(customer_id: str, model: str = "", k: int = 10, dataset: Dataset = "hm"):
+    c = ctx(dataset)
     if k not in c.k_values:
         raise HTTPException(400, f"K phải thuộc {c.k_values} (evaluation.k_values trong config + DEMO_EXTRA_K).")
     model = model or c.available_models[0]
@@ -193,9 +204,9 @@ def recommend(customer_id: str, model: str = "", k: int = 10):
 
 
 @router.get("/users/{customer_id}/neighbors")
-def neighbors(customer_id: str, k: int = 10):
+def neighbors(customer_id: str, k: int = 10, dataset: Dataset = "hm"):
     """Top-K khách tương đồng nhất theo UserKNN (cosine trên lịch sử mua), kèm sản phẩm mua chung."""
-    c = ctx()
+    c = ctx(dataset)
     u = _user(c, customer_id)
     rows = c.neighbors(u, max(1, min(int(k), 50)))
     if rows is None:
@@ -204,21 +215,23 @@ def neighbors(customer_id: str, k: int = 10):
 
 
 @router.get("/dashboard")
-def dashboard():
-    return metrics_io.dashboard(ctx())
+def dashboard(dataset: Dataset = "hm"):
+    return metrics_io.dashboard(ctx(dataset))
 
 
 @router.get("/image/{article_id}")
-def image(article_id: str):
-    aid = article_id.zfill(10)
-    if not aid.isdigit():
+def image(article_id: str, dataset: Dataset = "hm"):
+    """Ảnh H&M trong DEMO_IMAGES_DIR; không có ảnh (hoặc Amazon thiếu imUrl / ảnh lỗi) thì vẽ ô thay thế ghi loại sản
+    phẩm."""
+    aid = article_id.zfill(10) if dataset == "hm" else article_id
+    if not aid.isalnum():
         raise HTTPException(400, "article_id không hợp lệ.")
     path = os.path.join(IMAGES_DIR, aid[:3], f"{aid}.jpg")
-    if os.path.exists(path):
+    if dataset == "hm" and os.path.exists(path):
         return FileResponse(path, headers={"Cache-Control": "max-age=86400"})
-    arts = ctx().articles
+    arts = ctx(dataset).articles
     match = arts.loc[arts["article_id"] == aid, "product_type_name"]
-    label = escape(match.iloc[0] if len(match) else "H&M")
+    label = escape(match.iloc[0] if len(match) else DATASETS[dataset]["label"])
     svg = (
         '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 400">'
         '<rect width="300" height="400" fill="#efeae4"/>'
