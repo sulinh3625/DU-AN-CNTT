@@ -1,0 +1,22 @@
+{
+  "sample": "outputs/amazon/data/reviews_Beauty_5.csv.gz",
+  "data_md5": "1bbee3d37f6f2d99717b02e13f49c285",
+  "n_users": 10681,
+  "n_items": 6069,
+  "n_id_items": 6069,
+  "n_kept_pairs": 94009,
+  "val": {
+    "train_pairs": 82281,
+    "scoreable": 6039,
+    "users": 3153,
+    "targets": 7880,
+    "candidates_mean": 6030.783698065335
+  },
+  "test": {
+    "train_pairs": 94009,
+    "scoreable": 6069,
+    "users": 2644,
+    "targets": 6107,
+    "candidates_mean": 6058.406959152799
+  }
+}

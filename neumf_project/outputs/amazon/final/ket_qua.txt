@@ -1,0 +1,97 @@
+KẾT QUẢ ĐÁNH GIÁ CUỐI — AMAZON BEAUTY — GIAO THỨC V2 (5 seed: 42, 2024, 2025, 2026, 3407)
+2.644 khách được đánh giá, trung bình 6.058 ứng viên mỗi khách. Xếp theo NDCG@10 (độ đo chính); ± là độ lệch chuẩn qua seed.
+
+1. Kết quả chính trên tập kiểm thử
+
+Mô hình             NDCG@10            Recall@10          HR@10              Precision@10
+-----------------------------------------------------------------------------------------
+LateFusion-F        0,03747 ± 0,00180  0,06286 ± 0,00167  0,10802 ± 0,00314  0,01222 ± 0,00045
+GMF-F               0,03298 ± 0,00259  0,05465 ± 0,00397  0,09410 ± 0,00780  0,01042 ± 0,00088
+NeuMF-F             0,03277 ± 0,00189  0,05568 ± 0,00403  0,09750 ± 0,00657  0,01092 ± 0,00077
+MLP-F               0,03065 ± 0,00193  0,05107 ± 0,00327  0,08737 ± 0,00656  0,00998 ± 0,00092
+UserKNN             0,02506 ± 0,00000  0,03553 ± 0,00000  0,07716 ± 0,00000  0,00930 ± 0,00000
+ItemKNN             0,02333 ± 0,00000  0,03526 ± 0,00000  0,07186 ± 0,00000  0,00870 ± 0,00000
+NeuMF               0,01978 ± 0,00176  0,03035 ± 0,00187  0,06694 ± 0,00605  0,00762 ± 0,00090
+GMF                 0,01627 ± 0,00173  0,02533 ± 0,00154  0,05582 ± 0,00303  0,00640 ± 0,00036
+MostPopular-Recent  0,01401 ± 0,00000  0,02483 ± 0,00000  0,03858 ± 0,00000  0,00416 ± 0,00000
+MLP                 0,01271 ± 0,00054  0,02045 ± 0,00132  0,04667 ± 0,00324  0,00513 ± 0,00037
+BPR-MF              0,01144 ± 0,00091  0,01691 ± 0,00164  0,04115 ± 0,00309  0,00498 ± 0,00035
+Content             0,00945 ± 0,00000  0,01448 ± 0,00000  0,03215 ± 0,00000  0,00356 ± 0,00000
+Most Popular        0,00872 ± 0,00000  0,01576 ± 0,00000  0,03744 ± 0,00000  0,00390 ± 0,00000
+Random              0,00101 ± 0,00028  0,00168 ± 0,00059  0,00446 ± 0,00143  0,00045 ± 0,00014
+NDCG@10: món đúng càng ở trên trong top-10 càng được nhiều điểm. Recall@10: số món đúng trong top-10 / tổng số món đúng.
+HR@10: tỉ lệ khách có ít nhất một món đúng trong top-10. Precision@10: số món đúng trong top-10 / 10.
+Không tinh chỉnh trên Amazon Beauty: cấu hình lấy từ audit/v2/best_configs.json (chọn trên H&M); số epoch chọn trên tập xác thực của bộ này.
+
+
+2. NDCG theo K
+
+Mô hình             NDCG@5             NDCG@10            NDCG@20
+-----------------------------------------------------------------
+LateFusion-F        0,02879 ± 0,00222  0,03747 ± 0,00180  0,04571 ± 0,00142
+GMF-F               0,02567 ± 0,00256  0,03298 ± 0,00259  0,04159 ± 0,00195
+NeuMF-F             0,02450 ± 0,00148  0,03277 ± 0,00189  0,04144 ± 0,00208
+MLP-F               0,02330 ± 0,00151  0,03065 ± 0,00193  0,03764 ± 0,00184
+UserKNN             0,02059 ± 0,00000  0,02506 ± 0,00000  0,03096 ± 0,00000
+ItemKNN             0,01895 ± 0,00000  0,02333 ± 0,00000  0,02789 ± 0,00000
+NeuMF               0,01599 ± 0,00161  0,01978 ± 0,00176  0,02542 ± 0,00207
+GMF                 0,01287 ± 0,00180  0,01627 ± 0,00173  0,02090 ± 0,00166
+MostPopular-Recent  0,00964 ± 0,00000  0,01401 ± 0,00000  0,01854 ± 0,00000
+MLP                 0,00978 ± 0,00080  0,01271 ± 0,00054  0,01694 ± 0,00062
+BPR-MF              0,00883 ± 0,00077  0,01144 ± 0,00091  0,01476 ± 0,00082
+Content             0,00737 ± 0,00000  0,00945 ± 0,00000  0,01264 ± 0,00000
+Most Popular        0,00619 ± 0,00000  0,00872 ± 0,00000  0,00998 ± 0,00000
+Random              0,00066 ± 0,00031  0,00101 ± 0,00028  0,00153 ± 0,00031
+
+
+3. Kiểm định 10 so sánh đã đăng ký (NDCG@10; Wilcoxon, hiệu chỉnh Holm, CI bootstrap 95%)
+
+#   A        B                   Chênh (A−B)/B  CI 95% của A−B        p Holm   Kết luận
+---------------------------------------------------------------------------------------
+1   NeuMF-F  NeuMF               +65,7%         [0,00936; 0,01681]    < 0,001  NeuMF-F tốt hơn có ý nghĩa
+2   NeuMF-F  GMF-F               -0,6%          [-0,00228; 0,00186]   0,534    không khác biệt có ý nghĩa
+3   NeuMF-F  MLP-F               +6,9%          [-0,00044; 0,00457]   0,050    không khác biệt có ý nghĩa
+4   NeuMF-F  LateFusion-F        -12,5%         [-0,00668; -0,00279]  < 0,001  LateFusion-F tốt hơn có ý nghĩa
+5   NeuMF-F  BPR-MF              +186,5%        [0,01756; 0,02528]    < 0,001  NeuMF-F tốt hơn có ý nghĩa
+6   NeuMF-F  ItemKNN             +40,5%         [0,00477; 0,01417]    < 0,001  NeuMF-F tốt hơn có ý nghĩa
+7   NeuMF-F  UserKNN             +30,8%         [0,00313; 0,01232]    < 0,001  NeuMF-F tốt hơn có ý nghĩa
+8   NeuMF-F  MostPopular-Recent  +134,0%        [0,01553; 0,02201]    < 0,001  NeuMF-F tốt hơn có ý nghĩa
+9   NeuMF-F  Content             +246,7%        [0,01902; 0,02766]    < 0,001  NeuMF-F tốt hơn có ý nghĩa
+10  NeuMF    BPR-MF              +72,9%         [0,00630; 0,01038]    < 0,001  NeuMF tốt hơn có ý nghĩa
+"Tốt hơn có ý nghĩa" khi đồng thời p Holm < 0,05, CI không chứa 0 và chênh lệch ≥ 5%.
+
+
+4. Ablation NeuMF-F (seed 42; cùng siêu tham số, tắt một thành phần)
+
+Biến thể                 NDCG@10  Thay đổi  CI 95% của hiệu
+-----------------------------------------------------------
+NeuMF-F (đầy đủ)         0,03378  —         —
+Bỏ vector văn bản        0,03047  -9,8%     [-0,00701; 0,00051]
+Bỏ đặc trưng thời gian   0,02310  -31,6%    [-0,01569; -0,00561]
+Bỏ thông tin khách hàng  0,03424  +1,3%     [-0,00271; 0,00369]
+Bỏ thuộc tính sản phẩm   0,02892  -14,4%    [-0,00844; -0,00133]
+Chỉ mô tả, không kiểm định.
+
+
+5. Độ phủ top-10 (seed 42), số epoch chọn và thời gian huấn luyện
+
+Mô hình             Độ phủ ứng viên  Epoch chọn theo seed  Phút / seed
+----------------------------------------------------------------------
+LateFusion-F        15,3%            —                     0,0
+GMF-F               32,1%            8, 17, 8, 19, 18      6,1
+NeuMF-F             20,5%            4, 5, 3, 6, 9         4,1
+MLP-F               5,4%             5, 7, 8, 12, 8        4,9
+UserKNN             34,6%            —                     0,1
+ItemKNN             63,2%            —                     0,0
+NeuMF               17,1%            7, 8, 8, 8, 13        2,9
+GMF                 25,8%            13, 11, 10, 12, 11    3,4
+MostPopular-Recent  0,3%             —                     0,0
+MLP                 22,8%            6, 6, 6, 8, 8         2,9
+BPR-MF              5,2%             —                     1,4
+Content             86,5%            —                     0,0
+Most Popular        0,2%             —                     0,0
+Random              98,8%            —                     0,0
+Độ phủ: tỉ lệ sản phẩm ứng viên xuất hiện trong top-10 của ít nhất một khách. Epoch chọn = 1 ở một seed: seed đó dừng ngay, thường chỉ gợi ý sản phẩm phổ biến.
+
+
+Nguồn: summary.csv, significance.csv, ablation.csv, beyond.csv cùng thư mục (scripts/24_report_v2.py).
