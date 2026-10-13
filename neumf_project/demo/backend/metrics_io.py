@@ -36,15 +36,21 @@ def _by_k(df: pd.DataFrame) -> pd.DataFrame:
 
 def dashboard(ctx) -> dict:
     m = ctx.run_metadata
+    # Phân tích bổ sung (scripts/24_report_v2.py ghi bosung/*.csv): bảng gồm 14 mô hình + mô hình lai truyền thống (cột
+    # supplementary) — có thì dùng thay bảng của 14 mô hình; kiểm định họ bổ sung B1–B2 là một khối riêng.
+    bs = "bosung/" if (ctx.results_dir / "bosung" / "summary.csv").exists() else ""
     # by_k.csv (24_report_v2.py, tính từ hạng đã lưu) có đủ K = 5, 10, 15, 20; kết quả cũ chưa có thì dùng summary.csv
     by_k_file = "by_k.csv" if (ctx.results_dir / "by_k.csv").exists() else "summary.csv"
+    if bs and (ctx.results_dir / bs / by_k_file).exists():
+        by_k_file = bs + by_k_file
+    names = lambda df: df.assign(A=df["A"].map(V.DISPLAY), B=df["B"].map(V.DISPLAY))  # noqa: E731
     return {
         "run_tag": ctx.run_tag, "dry_run": m["dry_run"],
-        "summary": _block(ctx, "summary.csv", _named),
+        "summary": _block(ctx, bs + "summary.csv", _named),
         "by_k": _block(ctx, by_k_file, lambda df: _by_k(_named(df))),
-        "significance": _block(ctx, "significance.csv", lambda df: df.assign(A=df["A"].map(V.DISPLAY),
-                                                                             B=df["B"].map(V.DISPLAY))),
-        "beyond": _block(ctx, "beyond.csv", _named),
+        "significance": _block(ctx, "significance.csv", names),
+        "significance_bs": _block(ctx, bs + "significance.csv", names) if bs else None,
+        "beyond": _block(ctx, bs + "beyond.csv", _named),
         "ablation": _block(ctx, "ablation.csv", lambda df: df),
         "stats": {"status": "ok", "source": (ctx.results_dir / "data.json").relative_to(PROJECT_ROOT).as_posix(), "data": {
             "n_users": ctx.n_users, "n_items": ctx.n_items, "n_interactions": m["n_kept_pairs"],

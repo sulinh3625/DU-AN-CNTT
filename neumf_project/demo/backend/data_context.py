@@ -36,6 +36,7 @@ for p in (PROJECT_ROOT, PROJECT_ROOT / "scripts"):
 
 import v2_common as V  # noqa: E402
 from src.baselines import BPRMFBaseline  # noqa: E402
+from src.baselines.hybrid import COMPONENTS as HYBRID_COMPONENTS, TraditionalHybrid  # noqa: E402
 from src.evaluation.full_ranking import EvalRecord  # noqa: E402
 from src.evaluation.ranking_utils import deterministic_tie_key  # noqa: E402
 from src.models.late_fusion import LateFusion  # noqa: E402
@@ -66,8 +67,11 @@ SEED = 42  # 23_final_v2.py chỉ lưu checkpoint của seed 42
 V2_NEURAL = {"NeuMF-F": "neumf_f", "GMF-F": "gmf_f", "MLP-F": "mlp_f", "NeuMF": "neumf", "GMF": "gmf", "MLP": "mlp"}
 V2_STATIC = {"MostPopular": "popularity", "MostPopular-Recent": "recent_pop", "Content": "content",
              "ItemKNN": "itemknn", "UserKNN": "userknn"}
-V2_ORDER = ["NeuMF-F", "LateFusion-F", "GMF-F", "MLP-F", "NeuMF", "GMF", "MLP", "BPR-MF", "UserKNN", "ItemKNN",
-            "MostPopular-Recent", "Content", "MostPopular"]
+V2_ORDER = ["NeuMF-F", "LateFusion-F", "GMF-F", "MLP-F", "NeuMF", "GMF", "MLP", "BPR-MF", "Hybrid-CBCF", "UserKNN",
+            "ItemKNN", "MostPopular-Recent", "Content", "MostPopular"]
+# Mô hình lai truyền thống (bổ sung sau đánh giá cuối, scripts/25_bosung.py): chỉ dựng khi <kết quả>/bosung/results.json
+# đã có — tức tập kiểm thử đã được chấm cho mô hình này theo audit/PREREG_bosung.md; demo không chấm trước kế hoạch.
+HYBRID = "Hybrid-CBCF"
 BPR_CHECKPOINT = "bpr.npz"  # mảng P (users x d), Q (items x d)
 ARTICLES_PATH = PROJECT_ROOT / "data" / "raw" / "hm" / "articles.csv"
 CUSTOMERS_PATH = PROJECT_ROOT / "data" / "raw" / "hm" / "customers.csv"
@@ -243,6 +247,14 @@ class DataContext:
         for name, key in V2_STATIC.items():
             if key in configs:
                 self.scorers[name] = V.score_fn(key, configs[key], D, ev)
+        bosung = root / "bosung" / "results.json"
+        parts = [V.DISPLAY[k] for k in HYBRID_COMPONENTS]
+        if bosung.exists() and set(parts) <= set(self.scorers):
+            p = json.loads(bosung.read_text(encoding="utf-8"))["config"]["params"]
+            self.scorers[HYBRID] = TraditionalHybrid([self.scorers[n] for n in parts], p["fusion"], p.get("weights"))
+        else:
+            self.unavailable[HYBRID] = ("Chưa chấm tập kiểm thử cho mô hình bổ sung — chạy `python run.py "
+                                        f"{'' if dataset == 'hm' else 'amazon-'}bosung-final --reason \"...\"`.")
         bpr_path = seed_dir / BPR_CHECKPOINT
         if bpr_path.exists():
             self.scorers["BPR-MF"] = V.MaskedScoreFn(BPRMFBaseline.load(bpr_path), ev.scoreable, D.n_id_items)

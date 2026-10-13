@@ -46,11 +46,13 @@ python run.py demo           # hoặc: python -m demo
 | Màn hình | Nội dung |
 |---|---|
 | **Kiểm thử mô hình** (trang mặc định) | **Chọn khách**: thanh khách hiện mã, số món đã mua / món đích, nhóm giao dịch, khu vực mua nhiều nhất, tuổi, loại sản phẩm hay mua; nút ‹ › (phím ← →) sang khách trước / sau trong danh sách đang lọc, nút Ngẫu nhiên. Bảng chọn mở bằng **Ctrl K** hoặc **/**: tìm theo một đoạn `customer_id`, lọc nhóm giao dịch và khu vực, lọc **Gợi ý trúng / Gợi ý trượt** (có / không có món đích trong top-K của mô hình và K đang chọn; lần đầu với mỗi mô hình chấm mọi khách mất vài giây, sau đó giữ lại), sắp xếp (kể cả theo hạng món đích tốt nhất), ↑ ↓ Enter để chọn, mục "Xem gần đây" (lưu trong trình duyệt). URL giữ `?user=` nên tải lại hay gửi link vẫn mở đúng khách. **Sau khi chọn**: lịch sử mua (đúng dữ liệu mô hình đã học), top-K của một mô hình hoặc so sánh hai mô hình, hạng của từng sản phẩm đích, HR@K, NDCG@K, Recall@K. Thẻ **"10 khách tương đồng nhất"** (UserKNN): độ tương đồng, số món mua chung, láng giềng đã mua sản phẩm đích nào. |
-| **Dashboard** | Chỉ đọc `outputs/v2/final/*.csv`: kết quả 5 seed, đánh giá theo K (5 · 10 · 20), kiểm định họ 10 so sánh, độ phủ top-10 và chi phí huấn luyện, ablation NeuMF-F. Thiếu file thì hiện lệnh cần chạy. |
+| **Dashboard** | Chỉ đọc `outputs/v2/final/*.csv` (Amazon: `outputs/amazon/final/*.csv`): kết quả 5 seed, đánh giá theo K (5 · 10 · 15 · 20, từ `by_k.csv` — tính lại từ hạng đã lưu), kiểm định họ 10 so sánh, độ phủ top-10 và chi phí huấn luyện, ablation NeuMF-F. Khi đã chấm bổ sung mô hình lai truyền thống (`scripts/25_bosung.py`), đọc bảng trong `final/bosung/` (thêm Hybrid-CBCF, dấu †) và hiện thêm thẻ kiểm định họ bổ sung B1–B2. Thiếu file thì hiện lệnh cần chạy. |
 
 13 mô hình: NeuMF-F, LateFusion-F, GMF-F, MLP-F, NeuMF, GMF, MLP, BPR-MF, UserKNN, ItemKNN, MostPopular-Recent,
 Content, Most Popular — seed 42, cấu hình theo `results.json`, đã huấn luyện lại trên mọi cặp trước 29/07/2020. Mặc định
-so sánh NeuMF-F với NeuMF.
+so sánh NeuMF-F với NeuMF. Thêm mô hình lai truyền thống **Hybrid-CBCF** (Content + UserKNN + ItemKNN, trọng số trong
+`final/bosung/results.json`) khi đã chấm bổ sung bằng `python run.py bosung-final` (Amazon: `amazon-bosung-final`);
+chưa chấm thì mô hình này bị ẩn kèm lệnh cần chạy.
 
 ## 4. Cách chấm — khớp đánh giá cuối
 

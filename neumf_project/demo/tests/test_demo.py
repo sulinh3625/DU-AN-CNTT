@@ -21,7 +21,8 @@ TOL = 1e-6
 DEEP, DEEP_SLACK = 100, 3
 V2_KEY = {"NeuMF-F": "neumf_f", "GMF-F": "gmf_f", "MLP-F": "mlp_f", "NeuMF": "neumf", "GMF": "gmf", "MLP": "mlp",
           "LateFusion-F": "late_f", "BPR-MF": "bpr", "UserKNN": "userknn", "ItemKNN": "itemknn",
-          "MostPopular-Recent": "recent_pop", "Content": "content", "MostPopular": "popularity"}
+          "MostPopular-Recent": "recent_pop", "Content": "content", "MostPopular": "popularity",
+          "Hybrid-CBCF": "hybrid"}
 
 
 @pytest.fixture(scope="module")
@@ -35,8 +36,14 @@ def vctx():
 
 # ------------------------------------------------------------- khớp đánh giá cuối
 def test_metrics_match_per_user_file(vctx):
-    """Chỉ số per-user của demo khớp outputs/v2/final/seed42/per_user.csv.gz (số của Chương 4)."""
-    per = pd.read_csv(V2_DIR / f"seed{SEED}" / "per_user.csv.gz").set_index(["model", "user"])
+    """Chỉ số per-user của demo khớp outputs/v2/final/seed42/per_user.csv.gz (số của Chương 4) và, khi đã chấm bổ sung,
+    bosung/per_user.csv.gz của mô hình lai truyền thống."""
+    per = pd.read_csv(V2_DIR / f"seed{SEED}" / "per_user.csv.gz")
+    bs = V2_DIR / "bosung" / "per_user.csv.gz"
+    if bs.exists():  # scripts/25_bosung.py: mô hình tất định, một bản cho mỗi seed
+        b = pd.read_csv(bs)
+        per = pd.concat([per, b[b["seed"] == SEED]], ignore_index=True)
+    per = per.set_index(["model", "user"])
     rng = np.random.default_rng(2)
     users = rng.choice(vctx.target_users, size=min(40, len(vctx.target_users)), replace=False)
     assert {"NeuMF-F", "NeuMF", "GMF-F", "MLP-F", "LateFusion-F", "BPR-MF"} <= set(vctx.available_models)
@@ -126,8 +133,14 @@ def test_dashboard_reads_result_files(vctx):
     d = metrics_io.dashboard(vctx)
     assert d["summary"]["status"] == "ok" and d["significance"]["status"] == "ok"
     assert {"NeuMF-F", "NeuMF", "UserKNN"} <= {r["model"] for r in d["summary"]["data"]}
-    assert len(d["significance"]["data"]) == 10
+    assert len(d["significance"]["data"]) == 10  # họ đăng ký trước, không trộn họ bổ sung
     assert d["stats"]["data"]["n_test_users"] == len(vctx.target_users)
+    # Mô hình lai truyền thống chỉ hiện khi tập kiểm thử đã được chấm cho nó theo kế hoạch bổ sung (25_bosung.py)
+    scored = (V2_DIR / "bosung" / "results.json").exists()
+    assert ("Hybrid-CBCF" in vctx.available_models) == scored
+    assert (d["significance_bs"] is not None) == (V2_DIR / "bosung" / "summary.csv").exists()
+    if d["significance_bs"] is not None:
+        assert len(d["significance_bs"]["data"]) == 2
 
 
 def test_results_from_other_data_are_refused(tmp_path, monkeypatch):

@@ -1,0 +1,22 @@
+% Sinh tự động bởi neumf_project/scripts/24_report_v2.py — KHÔNG sửa tay.
+\begin{table}[htbp]
+    \centering\small
+    \caption{Mô hình lai truyền thống Hybrid-CBCF (bổ sung): ba thành phần đứng riêng và bốn cách kết hợp trên tập xác thực của mẫu phát triển (in đậm: cách được chọn)}
+    \label{tab:v2hybrid}
+    \begin{adjustbox}{max width=\textwidth}
+    \begin{tabular}{lrr}
+        \toprule
+        Mô hình & NDCG@10 & HR@10 \\
+        \midrule
+        Content (đứng riêng) & 0{,}00435 & 0{,}02141 \\
+        UserKNN (đứng riêng) & 0{,}02753 & 0{,}10432 \\
+        ItemKNN (đứng riêng) & 0{,}02599 & 0{,}09537 \\
+        Hybrid-CBCF -- bỏ phiếu: trung bình & 0{,}02634 & 0{,}10004 \\
+        Hybrid-CBCF -- bỏ phiếu: max & 0{,}01483 & 0{,}05411 \\
+        Hybrid-CBCF -- bỏ phiếu: min & 0{,}02143 & 0{,}08447 \\
+        Hybrid-CBCF -- \textbf{trọng số học theo cặp (khớp chéo theo khách)} & \textbf{0{,}02815} & \textbf{0{,}10588} \\
+        \bottomrule
+    \end{tabular}
+    \end{adjustbox}
+    \par\smallskip{\footnotesize Điểm của mỗi thành phần chuẩn hoá min--max trên tập ứng viên của khách. Bỏ phiếu: lấy trung bình, max hoặc min của ba điểm. Trọng số: tổng có trọng số, trọng số học bằng hồi quy logistic trên các cặp (sản phẩm đúng, sản phẩm không đúng) của cùng một khách, 50 sản phẩm không đúng mỗi sản phẩm đúng; NDCG@10 tính bằng khớp chéo hai phần theo khách. Số trên tập xác thực chỉ dùng để chọn. Mọi dòng tính trên cùng máy và cùng tệp đặc trưng; khác lần tinh chỉnh đã đăng ký (\bangrefV{tab_v2_tuning.tex}{tab:v2tuning}) ở Content (0{,}00459) vì tệp đặc trưng văn bản được dựng lại trên máy khác.}
+\end{table}

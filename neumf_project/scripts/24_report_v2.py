@@ -18,6 +18,11 @@ Ghi: <final-dir>/{summary,significance,ablation,beyond,by_k}.csv, hình <final-d
 Mọi số trong báo cáo lấy từ các file này, không gõ tay.
 Amazon Beauty (NEUMF_CONFIG=configs/amazon.yaml, `python run.py amazon-report`): đọc outputs/amazon/final/, ghi bảng +
 macro (\\ARes, \\ASig, ...) vào content/tables/amazon/ và hình vào media/figures/amazon/ — không đụng bảng của H&M.
+Bổ sung sau đánh giá cuối (audit/PREREG_bosung.md): nếu có <final-dir>/bosung/ (scripts/25_bosung.py) thì thêm mô hình lai
+truyền thống Hybrid-CBCF (đánh dấu †) vào bảng kết quả theo ba nhóm baseline, bảng theo K, bảng độ phủ và bảng tinh
+chỉnh, và kiểm định riêng họ bổ sung B1–B2 (Holm trong họ) -> <final-dir>/bosung/{summary,significance,by_k,beyond}.csv,
+bảng tab_*_sigbs.tex, macro \\VSig{B1}{...}, \\VRes{Hyb}{...}. Các tệp, thứ hạng và họ 10 so sánh của 14 mô hình đăng ký
+trước giữ nguyên.
 """
 from __future__ import annotations
 
@@ -48,18 +53,27 @@ MODELS = ["neumf_f", "late_f", "gmf_f", "mlp_f", "neumf", "gmf", "mlp", "bpr", "
           "recent_pop", "popularity", "random"]
 NAME = {"random": "Random", "popularity": "Most Popular", "recent_pop": "MostPopular-Recent", "content": "Content",
         "itemknn": "ItemKNN", "userknn": "UserKNN", "bpr": "BPR-MF", "gmf": "GMF", "mlp": "MLP", "neumf": "NeuMF",
-        "gmf_f": "GMF-F", "mlp_f": "MLP-F", "neumf_f": "NeuMF-F", "late_f": "LateFusion-F"}
+        "gmf_f": "GMF-F", "mlp_f": "MLP-F", "neumf_f": "NeuMF-F", "late_f": "LateFusion-F", "hybrid": "Hybrid-CBCF"}
 KEY = {"random": "Rand", "popularity": "Pop", "recent_pop": "RecPop", "content": "Cont", "itemknn": "IKNN",
        "userknn": "UKNN", "bpr": "BPR", "gmf": "GMF", "mlp": "MLP", "neumf": "NeuMF", "gmf_f": "GMFF",
-       "mlp_f": "MLPF", "neumf_f": "NeuMFF", "late_f": "LateF"}
+       "mlp_f": "MLPF", "neumf_f": "NeuMFF", "late_f": "LateF", "hybrid": "Hyb"}
 ABL = {"neumf_f-text": ("AblText", "Bỏ vector văn bản"), "neumf_f-time": ("AblTime", "Bỏ đặc trưng thời gian"),
        "neumf_f-user": ("AblUser", "Bỏ thông tin khách hàng"), "neumf_f-attr": ("AblAttr", "Bỏ thuộc tính sản phẩm"),
        "neumf_f-iddrop": ("AblIdDrop", "Không bỏ ID ngẫu nhiên")}
-GROUP_COLOR = {"Mô hình đề xuất (NeuMF-F)": "#2a78d6", "Có đặc trưng: thành phần, Late Fusion": "#8fb8ea",
-               "Chỉ dùng ID (NCF)": "#eb6834", "Baseline": "#1baf7a"}
-GROUP_OF = {"neumf_f": "Mô hình đề xuất (NeuMF-F)", **dict.fromkeys(("gmf_f", "mlp_f", "late_f"),
-                                                                   "Có đặc trưng: thành phần, Late Fusion"),
-            **dict.fromkeys(("gmf", "mlp", "neumf"), "Chỉ dùng ID (NCF)")}
+# Bổ sung sau đánh giá cuối (audit/PREREG_bosung.md, scripts/25_bosung.py): mô hình lai truyền thống, đánh dấu † trong
+# bảng; kiểm định trong họ riêng B1–B2 (Holm trong họ) — họ 10 so sánh đăng ký trước không đổi.
+SUP = ("hybrid",)
+DAGGER = r"\textsuperscript{\dag}"
+COMPARISONS_BS = [("neumf_f", "hybrid"), ("hybrid", "userknn")]
+# Ba nhóm baseline theo góp ý của GVHD (PREREG_bosung mục 5; cách xếp chờ GVHD xác nhận). Trong mỗi nhóm, bảng xếp theo
+# NDCG@10 giảm dần.
+GROUPS = [("Mô hình đề xuất", ("neumf_f",)),
+          ("Nhóm 1: mô hình đơn lẻ", ("gmf_f", "mlp_f", "gmf", "mlp")),
+          ("Nhóm 2: học máy truyền thống", ("hybrid", "userknn", "itemknn", "bpr", "content")),
+          ("Nhóm 3: chuyên biệt cho gợi ý", ("late_f", "neumf", "recent_pop", "popularity")),
+          ("Cận dưới", ("random",))]
+GROUP_COLOR = dict(zip([g for g, _ in GROUPS], ["#2a78d6", "#8fb8ea", "#1baf7a", "#eb6834", "#898781"]))
+GROUP_OF = {m: g for g, ms in GROUPS for m in ms}
 # Họ so sánh cố định (PREREG_v2 mục 7), theo đúng thứ tự đăng ký.
 COMPARISONS = [("neumf_f", "neumf"), ("neumf_f", "gmf_f"), ("neumf_f", "mlp_f"), ("neumf_f", "late_f"),
                ("neumf_f", "bpr"), ("neumf_f", "itemknn"), ("neumf_f", "userknn"), ("neumf_f", "recent_pop"),
@@ -86,7 +100,7 @@ TEXT = {
 
 
 def group(m: str) -> str:
-    return GROUP_OF.get(m, "Baseline")
+    return GROUP_OF.get(m, GROUPS[-1][0])
 
 
 def mk(metric: str) -> str:
@@ -139,6 +153,25 @@ def load(final_dir: Path):
     return seeds, res, per, hist, models
 
 
+def load_supplement(final_dir: Path, seeds, res: dict):
+    """Kết quả bổ sung của scripts/25_bosung.py trong <final-dir>/bosung/. Mô hình tất định, chấm một lần: per_user có
+    một bản cho mỗi seed của đánh giá cuối. Trả về (results.json bổ sung hoặc None, per_user, res có thêm mô hình bổ sung
+    ở mọi seed — chỉ để dựng bảng hiển thị chung với 14 mô hình)."""
+    d = final_dir / "bosung"
+    if not (d / "results.json").exists():
+        return None, pd.DataFrame(), res
+    sup = json.loads((d / "results.json").read_text(encoding="utf-8"))
+    per = pd.read_csv(d / "per_user.csv.gz")
+    if sorted(per["seed"].unique()) != sorted(seeds):
+        raise SystemExit(f"{d}/per_user.csv.gz có seed {sorted(per['seed'].unique())} khác đánh giá cuối {seeds}")
+    if sup.get("provenance", {}).get("data_md5") != res[seeds[0]].get("provenance", {}).get("data_md5"):
+        raise SystemExit(f"{d} được chấm trên dữ liệu khác lần đánh giá cuối (data_md5) — không ghép vào bảng.")
+    merged = {s: {**res[s], "results": {**res[s]["results"], **sup["results"]},
+                  "beyond": {**res[s].get("beyond", {}), **sup.get("beyond", {})},
+                  "train_meta": {**res[s].get("train_meta", {}), **sup.get("train_meta", {})}} for s in seeds}
+    return sup, per, merged
+
+
 def summarize(seeds, res, models, best) -> pd.DataFrame:
     rows = []
     for m in models:
@@ -156,9 +189,12 @@ def user_matrix(per: pd.DataFrame, models: list[str], metric: str = "NDCG@10") -
     return per[per["model"].isin(models)].groupby(["model", "user"])[metric].mean().unstack("model")
 
 
-def significance(um: pd.DataFrame) -> pd.DataFrame:
+def significance(um: pd.DataFrame, comparisons=COMPARISONS, prefix: str = "") -> pd.DataFrame:
+    """Kiểm định một họ so sánh (mặc định họ 10 so sánh đăng ký trước; họ bổ sung: COMPARISONS_BS, prefix "B"), hiệu
+    chỉnh Holm trong họ."""
     rows = []
-    for i, (a, b) in enumerate(COMPARISONS, 1):
+    for i, (a, b) in enumerate(comparisons, 1):
+        i = f"{prefix}{i}" if prefix else i
         if a not in um or b not in um:
             continue
         d = (um[a] - um[b]).to_numpy()
@@ -283,9 +319,24 @@ def num(x) -> str:
     return f"{x:g}".replace(".", "{,}")
 
 
+HYBRID_FUSION = {"mean": "bỏ phiếu: trung bình", "max": "bỏ phiếu: max", "min": "bỏ phiếu: min",
+                 "lr": "trọng số học theo cặp"}
+
+
+def hybrid_weights(p: dict) -> np.ndarray:
+    """Trọng số của Hybrid-CBCF chia cho tổng (cùng thứ tự xếp hạng với trọng số gốc)."""
+    w = np.asarray(p["weights"], dtype=float)
+    return w / w.sum()
+
+
 def params_text(m: str, p: dict) -> str:
     if not p:
         return "---"
+    if m == "hybrid":
+        if p["fusion"] != "lr":
+            return HYBRID_FUSION[p["fusion"]]
+        return HYBRID_FUSION["lr"] + ": " + "; ".join(
+            f"{n} {vn(x, 2)}" for n, x in zip(("Content", "UserKNN", "ItemKNN"), hybrid_weights(p)))
     if m == "recent_pop":
         return f"cửa sổ {p['window']} ngày"
     if m == "content":
@@ -355,6 +406,14 @@ def phrase(r) -> str:
         return NOT_SIG
     winner = r["A"] if r["verdict"] == "A tốt hơn" else r["B"]
     return f"{NAME[winner]} tốt hơn có ý nghĩa"
+
+
+def phrase_en(r) -> str:
+    """Như phrase(), cho tóm tắt tiếng Anh."""
+    if r["verdict"] == NOT_SIG:
+        return "not significantly different"
+    winner = r["A"] if r["verdict"] == "A tốt hơn" else r["B"]
+    return f"{NAME[winner]} significantly better"
 
 
 def family_summary(sig: pd.DataFrame) -> tuple[str, str]:
@@ -470,18 +529,24 @@ def export_data(m: Macros, tables: Path, info_a: dict, info_b: dict | None) -> N
         encoding="utf-8")
 
 
-def export_tuning(m: Macros, tables: Path, best: dict) -> None:
-    """Cấu hình tốt nhất trên tập xác thực của mẫu A + thống kê nhật ký tinh chỉnh."""
+def export_tuning(m: Macros, tables: Path, best: dict, bs: dict | None = None) -> None:
+    """Cấu hình tốt nhất trên tập xác thực của mẫu A + thống kê nhật ký tinh chỉnh. bs: bosung_best_configs.json (mô
+    hình bổ sung, dòng đánh dấu †; nhật ký riêng bosung_tuning_log.csv -> bảng các cách kết hợp)."""
     rows = []
-    for mm in [x for x in MODELS if x in best]:
-        v = best[mm]["val"]
-        rows.append([NAME[mm], params_text(mm, best[mm]["params"]), vn(v["NDCG@10"]), vn(v.get("HR@10"))])
+    bs = bs or {}
+    for mm in [x for x in MODELS if x in best] + [x for x in SUP if x in bs]:
+        cfg = best.get(mm) or bs[mm]
+        v = cfg["val"]
+        rows.append([NAME[mm] + (DAGGER if mm in SUP else ""), params_text(mm, cfg["params"]), vn(v["NDCG@10"]),
+                     vn(v.get("HR@10"))])
         for c in ("NDCG@10", "Recall@10", "HR@10"):
             if c in v:
                 m.add("val", KEY[mm], mk(c), vn(v[c]))
-        m.add("cfg", KEY[mm], "params", params_text(mm, best[mm]["params"]))
-        if best[mm].get("best_epoch") is not None:
-            m.add("cfg", KEY[mm], "epoch", str(best[mm]["best_epoch"]))
+        m.add("cfg", KEY[mm], "params", params_text(mm, cfg["params"]))
+        if cfg.get("best_epoch") is not None:
+            m.add("cfg", KEY[mm], "epoch", str(cfg["best_epoch"]))
+    if "hybrid" in bs:
+        export_hybrid_tuning(m, tables, best, bs["hybrid"])
     log = AUDIT / "tuning_log.csv"
     if log.exists():
         t = pd.read_csv(log)
@@ -493,13 +558,60 @@ def export_tuning(m: Macros, tables: Path, best: dict) -> None:
             m.add("cfg", "all", "nneural", str(len(neural)))
             m.add("cfg", "all", "epochmax", str(int(neural["best_epoch"].max())))
             m.add("cfg", "all", "epochmedian", vn(float(neural["best_epoch"].median()), 0))
+    note = ("d: số chiều embedding; neg: số mẫu âm mỗi mẫu dương; wd: weight decay; bỏ ID: xác suất bỏ embedding ID của "
+            "sản phẩm khi huấn luyện. Số trên tập xác thực dùng để chọn cấu hình, không dùng để kết luận.")
+    if "hybrid" in bs:
+        note += (f" {DAGGER}Mô hình lai truyền thống bổ sung sau đánh giá cuối: 4 cách kết hợp; trọng số chia cho tổng; "
+                 "NDCG@10 của cách trọng số tính bằng khớp chéo theo khách (\\bangrefV{tab_v2_hybrid.tex}{tab:v2hybrid}).")
     (tables / "tab_v2_tuning.tex").write_text(table(
         "tab:v2tuning", "Cấu hình tốt nhất của từng mô hình trên tập xác thực của mẫu phát triển (seed 42; 6 cấu hình "
         "mỗi mô hình có học, mô hình một tham số thử đủ lưới)", "llrr",
-        ["Mô hình", "Cấu hình chọn", "NDCG@10", "HR@10"], rows,
-        "d: số chiều embedding; neg: số mẫu âm mỗi mẫu dương; wd: weight decay; bỏ ID: xác suất bỏ embedding ID của "
-        "sản phẩm khi huấn luyện. Số trên tập xác thực dùng để chọn cấu hình, không dùng để kết luận."),
+        ["Mô hình", "Cấu hình chọn", "NDCG@10", "HR@10"], rows, note),
         encoding="utf-8")
+
+
+def export_hybrid_tuning(m: Macros, tables: Path, best: dict, hb: dict) -> None:
+    """Bảng các cách kết hợp của Hybrid-CBCF trên tập xác thực của mẫu phát triển (nhật ký bosung_tuning_log.csv), đặt
+    cạnh ba thành phần đứng riêng — như bảng so sánh mô hình đơn lẻ và mô hình lai trong luận án của GVHD."""
+    log = AUDIT / "bosung_tuning_log.csv"
+    if not log.exists():
+        return
+    t = pd.read_csv(log)
+    t = t[t["model"] == "hybrid"].drop_duplicates("params", keep="last")
+    chosen = json.dumps(hb["params"], sort_keys=True)
+    parts = hb.get("components_val") or {k: best[k]["val"] for k in ("content", "userknn", "itemknn")}
+    rows = []
+    for k in ("content", "userknn", "itemknn"):
+        rows.append([f"{NAME[k]} (đứng riêng)", vn(parts[k]["NDCG@10"]), vn(parts[k]["HR@10"])])
+        m.add("val", "Hyb" + KEY[k], "NDCG10", vn(parts[k]["NDCG@10"]))
+    differ = [k for k in parts if vn(parts[k]["NDCG@10"]) != vn(best[k]["val"]["NDCG@10"])]
+    for _, r in t.iterrows():
+        p = json.loads(r["params"])
+        label = HYBRID_FUSION[p["fusion"]] + (" (khớp chéo theo khách)" if p["fusion"] == "lr" else "")
+        cells = [vn(r["val_NDCG@10"]), vn(r["val_HR@10"])]
+        if json.dumps(p, sort_keys=True) == chosen:
+            label, cells = rf"\textbf{{{label}}}", [rf"\textbf{{{c}}}" for c in cells]
+        rows.append([f"Hybrid-CBCF -- {label}", *cells])
+        m.add("val", "Hyb" + p["fusion"].capitalize(), "NDCG10", vn(r["val_NDCG@10"]))
+    w = hybrid_weights(hb["params"]) if hb["params"]["fusion"] == "lr" else None
+    if w is not None:
+        for name, x in zip(("wCont", "wUKNN", "wIKNN"), w):
+            m.add("cfg", "Hyb", name, vn(x, 2))
+    m.add("cfg", "Hyb", "fusion", HYBRID_FUSION[hb["params"]["fusion"]])
+    m.add("cfg", "Hyb", "nneg", str(hb.get("pairwise", {}).get("n_neg", "")))
+    (tables / "tab_v2_hybrid.tex").write_text(table(
+        "tab:v2hybrid", "Mô hình lai truyền thống Hybrid-CBCF (bổ sung): ba thành phần đứng riêng và bốn cách kết hợp "
+        "trên tập xác thực của mẫu phát triển (in đậm: cách được chọn)", "lrr",
+        ["Mô hình", "NDCG@10", "HR@10"], rows,
+        "Điểm của mỗi thành phần chuẩn hoá min--max trên tập ứng viên của khách. Bỏ phiếu: lấy trung bình, max hoặc "
+        "min của ba điểm. Trọng số: tổng có trọng số, trọng số học bằng hồi quy logistic trên các cặp (sản phẩm đúng, "
+        f"sản phẩm không đúng) của cùng một khách, {hb.get('pairwise', {}).get('n_neg', 50)} sản phẩm không đúng mỗi "
+        "sản phẩm đúng; NDCG@10 tính bằng khớp chéo hai phần theo khách. Số trên tập xác thực chỉ dùng để chọn. Mọi "
+        "dòng tính trên cùng máy và cùng tệp đặc trưng"
+        + ("" if not differ else "; khác lần tinh chỉnh đã đăng ký (\\bangrefV{tab_v2_tuning.tex}{tab:v2tuning}) ở "
+           + ", ".join(f"{NAME[k]} ({vn(best[k]['val']['NDCG@10'])})" for k in differ)
+           + " vì tệp đặc trưng văn bản được dựng lại trên máy khác")
+        + "."), encoding="utf-8")
 
 
 def tex_escape(text: str) -> str:
@@ -524,52 +636,111 @@ def export_run(m: Macros, seeds, res) -> None:
     m.add("data", "run", "seedlist", ", ".join(map(str, seeds)))
 
 
-def export_results(m: Macros, tables: Path, seeds, summary, sig, abl, bey, info_b) -> None:
+SIG_HEADER = ["\\#", "A", "B", "NDCG@10 A", "NDCG@10 B", "(A$-$B)/B", "CI 95\\% của A$-$B", "p Holm", "Kết luận"]
+
+
+def sig_rows(m: Macros, sig: pd.DataFrame) -> list[list[str]]:
+    """Dòng bảng kiểm định + macro \\<P>Sig{id}{rel, diff, lo, hi, pholm, p, verdict, phrase} của một họ so sánh."""
+    rows = []
+    for r in sig.itertuples():
+        rows.append([str(r.id), NAME[r.A], NAME[r.B], vn(r.mean_A), vn(r.mean_B), pct(r.rel_diff),
+                     f"[{vn(r.ci_low, sign=True)}; {vn(r.ci_high, sign=True)}]", pval(r.p_holm),
+                     "---" if r.verdict == NOT_SIG else r.verdict])
+        for k, v in (("rel", pct(r.rel_diff)), ("diff", vn(r.diff, sign=True)), ("lo", vn(r.ci_low, sign=True)),
+                     ("hi", vn(r.ci_high, sign=True)), ("pholm", pval(r.p_holm)), ("p", pval(r.p_wilcoxon)),
+                     ("verdict", r.verdict), ("phrase", phrase(r._asdict())), ("phraseEN", phrase_en(r._asdict()))):
+            m.add("sig", str(r.id), k, v)
+    return rows
+
+
+def export_supplement(m: Macros, tables: Path, sig_bs: pd.DataFrame, sup: dict, n_seed: int) -> None:
+    """Phân tích bổ sung (audit/PREREG_bosung.md): kiểm định họ B1–B2 (Holm trong họ), thông tin lần chấm bổ sung và đối
+    chiếu ba thành phần của Hybrid-CBCF với lần đánh giá cuối đã đăng ký."""
+    tab, lab, where = TEXT["tab"], TEXT["label"], TEXT["where"]
+    if not sig_bs.empty:
+        rows = sig_rows(m, sig_bs)
+        m.add("sig", "bs", "n", str(len(sig_bs)))
+        m.add("sig", "bs", "nsig", str(int((sig_bs["verdict"] != NOT_SIG).sum())))
+        (tables / f"{tab}sigbs.tex").write_text(table(
+            f"{lab}sigbs", f"Phân tích bổ sung: kiểm định họ {len(sig_bs)} so sánh với mô hình lai truyền thống "
+            f"Hybrid-CBCF trên NDCG@10 ({where}, mỗi người dùng lấy trung bình qua {n_seed} seed): Wilcoxon "
+            "signed-rank, hiệu chỉnh Holm trong họ, khoảng tin cậy bootstrap 95\\%",
+            "rllrrrcrc", SIG_HEADER, rows,
+            "---: không khác biệt có ý nghĩa. Cùng tiêu chí ``tốt hơn'' như họ 10 so sánh đăng ký trước (p Holm $<$ "
+            "0,05, CI không chứa 0, chênh lệch tương đối $\\geq$ 5\\%); họ bổ sung được đăng ký sau đánh giá cuối và "
+            "hiệu chỉnh riêng, không làm thay đổi họ 10 so sánh."), encoding="utf-8")
+    prov, mach = sup.get("provenance", {}), sup.get("machine", {})
+    m.add("data", "bs", "commit", str(prov.get("git_commit") or "")[:7])
+    m.add("data", "bs", "cpu", tex_escape(str(mach.get("cpu", ""))))
+    m.add("data", "bs", "date", vn_date(str(sup.get("date", "")).split("T")[0]) if sup.get("date") else "---")
+    m.add("data", "bs", "minutes", vn(float(sup.get("elapsed_min", 0)), 1))
+    for k, c in sup.get("components_check", {}).items():
+        key = KEY[k]
+        m.add("data", f"bs{key}", "now", vn(c["NDCG@10"]))
+        if "users" in c:
+            m.add("data", f"bs{key}", "reg", vn(c["registered_NDCG10"]))
+            m.add("data", f"bs{key}", "same", f"{thousands(c['users_same_ranks'])}/{thousands(c['users'])}")
+
+
+def export_results(m: Macros, tables: Path, seeds, summary, sig, abl, bey, info_b, display=None,
+                   bey_display=None) -> None:
+    """summary, sig, abl, bey: 14 mô hình đăng ký trước (thứ hạng \\<P>Rank tính trên đây). display, bey_display: thêm mô
+    hình bổ sung (SUP, đánh dấu †) — dùng cho bảng kết quả theo ba nhóm và bảng độ phủ."""
     n_seed = len(seeds)
     models = summary["model"].tolist()
-    by = summary.set_index("model")
     rank = {mm: i + 1 for i, mm in enumerate(models)}
+    display = summary if display is None else display
+    bey = bey if bey_display is None else bey_display
+    shown = display["model"].tolist()  # NDCG@10 giảm dần
+    by = display.set_index("model")
     tab, lab, where = TEXT["tab"], TEXT["label"], TEXT["where"]
 
-    # Kết quả chính
+    # Kết quả chính, xếp theo ba nhóm mô hình đối chứng; trong nhóm theo NDCG@10 giảm dần
     best_val = {c: by[f"{c}_mean"].max() for c in TABLE_METRICS}
     rows = []
-    for mm in models:
-        r = [NAME[mm]]
-        for c in TABLE_METRICS:
-            mean, sd = by.loc[mm, f"{c}_mean"], by.loc[mm, f"{c}_std"]
-            cell = vn(mean)
-            if mean == best_val[c]:
-                cell = rf"\textbf{{{cell}}}"
-            r.append(cell + rf"\,{{\scriptsize$\pm$\,{vn(sd)}}}")
-        rows.append(r)
+    for gi, (gname, members) in enumerate(GROUPS):
+        ms = [mm for mm in shown if mm in members]
+        if not ms:
+            continue
+        rows.append([("\\midrule " if gi else "") + rf"\multicolumn{{{1 + len(TABLE_METRICS)}}}{{l}}{{\textit{{{gname}}}}}"])
+        for mm in ms:
+            r = [NAME[mm] + (DAGGER if mm in SUP else "")]
+            for c in TABLE_METRICS:
+                mean, sd = by.loc[mm, f"{c}_mean"], by.loc[mm, f"{c}_std"]
+                cell = vn(mean)
+                if mean == best_val[c]:
+                    cell = rf"\textbf{{{cell}}}"
+                r.append(cell + rf"\,{{\scriptsize$\pm$\,{vn(sd)}}}")
+            rows.append(r)
+    for mm in shown:
         for c in METRICS:
             m.add("res", KEY[mm], mk(c), vn(by.loc[mm, f"{c}_mean"]))
             m.add("sd", KEY[mm], mk(c), vn(by.loc[mm, f"{c}_std"]))
-        m.add("rank", KEY[mm], "NDCG10", ORDINAL.get(rank[mm], str(rank[mm])))
+        if mm in rank:
+            m.add("rank", KEY[mm], "NDCG10", ORDINAL.get(rank[mm], str(rank[mm])))
+        else:  # mô hình bổ sung: thứ hạng trong toàn bộ mô hình của bảng (14 + bổ sung)
+            k = shown.index(mm) + 1
+            m.add("rank", KEY[mm], "all", ORDINAL.get(k, str(k)))
+    m.add("rank", "all", "n", str(len(shown)))
     n_users = info_b.get("test", info_b["val"])["users"]
     note = ("In đậm: trung bình cao nhất mỗi cột. Mô hình tất định (Most Popular, MostPopular-Recent, Content, ItemKNN, "
-            "UserKNN) cho cùng kết quả ở mọi seed.")
+            "UserKNN" + (", Hybrid-CBCF" if any(mm in SUP for mm in shown) else "") + ") cho cùng kết quả ở mọi seed.")
+    if any(mm in SUP for mm in shown):
+        note += (f" {DAGGER}Mô hình lai truyền thống bổ sung sau đánh giá cuối theo góp ý của giảng viên hướng dẫn: "
+                 "chấm một lần trên cùng tập kiểm thử, không thuộc họ 10 so sánh đăng ký trước.")
     if not V.TUNED_HERE:
         note += (" Không tinh chỉnh trên bộ này: cấu hình chọn trên tập xác thực của mẫu phát triển H\\&M, chỉ số epoch "
                  "của mạng nơ-ron được chọn trên tập xác thực của chính bộ này.")
     (tables / f"{tab}main.tex").write_text(table(
-        f"{lab}main", f"Kết quả trên {TEXT['test']}: trung bình $\\pm$ độ lệch chuẩn qua {n_seed} seed "
-        f"(xếp hạng trên toàn bộ tập ứng viên; {thousands(n_users)} người dùng)",
+        f"{lab}main", f"Kết quả trên {TEXT['test']} theo ba nhóm mô hình đối chứng: trung bình $\\pm$ độ lệch chuẩn qua "
+        f"{n_seed} seed (xếp hạng trên toàn bộ tập ứng viên; {thousands(n_users)} người dùng)",
         "l" + "r" * len(TABLE_METRICS), ["Mô hình", *TABLE_METRICS], rows, note), encoding="utf-8")
     m.add("data", "run", "seeds", str(n_seed))
+    models = shown  # bảng độ phủ: mọi mô hình của bảng chính
 
     # Kiểm định
     if not sig.empty:
-        rows = []
-        for r in sig.itertuples():
-            rows.append([str(r.id), NAME[r.A], NAME[r.B], vn(r.mean_A), vn(r.mean_B), pct(r.rel_diff),
-                         f"[{vn(r.ci_low, sign=True)}; {vn(r.ci_high, sign=True)}]", pval(r.p_holm),
-                         "---" if r.verdict == NOT_SIG else r.verdict])
-            for k, v in (("rel", pct(r.rel_diff)), ("diff", vn(r.diff, sign=True)), ("lo", vn(r.ci_low, sign=True)),
-                         ("hi", vn(r.ci_high, sign=True)), ("pholm", pval(r.p_holm)), ("p", pval(r.p_wilcoxon)),
-                         ("verdict", r.verdict), ("phrase", phrase(r._asdict()))):
-                m.add("sig", str(r.id), k, v)
+        rows = sig_rows(m, sig)
         s_vn, s_en = family_summary(sig)
         m.add("sig", "all", "summary", s_vn)
         m.add("sig", "all", "summaryEN", s_en)
@@ -578,8 +749,7 @@ def export_results(m: Macros, tables: Path, seeds, summary, sig, abl, bey, info_
         (tables / f"{tab}sig.tex").write_text(table(
             f"{lab}sig", f"Kiểm định họ {len(sig)} so sánh đã đăng ký trước trên NDCG@10 ({where}, mỗi người dùng lấy "
             f"trung bình qua {n_seed} seed): Wilcoxon signed-rank, hiệu chỉnh Holm, khoảng tin cậy bootstrap 95\\%",
-            "rllrrrcrc", ["\\#", "A", "B", "NDCG@10 A", "NDCG@10 B", "(A$-$B)/B", "CI 95\\% của A$-$B", "p Holm",
-                          "Kết luận"], rows,
+            "rllrrrcrc", SIG_HEADER, rows,
             "---: không khác biệt có ý nghĩa. ``A tốt hơn'' (hoặc ``B tốt hơn'') chỉ khi đồng thời p Holm $<$ 0,05, "
             "CI không chứa 0 và chênh lệch tương đối $\\geq$ 5\\%."), encoding="utf-8")
 
@@ -613,7 +783,7 @@ def export_results(m: Macros, tables: Path, seeds, summary, sig, abl, bey, info_
     rows = []
     for mm in models:
         ep = b.loc[mm, "best_epoch_mean"]
-        rows.append([NAME[mm], vn(b.loc[mm, "coverage10"] * 100, 1) + r"\%",
+        rows.append([NAME[mm] + (DAGGER if mm in SUP else ""), vn(b.loc[mm, "coverage10"] * 100, 1) + r"\%",
                      "---" if np.isnan(ep) else vn(ep, 1), vn(b.loc[mm, "train_min"], 1)])
         m.add("bey", KEY[mm], "cov", vn(b.loc[mm, "coverage10"] * 100, 1) + r"\%")
         m.add("bey", KEY[mm], "time", vn(b.loc[mm, "train_min"], 1))
@@ -625,7 +795,9 @@ def export_results(m: Macros, tables: Path, seeds, summary, sig, abl, bey, info_
         ["Mô hình", "Độ phủ ứng viên", "Số epoch chọn", "Thời gian (phút)"], rows,
         "Độ phủ: tỉ lệ sản phẩm của không gian ứng viên xuất hiện trong top-10 của ít nhất một người dùng. Số epoch "
         f"chọn trên {TEXT['sel']} trước khi huấn luyện lại. Thời gian: chọn epoch + huấn luyện lại (mạng nơ-ron) "
-        "hoặc khớp mô hình, không gồm thời gian chấm."), encoding="utf-8")
+        "hoặc khớp mô hình, không gồm thời gian chấm."
+        + (f" {DAGGER}Bổ sung sau đánh giá cuối, chạy trên máy khác (chỉ CPU)." if any(mm in SUP for mm in models)
+           else "")), encoding="utf-8")
 
 
 def export_by_k(m: Macros, tables: Path, bk: pd.DataFrame, n_seed: int) -> None:
@@ -645,7 +817,7 @@ def export_by_k(m: Macros, tables: Path, bk: pd.DataFrame, n_seed: int) -> None:
         best = {c: by[f"{c}_mean"].max() for c in cols}
         rows = []
         for mm in by.index:
-            r = [NAME[mm]]
+            r = [NAME[mm] + (DAGGER if mm in SUP else "")]
             for c in cols:
                 v = by.loc[mm, f"{c}_mean"]
                 r.append(rf"\textbf{{{vn(v, 4)}}}" if v == best[c] else vn(v, 4))
@@ -655,12 +827,14 @@ def export_by_k(m: Macros, tables: Path, bk: pd.DataFrame, n_seed: int) -> None:
                  rf"\multicolumn{{{len(K_ALL)}}}{{c}}{{{pair[1]}@K}} \\"
                  + "\n" + rf"        \cmidrule(lr){{2-{1 + len(K_ALL)}}}\cmidrule(lr){{{2 + len(K_ALL)}-"
                  rf"{1 + 2 * len(K_ALL)}}}")
+        note = ("Tính lại từ hạng của từng sản phẩm đúng đã lưu ở lần đánh giá cuối (không chấm lại tập kiểm thử); cột "
+                "@5, @10, @20 trùng với số của lần đánh giá đó. In đậm: cao nhất mỗi cột. Độ lệch chuẩn qua seed ở tệp "
+                "by\\_k.csv.")
+        if any(mm in SUP for mm in by.index):
+            note += f" {DAGGER}Mô hình lai truyền thống bổ sung sau đánh giá cuối (hạng đã lưu ở lần chấm bổ sung)."
         text = table(f"{lab}k{part}", f"{pair[0]}@K và {pair[1]}@K với K = "
                      f"{', '.join(map(str, K_ALL))} trên {TEXT['test']} (trung bình qua {n_seed} seed)",
-                     "l" + "r" * len(cols), header, rows,
-                     "Tính lại từ hạng của từng sản phẩm đúng đã lưu ở lần đánh giá cuối (không chấm lại tập kiểm "
-                     "thử); cột @5, @10, @20 trùng với số của lần đánh giá đó. In đậm: cao nhất mỗi cột. Độ lệch "
-                     "chuẩn qua seed ở tệp by\\_k.csv.")
+                     "l" + "r" * len(cols), header, rows, note)
         (tables / f"{tab}k{part}.tex").write_text(text.replace("        \\toprule\n",
                                                                   "        \\toprule\n" + group + "\n", 1),
                                                      encoding="utf-8")
@@ -722,11 +896,11 @@ def plot_metrics(res, seeds, summary, fig_dir: Path, n_users: int):
         ax.set_xlim(0, mean.max() * 1.3)
         ax.set_title(c, fontsize=11, color=INK, loc="left")
         style(ax, "x")
-    axes[0].set_yticks(y, [NAME[mm] for mm in models], fontsize=9.5, color=INK)
+    axes[0].set_yticks(y, [NAME[mm] + ("†" if mm in SUP else "") for mm in models], fontsize=9.5, color=INK)
     axes[0].invert_yaxis()
     handles = [Patch(color=col, label=gname) for gname, col in GROUP_COLOR.items()]
     handles.append(Line2D([], [], marker="o", color=INK, linestyle="none", markersize=4, label="Từng seed"))
-    fig.legend(handles=handles, loc="upper center", ncol=5, frameon=False, fontsize=9, bbox_to_anchor=(0.5, 1.0))
+    fig.legend(handles=handles, loc="upper center", ncol=len(handles), frameon=False, fontsize=9, bbox_to_anchor=(0.5, 1.0))
     fig.suptitle(f"{TEXT['test_fig']} — trung bình ± độ lệch chuẩn qua {len(seeds)} seed "
                  f"({thousands(n_users)} người dùng)", fontsize=12, color=INK, y=1.07)
     fig.savefig(fig_dir / "v2_metrics.png", dpi=200, bbox_inches="tight", facecolor=SURFACE)
@@ -822,7 +996,7 @@ def plot_val_vs_test(summary: pd.DataFrame, fig_dir: Path):
         ax.plot([v, t], [i, i], color=GRID, linewidth=2, zorder=1)
         ax.scatter([v], [i], s=46, color="#eb6834", zorder=3, edgecolors=SURFACE, linewidths=2)
         ax.scatter([t], [i], s=46, color="#2a78d6", zorder=3, edgecolors=SURFACE, linewidths=2)
-    ax.set_yticks(y, [NAME[mm] for mm in s["model"]], fontsize=9.5, color=INK)
+    ax.set_yticks(y, [NAME[mm] + ("†" if mm in SUP else "") for mm in s["model"]], fontsize=9.5, color=INK)
     ax.invert_yaxis()
     ax.legend(handles=[Line2D([], [], marker="o", color=c, linestyle="none", markersize=7, label=lab)
                        for c, lab in (("#eb6834", "Mẫu phát triển, tập xác thực (tinh chỉnh, seed 42)"),
@@ -836,8 +1010,11 @@ def plot_val_vs_test(summary: pd.DataFrame, fig_dir: Path):
 
 
 # ------------------------------------------------------------------ ket_qua.txt
-def text_report(seeds, summary, sig, abl, bey, info_b, bk: pd.DataFrame | None = None) -> str:
-    """Bản tóm tắt dễ đọc (<final-dir>/ket_qua.txt): cùng số với các file CSV, không tính lại gì."""
+def text_report(seeds, summary, sig, abl, bey, info_b, bk: pd.DataFrame | None = None, sup: dict | None = None,
+                display: pd.DataFrame | None = None, sig_bs: pd.DataFrame | None = None,
+                bk_all: pd.DataFrame | None = None) -> str:
+    """Bản tóm tắt dễ đọc (<final-dir>/ket_qua.txt): cùng số với các file CSV, không tính lại gì. sup, display, sig_bs,
+    bk_all: phân tích bổ sung (mục 6), nếu có."""
     f = lambda x, nd=5: "—" if pd.isna(x) else vn_plain(x, nd)  # noqa: E731
     pc = lambda x: "—" if pd.isna(x) else f"{x * 100:+.1f}%".replace(".", ",")  # noqa: E731
     s = summary.set_index("model")
@@ -895,8 +1072,38 @@ def text_report(seeds, summary, sig, abl, bey, info_b, bk: pd.DataFrame | None =
             f(b.loc[m, "train_min"], 1)] for m in s.index if m in b.index],
           ["Độ phủ: tỉ lệ sản phẩm ứng viên xuất hiện trong top-10 của ít nhất một khách. Epoch chọn = 1 ở một seed: "
            "seed đó dừng ngay, thường chỉ gợi ý sản phẩm phổ biến."])
+    if sup is not None and display is not None:
+        d = display.set_index("model")
+        md = lambda m, c: f"{f(d.loc[m, f'{c}_mean'])} ± {f(d.loc[m, f'{c}_std'])}"  # noqa: E731
+        groups = [[g, NAME[m] + ("†" if m in SUP else ""), *(md(m, c) for c in TABLE_METRICS[:4])]
+                  for g, ms in GROUPS for m in display["model"] if m in ms]
+        block("6. Bổ sung sau đánh giá cuối: mô hình lai truyền thống Hybrid-CBCF (audit/PREREG_bosung.md) — kết quả "
+              "theo ba nhóm mô hình đối chứng", ["Nhóm", "Mô hình", "NDCG@10", "Recall@10", "HR@10", "Precision@10"],
+              groups, ["† Bổ sung: kết hợp Content, UserKNN, ItemKNN theo mô hình lai trong luận án của GVHD; cách "
+                       f"kết hợp chọn trên tập xác thực của mẫu phát triển H&M: {sup['config']['params']}.",
+                       "Chấm một lần trên cùng tập kiểm thử (tất định, dùng cho mọi seed); không thuộc họ 10 so sánh "
+                       "đăng ký trước."])
+        if bk_all is not None and not bk_all.empty and "hybrid" in set(bk_all["model"]):
+            b = bk_all.set_index("model")
+            block("6a. Hybrid-CBCF theo K", ["Độ đo", *(f"@{k}" for k in K_ALL)],
+                  [[n, *(f(b.loc["hybrid", f"{n}@{k}_mean"]) for k in K_ALL)] for n in K_METRICS])
+        if sig_bs is not None and not sig_bs.empty:
+            block("6b. Kiểm định họ bổ sung (NDCG@10; Wilcoxon, hiệu chỉnh Holm trong họ, CI bootstrap 95%)",
+                  ["#", "A", "B", "Chênh (A−B)/B", "CI 95% của A−B", "p Holm", "Kết luận"],
+                  [[r.id, NAME[r.A], NAME[r.B], pc(r.rel_diff), f"[{f(r.ci_low)}; {f(r.ci_high)}]",
+                    "< 0,001" if r.p_holm < 0.001 else f(r.p_holm, 3), phrase(r._asdict())] for r in sig_bs.itertuples()])
+        check = sup.get("components_check", {})
+        if check:
+            block("6c. Ba thành phần chấm lại cùng lần chấm bổ sung, so với đánh giá cuối đã đăng ký",
+                  ["Thành phần", "NDCG@10 (lần bổ sung)", "NDCG@10 (đã đăng ký)", "Khách trùng hạng"],
+                  [[NAME[k], f(c["NDCG@10"]), f(c.get("registered_NDCG10", np.nan)),
+                    f"{c['users_same_ranks']}/{c['users']}" if "users" in c else "—"] for k, c in check.items()],
+                  [f"Máy chạy bổ sung: {sup.get('machine', {}).get('cpu', '')}; commit "
+                   f"{str(sup.get('provenance', {}).get('git_commit') or '')[:7]}. Tệp đặc trưng văn bản không nằm trong "
+                   "git, mỗi máy tự dựng, nên Content có thể lệch nhẹ; UserKNN, ItemKNN không dùng đặc trưng."])
     out.append("Nguồn: summary.csv, significance.csv, ablation.csv, beyond.csv"
-               f"{'' if bk is None or bk.empty else ', by_k.csv'} cùng thư mục (scripts/24_report_v2.py).")
+               f"{'' if bk is None or bk.empty else ', by_k.csv'} cùng thư mục (scripts/24_report_v2.py)"
+               + ("; phân tích bổ sung: bosung/." if sup is not None else "."))
     return "\n".join(out) + "\n"
 
 
@@ -912,6 +1119,8 @@ def main():
     args = ap.parse_args()
     # NDCG@10 lúc tinh chỉnh chỉ có khi tinh chỉnh trên chính bộ này (Amazon dùng cấu hình H&M: không có cột đó)
     best = json.loads(V.BEST_CONFIGS.read_text(encoding="utf-8")) if V.TUNED_HERE else {}
+    bs_path = V.BEST_CONFIGS.with_name("bosung_best_configs.json")  # mô hình bổ sung (25_bosung.py tune)
+    bs_best = json.loads(bs_path.read_text(encoding="utf-8")) if V.TUNED_HERE and bs_path.exists() else {}
     if args.tuning_only:
         if not V.TUNED_HERE:  # Amazon không tinh chỉnh: không có bảng tinh chỉnh, không được ghi đè bảng của H&M
             raise SystemExit(f"{V.NAME} không tinh chỉnh — --tuning-only chỉ dùng cho H&M")
@@ -920,7 +1129,7 @@ def main():
         tables = ensure(Path(args.report_dir) / "content" / "tables" / "v2")
         m = Macros()
         export_data(m, tables, dev_info(), None)
-        export_tuning(m, tables, best)
+        export_tuning(m, tables, best, bs_best)
         m.write(tables / "results_v2_macros.tex")
         print(f"Đã ghi bảng dữ liệu (mẫu A) và kết quả tinh chỉnh vào {tables}")
         return
@@ -939,15 +1148,33 @@ def main():
     if not bk.empty:
         bk.to_csv(final_dir / "by_k.csv", index=False)
 
+    # Phân tích bổ sung (audit/PREREG_bosung.md): bảng hiển thị gồm 14 mô hình + mô hình bổ sung; họ kiểm định riêng
+    sup, sup_per, res_all = load_supplement(final_dir, seeds, res)
+    models_all = models + [mm for mm in SUP if sup is not None and mm in sup["results"]]
+    per_all, display, bey_all, bk_all, sig_bs = per, summary, bey, bk, pd.DataFrame()
+    if sup is not None:
+        per_all = pd.concat([per, sup_per], ignore_index=True)
+        display = summarize(seeds, res_all, models_all, {**best, **bs_best})
+        bey_all = beyond(seeds, res_all, models_all)
+        bk_all = by_k(per_all, models_all, display)
+        sig_bs = significance(user_matrix(per_all, models_all), COMPARISONS_BS, "B")
+        out_bs = final_dir / "bosung"
+        display.assign(supplementary=display["model"].isin(SUP)).to_csv(out_bs / "summary.csv", index=False)
+        sig_bs.to_csv(out_bs / "significance.csv", index=False)
+        bey_all.to_csv(out_bs / "beyond.csv", index=False)
+        if not bk_all.empty:
+            bk_all.to_csv(out_bs / "by_k.csv", index=False)
+
     info_b = json.loads((final_dir / "data.json").read_text(encoding="utf-8"))
     n_users = info_b.get("test", info_b["val"])["users"]
-    (final_dir / "ket_qua.txt").write_text(text_report(seeds, summary, sig, abl, bey, info_b, bk), encoding="utf-8")
+    (final_dir / "ket_qua.txt").write_text(text_report(seeds, summary, sig, abl, bey, info_b, bk, sup, display, sig_bs,
+                                                       bk_all), encoding="utf-8")
     fig_dir = ensure(final_dir / "figures")
-    plot_metrics(res, seeds, summary, fig_dir, n_users)
+    plot_metrics(res_all, seeds, display, fig_dir, n_users)
     plot_significance(sig, fig_dir)
     plot_ablation(abl, fig_dir)
     plot_curves(hist, fig_dir)
-    plot_val_vs_test(summary, fig_dir)
+    plot_val_vs_test(display, fig_dir)
 
     pd.set_option("display.width", 220)
     cols = ["name", "NDCG@10_mean", "NDCG@10_std", "Recall@10_mean", "HR@10_mean", "val_NDCG@10"]
@@ -964,13 +1191,15 @@ def main():
         m = Macros(TEXT["macro"])
         if V.TUNED_HERE:
             export_data(m, tables, dev_info(), info_b)
-            export_tuning(m, tables, best)
+            export_tuning(m, tables, best, bs_best)
         else:  # Amazon: một bộ dữ liệu, không tinh chỉnh
             manifest = json.loads(V.MANIFEST.read_text(encoding="utf-8")) if V.MANIFEST.exists() else {}
             export_data_amazon(m, tables, info_b, manifest.get(V.data_name("holdout"), {}))
-        export_results(m, tables, seeds, summary, sig, abl, bey, info_b)
-        export_by_k(m, tables, bk, len(seeds))
+        export_results(m, tables, seeds, summary, sig, abl, bey, info_b, display, bey_all)
+        export_by_k(m, tables, bk_all, len(seeds))
         export_run(m, seeds, res)
+        if sup is not None:
+            export_supplement(m, tables, sig_bs, sup, len(seeds))
         m.write(tables / TEXT["macros_file"])
         fig_out = ensure(report / "media" / "figures" / TEXT["subdir"])
         for f in fig_dir.glob("*.png"):

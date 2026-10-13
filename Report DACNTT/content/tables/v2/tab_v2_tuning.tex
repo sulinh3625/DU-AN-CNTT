@@ -21,8 +21,9 @@
         Content & chu kỳ bán rã 30 ngày & 0{,}00459 & 0{,}02180 \\
         MostPopular-Recent & cửa sổ 28 ngày & 0{,}02334 & 0{,}10432 \\
         Most Popular & --- & 0{,}02174 & 0{,}09420 \\
+        Hybrid-CBCF\textsuperscript{\dag} & trọng số học theo cặp: Content 0{,}12; UserKNN 0{,}60; ItemKNN 0{,}28 & 0{,}02815 & 0{,}10588 \\
         \bottomrule
     \end{tabular}
     \end{adjustbox}
-    \par\smallskip{\footnotesize d: số chiều embedding; neg: số mẫu âm mỗi mẫu dương; wd: weight decay; bỏ ID: xác suất bỏ embedding ID của sản phẩm khi huấn luyện. Số trên tập xác thực dùng để chọn cấu hình, không dùng để kết luận.}
+    \par\smallskip{\footnotesize d: số chiều embedding; neg: số mẫu âm mỗi mẫu dương; wd: weight decay; bỏ ID: xác suất bỏ embedding ID của sản phẩm khi huấn luyện. Số trên tập xác thực dùng để chọn cấu hình, không dùng để kết luận. \textsuperscript{\dag}Mô hình lai truyền thống bổ sung sau đánh giá cuối: 4 cách kết hợp; trọng số chia cho tổng; NDCG@10 của cách trọng số tính bằng khớp chéo theo khách (\bangrefV{tab_v2_hybrid.tex}{tab:v2hybrid}).}
 \end{table}

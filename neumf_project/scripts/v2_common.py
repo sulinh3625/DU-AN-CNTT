@@ -23,6 +23,7 @@ PROJECT_ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(PROJECT_ROOT))
 
 from src.baselines import BPRMFBaseline, ItemKNNBaseline, MostPopularBaseline, RandomBaseline, UserKNNBaseline  # noqa: E402
+from src.baselines.hybrid import COMPONENTS as HYBRID_COMPONENTS  # noqa: E402
 from src.data_pipeline.dataset import TrainDataset  # noqa: E402
 from src.data_pipeline.feature_dataset import FeatureTrainDataset  # noqa: E402
 from src.data_pipeline.features import DAY0, group_by_product, load_catalog, load_daily_sales  # noqa: E402
@@ -58,7 +59,8 @@ METRICS = ["NDCG@10", "Recall@10", "HR@10", "Precision@10", "NDCG@5", "NDCG@20"]
 
 DISPLAY = {"random": "Random", "popularity": "MostPopular", "recent_pop": "MostPopular-Recent", "content": "Content",
            "itemknn": "ItemKNN", "userknn": "UserKNN", "bpr": "BPR-MF", "gmf": "GMF", "mlp": "MLP", "neumf": "NeuMF",
-           "gmf_f": "GMF-F", "mlp_f": "MLP-F", "neumf_f": "NeuMF-F", "late_f": "LateFusion-F"}
+           "gmf_f": "GMF-F", "mlp_f": "MLP-F", "neumf_f": "NeuMF-F", "late_f": "LateFusion-F",
+           "hybrid": "Hybrid-CBCF"}  # hybrid: mô hình lai truyền thống bổ sung sau đánh giá cuối (25_bosung.py)
 TORCH_ID = ("gmf", "mlp", "neumf")
 TORCH_FEAT = ("gmf_f", "mlp_f", "neumf_f")
 # Ablation của NeuMF-F (cùng siêu tham số với NeuMF-F, tắt một thành phần) — chỉ mô tả.
@@ -100,6 +102,7 @@ DEFAULTS = {
     "late_f": dict(w=0.5),
 }
 LATE_PARTS = ("gmf_f", "mlp_f")  # Late Fusion-F = trộn điểm GMF-F và MLP-F huấn luyện riêng
+HYBRID_PARTS = HYBRID_COMPONENTS  # Hybrid-CBCF = kết hợp Content, UserKNN, ItemKNN (audit/PREREG_bosung.md)
 
 
 def sample_configs(grid: dict, default: dict, n: int, seed: int = CFG.get("tuning", {}).get("grid_seed", 0)) -> list[dict]:
@@ -301,11 +304,18 @@ def late_fusion(parts: dict, w: float) -> LateFusion:
     return LateFusion(parts[LATE_PARTS[0]], parts[LATE_PARTS[1]], w)
 
 
+def hybrid_components(best: dict, D: DataV2, stage: Stage) -> list:
+    """Ba thành phần của mô hình lai truyền thống Hybrid-CBCF (Content, UserKNN, ItemKNN — thứ tự COMPONENTS của
+    src/baselines/hybrid.py), khớp trên tập huấn luyện của giai đoạn với đúng cấu hình đã chọn khi tinh chỉnh (best =
+    audit/v2/best_configs.json)."""
+    return [score_fn(k, best[k]["params"], D, stage) for k in HYBRID_PARTS]
+
+
 def evaluate(scorer, stage: Stage, dev, per_user=None, topk=None) -> dict:
     return evaluate_v2(scorer, stage.records, device=dev, per_user=per_user, topk=topk, **eval_kw())
 
 
 __all__ = ["CFG", "CONFIG", "DATASET", "NAME", "OUT", "read_config", "manifest_path", "AUDIT", "METRICS", "DISPLAY", "GRIDS", "DEFAULTS", "ABLATIONS", "ABLATION_DISPLAY", "TORCH_ID",
-           "TORCH_FEAT", "LATE_PARTS", "DATA_DIR", "MANIFEST", "data_name", "configs_for", "load_data", "device",
-           "build_torch", "torch_scorer", "fit_torch", "score_fn", "late_fusion", "evaluate", "is_feature",
-           "evaluate_score_function"]
+           "TORCH_FEAT", "LATE_PARTS", "HYBRID_PARTS", "DATA_DIR", "MANIFEST", "data_name", "configs_for", "load_data",
+           "device", "build_torch", "torch_scorer", "fit_torch", "score_fn", "late_fusion", "hybrid_components",
+           "evaluate", "is_feature", "evaluate_score_function"]

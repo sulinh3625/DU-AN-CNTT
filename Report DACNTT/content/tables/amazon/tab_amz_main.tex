@@ -1,26 +1,31 @@
 % Sinh tự động bởi neumf_project/scripts/24_report_v2.py — KHÔNG sửa tay.
 \begin{table}[htbp]
     \centering\small
-    \caption{Kết quả trên tập kiểm thử Amazon Beauty: trung bình $\pm$ độ lệch chuẩn qua 5 seed (xếp hạng trên toàn bộ tập ứng viên; 2.644 người dùng)}
+    \caption{Kết quả trên tập kiểm thử Amazon Beauty theo ba nhóm mô hình đối chứng: trung bình $\pm$ độ lệch chuẩn qua 5 seed (xếp hạng trên toàn bộ tập ứng viên; 2.644 người dùng)}
     \label{tab:amzmain}
     \begin{adjustbox}{max width=\textwidth}
     \begin{tabular}{lrrrrrr}
         \toprule
         Mô hình & NDCG@10 & Recall@10 & HR@10 & Precision@10 & NDCG@5 & NDCG@20 \\
         \midrule
-        LateFusion-F & \textbf{0{,}03747}\,{\scriptsize$\pm$\,0{,}00180} & \textbf{0{,}06286}\,{\scriptsize$\pm$\,0{,}00167} & \textbf{0{,}10802}\,{\scriptsize$\pm$\,0{,}00314} & \textbf{0{,}01222}\,{\scriptsize$\pm$\,0{,}00045} & \textbf{0{,}02879}\,{\scriptsize$\pm$\,0{,}00222} & \textbf{0{,}04571}\,{\scriptsize$\pm$\,0{,}00142} \\
-        GMF-F & 0{,}03298\,{\scriptsize$\pm$\,0{,}00259} & 0{,}05465\,{\scriptsize$\pm$\,0{,}00397} & 0{,}09410\,{\scriptsize$\pm$\,0{,}00780} & 0{,}01042\,{\scriptsize$\pm$\,0{,}00088} & 0{,}02567\,{\scriptsize$\pm$\,0{,}00256} & 0{,}04159\,{\scriptsize$\pm$\,0{,}00195} \\
+        \multicolumn{7}{l}{\textit{Mô hình đề xuất}} \\
         NeuMF-F & 0{,}03277\,{\scriptsize$\pm$\,0{,}00189} & 0{,}05568\,{\scriptsize$\pm$\,0{,}00403} & 0{,}09750\,{\scriptsize$\pm$\,0{,}00657} & 0{,}01092\,{\scriptsize$\pm$\,0{,}00077} & 0{,}02450\,{\scriptsize$\pm$\,0{,}00148} & 0{,}04144\,{\scriptsize$\pm$\,0{,}00208} \\
+        \midrule \multicolumn{7}{l}{\textit{Nhóm 1: mô hình đơn lẻ}} \\
+        GMF-F & 0{,}03298\,{\scriptsize$\pm$\,0{,}00259} & 0{,}05465\,{\scriptsize$\pm$\,0{,}00397} & 0{,}09410\,{\scriptsize$\pm$\,0{,}00780} & 0{,}01042\,{\scriptsize$\pm$\,0{,}00088} & 0{,}02567\,{\scriptsize$\pm$\,0{,}00256} & 0{,}04159\,{\scriptsize$\pm$\,0{,}00195} \\
         MLP-F & 0{,}03065\,{\scriptsize$\pm$\,0{,}00193} & 0{,}05107\,{\scriptsize$\pm$\,0{,}00327} & 0{,}08737\,{\scriptsize$\pm$\,0{,}00656} & 0{,}00998\,{\scriptsize$\pm$\,0{,}00092} & 0{,}02330\,{\scriptsize$\pm$\,0{,}00151} & 0{,}03764\,{\scriptsize$\pm$\,0{,}00184} \\
+        GMF & 0{,}01627\,{\scriptsize$\pm$\,0{,}00173} & 0{,}02533\,{\scriptsize$\pm$\,0{,}00154} & 0{,}05582\,{\scriptsize$\pm$\,0{,}00303} & 0{,}00640\,{\scriptsize$\pm$\,0{,}00036} & 0{,}01287\,{\scriptsize$\pm$\,0{,}00180} & 0{,}02090\,{\scriptsize$\pm$\,0{,}00166} \\
+        MLP & 0{,}01271\,{\scriptsize$\pm$\,0{,}00054} & 0{,}02045\,{\scriptsize$\pm$\,0{,}00132} & 0{,}04667\,{\scriptsize$\pm$\,0{,}00324} & 0{,}00513\,{\scriptsize$\pm$\,0{,}00037} & 0{,}00978\,{\scriptsize$\pm$\,0{,}00080} & 0{,}01694\,{\scriptsize$\pm$\,0{,}00062} \\
+        \midrule \multicolumn{7}{l}{\textit{Nhóm 2: học máy truyền thống}} \\
         UserKNN & 0{,}02506\,{\scriptsize$\pm$\,0{,}00000} & 0{,}03553\,{\scriptsize$\pm$\,0{,}00000} & 0{,}07716\,{\scriptsize$\pm$\,0{,}00000} & 0{,}00930\,{\scriptsize$\pm$\,0{,}00000} & 0{,}02059\,{\scriptsize$\pm$\,0{,}00000} & 0{,}03096\,{\scriptsize$\pm$\,0{,}00000} \\
         ItemKNN & 0{,}02333\,{\scriptsize$\pm$\,0{,}00000} & 0{,}03526\,{\scriptsize$\pm$\,0{,}00000} & 0{,}07186\,{\scriptsize$\pm$\,0{,}00000} & 0{,}00870\,{\scriptsize$\pm$\,0{,}00000} & 0{,}01895\,{\scriptsize$\pm$\,0{,}00000} & 0{,}02789\,{\scriptsize$\pm$\,0{,}00000} \\
-        NeuMF & 0{,}01978\,{\scriptsize$\pm$\,0{,}00176} & 0{,}03035\,{\scriptsize$\pm$\,0{,}00187} & 0{,}06694\,{\scriptsize$\pm$\,0{,}00605} & 0{,}00762\,{\scriptsize$\pm$\,0{,}00090} & 0{,}01599\,{\scriptsize$\pm$\,0{,}00161} & 0{,}02542\,{\scriptsize$\pm$\,0{,}00207} \\
-        GMF & 0{,}01627\,{\scriptsize$\pm$\,0{,}00173} & 0{,}02533\,{\scriptsize$\pm$\,0{,}00154} & 0{,}05582\,{\scriptsize$\pm$\,0{,}00303} & 0{,}00640\,{\scriptsize$\pm$\,0{,}00036} & 0{,}01287\,{\scriptsize$\pm$\,0{,}00180} & 0{,}02090\,{\scriptsize$\pm$\,0{,}00166} \\
-        MostPopular-Recent & 0{,}01401\,{\scriptsize$\pm$\,0{,}00000} & 0{,}02483\,{\scriptsize$\pm$\,0{,}00000} & 0{,}03858\,{\scriptsize$\pm$\,0{,}00000} & 0{,}00416\,{\scriptsize$\pm$\,0{,}00000} & 0{,}00964\,{\scriptsize$\pm$\,0{,}00000} & 0{,}01854\,{\scriptsize$\pm$\,0{,}00000} \\
-        MLP & 0{,}01271\,{\scriptsize$\pm$\,0{,}00054} & 0{,}02045\,{\scriptsize$\pm$\,0{,}00132} & 0{,}04667\,{\scriptsize$\pm$\,0{,}00324} & 0{,}00513\,{\scriptsize$\pm$\,0{,}00037} & 0{,}00978\,{\scriptsize$\pm$\,0{,}00080} & 0{,}01694\,{\scriptsize$\pm$\,0{,}00062} \\
         BPR-MF & 0{,}01144\,{\scriptsize$\pm$\,0{,}00091} & 0{,}01691\,{\scriptsize$\pm$\,0{,}00164} & 0{,}04115\,{\scriptsize$\pm$\,0{,}00309} & 0{,}00498\,{\scriptsize$\pm$\,0{,}00035} & 0{,}00883\,{\scriptsize$\pm$\,0{,}00077} & 0{,}01476\,{\scriptsize$\pm$\,0{,}00082} \\
         Content & 0{,}00945\,{\scriptsize$\pm$\,0{,}00000} & 0{,}01448\,{\scriptsize$\pm$\,0{,}00000} & 0{,}03215\,{\scriptsize$\pm$\,0{,}00000} & 0{,}00356\,{\scriptsize$\pm$\,0{,}00000} & 0{,}00737\,{\scriptsize$\pm$\,0{,}00000} & 0{,}01264\,{\scriptsize$\pm$\,0{,}00000} \\
+        \midrule \multicolumn{7}{l}{\textit{Nhóm 3: chuyên biệt cho gợi ý}} \\
+        LateFusion-F & \textbf{0{,}03747}\,{\scriptsize$\pm$\,0{,}00180} & \textbf{0{,}06286}\,{\scriptsize$\pm$\,0{,}00167} & \textbf{0{,}10802}\,{\scriptsize$\pm$\,0{,}00314} & \textbf{0{,}01222}\,{\scriptsize$\pm$\,0{,}00045} & \textbf{0{,}02879}\,{\scriptsize$\pm$\,0{,}00222} & \textbf{0{,}04571}\,{\scriptsize$\pm$\,0{,}00142} \\
+        NeuMF & 0{,}01978\,{\scriptsize$\pm$\,0{,}00176} & 0{,}03035\,{\scriptsize$\pm$\,0{,}00187} & 0{,}06694\,{\scriptsize$\pm$\,0{,}00605} & 0{,}00762\,{\scriptsize$\pm$\,0{,}00090} & 0{,}01599\,{\scriptsize$\pm$\,0{,}00161} & 0{,}02542\,{\scriptsize$\pm$\,0{,}00207} \\
+        MostPopular-Recent & 0{,}01401\,{\scriptsize$\pm$\,0{,}00000} & 0{,}02483\,{\scriptsize$\pm$\,0{,}00000} & 0{,}03858\,{\scriptsize$\pm$\,0{,}00000} & 0{,}00416\,{\scriptsize$\pm$\,0{,}00000} & 0{,}00964\,{\scriptsize$\pm$\,0{,}00000} & 0{,}01854\,{\scriptsize$\pm$\,0{,}00000} \\
         Most Popular & 0{,}00872\,{\scriptsize$\pm$\,0{,}00000} & 0{,}01576\,{\scriptsize$\pm$\,0{,}00000} & 0{,}03744\,{\scriptsize$\pm$\,0{,}00000} & 0{,}00390\,{\scriptsize$\pm$\,0{,}00000} & 0{,}00619\,{\scriptsize$\pm$\,0{,}00000} & 0{,}00998\,{\scriptsize$\pm$\,0{,}00000} \\
+        \midrule \multicolumn{7}{l}{\textit{Cận dưới}} \\
         Random & 0{,}00101\,{\scriptsize$\pm$\,0{,}00028} & 0{,}00168\,{\scriptsize$\pm$\,0{,}00059} & 0{,}00446\,{\scriptsize$\pm$\,0{,}00143} & 0{,}00045\,{\scriptsize$\pm$\,0{,}00014} & 0{,}00066\,{\scriptsize$\pm$\,0{,}00031} & 0{,}00153\,{\scriptsize$\pm$\,0{,}00031} \\
         \bottomrule
     \end{tabular}

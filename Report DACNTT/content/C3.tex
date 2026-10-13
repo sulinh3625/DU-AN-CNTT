@@ -397,7 +397,7 @@ Theo phân loại ở mục~\ref{subsec:early_late_fusion}, đây là \textbf{h�
     \item \textbf{GMF, MLP, NeuMF chỉ dùng ID}: kiến trúc NCF gốc \parencite{he2017ncf}, không có đặc trưng -- đo lợi ích của đặc trưng.
     \item \textbf{Ablation của NeuMF-F}: cùng siêu tham số với NeuMF-F, tắt lần lượt một thành phần -- vector văn bản, đặc trưng thời gian, thông tin khách hàng, thuộc tính sản phẩm, hoặc cơ chế bỏ ID ngẫu nhiên. Biến thể nào trùng với chính NeuMF-F thì không chạy (mục~\ref{subsec:ablation}).
 \end{itemize}
-Các baseline không thuộc khung này (Most Popular, MostPopular-Recent, Content, ItemKNN, UserKNN, BPR-MF) được mô tả ở mục~\ref{sec:baselines}.
+Các baseline không thuộc khung này (Most Popular, MostPopular-Recent, Content, ItemKNN, UserKNN, BPR-MF) và mô hình lai truyền thống Hybrid-CBCF -- kết hợp Content, UserKNN và ItemKNN, bổ sung sau đánh giá cuối (Thuật toán~\ref{alg:hybrid}) -- được mô tả ở mục~\ref{sec:baselines}, cùng cách xếp mọi mô hình đối chứng thành ba nhóm.
 
 \section{Lấy mẫu âm theo thời điểm và hàm mục tiêu}
 \label{sec:sampling_loss}
@@ -564,7 +564,7 @@ Bảng~\ref{tab:hyperparams} liệt kê không gian tinh chỉnh của mọi mô
 
 \begin{enumerate}
     \item \textbf{Tách mẫu phát triển và mẫu kiểm định.} Mọi lựa chọn mô hình, siêu tham số và số epoch dựa trên tập \emph{xác thực}: tinh chỉnh trên mẫu phát triển, chọn số epoch khi đánh giá cuối trên tập xác thực của mẫu kiểm định. Tập kiểm thử của mẫu kiểm định chỉ được mở \textbf{đúng một lần}, ở đánh giá cuối; tập kiểm thử của mẫu phát triển không được dựng ở bản cuối của quy trình.
-    \item \textbf{Đăng ký trước (pre-registration).} Danh sách mô hình, lưới tinh chỉnh, số seed, độ đo chính, họ so sánh, tiêu chí kết luận và các hạn chế đã biết được ghi vào kế hoạch thực nghiệm (03/10/2026) \emph{trước} khi có kết quả tinh chỉnh của bất kỳ mô hình có đặc trưng nào, rồi được lưu vào hệ thống quản lý phiên bản. Bản cuối của kế hoạch (10/10/2026) đổi bốn điểm theo góp ý của giảng viên hướng dẫn và quyết định của nhóm -- một sản phẩm là một mẫu thiết kế, bỏ sản phẩm chưa có người mua khỏi tập ứng viên, ghi dữ liệu đã lọc ra tệp kiểm bằng mã MD5, và đánh giá cuối trên mẫu kiểm định mới (khối 2). Các điểm này được quyết định sau khi đã xem kết quả trên khối 1, nên khối 1 không còn dùng để kết luận (mục~\ref{sec:v1_history}). Bản cuối được lưu phiên bản sau khi tinh chỉnh lại trên dữ liệu mới của mẫu phát triển và trước khi dựng tập kiểm thử của mẫu kiểm định; độ đo chính, họ so sánh và tiêu chí kết luận giữ nguyên như bản 03/10/2026. Mô hình đề xuất (NeuMF-F) được cố định từ trước, không chọn lại theo kết quả. Mọi thay đổi sau đó được ghi vào mục ``lệch kế hoạch'' kèm thời điểm. Kế hoạch kiểm chứng trên Amazon Beauty được đăng ký riêng theo cùng cách, trước khi chạy mô hình nào trên bộ này.
+    \item \textbf{Đăng ký trước (pre-registration).} Danh sách mô hình, lưới tinh chỉnh, số seed, độ đo chính, họ so sánh, tiêu chí kết luận và các hạn chế đã biết được ghi vào kế hoạch thực nghiệm (03/10/2026) \emph{trước} khi có kết quả tinh chỉnh của bất kỳ mô hình có đặc trưng nào, rồi được lưu vào hệ thống quản lý phiên bản. Bản cuối của kế hoạch (10/10/2026) đổi bốn điểm theo góp ý của giảng viên hướng dẫn và quyết định của nhóm -- một sản phẩm là một mẫu thiết kế, bỏ sản phẩm chưa có người mua khỏi tập ứng viên, ghi dữ liệu đã lọc ra tệp kiểm bằng mã MD5, và đánh giá cuối trên mẫu kiểm định mới (khối 2). Các điểm này được quyết định sau khi đã xem kết quả trên khối 1, nên khối 1 không còn dùng để kết luận (mục~\ref{sec:v1_history}). Bản cuối được lưu phiên bản sau khi tinh chỉnh lại trên dữ liệu mới của mẫu phát triển và trước khi dựng tập kiểm thử của mẫu kiểm định; độ đo chính, họ so sánh và tiêu chí kết luận giữ nguyên như bản 03/10/2026. Mô hình đề xuất (NeuMF-F) được cố định từ trước, không chọn lại theo kết quả. Mọi thay đổi sau đó được ghi vào mục ``lệch kế hoạch'' kèm thời điểm. Kế hoạch kiểm chứng trên Amazon Beauty được đăng ký riêng theo cùng cách, trước khi chạy mô hình nào trên bộ này. Mô hình lai truyền thống Hybrid-CBCF, thêm theo góp ý của giảng viên hướng dẫn sau khi đánh giá cuối đã xong, có một kế hoạch đăng ký bổ sung riêng, lưu phiên bản trước khi chấm: cách kết hợp chọn trên tập xác thực của mẫu phát triển (Thuật toán~\ref{alg:hybrid}), tập kiểm thử của mỗi bộ dữ liệu được mở thêm một lần cho mô hình này, và hai so sánh bổ sung được hiệu chỉnh Holm riêng, không làm thay đổi họ 10 so sánh dưới đây (mục~\ref{subsec:bosung_results}).
     \item \textbf{Khoá tập kiểm thử.} Chương trình đánh giá cuối từ chối chạy nếu kế hoạch chưa được lưu phiên bản, thiếu lý do chạy, mã nguồn có thay đổi chưa lưu hoặc có tệp mã chưa được theo dõi, tinh chỉnh chưa đủ mô hình, mã băm nội dung mã nguồn khác lúc tinh chỉnh, hoặc seed đó đã từng mở tập kiểm thử. Mỗi seed ghi một dòng nhật ký truy cập (thời gian, phiên bản mã nguồn, mã băm cấu hình, danh sách mô hình, lý do) \emph{trước} khi chấm.
     \item \textbf{Cùng ngân sách tinh chỉnh} cho mọi mô hình có học (6 cấu hình, mục~\ref{subsec:hyperparameters_setup}).
     \item \textbf{Huấn luyện lại trước khi chấm.} Với mỗi seed trong 5 seed (42, 2024, 2025, 2026, 3407) và mỗi mạng nơ-ron: huấn luyện trên dữ liệu trước 01/07/2020 của mẫu kiểm định, dừng sớm theo NDCG@10 trên tập xác thực của chính mẫu này để chọn số epoch $e^*$; huấn luyện lại từ đầu trên mọi cặp trước 29/07/2020 đúng $e^*$ epoch (không còn tập xác thực để dừng, và tập kiểm thử không được dùng để dừng); rồi chấm tập kiểm thử (Thuật toán~\ref{alg:train}). BPR-MF và các mô hình không phải mạng nơ-ron được khớp trên mọi cặp trước 29/07/2020; LateFusion-F trộn đúng GMF-F và MLP-F đã huấn luyện lại ở cùng seed, với $w$ chọn trên mẫu phát triển.
@@ -605,6 +605,35 @@ Thuật toán~\ref{alg:fullranking} là cách mọi mô hình được chấm tr
     \State $N(w) \gets$ NDCG@10 của điểm trộn trên $V$ (Thuật toán~\ref{alg:fullranking})
 \EndFor
 \State \Return $w^* = \arg\max_{w \in W} N(w)$ \Comment{cố định từ đây, không chọn lại trên tập kiểm thử}
+\end{algorithmic}
+\end{algorithm}
+
+Thuật toán~\ref{alg:hybrid} chọn cách kết hợp của mô hình lai truyền thống Hybrid-CBCF (mục~\ref{sec:baselines}), cũng chỉ trên tập xác thực của mẫu phát triển. Trọng số của cách kết hợp có trọng số được học, không chọn trên lưới, nên số NDCG@10 dùng để so với các cách bỏ phiếu được tính bằng khớp chéo theo khách: trọng số dùng để chấm một khách luôn được học trên những khách khác. Cách kết hợp và trọng số được chọn giữ nguyên ở đánh giá trên mẫu kiểm định và trên Amazon Beauty.
+
+\begin{algorithm}[htbp]
+\caption{Chọn cách kết hợp và học trọng số của mô hình lai truyền thống Hybrid-CBCF trên tập xác thực của mẫu phát triển}
+\label{alg:hybrid}
+\begin{algorithmic}[1]
+\Require Content, UserKNN, ItemKNN với cấu hình đã chọn khi tinh chỉnh, khớp trên dữ liệu trước mốc xác thực; tập xác thực $V$; $m = 50$ sản phẩm không đúng mỗi sản phẩm đúng (rút bằng seed cố định)
+\Ensure cách kết hợp $F^*$; trọng số $w^*$ nếu $F^*$ là tổng có trọng số
+\For{mỗi khách $u$ của $V$ và mỗi $i \in \mathcal{C}_u$}
+    \State $x_{ui} \gets \big(\mathrm{minmax}(s^{CB}(u, \mathcal{C}_u))_i,\ \mathrm{minmax}(s^{UserKNN}(u, \mathcal{C}_u))_i,\ \mathrm{minmax}(s^{ItemKNN}(u, \mathcal{C}_u))_i\big)$
+\EndFor
+\For{$F \in \{\text{trung bình}, \max, \min\}$} \Comment{bỏ phiếu}
+    \State $N(F) \gets$ NDCG@10 trên $V$ của điểm $F(x_{ui})$ (Thuật toán~\ref{alg:fullranking})
+\EndFor
+\State chia khách của $V$ thành hai phần $P_0, P_1$ theo chỉ số chẵn, lẻ \Comment{khớp chéo}
+\For{$k \in \{0, 1\}$}
+    \State $D \gets \emptyset$
+    \For{mỗi khách $u \notin P_k$ và mỗi sản phẩm đúng $p$ của $u$}
+        \State rút $m$ sản phẩm không đúng $j \in \mathcal{C}_u$; thêm $(x_{up} - x_{uj},\ 1)$ và $(x_{uj} - x_{up},\ 0)$ vào $D$
+    \EndFor
+    \State $w_k \gets$ hồi quy logistic không hệ số chặn trên $D$ \Comment{$\max \sum \ln \sigma(w \cdot (x_{up} - x_{uj}))$}
+    \State điểm của mỗi khách $u \in P_k$: $w_k \cdot x_{ui}$
+\EndFor
+\State $N(\text{trọng số}) \gets$ NDCG@10 trên $V$ của điểm khớp chéo
+\State $F^* \gets \arg\max_F N(F)$; nếu $F^*$ là tổng có trọng số thì $w^* \gets$ hồi quy logistic trên các cặp của mọi khách của $V$
+\State \Return $F^*, w^*$ \Comment{cố định từ đây, không chọn lại trên tập kiểm thử}
 \end{algorithmic}
 \end{algorithm}
 

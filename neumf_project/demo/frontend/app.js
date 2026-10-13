@@ -9,6 +9,7 @@ const MODEL_COLORS = {
   "NeuMF-F": "#2a78d6", "GMF-F": "#5b9be6", "MLP-F": "#173f7a", "LateFusion-F": "#7b4fa3", "NeuMF": "#e07a5f",
   "GMF": "#28528f", "MLP": "#6a8fc7", "BPR-MF": "#1d7a46", "ItemKNN": "#b07d12", "UserKNN": "#d9a425",
   "MostPopular-Recent": "#6b6b6b", "Content": "#1baf7a", "MostPopular": "#9a9a9a", "Random": "#d4d0ca",
+  "Hybrid-CBCF": "#0f7f5c",
 };
 const SHOW = { "MostPopular": "Most Popular" };
 const show = (m) => SHOW[m] || m;
@@ -631,11 +632,13 @@ function renderDashboard(d, dash) {
     <div class="card wide"><h2>Kết quả — trung bình ± độ lệch chuẩn qua seed</h2>${body(d.summary, (rows) => `
       <canvas id="c-final"></canvas>
       <div class="scroll"><table><tr><th>Mô hình</th>${metrics.map((m) => `<th>${m}</th>`).join("")}</tr>${rows.map((r) =>
-        `<tr><td>${esc(show(r.model))}</td>${metrics.map((m) => `<td>${fmt(r[m + "_mean"], 5)} ± ${fmt(r[m + "_std"], 5)}</td>`).join("")}</tr>`).join("")}</table></div>`)}</div>
+        `<tr><td>${esc(show(r.model))}${r.supplementary ? "†" : ""}</td>${metrics.map((m) => `<td>${fmt(r[m + "_mean"], 5)} ± ${fmt(r[m + "_std"], 5)}</td>`).join("")}</tr>`).join("")}</table></div>
+      ${rows.some((r) => r.supplementary) ? `<div class="note">† Mô hình lai truyền thống (Content + UserKNN + ItemKNN), bổ sung sau đánh giá cuối theo góp ý của GVHD: chấm một lần trên cùng tập kiểm thử, không thuộc họ 10 so sánh đăng ký trước.</div>` : ""}`)}</div>
 
-    ${byKCard(d.by_k, "Các chỉ số @K có trong summary.csv của đánh giá cuối.")}
+    ${byKCard(d.by_k, "Số @K trong by_k.csv được tính lại từ hạng đã lưu của đánh giá cuối, không chấm lại tập kiểm thử.")}
 
     <div class="card wide"><h2>Kiểm định cặp theo khách hàng (NDCG@10) — họ 10 so sánh đăng ký trước</h2>${body(d.significance, sigTable)}</div>
+    ${d.significance_bs ? `<div class="card wide"><h2>Phân tích bổ sung — so sánh với mô hình lai truyền thống (Holm riêng trong họ)</h2>${body(d.significance_bs, sigTable)}</div>` : ""}
 
     <div class="card"><h2>Độ phủ top-10 và chi phí huấn luyện</h2>${body(d.beyond, (rows) => simpleTable(rows,
       [["coverage10", "Độ phủ", (v) => pct(v)], ["best_epoch_mean", "Số epoch", (v) => fmt(v, 1)],

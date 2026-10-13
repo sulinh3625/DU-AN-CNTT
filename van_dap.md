@@ -147,7 +147,7 @@ hình) và tính lại được chỉ số ở K bất kỳ. Trên Amazon cũng 
 ### 3. Top-K là gì? Top-K người dùng tương đồng xác định thế nào?
 
 - **Top-K trong kết quả** là Top-K **sản phẩm**: chấm điểm mọi món khách chưa mua, sắp giảm dần, lấy K món đầu (Hình 2.1,
-  3.2 vẽ đủ chuỗi σ → điểm → sắp xếp → Top-K; Thuật toán 3.6).
+  3.2 vẽ đủ chuỗi σ → điểm → sắp xếp → Top-K; Thuật toán 3.7).
 - **Top-K người dùng tương đồng** thuộc cách lọc cộng tác dựa trên láng giềng — mô hình **UserKNN**, đúng như Algorithm 3 trong luận án của cô:
   1. tính độ tương đồng cosine giữa hai khách theo các món mua chung;
   2. giữ k khách giống nhất (k = 200, chọn trên tập xác thực);
@@ -183,7 +183,7 @@ nhóm khách). Mở ở đâu: mục 2.1.2, 3.3.1.
   - thiết kế có tuỳ chọn **bỏ ID ngẫu nhiên** khi huấn luyện (ý tưởng DropoutNet), nhưng tinh chỉnh chọn ρ = 0 cho NeuMF-F
     và MLP-F (GMF-F chọn 0,25); trong bản cuối nó chỉ là một siêu tham số điều chuẩn.
 
-Mở ở đâu: mục 2.1.4, 2.4.1, 3.2.4, **3.7** (Thuật toán 3.6), 4.6, 4.7.
+Mở ở đâu: mục 2.1.4, 2.4.1, 3.2.4, **3.7** (Thuật toán 3.7), 4.6, 4.7.
 
 ### 6. NDCG và các chỉ số
 
@@ -311,26 +311,37 @@ nhất muộn không kém ở bộ nào đã thử. Mở ở đâu: mục 2.3.4 
 
 ### 14. Baseline gồm những gì? Lai có tốt hơn trước khi lai không?
 
-| Nhóm | Mô hình |
-|---|---|
-| Đơn giản | Random, Most Popular, MostPopular-Recent |
-| Theo nội dung | Content (gợi ý món giống món khách đã mua, theo mô tả và thuộc tính) |
-| Láng giềng | ItemKNN, UserKNN |
-| MF | BPR-MF |
-| Chỉ dùng mã ID | GMF, MLP, NeuMF |
-| Thành phần có đặc trưng | GMF-F, MLP-F |
-| Mô hình đề xuất | **NeuMF-F** (early fusion) |
-| Hợp nhất muộn | LateFusion-F |
+Theo góp ý họp 04/10, baseline được xếp thành **ba nhóm** (báo cáo mục 4.2; cách xếp do nhóm đề xuất, chờ cô xác nhận):
+
+| Nhóm | Mô hình | Trả lời câu hỏi |
+|---|---|---|
+| Mô hình đơn lẻ | GMF, MLP (chỉ mã ID); GMF-F, MLP-F (có đặc trưng) — từng nhánh của mô hình lai đứng riêng | Lai có hơn từng nhánh không |
+| Học máy truyền thống | Content, ItemKNN, UserKNN, BPR-MF; **Hybrid-CBCF** — mô hình lai truyền thống (bổ sung) | Lai học sâu có hơn cách làm truyền thống, kể cả lai truyền thống, không |
+| Chuyên biệt cho gợi ý | Most Popular, MostPopular-Recent; NeuMF (NCF gốc); LateFusion-F (hợp nhất muộn) | Có hơn xu hướng phổ biến, NCF gốc và hợp nhất muộn không |
+
+Mô hình đề xuất: **NeuMF-F** (early fusion). Random là cận dưới.
 
 - "Lai có tốt hơn trước khi lai" = so sánh NeuMF-F với GMF-F và MLP-F. **Kết quả H&M:** hơn MLP-F (+15,0%), ngang GMF-F
   (+2,6%, không có ý nghĩa). Với baseline: hơn cả 5 baseline trong họ so sánh (BPR-MF, ItemKNN, UserKNN,
   MostPopular-Recent, Content) trên cả H&M lẫn Amazon.
 - Chỉ nói "A tốt hơn B" khi **đủ cả ba** điều kiện: p sau hiệu chỉnh Holm < 0,05; khoảng tin cậy 95% không chứa 0; chênh lệch ≥ 5%. Tiêu chí này cố định từ trước khi chấm.
-- Cách xếp ba nhóm baseline theo góp ý (mô hình đơn lẻ / học máy truyền thống / mô hình chuyên biệt cho gợi ý) **đang chờ
-  cô chốt** nhóm "học máy truyền thống": xếp ItemKNN, UserKNN, BPR-MF vào nhóm này, hay thêm một mô hình học máy trên
-  đặc trưng (ví dụ Logistic Regression).
+- **Mô hình lai truyền thống Hybrid-CBCF** (theo chương 3 luận án của cô): ba mô hình đơn lẻ — Content (lọc nội dung),
+  UserKNN, ItemKNN (lọc cộng tác) — chấm riêng; điểm mỗi mô hình chuẩn hoá về 0–1 trên tập ứng viên của khách; rồi kết
+  hợp bằng bỏ phiếu (trung bình, max, min) hoặc tổng có trọng số. Trên tập xác thực của mẫu phát triển, tổng có trọng
+  số tốt nhất (NDCG@10 0,02815, so với trung bình 0,02634 và UserKNN đứng riêng 0,02753); trọng số Content 0,12,
+  UserKNN 0,60, ItemKNN 0,28 — lọc cộng tác là chính.
+- **Vì sao học trọng số theo cặp?** Luận án học trọng số trên điểm đánh giá (rating); dữ liệu của đề tài chỉ có mua /
+  không mua. Nếu chạy hồi quy logistic thường trên từng cặp (khách, sản phẩm), trọng số học ra âm và mô hình hỏng
+  (NDCG@10 ≈ 0,0005), vì gộp mọi khách thì khác biệt giữa các khách lấn át thứ tự trong danh sách của từng khách. Học
+  theo cặp (món đúng so với món không đúng **của cùng một khách**) là đúng mục tiêu xếp hạng — cùng tiêu chí với BPR.
+- **Vì sao thêm sau khi đã chấm tập kiểm thử, có thiên lệch không?** Mô hình được thêm theo góp ý của cô, sau đánh giá
+  cuối, nên làm như một **phân tích bổ sung**: kế hoạch riêng `PREREG_bosung.md` commit trước khi chấm; cách kết hợp chọn
+  trên tập xác thực, không nhìn tập kiểm thử; tập kiểm thử mở thêm đúng một lần cho mô hình này; hai so sánh bổ sung
+  (NeuMF-F vs Hybrid-CBCF, Hybrid-CBCF vs UserKNN) hiệu chỉnh Holm riêng; họ 10 so sánh và kết luận cũ giữ nguyên. Điều
+  phải nói thẳng: lúc thêm, nhóm đã biết kết quả kiểm thử của ba thành phần.
+- **Kết quả trên tập kiểm thử:** chưa chấm (chờ commit rồi chạy `python run.py bosung-final`).
 
-Mở ở đâu: mục 3.6, 4.2.
+Mở ở đâu: mục 2.1.1, 3.6 (Thuật toán 3.6), 4.2, 4.3, 4.4 ("Phân tích bổ sung").
 
 ### 15. Sơ đồ kiến trúc
 
@@ -342,8 +353,9 @@ Mở ở đâu: mục 3.6, 4.2.
 - **Hình 3.3** — quy trình đánh giá riêng: tinh chỉnh trên mẫu phát triển → đăng ký trước, khoá test → huấn luyện lại →
   Full Ranking trên mẫu kiểm định → kiểm định họ 10 so sánh.
 - **Hình 3.4** — kiến trúc ba tầng của demo.
-- **Thuật toán 3.1–3.6** — mã giả: chuẩn bị dữ liệu (gộp product_code, k-core lặp), lấy mẫu âm, huấn luyện có dừng sớm
-  và huấn luyện lại, Full Ranking, chọn w của LateFusion-F, suy diễn Top-K có xử lý khách mới.
+- **Thuật toán 3.1–3.7** — mã giả: chuẩn bị dữ liệu (gộp product_code, k-core lặp), lấy mẫu âm, huấn luyện có dừng sớm
+  và huấn luyện lại, Full Ranking, chọn w của LateFusion-F, chọn cách kết hợp của mô hình lai truyền thống, suy diễn
+  Top-K có xử lý khách mới.
 
 Luồng cô gợi ý (dữ liệu → tiền xử lý → chia → ma trận → MF → vector → DL → hợp nhất → điểm → xếp hạng → Top-K) được Hình
 3.1, 3.2 và 2.1 thể hiện đủ.
@@ -368,7 +380,7 @@ Luồng cô gợi ý (dữ liệu → tiền xử lý → chia → ma trận →
 | 6 | Xây mô hình lai | Xong — NeuMF-F (0,04003, hơn NeuMF chỉ ID 43,8%) |
 | 7 | Thử Fusion | Xong — Early (NeuMF-F) và Late (LateFusion-F); ngang nhau trên H&M, Late tốt hơn trên Amazon |
 | 8 | Bảng NDCG/HR/Recall/Precision | Xong — tự sinh từ kết quả 5 seed, ở K = 5, 10, 15, 20 |
-| 9 | Vẽ kiến trúc | Xong — Hình 2.1, 3.1, 3.2, 3.3 (vẽ lại theo góp ý 04/10), mã giả Thuật toán 3.1–3.6 |
+| 9 | Vẽ kiến trúc | Xong — Hình 2.1, 3.1, 3.2, 3.3 (vẽ lại theo góp ý 04/10), mã giả Thuật toán 3.1–3.7 |
 | 10 | Phân tích kết quả | Xong — kiểm định, ablation, độ phủ, ổn định giữa hai mẫu, kiểm chứng Amazon, phần thảo luận Chương 4 |
 
 ---

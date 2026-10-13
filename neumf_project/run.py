@@ -22,6 +22,12 @@ Dữ liệu đối chứng Amazon Beauty (audit/PREREG_amazon.md) — cùng scri
     python run.py amazon-final --reason "..."  # đánh giá cuối Amazon (sau khi commit audit/PREREG_amazon.md)
     python run.py amazon-report              # kiểm định, bảng, hình, macro LaTeX (content/tables/amazon/) từ outputs/amazon/final/
 
+Bổ sung sau đánh giá cuối — mô hình lai truyền thống Hybrid-CBCF (audit/PREREG_bosung.md, scripts/25_bosung.py):
+    python run.py bosung-tune                # chọn cách kết hợp trên tập xác thực của mẫu phát triển H&M (dưới 1 phút)
+    python run.py bosung-dry-run             # thử đường ống trên tập xác thực (không chấm test)
+    python run.py bosung-final --reason "..."          # chấm tập kiểm thử H&M một lần, rồi xuất lại bảng (24)
+    python run.py amazon-bosung-final --reason "..."   # như trên cho Amazon Beauty (cách kết hợp chọn trên H&M)
+
 Mỗi lệnh chỉ gọi lần lượt các script tương ứng trong scripts/ (chi tiết: README.md mục 3) — file này không chứa logic
 huấn luyện/đánh giá. Trước mỗi bước in thanh tiến trình [████░░░░] k/N kèm thời gian đã chạy; bước nào lỗi thì dừng
 ngay, in bảng tóm tắt (✓ xong / ✗ lỗi / ⏹ bị ngắt, thời gian từng bước) và lệnh chạy lại riêng bước đó — thông báo lỗi
@@ -170,6 +176,19 @@ def cmd_v2_report(args):
     return [_s("24_report_v2.py")]
 
 
+def cmd_bosung_tune(args):
+    return [_s("25_bosung.py", "tune")]
+
+
+def cmd_bosung_dry_run(args):
+    return [_s("25_bosung.py", "final", "--dry-run")]
+
+
+def cmd_bosung_final(args):
+    """Mô hình lai truyền thống: chấm tập kiểm thử một lần (khoá kiểm thử của 25_bosung.py), rồi xuất lại bảng (24)."""
+    return [_s("25_bosung.py", "final", "--reason", args.reason), _s("24_report_v2.py")]
+
+
 def cmd_all(args):
     """Chạy qua đêm: file dữ liệu đã lọc -> tinh chỉnh mọi mô hình (--resume: bị ngắt thì chạy lại lệnh là đi tiếp) ->
     chạy thử đánh giá cuối trên tập xác thực (bắt lỗi đường ống, không chấm test). --final: chấm luôn tập kiểm thử ở
@@ -188,6 +207,8 @@ COMMANDS = {
     "check-report": cmd_check_report, "demo": cmd_demo,
     "amazon-data": cmd_amazon_data, "amazon-dry-run": cmd_v2_dry_run, "amazon-final": cmd_v2_final,
     "amazon-report": cmd_v2_report,
+    "bosung-tune": cmd_bosung_tune, "bosung-dry-run": cmd_bosung_dry_run, "bosung-final": cmd_bosung_final,
+    "amazon-bosung-final": cmd_bosung_final,
 }
 
 # ------------------------------------------------------------------ menu
@@ -197,9 +218,12 @@ MENU = (
      ("all", "v2-tune", "v2-dry-run", "v2-final", "v2-report", "check-report")),
     ("Dữ liệu đối chứng Amazon Beauty (audit/PREREG_amazon.md)",
      ("amazon-data", "amazon-dry-run", "amazon-final", "amazon-report")),
+    ("Bổ sung sau đánh giá cuối: mô hình lai truyền thống (audit/PREREG_bosung.md)",
+     ("bosung-tune", "bosung-dry-run", "bosung-final", "amazon-bosung-final")),
     ("Khác", ("demo",)),
 )
-OPENS_TEST = ("v2-final", "amazon-final")  # chấm tập kiểm thử: menu hỏi lại, mặc định Không (all --final cũng vậy)
+# chấm tập kiểm thử: menu hỏi lại, mặc định Không (all --final cũng vậy)
+OPENS_TEST = ("v2-final", "amazon-final", "bosung-final", "amazon-bosung-final")
 
 
 def menu(sub) -> list[str] | None:
@@ -268,6 +292,11 @@ def main():
     p.add_argument("--seeds", nargs="+", type=int, default=None, help="mặc định: 5 seed của configs/amazon.yaml")
     add("amazon-report", "Amazon: kiểm định, hình, ket_qua.txt, bảng/macro LaTeX (content/tables/amazon/) từ "
         "outputs/amazon/final (24)")
+    add("bosung-tune", "Hybrid-CBCF: chọn cách kết hợp trên tập xác thực của mẫu phát triển H&M (25 tune)")
+    add("bosung-dry-run", "Hybrid-CBCF: thử đường ống trên tập xác thực (25 final --dry-run; không chấm test)")
+    for name, where in (("bosung-final", "H&M"), ("amazon-bosung-final", "Amazon")):
+        add(name, f"Hybrid-CBCF: chấm tập kiểm thử {where} một lần (25 final) + báo cáo (24)") \
+            .add_argument("--reason", required=True, help="Lý do chấm test (ghi vào audit/test_access_log.csv)")
 
     argv = sys.argv[1:]
     interactive = not argv and sys.stdin.isatty()
