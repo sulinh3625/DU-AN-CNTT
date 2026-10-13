@@ -1,0 +1,28 @@
+% Sinh tự động bởi neumf_project/scripts/24_report_v2.py — KHÔNG sửa tay.
+\begin{table}[htbp]
+    \centering\small
+    \caption{Quy mô dữ liệu Amazon Beauty (2014, 5-core): một bộ dữ liệu, chia theo thời gian}
+    \label{tab:amzdata}
+    \begin{adjustbox}{max width=\textwidth}
+    \begin{tabular}{lr}
+        \toprule
+         & Amazon Beauty \\
+        \midrule
+        Đánh giá trong bộ 5-core gốc (mỗi đánh giá là một tương tác) & 198.502 \\
+        Sản phẩm có đánh giá trước 01/01/2014 & 11.493 \\
+        Cặp (khách, sản phẩm) trước 01/01/2014 & 140.193 \\
+        Khách sau lọc 5-core & 10.681 \\
+        Sản phẩm (asin) sau lọc 5-core & 6.069 \\
+        Cặp sau lọc 5-core & 94.009 \\
+        Xác thực: cặp huấn luyện (trước 01/10/2013) & 82.281 \\
+        Xác thực: khách được đánh giá & 3.153 \\
+        Xác thực: cặp đúng & 7.880 \\
+        Kiểm thử: cặp huấn luyện (trước 01/01/2014) & 94.009 \\
+        Kiểm thử: khách được đánh giá & 2.644 \\
+        Kiểm thử: cặp đúng & 6.107 \\
+        Kiểm thử: số ứng viên trung bình mỗi khách & 6.058 \\
+        \bottomrule
+    \end{tabular}
+    \end{adjustbox}
+    \par\smallskip{\footnotesize Một sản phẩm = một asin. Lọc 5-core chỉ trên các cặp trước mốc kiểm thử 01/01/2014. Tập xác thực (01/10/2013 -- 31/12/2013) chỉ dùng để chọn số epoch; không tinh chỉnh trên bộ này. Ứng viên và cặp đúng chỉ gồm sản phẩm đã có cặp huấn luyện trước mốc của giai đoạn.}
+\end{table}

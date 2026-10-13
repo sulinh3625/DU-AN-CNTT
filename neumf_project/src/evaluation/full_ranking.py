@@ -23,25 +23,6 @@ class EvalRecord:
         return self.positive_items
 
 
-def build_full_ranking_records(eval_df, n_items: int, seen_positive_sets) -> list[EvalRecord]:
-    all_items = np.arange(n_items, dtype=np.int64)
-    records = []
-    for u, pos in zip(eval_df["user"].values, eval_df["item"].values):
-        u, pos = int(u), int(pos)
-        seen = set(seen_positive_sets[u])
-        seen.discard(pos)
-        if seen:
-            mask = np.ones(n_items, dtype=bool)
-            mask[np.fromiter(seen, dtype=np.int64)] = False
-            candidates = all_items[mask]
-        else:
-            candidates = all_items.copy()
-        if pos not in candidates:
-            candidates = np.append(candidates, pos)
-        records.append(EvalRecord(u, pos, candidates.astype(np.int64, copy=False)))
-    return records
-
-
 def build_full_ranking_records_multi(eval_df, n_items: int, seen_positive_sets, item_pool=None) -> list[EvalRecord]:
     """Một record cho mỗi user, gom mọi item đúng của user trong eval_df.
 
@@ -64,12 +45,6 @@ def build_full_ranking_records_multi(eval_df, n_items: int, seen_positive_sets, 
             mask[np.fromiter(seen, dtype=np.int64)] = False
         records.append(EvalRecord(u, int(positives[0]), all_items[mask], positives))
     return records
-
-
-def record_metric(scores, record: EvalRecord, k: int, tie_seed: int, metric: str = "NDCG") -> float:
-    """Metric@k của một record (dùng khi tune tham số trên validation)."""
-    ranks = rank_positives(scores, record.candidates, record.positives, record.user, tie_seed)
-    return multi_ranking_metrics(ranks, k)[metric]
 
 
 def _empty_metric_lists(k_values, include_redundant):

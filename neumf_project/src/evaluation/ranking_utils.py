@@ -13,23 +13,8 @@ def deterministic_tie_key(user: int, item_ids: np.ndarray, seed: int) -> np.ndar
     return x
 
 
-def rank_positive(scores: np.ndarray, candidates: np.ndarray, positive_item: int, user: int, tie_seed: int) -> int:
-    scores = np.asarray(scores, dtype=np.float64)
-    candidates = np.asarray(candidates, dtype=np.int64)
-    tie = deterministic_tie_key(user, candidates, tie_seed)
-    # primary: score descending; secondary: deterministic pseudo-random key ascending
-    order = np.lexsort((tie, -scores))
-    pos_idx = np.flatnonzero(candidates[order] == int(positive_item))
-    if len(pos_idx) != 1:
-        raise ValueError("positive_item phải xuất hiện đúng 1 lần trong candidate set")
-    return int(pos_idx[0]) + 1
-
-
 def rank_positives(scores: np.ndarray, candidates: np.ndarray, positives, user: int, tie_seed: int) -> np.ndarray:
-    """Rank (1-based) của TỪNG item đúng trong cùng một thứ tự xếp hạng như rank_positive.
-
-    Với 1 item đúng, kết quả bằng đúng [rank_positive(...)].
-    """
+    """Rank (1-based) của TỪNG item đúng: xếp theo điểm giảm dần, hoà điểm theo khoá tất định tăng dần."""
     scores = np.asarray(scores, dtype=np.float64)
     candidates = np.asarray(candidates, dtype=np.int64)
     positives = np.asarray(positives, dtype=np.int64)

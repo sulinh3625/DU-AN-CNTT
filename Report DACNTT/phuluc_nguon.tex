@@ -42,6 +42,9 @@ Phụ lục này liệt kê từng luận điểm lý thuyết và phương phá
 \ref{subsec:phamvi} & Bộ dữ liệu H\&M Personalized Fashion Recommendations &
 \textcite{hm2022kaggle} \\
 \hline
+\ref{subsec:amazon_data} & Bộ dữ liệu đánh giá sản phẩm Amazon (2014), danh mục Beauty, bản 5-core -- dữ liệu kiểm chứng &
+\textcite{mcauley2015image} \\
+\hline
 
 \hline
 \multicolumn{3}{|l|}{\textit{A.2. Phản hồi ẩn, NCF, mô hình lai có đặc trưng \& chiến lược hợp nhất}} \\
@@ -99,6 +102,9 @@ Phụ lục này liệt kê từng luận điểm lý thuyết và phương phá
 \ref{sec:protocol}, \ref{sec:discussion} & Baseline phải được tinh chỉnh cùng ngân sách; không chọn mô hình trên tập kiểm thử &
 \textcite{dacrema2019progress}; \textcite{rendle2020ncfmf} \\
 \hline
+\ref{subsec:foundation_studies} & Ba nghiên cứu nền tảng: kiến trúc NeuMF, tái đánh giá NeuMF so với MF, hợp nhất đa nguồn Early/Late Fusion &
+\textcite{he2017ncf}; \textcite{rendle2020ncfmf}; \textcite{holinh2023multisource} \\
+\hline
 \ref{subsec:mf_model}, \ref{sec:v1_history} & Thuật toán iALS cho phản hồi ẩn và cách tinh chỉnh iALS &
 \textcite{hu2008implicit}; \textcite{rendle2022ials} \\
 \hline
@@ -123,17 +129,19 @@ Phụ lục này liệt kê từng luận điểm lý thuyết và phương phá
 \addcontentsline{toc}{chapter}{PHỤ LỤC B. TÁI LẬP KẾT QUẢ THỰC NGHIỆM}
 \label{app:taolap}
 
-Mã nguồn nằm trong thư mục \texttt{neumf\_project/} của kho mã dự án; hướng dẫn chi tiết ở tệp \texttt{README.md}. Các bước tạo ra toàn bộ số liệu của giao thức v2 (Chương~\ref{chap:thucnghiem}):
+Mã nguồn nằm trong thư mục \texttt{neumf\_project/} của kho mã dự án; hướng dẫn chi tiết ở tệp \texttt{README.md}. Các bước tạo ra toàn bộ số liệu của Chương~\ref{chap:thucnghiem} (tên lệnh giữ nguyên như trong mã nguồn):
 
 \begingroup\sloppy
 \begin{enumerate}
-    \item \textbf{Dữ liệu:} đặt \texttt{transactions\_train.csv}, \texttt{articles.csv} và \texttt{customers.csv} của cuộc thi H\&M vào \texttt{data/raw/hm/}; chạy \texttt{python run.py sample-hm} để tạo mẫu phát triển A và \texttt{python run.py v2-data} để tạo mẫu kiểm định B cùng các tệp đặc trưng (danh mục sản phẩm, doanh số theo ngày). Mọi bước đều tất định.
-    \item \textbf{Tinh chỉnh (chỉ tập xác thực của mẫu A):} \texttt{python run.py v2-tune --resume}; mỗi cấu hình ghi một dòng vào \texttt{audit/v2/tuning\_log.csv} (kèm phiên bản và mã băm nội dung mã nguồn), cấu hình tốt nhất vào \texttt{audit/v2/best\_configs.json}.
+    \item \textbf{Dữ liệu:} đặt \texttt{transactions\_train.csv}, \texttt{articles.csv} và \texttt{customers.csv} của cuộc thi H\&M vào \texttt{data/raw/hm/}; chạy \texttt{python run.py sample-hm} để tạo mẫu phát triển và \texttt{python run.py v2-data} để tạo mẫu kiểm định, các tệp đặc trưng (danh mục sản phẩm, doanh số theo ngày) và tệp dữ liệu đã lọc của hai mẫu (gộp theo \texttt{product\_code}, lọc 10-core) kèm mã MD5 trong \texttt{outputs/data/manifest.json}. Mọi bước đều tất định.
+    \item \textbf{Tinh chỉnh (chỉ tập xác thực của mẫu phát triển):} \texttt{python run.py v2-tune --resume}; mỗi cấu hình ghi một dòng vào \texttt{audit/v2/tuning\_log.csv} (kèm phiên bản và mã băm nội dung mã nguồn), cấu hình tốt nhất vào \texttt{audit/v2/best\_configs.json}.
     \item \textbf{Đăng ký trước:} kế hoạch \texttt{audit/PREREG\_v2.md} phải được lưu vào git trước bước đánh giá cuối.
-    \item \textbf{Chạy thử (không chạm tập kiểm thử):} \texttt{python run.py v2-dry-run} chạy trọn đường ống đánh giá cuối trên tập xác thực của mẫu A với 1 epoch, để phát hiện lỗi trước khi mở tập kiểm thử.
-    \item \textbf{Đánh giá cuối:} \texttt{python run.py v2-final --reason "..."} chạy \texttt{23\_final\_v2.py} (5 seed trên mẫu B, có khoá tập kiểm thử: từ chối chạy nếu kế hoạch chưa lưu, thiếu lý do, mã nguồn có thay đổi chưa lưu hoặc khác mã nguồn lúc tinh chỉnh; mỗi seed ghi một dòng vào \texttt{audit/test\_access\_log.csv} trước khi chấm) rồi \texttt{24\_report\_v2.py} (kiểm định, bảng, hình và macro số liệu sang báo cáo).
+    \item \textbf{Chạy thử (không chạm tập kiểm thử):} \texttt{python run.py v2-dry-run} chạy trọn đường ống đánh giá cuối trên tập xác thực của mẫu phát triển với 1 epoch, để phát hiện lỗi trước khi mở tập kiểm thử.
+    \item \textbf{Đánh giá cuối:} \texttt{python run.py v2-final --reason "..."} chạy \texttt{23\_final\_v2.py} (5 seed trên mẫu kiểm định, có khoá tập kiểm thử: từ chối chạy nếu kế hoạch chưa lưu, thiếu lý do, mã nguồn có thay đổi chưa lưu hoặc khác mã nguồn lúc tinh chỉnh; mỗi seed ghi một dòng vào \texttt{audit/test\_access\_log.csv} trước khi chấm) rồi \texttt{24\_report\_v2.py} (kiểm định, chỉ số ở $K = 5, 10, 15, 20$ tính từ hạng đã lưu, bảng, hình và macro số liệu sang báo cáo; bản tóm tắt dạng chữ ở \texttt{outputs/v2/final/ket\_qua.txt}).
+    \item \textbf{Kiểm chứng trên Amazon Beauty:} đặt tệp đánh giá và metadata danh mục Beauty (2014) vào \texttt{data/raw/amazon/}; \texttt{python run.py amazon-data} tạo đặc trưng và tệp dữ liệu đã lọc (5-core), \texttt{python run.py amazon-final --reason "..."} chạy đánh giá cuối theo kế hoạch \texttt{audit/PREREG\_amazon.md} với cấu hình chọn trên H\&M; \texttt{python run.py amazon-report} xuất bảng, hình và macro vào \texttt{content/tables/amazon/} và \texttt{media/figures/amazon/}.
+    \item \textbf{Đối chiếu câu chữ:} \texttt{python run.py check-report} kiểm tra các câu nhận xét bằng chữ trong báo cáo với số liệu hiện có và báo các macro, bảng, hình còn thiếu.
     \item \textbf{Biên dịch báo cáo:} chạy \texttt{compile.bat} trong thư mục báo cáo.
 \end{enumerate}
 \endgroup
 
-Kết quả của giai đoạn phát triển (giao thức v1, mục~\ref{sec:v1_history}) được giữ nguyên trong kho mã (\texttt{outputs/final/}, \texttt{audit/PREREG.md}) cùng các lệnh tái lập tương ứng trong \texttt{README.md}. Nhật ký \texttt{audit/test\_access\_log.csv} liệt kê mọi lần đánh giá trên tập kiểm thử của cả hai giao thức, kèm phiên bản mã nguồn và mã băm cấu hình tương ứng.
+Kế hoạch của giai đoạn phát triển ban đầu (mục~\ref{sec:v1_history}) vẫn ở \texttt{audit/PREREG.md}; mã nguồn và kết quả của giai đoạn này được giữ trong lịch sử git (commit \texttt{9799f1a}, trước khi dọn mã cũ). Kế hoạch của bản đầu kế hoạch đánh giá (đánh giá trên khối 1) ở \texttt{audit/PREREG\_v2\_cu.md}. Nhật ký \texttt{audit/test\_access\_log.csv} liệt kê mọi lần đánh giá trên tập kiểm thử -- giai đoạn phát triển ban đầu, bản đầu và bản cuối của kế hoạch đánh giá (kể cả lần chạy lại seed 42), và đánh giá cuối trên Amazon Beauty -- kèm phiên bản mã nguồn và mã băm cấu hình tương ứng.

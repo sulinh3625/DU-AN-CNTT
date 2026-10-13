@@ -2,11 +2,16 @@
 
 Mọi mô hình được huấn luyện và đánh giá bằng cùng các hàm ở đây, cả khi tinh chỉnh (22_tune_v2.py) lẫn khi đánh giá
 cuối (23_final_v2.py). Mô hình chỉ dùng ID được bọc MaskedScorer/MaskedScoreFn: sản phẩm không có dữ liệu huấn luyện
-của giai đoạn (gồm sản phẩm mới) nhận điểm -inf, tức bị xếp cuối.
+của giai đoạn nhận điểm -inf, tức bị xếp cuối (tập ứng viên vốn chỉ gồm sản phẩm có dữ liệu huấn luyện).
+
+Bộ dữ liệu chọn bằng biến môi trường NEUMF_CONFIG (mặc định configs/v2.yaml = H&M; configs/amazon.yaml = dữ liệu đối
+chứng Amazon Beauty, audit/PREREG_amazon.md): cùng mã, mọi đường dẫn (dữ liệu, nhật ký, kết quả) lấy từ cấu hình.
 """
 from __future__ import annotations
 
 import itertools
+import json
+import os
 import sys
 from pathlib import Path
 
@@ -20,8 +25,8 @@ sys.path.insert(0, str(PROJECT_ROOT))
 from src.baselines import BPRMFBaseline, ItemKNNBaseline, MostPopularBaseline, RandomBaseline, UserKNNBaseline  # noqa: E402
 from src.data_pipeline.dataset import TrainDataset  # noqa: E402
 from src.data_pipeline.feature_dataset import FeatureTrainDataset  # noqa: E402
-from src.data_pipeline.features import load_catalog, load_daily_sales  # noqa: E402
-from src.data_pipeline.protocol_v2 import DataV2, Stage, build_v2  # noqa: E402
+from src.data_pipeline.features import DAY0, group_by_product, load_catalog, load_daily_sales  # noqa: E402
+from src.data_pipeline.protocol_v2 import DataV2, Stage, build_from_pairs, load_pairs  # noqa: E402
 from src.evaluation.full_ranking import evaluate_score_function, evaluate_torch_model  # noqa: E402
 from src.evaluation.v2 import evaluate_v2  # noqa: E402
 from src.models.hybrid_features import (ContentProfile, MaskedScoreFn, MaskedScorer, NeuMFF,  # noqa: E402
@@ -31,9 +36,25 @@ from src.models.neumf import GMF, MLP, NeuMF  # noqa: E402
 from src.training.trainer import get_device, make_optimizer, train_one_model  # noqa: E402
 from src.utils.seed import seed_everything  # noqa: E402
 
-CFG = yaml.safe_load((PROJECT_ROOT / "configs" / "v2.yaml").read_text(encoding="utf-8"))
-AUDIT = PROJECT_ROOT / "audit" / "v2"
-METRICS = ["NDCG@10", "Recall@10", "HR@10", "Precision@10", "NDCG@5", "NDCG@20", "NDCG@10_old", "NDCG@10_new"]
+CONFIG = PROJECT_ROOT / os.environ.get("NEUMF_CONFIG", "configs/v2.yaml")
+
+
+def read_config(path) -> dict:
+    return yaml.safe_load(Path(path).read_text(encoding="utf-8"))
+
+
+CFG = read_config(CONFIG)
+DATASET = CFG.get("dataset", "hm")  # "hm" | "amazon"
+NAME = CFG.get("name", "H&M")
+AUDIT = PROJECT_ROOT / CFG.get("audit_dir", "audit/v2")  # nhật ký tinh chỉnh, cấu hình tốt nhất
+# Cấu hình tốt nhất dùng cho đánh giá cuối. Amazon: best_configs trỏ tới cấu hình đã chọn trên H&M — không tinh chỉnh
+# trên bộ này (TUNED_HERE = False: 22 không chạy, 23 không so mã băm với nhật ký tinh chỉnh).
+TUNED_HERE = "best_configs" not in CFG
+BEST_CONFIGS = PROJECT_ROOT / CFG.get("best_configs", f"{CFG.get('audit_dir', 'audit/v2')}/best_configs.json")
+OUT = PROJECT_ROOT / CFG.get("out_dir", "outputs/v2")  # checkpoint tinh chỉnh, dry_run/, final/
+DATA_DIR = PROJECT_ROOT / CFG["data_dir"]  # file dữ liệu đã lọc của scripts/02_prepare_data.py
+MANIFEST = DATA_DIR / "manifest.json"
+METRICS = ["NDCG@10", "Recall@10", "HR@10", "Precision@10", "NDCG@5", "NDCG@20"]
 
 DISPLAY = {"random": "Random", "popularity": "MostPopular", "recent_pop": "MostPopular-Recent", "content": "Content",
            "itemknn": "ItemKNN", "userknn": "UserKNN", "bpr": "BPR-MF", "gmf": "GMF", "mlp": "MLP", "neumf": "NeuMF",
@@ -81,7 +102,7 @@ DEFAULTS = {
 LATE_PARTS = ("gmf_f", "mlp_f")  # Late Fusion-F = trộn điểm GMF-F và MLP-F huấn luyện riêng
 
 
-def sample_configs(grid: dict, default: dict, n: int, seed: int = CFG["tuning"]["grid_seed"]) -> list[dict]:
+def sample_configs(grid: dict, default: dict, n: int, seed: int = CFG.get("tuning", {}).get("grid_seed", 0)) -> list[dict]:
     """default + (n-1) cấu hình rút không lặp từ lưới bằng numpy seed cố định (lưới nhỏ hơn n -> lấy hết)."""
     combos = [dict(zip(grid, vals)) for vals in itertools.product(*grid.values())]
     if default not in combos:
@@ -101,14 +122,51 @@ def configs_for(model: str, n: int) -> list[dict]:
 
 
 # ------------------------------------------------------------------ dữ liệu
-def load_data(sample: str, with_test: bool = False) -> DataV2:
-    f = CFG["features"]
+def data_name(sample: str, cfg: dict | None = None) -> str:
+    """Tên file dữ liệu đã lọc của một mẫu = tên file mẫu bỏ mọi đuôi (mau_phat_trien, mau_kiem_dinh,
+    reviews_Beauty_5)."""
+    return Path((cfg or CFG)["samples"][sample]).name.split(".")[0]
+
+
+def manifest_path(cfg: dict | None = None) -> Path:
+    return PROJECT_ROOT / (cfg or CFG)["data_dir"] / "manifest.json"
+
+
+def load_data(sample: str, with_test: bool = False, cfg: dict | None = None) -> DataV2:
+    """Dựng dữ liệu của mẫu từ file đã lọc <data_dir>/<tên mẫu>.csv.gz — mọi mô hình đọc cùng file này — sau khi kiểm
+    MD5 (nội dung đã giải nén) với manifest.json; không dựng lại từ dữ liệu thô. cfg: cấu hình khác CFG (demo nạp cả
+    H&M lẫn Amazon trong một tiến trình)."""
+    own = cfg is None  # cấu hình của tiến trình: dùng DATA_DIR, MANIFEST của module
+    cfg = CFG if own else cfg
+    prep = "python run.py prepare" if cfg.get("dataset", "hm") == "hm" else "python run.py amazon-data"
+    name = data_name(sample, cfg)
+    path = (DATA_DIR if own else PROJECT_ROOT / cfg["data_dir"]) / f"{name}.csv.gz"
+    manifest = MANIFEST if own else manifest_path(cfg)
+    entry = json.loads(manifest.read_text(encoding="utf-8")).get(name) if manifest.exists() else None
+    if entry is None or not path.exists():
+        raise SystemExit(f"Thiếu {path} hoặc mục '{name}' trong {manifest} — chạy `{prep}` trước.")
+    if (entry["k_core"], entry["test_start"]) != (cfg["k_core"], cfg["test_start"]):
+        raise SystemExit(f"{path} lọc với k_core={entry['k_core']}, test_start={entry['test_start']} khác cấu hình "
+                         f"— chạy lại `{prep}`.")
+    try:
+        pairs = load_pairs(path, entry["md5"])
+    except ValueError as e:
+        raise SystemExit(f"{e} — file bị sửa hoặc manifest cũ: chạy lại `{prep}`.") from None
+    f = cfg["features"]
     for p in (f["catalog"], f["sales"]):
         if not (PROJECT_ROOT / p).exists():
-            raise SystemExit(f"Thiếu {p} — chạy `python scripts/21_build_features.py` trước.")
-    return build_v2(PROJECT_ROOT / CFG["samples"][sample], CFG["val_start"], CFG["test_start"], CFG["k_core"],
-                    load_catalog(PROJECT_ROOT / f["catalog"]), load_daily_sales(PROJECT_ROOT / f["sales"]),
-                    PROJECT_ROOT / f["customers"], with_test=with_test)
+            raise SystemExit(f"Thiếu {p} — chạy `{prep}` (gồm scripts/21_build_features.py) trước.")
+    catalog, sales = load_catalog(PROJECT_ROOT / f["catalog"]), load_daily_sales(PROJECT_ROOT / f["sales"])
+    if cfg.get("dataset", "hm") == "hm":  # gộp mọi màu của một mẫu (product_code); Amazon: một asin là một sản phẩm
+        catalog, sales = group_by_product(catalog, sales)
+    D = build_from_pairs(pairs, cfg["val_start"], cfg["test_start"], catalog, sales,
+                         PROJECT_ROOT / f["customers"] if f.get("customers") else None, with_test=with_test,
+                         day0=cfg.get("day0", DAY0))
+    if D.user_cats is None:  # không có thông tin khách (Amazon): nhánh user của NeuMF-F chỉ còn đặc trưng thời gian
+        D.user_cats, D.user_cards = np.zeros((D.n_users, 0), dtype=np.int32), []
+    D.meta.update(k_core=cfg["k_core"], sample=f"{cfg['data_dir']}/{name}.csv.gz", data_md5=entry["md5"],
+                  dataset=cfg.get("dataset", "hm"), content_onehot=cfg.get("content_onehot"))
+    return D
 
 
 def device():
@@ -126,13 +184,15 @@ def provenance() -> dict:
         except (OSError, subprocess.SubprocessError):
             return ""
 
-    blob = (PROJECT_ROOT / "configs" / "v2.yaml").read_bytes()
-    return {"config_path": "configs/v2.yaml", "config_hash": hashlib.sha256(blob).hexdigest()[:16],
+    blob = CONFIG.read_bytes()
+    return {"config_path": CONFIG.relative_to(PROJECT_ROOT).as_posix(),
+            "config_hash": hashlib.sha256(blob).hexdigest()[:16],
             "code_hash": code_hash(), "git_commit": git("rev-parse", "HEAD") or None,
             "git_dirty": bool(git("status", "--porcelain", "--untracked-files=no"))}
 
 
-CODE_FILES = ["src", "scripts/v2_common.py", "scripts/22_tune_v2.py", "configs/v2.yaml"]
+CODE_FILES = ["src", "scripts/v2_common.py", "scripts/22_tune_v2.py", "scripts/02_prepare_data.py",
+              CONFIG.relative_to(PROJECT_ROOT).as_posix()]  # cấu hình đang dùng (configs/v2.yaml hoặc amazon.yaml)
 
 
 def code_hash() -> str:
@@ -224,7 +284,8 @@ def score_fn(key: str, p: dict, D: DataV2, stage: Stage, seed: int = 42):
     if key == "recent_pop":
         return RecentPopularity(D.item_cum, stage.cutoff, p["window"])
     if key == "content":
-        return ContentProfile(D.item_text, D.item_cats, D.item_cards, tr, D.n_users, stage.cutoff, p["half_life"])
+        return ContentProfile(D.item_text, D.item_cats, D.item_cards, tr, D.n_users, stage.cutoff, p["half_life"],
+                              D.meta.get("content_onehot"))
     if key in ("itemknn", "userknn"):
         cls = ItemKNNBaseline if key == "itemknn" else UserKNNBaseline
         return MaskedScoreFn(cls(tr, D.n_users, D.n_id_items, k=p["k"], shrink=p["shrink"]), stage.scoreable,
@@ -241,9 +302,10 @@ def late_fusion(parts: dict, w: float) -> LateFusion:
 
 
 def evaluate(scorer, stage: Stage, dev, per_user=None, topk=None) -> dict:
-    return evaluate_v2(scorer, stage.records, stage.new, device=dev, per_user=per_user, topk=topk, **eval_kw())
+    return evaluate_v2(scorer, stage.records, device=dev, per_user=per_user, topk=topk, **eval_kw())
 
 
-__all__ = ["CFG", "AUDIT", "METRICS", "DISPLAY", "GRIDS", "DEFAULTS", "ABLATIONS", "ABLATION_DISPLAY", "TORCH_ID",
-           "TORCH_FEAT", "LATE_PARTS", "configs_for", "load_data", "device", "build_torch", "torch_scorer",
-           "fit_torch", "score_fn", "late_fusion", "evaluate", "is_feature", "evaluate_score_function"]
+__all__ = ["CFG", "CONFIG", "DATASET", "NAME", "OUT", "read_config", "manifest_path", "AUDIT", "METRICS", "DISPLAY", "GRIDS", "DEFAULTS", "ABLATIONS", "ABLATION_DISPLAY", "TORCH_ID",
+           "TORCH_FEAT", "LATE_PARTS", "DATA_DIR", "MANIFEST", "data_name", "configs_for", "load_data", "device",
+           "build_torch", "torch_scorer", "fit_torch", "score_fn", "late_fusion", "evaluate", "is_feature",
+           "evaluate_score_function"]

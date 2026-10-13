@@ -1,4 +1,4 @@
-"""Tinh chỉnh CHỈ trên tập xác thực của mẫu phát triển hm500k theo giao thức v2 (audit/PREREG_v2.md).
+"""Tinh chỉnh CHỈ trên tập xác thực của mẫu phát triển theo giao thức v2 (audit/PREREG_v2.md).
 
     python scripts/22_tune_v2.py                       # mọi mô hình, theo thứ tự ORDER
     python scripts/22_tune_v2.py --model neumf_f --resume
@@ -9,6 +9,7 @@
 - Mỗi cấu hình ghi một dòng vào audit/v2/tuning_log.csv; cấu hình tốt nhất theo NDCG@10 vào audit/v2/best_configs.json
   (kèm checkpoint của GMF-F, MLP-F tốt nhất cho Late Fusion-F). --resume bỏ qua cấu hình đã có trong nhật ký.
 - Không dựng tập kiểm thử của bất kỳ mẫu nào.
+- Amazon Beauty (configs/amazon.yaml) không tinh chỉnh: dùng cấu hình đã chọn trên H&M (audit/PREREG_amazon.md mục 4).
 """
 from __future__ import annotations
 
@@ -31,11 +32,17 @@ from src.utils.io import ensure_dir
 
 ORDER = ["popularity", "recent_pop", "content", "itemknn", "userknn", "bpr", "gmf", "mlp", "neumf",
          "gmf_f", "mlp_f", "neumf_f", "late_f"]
-CKPT = V.PROJECT_ROOT / "outputs" / "v2" / "tuning"
+CKPT = V.OUT / "tuning"
 
 
 def log_row(path: Path, row: dict) -> None:
     new = not path.exists()
+    if not new:  # nhật ký cũ thiếu/thừa cột (vd. trước khi có data_md5) -> ghi nối sẽ lệch cột
+        with path.open(encoding="utf-8") as f:
+            header = next(csv.reader(f), [])
+        if header != list(row):
+            raise SystemExit(f"{path} có cột {header}, khác dòng sắp ghi {list(row)} — chuyển nhật ký cũ đi rồi "
+                             "chạy lại.")
     with path.open("a", newline="", encoding="utf-8") as f:
         w = csv.DictWriter(f, fieldnames=list(row))
         if new:
@@ -57,18 +64,23 @@ def main():
     ap.add_argument("--log-dir", default=str(V.AUDIT))
     ap.add_argument("--max-epochs", type=int, default=V.CFG["training"]["max_epochs"])
     args = ap.parse_args()
+    if not V.TUNED_HERE:
+        raise SystemExit(f"{V.NAME} không tinh chỉnh — dùng cấu hình {V.CFG['best_configs']} (PREREG mục 4).")
     log_dir = ensure_dir(Path(args.log_dir))
     log_path, best_path = log_dir / "tuning_log.csv", log_dir / "best_configs.json"
     ensure_dir(CKPT)
 
     t0 = time.time()
     D = V.load_data("dev", with_test=False)
+    other = [r for r in logged(log_path) if r.get("data_md5") != D.meta["data_md5"]]
+    if other:  # nhật ký của dữ liệu khác (vd. trước bản cuối): --resume sẽ bỏ qua nhầm, best_configs.json cũng cũ
+        raise SystemExit(f"{log_path} có {len(other)} dòng tinh chỉnh trên dữ liệu khác (data_md5) — chuyển "
+                         f"tuning_log.csv và best_configs.json trong {log_dir} sang chỗ khác rồi chạy lại.")
     st, dev, seed = D.val, V.device(), V.CFG["tuning"]["seed"]
     prov = V.provenance()
-    print(f"mẫu phát triển: {D.n_users:,} người dùng, {D.n_items:,} sản phẩm ({D.n_id_items:,} có ID), "
-          f"{len(st.records):,} người dùng xác thực, {len(st.targets):,} cặp đúng "
-          f"({int(st.new[st.targets['item']].sum()):,} sản phẩm mới) | commit {prov['git_commit']} "
-          f"dirty={prov['git_dirty']} code {prov['code_hash']} ({time.time() - t0:.0f}s)", flush=True)
+    print(f"[{V.NAME}] mẫu phát triển: {D.n_users:,} người dùng, {D.n_items:,} sản phẩm, {len(st.records):,} người dùng xác "
+          f"thực, {len(st.targets):,} cặp đúng | commit {prov['git_commit']} dirty={prov['git_dirty']} "
+          f"code {prov['code_hash']} ({time.time() - t0:.0f}s)", flush=True)
     best = json.loads(best_path.read_text(encoding="utf-8")) if best_path.exists() else {}
     models = ORDER if "all" in args.model else [m for m in ORDER if m in args.model]
     late_parts = {}
@@ -95,11 +107,11 @@ def main():
                 metrics = V.evaluate(V.score_fn(model, p, D, st, seed), st, dev)
             row = dict(timestamp=datetime.now().isoformat(timespec="seconds"), model=model, config_id=cid,
                        params=key, config_hash=hashlib.sha256(f"{model}{key}{seed}".encode()).hexdigest()[:16],
-                       git_commit=prov["git_commit"], git_dirty=prov["git_dirty"], code_hash=prov["code_hash"], seed=seed, best_epoch=best_epoch,
+                       git_commit=prov["git_commit"], git_dirty=prov["git_dirty"], code_hash=prov["code_hash"],
+                       data_md5=D.meta["data_md5"], seed=seed, best_epoch=best_epoch,
                        time_s=round(time.time() - t1, 1), **{f"val_{k}": round(metrics[k], 6) for k in V.METRICS})
             log_row(log_path, row)
-            print(f"[{model} {cid + 1}/{len(configs)}] {key} -> NDCG@10 {metrics['NDCG@10']:.5f} "
-                  f"(cũ {metrics['NDCG@10_old']:.5f} / mới {metrics['NDCG@10_new']:.5f}), epoch {best_epoch}, "
+            print(f"[{model} {cid + 1}/{len(configs)}] {key} -> NDCG@10 {metrics['NDCG@10']:.5f}, epoch {best_epoch}, "
                   f"{row['time_s']:.0f}s", flush=True)
             if state is not None and model in V.LATE_PARTS:
                 prev = best.get(model, {}).get("val", {}).get("NDCG@10", -1.0)

@@ -45,27 +45,3 @@ class LateFusion:
         a = minmax(model_scores(self.a, user, items))
         b = minmax(model_scores(self.b, user, items))
         return self.w * a + (1.0 - self.w) * b
-
-
-def fusion_cache(model_a, model_b, records) -> dict[int, tuple[np.ndarray, np.ndarray]]:
-    """Điểm đã chuẩn hoá của hai thành phần trên candidates của từng record — tính một lần, dùng cho mọi w."""
-    for m in (model_a, model_b):
-        if isinstance(m, torch.nn.Module):
-            m.eval()
-    return {int(r.user): (minmax(model_scores(model_a, r.user, r.candidates)),
-                          minmax(model_scores(model_b, r.user, r.candidates))) for r in records}
-
-
-class CachedLateFusion:
-    """Như LateFusion nhưng đọc điểm đã tính sẵn (candidates phải đúng thứ tự của record đã dùng khi tạo cache)."""
-
-    def __init__(self, cache: dict, w: float):
-        if not 0.0 <= w <= 1.0:
-            raise ValueError("w phải nằm trong [0, 1]")
-        self.cache, self.w = cache, float(w)
-
-    def score_items(self, user: int, items) -> np.ndarray:
-        a, b = self.cache[int(user)]
-        if len(a) != len(items):
-            raise ValueError("candidates khác với lúc tạo cache")
-        return self.w * a + (1.0 - self.w) * b

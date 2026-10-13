@@ -1,4 +1,4 @@
-"""Đánh giá cuối giao thức v2 trên tập kiểm thử của mẫu kiểm định B (audit/PREREG_v2.md mục 5).
+"""Đánh giá cuối giao thức v2 trên tập kiểm thử của mẫu kiểm định (audit/PREREG_v2.md mục 5).
 
     python scripts/23_final_v2.py --reason "Đánh giá cuối v2 theo PREREG_v2"
     python scripts/23_final_v2.py --reason "..." --seeds 2026 3407     # chạy tiếp các seed chưa chạy (bị ngắt giữa chừng)
@@ -12,13 +12,17 @@ audit/test_access_log.csv (trừ khi --allow-rerun). Mỗi seed ghi một dòng 
 
 Mỗi seed: mạng nơ-ron chọn số epoch trên tập xác thực của B (dừng sớm như lúc tinh chỉnh) rồi huấn luyện lại từ đầu
 trên mọi cặp trước mốc kiểm thử đúng số epoch đó; BPR-MF và các mô hình không phải mạng nơ-ron khớp trên mọi cặp trước
-mốc kiểm thử; LateFusion-F trộn GMF-F và MLP-F của cùng seed. Ablation NeuMF-F chỉ chạy ở seed 42 (mô tả). Mỗi mô hình
-được chấm hai lần: tập ứng viên đầy đủ (kết quả chính) và chỉ sản phẩm cũ (phân tích độ nhạy).
+mốc kiểm thử; LateFusion-F trộn GMF-F và MLP-F của cùng seed. Ablation NeuMF-F chỉ chạy ở seed 42 (mô tả), bỏ biến
+thể trùng NeuMF-F (vd. "bỏ ID ngẫu nhiên" khi cấu hình chọn đã có id_dropout = 0).
 
-Ra outputs/v2/final/: data.json, items.csv.gz và seed<N>/{results.json, per_user.csv.gz, per_user_old.csv.gz,
-history.csv}; seed 42 thêm topk.json.gz và checkpoint mạng nơ-ron (*.pt).
---dry-run dùng mẫu A, giai đoạn xác thực đóng cả vai chọn epoch lẫn chấm, ghi ra outputs/v2/dry_run/, không ghi nhật ký
-kiểm thử: chỉ để kiểm tra đường ống chạy trọn vẹn, số liệu không có ý nghĩa.
+Ra outputs/v2/final/: data.json, items.csv.gz và seed<N>/{results.json, per_user.csv.gz, history.csv}; seed 42 thêm
+topk.json.gz và checkpoint mạng nơ-ron (*.pt). Thư mục ra còn kết quả của dữ liệu khác (data_md5 khác) thì dừng, không
+ghi lẫn.
+--dry-run dùng mẫu phát triển, giai đoạn xác thực đóng cả vai chọn epoch lẫn chấm, ghi ra outputs/v2/dry_run/, không ghi
+nhật ký kiểm thử: chỉ để kiểm tra đường ống chạy trọn vẹn, số liệu không có ý nghĩa.
+Amazon Beauty (NEUMF_CONFIG=configs/amazon.yaml, `python run.py amazon-final`): cùng khoá với audit/PREREG_amazon.md,
+run_tag amazon_kiemdinh_seed<N>, ra outputs/amazon/final/ (dry-run: outputs/amazon/dry_run/). Không tinh chỉnh trên
+Amazon: cấu hình lấy từ audit/v2/best_configs.json (H&M), nên không so mã băm với nhật ký tinh chỉnh.
 """
 from __future__ import annotations
 
@@ -43,7 +47,6 @@ import torch
 import v2_common as V
 from src.baselines import RandomBaseline
 from src.data_pipeline.protocol_v2 import describe
-from src.evaluation.full_ranking import build_full_ranking_records_multi
 from src.evaluation.v2 import evaluate_v2
 from src.utils.io import ensure_dir, log_test_access, prereg_committed
 
@@ -53,12 +56,12 @@ STATIC = ("popularity", "recent_pop", "content", "itemknn", "userknn")  # tất 
 NEURAL = V.TORCH_ID + V.TORCH_FEAT
 TUNED = [m for m in MODELS if m != "random"]
 ABLATION_SEED = TOPK_SEED = 42
-PER_USER_COLS = ["user", "n_candidates", "n_positives", "n_new", "ranks", "new_flags", "NDCG@10", "Recall@10", "HR@10",
-                 "Precision@10", "NDCG@5", "NDCG@20", "NDCG@10_old", "NDCG@10_new"]
-PER_USER_OLD_COLS = ["user", "n_positives", "ranks", "NDCG@10", "Recall@10", "HR@10"]
-PREREG = V.PROJECT_ROOT / "audit" / "PREREG_v2.md"
+PER_USER_COLS = ["user", "n_candidates", "n_positives", "ranks", "NDCG@10", "Recall@10", "HR@10", "Precision@10",
+                 "NDCG@5", "NDCG@20"]
+PREREG = V.PROJECT_ROOT / V.CFG.get("prereg", "audit/PREREG_v2.md")
 TEST_LOG = V.PROJECT_ROOT / "audit" / "test_access_log.csv"
-RUN_TAG = "v2_final_seed"
+# H&M: "v2_final_seed<N>" là lần mở khối 1 (hm500k_b, 04/10/2026) — mẫu khác, không tính
+RUN_TAG = V.CFG.get("run_tag", "v2_kiemdinh_seed")
 
 
 def git(*a) -> str:
@@ -125,7 +128,7 @@ def tuning_code_hashes() -> set[str]:
 def lock_errors(args, prov: dict, best: dict) -> list[str]:
     errs = []
     if not prereg_committed(PREREG):
-        errs.append("audit/PREREG_v2.md chưa commit (hoặc đang bị sửa)")
+        errs.append(f"{PREREG.relative_to(V.PROJECT_ROOT).as_posix()} chưa commit (hoặc đang bị sửa)")
     if not args.reason.strip():
         errs.append("thiếu --reason (ghi vào audit/test_access_log.csv)")
     dirty = dirty_files()
@@ -140,36 +143,43 @@ def lock_errors(args, prov: dict, best: dict) -> list[str]:
     if missing:
         errs.append("chưa tinh chỉnh xong: " + ", ".join(missing))
     hashes = tuning_code_hashes()
-    if hashes != {prov["code_hash"]} and not args.allow_code_change:
+    if V.TUNED_HERE and hashes != {prov["code_hash"]} and not args.allow_code_change:
         errs.append(f"mã nguồn khác lúc tinh chỉnh (tinh chỉnh: {sorted(hashes)}, hiện tại: {prov['code_hash']}); "
-                    "nếu thay đổi không ảnh hưởng kết quả, chạy với --allow-code-change và ghi lý do vào PREREG_v2 mục 10")
+                    f"nếu thay đổi không ảnh hưởng kết quả, chạy với --allow-code-change và ghi lý do vào {PREREG.name} "
+                    "(mục lệch kế hoạch)")
     again = sorted(set(args.seeds) & opened_seeds())
     if again and not args.allow_rerun:
-        errs.append(f"seed {again} đã mở tập kiểm thử v2 — chỉ chạy lại với --allow-rerun và ghi vào PREREG_v2 mục 10")
+        errs.append(f"seed {again} đã mở tập kiểm thử ({V.NAME}) — chỉ chạy lại với --allow-rerun và ghi vào "
+                    f"{PREREG.name} (mục lệch kế hoạch)")
     if args.max_epochs != V.CFG["training"]["max_epochs"] or args.models or args.skip_ablation:
         errs.append("--max-epochs/--models/--skip-ablation chỉ dùng với --dry-run")
     return errs
 
 
-def old_only_records(stage, D):
-    """Phân tích độ nhạy: ứng viên và sản phẩm đúng chỉ gồm sản phẩm cũ (có dữ liệu huấn luyện của giai đoạn)."""
-    t = stage.targets[stage.scoreable[stage.targets["item"].to_numpy()]]
-    return build_full_ranking_records_multi(t, D.n_items, stage.train_pos, item_pool=np.flatnonzero(stage.scoreable))
+def foreign_results(root: Path, data_md5: str) -> list[str]:
+    """Seed trong thư mục ra đã có kết quả của dữ liệu khác — ghi tiếp vào đó sẽ trộn hai lần chạy khi tổng hợp."""
+    return sorted(p.parent.name for p in root.glob("seed*/results.json")
+                  if json.loads(p.read_text(encoding="utf-8")).get("provenance", {}).get("data_md5") != data_md5)
+
+
+def ablations(p: dict) -> list[str]:
+    """Biến thể ablation khác NeuMF-F (cấu hình p): bỏ biến thể không tắt gì, vd. "bỏ ID ngẫu nhiên" khi cấu hình chọn
+    đã có id_dropout = 0 — chạy nó chỉ ra lại đúng NeuMF-F."""
+    base = {"id_dropout": p.get("id_dropout", 0.0)}  # các cờ use_* của NeuMF-F đều bật
+    return [k for k, flags in V.ABLATIONS.items() if any(base.get(f, True) != v for f, v in flags.items())]
 
 
 def beyond(top: dict, stage, k: int = 10) -> dict:
-    """Mô tả danh sách top-k: độ phủ tập ứng viên và tỉ lệ sản phẩm mới trong top-k."""
+    """Mô tả danh sách top-k: độ phủ tập ứng viên."""
     lists = [np.asarray(v[:k], dtype=np.int64) for v in top.values()]
     shown = np.unique(np.concatenate(lists)) if lists else np.empty(0, np.int64)
-    return {f"coverage@{k}": len(shown) / max(int((stage.scoreable | stage.new).sum()), 1),
-            f"new_share@{k}": float(np.mean([stage.new[v].mean() for v in lists])) if lists else float("nan")}
+    return {f"coverage@{k}": len(shown) / max(int(stage.scoreable.sum()), 1)}
 
 
 class Runner:
     def __init__(self, args, D, sel, ev, best, prov, root, dev):
         self.args, self.D, self.sel, self.ev, self.best, self.prov, self.root, self.dev = \
             args, D, sel, ev, best, prov, root, dev
-        self.old_records = old_only_records(ev, D)
         self.kw = V.eval_kw()
         self.static = {}
 
@@ -177,16 +187,14 @@ class Runner:
         if model in self.best:
             return self.best[model]["params"]
         if not self.args.dry_run:
-            raise SystemExit(f"Thiếu cấu hình của {model} trong audit/v2/best_configs.json")
+            raise SystemExit(f"Thiếu cấu hình của {model} trong {V.BEST_CONFIGS}")
         return dict(V.DEFAULTS.get(model, {}))  # chạy thử khi tinh chỉnh chưa xong
 
     def evaluate(self, scorer, want_top: bool):
-        per, per_old, top = [], [], ({} if want_top else None)
+        per, top = [], ({} if want_top else None)
         t0 = time.perf_counter()
-        res = evaluate_v2(scorer, self.ev.records, self.ev.new, device=self.dev, per_user=per, topk=top, **self.kw)
-        res_old = evaluate_v2(scorer, self.old_records, self.ev.new, device=self.dev, per_user=per_old, **self.kw)
-        return dict(res=res, res_old=res_old, per=per, per_old=per_old, top=top,
-                    eval_time_s=time.perf_counter() - t0)
+        res = evaluate_v2(scorer, self.ev.records, device=self.dev, per_user=per, topk=top, **self.kw)
+        return dict(res=res, per=per, top=top, eval_time_s=time.perf_counter() - t0)
 
     def static_scores(self, model: str) -> dict:
         if model not in self.static:  # tất định -> tính một lần cho mọi seed của lần chạy này
@@ -198,33 +206,29 @@ class Runner:
 
     def run_seed(self, seed: int, models: list[str]):
         a = self.args
+        abl = (ablations(self.params("neumf_f")) if seed == ABLATION_SEED and not a.skip_ablation
+               and "neumf_f" in models else [])
         if not a.dry_run:
             tag = f"{RUN_TAG}{seed}" + ("_rerun" if seed in opened_seeds() else "")
-            names = [V.DISPLAY[m] for m in models]
-            if seed == ABLATION_SEED and not a.skip_ablation and "neumf_f" in models:
-                names += [V.ABLATION_DISPLAY[k] for k in V.ABLATIONS]
+            names = [V.DISPLAY[m] for m in models] + [V.ABLATION_DISPLAY[k] for k in abl]
             log_test_access(TEST_LOG, tag, self.prov, names, a.reason)
             if a.mirror_log:  # bản sao nhật ký ngoài máy chạy (vd. Google Drive) phòng máy ảo bị ngắt
                 log_test_access(Path(a.mirror_log), tag, self.prov, names, a.reason)
         out = ensure_dir(self.root / f"seed{seed}")
         want_top = seed == TOPK_SEED
-        results, results_old, rows, rows_old, topk, meta, hist, beyond_k = {}, {}, [], [], {}, {}, [], {}
+        results, rows, topk, meta, hist, beyond_k = {}, [], {}, {}, [], {}
         nets = {}
         t_seed = time.perf_counter()
 
         def record(name: str, r: dict, extra: dict):
-            results[name], results_old[name] = r["res"], r["res_old"]
+            results[name] = r["res"]
             rows.extend({"model": name, "seed": seed, **{c: u.get(c) for c in PER_USER_COLS}} for u in r["per"])
-            rows_old.extend({"model": name, "seed": seed, **{c: u.get(c) for c in PER_USER_OLD_COLS}}
-                            for u in r["per_old"])
             if want_top and r["top"] is not None:
                 topk[name] = {str(u): items for u, items in r["top"].items()}
                 beyond_k[name] = beyond(r["top"], self.ev)
             meta[name] = {**meta.get(name, {}), **extra, "eval_time_s": round(r["eval_time_s"], 1)}
             res = r["res"]
-            print(f"[seed {seed}] {V.DISPLAY.get(name, name):26s} NDCG@10 {res['NDCG@10']:.5f} "
-                  f"(cũ {res['NDCG@10_old']:.5f} / mới {res['NDCG@10_new']:.5f}) | chỉ SP cũ "
-                  f"{r['res_old']['NDCG@10']:.5f}", flush=True)
+            print(f"[seed {seed}] {V.DISPLAY.get(name, name):26s} NDCG@10 {res['NDCG@10']:.5f}", flush=True)
 
         def score(name: str, scorer, **extra):
             record(name, self.evaluate(scorer, want_top), extra)
@@ -265,23 +269,24 @@ class Runner:
                 if missing:
                     raise SystemExit(f"late_f cần {missing} trong cùng lần chạy")
                 score(m, V.late_fusion(nets, self.params("late_f")["w"]), w=self.params("late_f")["w"])
-        if seed == ABLATION_SEED and not a.skip_ablation and "neumf_f" in models:
-            for key in V.ABLATIONS:  # cùng siêu tham số với NeuMF-F, tắt một thành phần
-                net, info = select_refit(key, self.params("neumf_f"))
-                score(key, V.torch_scorer(key, net, self.ev, self.D, self.dev), **info)
+        for key in abl:  # cùng siêu tham số với NeuMF-F, tắt một thành phần
+            net, info = select_refit(key, self.params("neumf_f"))
+            score(key, V.torch_scorer(key, net, self.ev, self.D, self.dev), **info)
 
         pd.DataFrame(rows).to_csv(out / "per_user.csv.gz", index=False)
-        pd.DataFrame(rows_old).to_csv(out / "per_user_old.csv.gz", index=False)
         pd.DataFrame(hist).to_csv(out / "history.csv", index=False)
         if want_top:
             with gzip.open(out / "topk.json.gz", "wt", encoding="utf-8") as f:
                 json.dump(topk, f)
         payload = dict(
-            seed=seed, evaluated_on="dry-run: tập xác thực của mẫu A" if a.dry_run else "tập kiểm thử của mẫu B",
-            reason=a.reason, provenance={**self.prov, "tuning_code_hashes": sorted(tuning_code_hashes())},
+            seed=seed, dataset=V.DATASET, evaluated_on=("dry-run: tập xác thực của mẫu phát triển" if a.dry_run
+                                                         else "tập kiểm thử của mẫu kiểm định"),
+            reason=a.reason, provenance={**self.prov, "data_md5": self.D.meta["data_md5"],
+                                         "tuning_code_hashes": sorted(tuning_code_hashes()),
+                                         "configs_from": V.BEST_CONFIGS.relative_to(V.PROJECT_ROOT).as_posix()},
             machine=machine_info(self.dev),
             elapsed_min=round((time.perf_counter() - t_seed) / 60, 1),
-            results=results, results_old_only=results_old, beyond=beyond_k, train_meta=meta,
+            results=results, beyond=beyond_k, train_meta=meta,
             configs={m: self.params(m) for m in models if m != "random"})
         (out / "results.json").write_text(json.dumps(payload, indent=2, ensure_ascii=False, default=float),
                                           encoding="utf-8")
@@ -301,13 +306,13 @@ def main():
     ap.add_argument("--mirror-log", default="", help="ghi thêm mỗi dòng nhật ký truy cập test vào file này (vd. Drive)")
     args = ap.parse_args()
 
-    best_path = V.AUDIT / "best_configs.json"
+    best_path = V.BEST_CONFIGS
     best = json.loads(best_path.read_text(encoding="utf-8")) if best_path.exists() else {}
     prov = V.provenance()
     if not args.dry_run:
         errs = lock_errors(args, prov, best)
         if errs:
-            raise SystemExit("Khoá kiểm thử v2 — không chạy:\n  - " + "\n  - ".join(errs))
+            raise SystemExit(f"Khoá kiểm thử ({V.NAME}) — không chạy:\n  - " + "\n  - ".join(errs))
     models = [m for m in MODELS if not args.models or m in args.models]
     if "late_f" in models:
         models += [k for k in V.LATE_PARTS if k not in models]
@@ -317,21 +322,25 @@ def main():
     if args.dry_run:
         D = V.load_data("dev")
         sel = ev = D.val
-        root = ensure_dir(Path(args.out or V.PROJECT_ROOT / "outputs" / "v2" / "dry_run"))
+        root = ensure_dir(Path(args.out or V.OUT / "dry_run"))
     else:
         D = V.load_data("holdout", with_test=True)
         sel, ev = D.val, D.test
-        root = ensure_dir(Path(args.out or V.PROJECT_ROOT / "outputs" / "v2" / "final"))
+        root = ensure_dir(Path(args.out or V.OUT / "final"))
+    other = foreign_results(root, D.meta["data_md5"])
+    if other:
+        raise SystemExit(f"{root} còn kết quả của dữ liệu khác ({', '.join(other)}) — chuyển thư mục này sang chỗ khác "
+                         f"(vd. git mv {root.name} {root.name}_cu trong {root.parent.name}/) rồi chạy lại.")
     dev = V.device()
     info = describe(D)
-    (root / "data.json").write_text(json.dumps(dict(sample=D.meta["sample"], **info), indent=2, ensure_ascii=False),
-                                    encoding="utf-8")
-    pd.DataFrame(dict(item=np.arange(D.n_items), article_id=D.item_article, has_id=np.arange(D.n_items) < D.n_id_items,
-                      scoreable=ev.scoreable, new=ev.new)).to_csv(root / "items.csv.gz", index=False)
-    print(f"{'CHẠY THỬ (A, xác thực)' if args.dry_run else 'ĐÁNH GIÁ CUỐI (B, kiểm thử)'}: {D.n_users:,} người dùng, "
-          f"{D.n_items:,} sản phẩm | chấm {len(ev.records):,} người dùng, {len(ev.targets):,} cặp đúng "
-          f"({int(ev.new[ev.targets['item'].to_numpy()].sum()):,} sản phẩm mới) | commit {prov['git_commit']} "
-          f"code {prov['code_hash']} ({time.time() - t0:.0f}s)", flush=True)
+    (root / "data.json").write_text(json.dumps(dict(sample=D.meta["sample"], data_md5=D.meta["data_md5"], **info),
+                                               indent=2, ensure_ascii=False), encoding="utf-8")
+    pd.DataFrame(dict(item=np.arange(D.n_items), product_code=D.item_product, scoreable=ev.scoreable)
+                 ).to_csv(root / "items.csv.gz", index=False)
+    print(f"[{V.NAME}] {'CHẠY THỬ (phát triển, xác thực)' if args.dry_run else 'ĐÁNH GIÁ CUỐI (kiểm định, kiểm thử)'}: "
+          f"{D.n_users:,} người dùng, {D.n_items:,} sản phẩm | chấm {len(ev.records):,} người dùng, "
+          f"{len(ev.targets):,} cặp đúng | commit {prov['git_commit']} code {prov['code_hash']} "
+          f"({time.time() - t0:.0f}s)", flush=True)
 
     runner = Runner(args, D, sel, ev, best, prov, root, dev)
     for seed in args.seeds:

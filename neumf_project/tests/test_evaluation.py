@@ -1,30 +1,54 @@
 from __future__ import annotations
 
+import math
+
 import numpy as np
 import pandas as pd
+import pytest
 import torch
 
-from src.evaluation.full_ranking import build_full_ranking_records, evaluate_torch_model, EvalRecord
-from src.evaluation.ranking_utils import rank_positive
-from src.evaluation.long_tail import define_head_items
+from src.evaluation.full_ranking import (EvalRecord, build_full_ranking_records_multi, evaluate_score_function,
+                                         evaluate_torch_model)
+from src.evaluation.metrics import hr_at_k, multi_ranking_metrics, ndcg_at_k, precision_at_k, recall_at_k
+from src.evaluation.ranking_utils import rank_positives
 
 
 def test_full_ranking_excludes_seen_and_keeps_positive():
     eval_df = pd.DataFrame({"user": [0], "item": [4]})
-    seen = [{0, 1, 2, 3}]
-    rec = build_full_ranking_records(eval_df, 6, seen)[0]
-    assert 4 in rec.candidates
-    assert not ({0, 1, 2, 3} & set(rec.candidates))
-    assert set(rec.candidates) == {4, 5}
+    rec = build_full_ranking_records_multi(eval_df, 6, [{0, 1, 2, 3, 4}])[0]
+    assert rec.candidates.tolist() == [4, 5]  # món đã mua bị loại, món đúng luôn giữ
+
+
+def test_multi_records_keep_all_positives_and_pool():
+    eval_df = pd.DataFrame({"user": [0, 0], "item": [2, 3]})
+    rec = build_full_ranking_records_multi(eval_df, 6, [{0, 1}], item_pool=[0, 1, 2, 4])[0]
+    assert rec.positives.tolist() == [2, 3]              # item 3 ngoài pool vẫn giữ vì là item đúng
+    assert rec.candidates.tolist() == [2, 3, 4]
 
 
 def test_tie_ranking_is_deterministic():
     candidates = np.array([1, 2, 3, 4])
     scores = np.array([1.0, 1.0, 1.0, 1.0])
-    r1 = rank_positive(scores, candidates, 3, user=7, tie_seed=2026)
-    r2 = rank_positive(scores, candidates, 3, user=7, tie_seed=2026)
-    assert r1 == r2
-    assert 1 <= r1 <= 4
+    r1 = rank_positives(scores, candidates, [3], user=7, tie_seed=2026)
+    r2 = rank_positives(scores, candidates, [3], user=7, tie_seed=2026)
+    assert r1.tolist() == r2.tolist() and 1 <= r1[0] <= 4
+
+
+@pytest.mark.parametrize("rank", [1, 2, 3, 7, 10, 11, 500])
+@pytest.mark.parametrize("k", [1, 5, 10, 20])
+def test_multi_metrics_equal_single_item_formulas(rank, k):
+    m = multi_ranking_metrics([rank], k)
+    assert m["HR"] == hr_at_k(rank, k)
+    assert m["NDCG"] == ndcg_at_k(rank, k)
+    assert m["Precision"] == precision_at_k(rank, k)
+    assert m["Recall"] == recall_at_k(rank, k)
+
+
+def test_multi_metrics_two_relevant_items():
+    m = multi_ranking_metrics([1, 4], k=3)
+    assert m["HR"] == 1.0 and m["Recall"] == 0.5 and m["Precision"] == pytest.approx(1 / 3)
+    assert m["NDCG"] == pytest.approx(1.0 / (1.0 + 1 / math.log2(3)))
+    assert multi_ranking_metrics([1, 2], k=10)["NDCG"] == pytest.approx(1.0)  # thứ tự lý tưởng
 
 
 def test_perfect_model_hr_ndcg_one():
@@ -38,78 +62,13 @@ def test_perfect_model_hr_ndcg_one():
     assert result["NDCG@1"] == 1.0
 
 
-def test_head_fraction_uses_train_only_counts():
-    train = pd.DataFrame({"item": [0] * 10 + [1] * 5 + [2] * 2 + [3]})
-    head = define_head_items(train, n_items=4, head_fraction=0.25)
-    assert head == {0}
-
-
-def test_sampled_candidates_do_not_duplicate_positive():
-    from src.evaluation.sampled_ranking import build_sampled_ranking_records
-    eval_df = pd.DataFrame({"user": [0], "item": [2]})
-    all_pos = [{0, 1, 2}]
-    rec = build_sampled_ranking_records(eval_df, n_items=6, all_positive_sets=all_pos, n_negatives=3, seed=1)[0]
-    assert list(rec.candidates).count(2) == 1
-    assert not ({0, 1} & set(rec.candidates))
-
-
-# ─────────────────────────────────────────────────────────
-# Beyond-accuracy metrics tests
-# ─────────────────────────────────────────────────────────
-from src.evaluation.beyond_accuracy import (
-    catalog_coverage, average_recommendation_popularity,
-    head_recommendation_rate, novelty_score,
-)
-
-
-def test_catalog_coverage_full():
-    recs = {0: [0, 1], 1: [1, 2], 2: [2, 3]}
-    assert catalog_coverage(recs, n_items=4) == 1.0
-
-
-def test_catalog_coverage_partial():
-    recs = {0: [0], 1: [0]}  # chỉ item 0
-    assert catalog_coverage(recs, n_items=4) == 0.25
-
-
-def test_catalog_coverage_empty():
-    assert catalog_coverage({}, n_items=10) == 0.0
-
-
-def test_arp_most_popular_higher():
-    # item 0 xuất hiện 100 lần, item 1 xuất hiện 1 lần
-    pop_recs = {0: [0, 0]}        # recommend popular
-    tail_recs = {0: [1, 1]}       # recommend tail
-    counts = {0: 100, 1: 1}
-    assert average_recommendation_popularity(pop_recs, counts) > \
-           average_recommendation_popularity(tail_recs, counts)
-
-
-def test_head_rec_rate_all_head():
-    head = {0, 1}
-    recs = {0: [0, 1], 1: [0, 1]}
-    assert head_recommendation_rate(recs, head) == 1.0
-
-
-def test_head_rec_rate_no_head():
-    head = {0, 1}
-    recs = {0: [2, 3], 1: [4, 5]}
-    assert head_recommendation_rate(recs, head) == 0.0
-
-
-def test_novelty_popular_lower():
-    # item 0 rất phổ biến → novelty thấp; item 99 hiếm → novelty cao
-    counts = {0: 1000, 99: 1}
-    n_train = 1001
-    pop_recs = {0: [0]}
-    rare_recs = {0: [99]}
-    assert novelty_score(pop_recs, counts, n_train) < novelty_score(rare_recs, counts, n_train)
-
+def test_perfect_scorer_gets_ndcg_one_with_many_positives():
+    rec = EvalRecord(0, 2, np.arange(6), np.array([2, 5]))
+    res = evaluate_score_function(lambda u, i: 1.0 if i in (2, 5) else 0.0, [rec], [2], include_redundant=True)
+    assert res["NDCG@2"] == 1.0 and res["Recall@2"] == 1.0 and res["HR@2"] == 1.0
 
 
 def test_per_user_rows_match_summary_and_count_candidates():
-    from src.evaluation.full_ranking import evaluate_score_function
-
     records = [EvalRecord(0, 5, np.array([1, 2, 5, 6], dtype=np.int64)),
                EvalRecord(1, 2, np.array([2, 3, 4, 7, 8], dtype=np.int64), np.array([2, 8]))]
     rows = []
@@ -119,17 +78,3 @@ def test_per_user_rows_match_summary_and_count_candidates():
     assert rows[0]["ranks"] == "2" and rows[1]["ranks"] == "1;5"   # điểm = id item -> 8 đứng đầu, 2 đứng cuối
     for name, value in summary.items():
         assert np.mean([r[name] for r in rows]) == value
-
-
-def test_run_provenance_hash_tracks_config():
-    import dataclasses
-
-    from src.config import load_config
-    from src.utils.io import run_provenance
-
-    cfg = load_config("configs/hm500k.yaml")
-    a, b = run_provenance(cfg, "x"), run_provenance(load_config("configs/hm500k.yaml"), "x")
-    assert a["config_hash"] == b["config_hash"] and len(a["config_hash"]) == 16
-    changed = dataclasses.replace(cfg, training=dataclasses.replace(cfg.training, seed=7))
-    assert run_provenance(changed, "x")["config_hash"] != a["config_hash"]
-    assert "git_commit" in a and isinstance(a["git_dirty"], bool)

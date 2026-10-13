@@ -58,16 +58,11 @@ class MLP(nn.Module):
 
 
 class NeuMF(nn.Module):
-    """NeuMF với 4 bảng embedding độc lập cho GMF/MLP.
+    """NeuMF với 4 bảng embedding độc lập cho GMF/MLP."""
 
-    gmf_dim: số chiều nhánh GMF (mặc định = embedding_dim của nhánh MLP). He et al. (2017) cho phép hai nhánh
-    có kích thước riêng — cần khi GMF và MLP pretrain tốt nhất có số chiều khác nhau.
-    """
-
-    def __init__(self, n_users: int, n_items: int, embedding_dim: int, layers: list[int], dropout: float = 0.2,
-                 gmf_dim: int | None = None):
+    def __init__(self, n_users: int, n_items: int, embedding_dim: int, layers: list[int], dropout: float = 0.2):
         super().__init__()
-        gmf_dim = gmf_dim or embedding_dim
+        gmf_dim = embedding_dim
         input_size = 2 * embedding_dim
         if not layers or layers[0] != input_size:
             raise ValueError(f"mlp_layers[0] phải bằng 2*embedding_dim = {input_size}")
@@ -99,20 +94,3 @@ class NeuMF(nn.Module):
         mlp = self.mlp_layers(mlp_in)
         fused = torch.cat([gmf, mlp], dim=-1)
         return self.output_layer(fused).squeeze(-1)
-
-    @torch.no_grad()
-    def load_pretrained(self, gmf: GMF, mlp: MLP, alpha: float = 0.5):
-        self.gmf_user_emb.weight.copy_(gmf.user_emb.weight)
-        self.gmf_item_emb.weight.copy_(gmf.item_emb.weight)
-        self.mlp_user_emb.weight.copy_(mlp.user_emb.weight)
-        self.mlp_item_emb.weight.copy_(mlp.item_emb.weight)
-
-        target_linear = [m for m in self.mlp_layers if isinstance(m, nn.Linear)]
-        source_linear = [m for m in mlp.mlp_layers if isinstance(m, nn.Linear)]
-        for tgt, src in zip(target_linear, source_linear):
-            tgt.weight.copy_(src.weight)
-            tgt.bias.copy_(src.bias)
-
-        gmf_h = gmf.output_layer.weight.squeeze(0)
-        mlp_h = mlp.output_layer.weight.squeeze(0)
-        self.output_layer.weight.copy_(torch.cat([alpha * gmf_h, (1 - alpha) * mlp_h]).unsqueeze(0))

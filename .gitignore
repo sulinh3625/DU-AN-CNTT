@@ -5,6 +5,7 @@
 *.blg
 *.lof
 *.lot
+*.loa
 *.out
 *.toc
 *.run.xml

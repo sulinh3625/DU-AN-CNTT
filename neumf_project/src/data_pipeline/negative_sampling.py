@@ -27,13 +27,3 @@ def sample_train_negatives(
     if len(available) == 0:
         return np.empty(0, dtype=np.int64)
     return rng.choice(available, size=n_samples, replace=len(available) < n_samples).astype(np.int64)
-
-
-def sample_eval_negatives(
-    exclude_set: set[int], n_items: int, n_samples: int, rng: np.random.Generator
-) -> np.ndarray:
-    available = available_negatives(exclude_set, n_items)
-    if len(available) == 0:
-        return np.empty(0, dtype=np.int64)
-    n_take = min(n_samples, len(available))
-    return rng.choice(available, size=n_take, replace=False).astype(np.int64)

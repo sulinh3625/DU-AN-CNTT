@@ -1,8 +1,9 @@
-"""Đánh giá cuối v2 (scripts/23_final_v2.py) và phân tích (scripts/24_report_v2.py): khoá kiểm thử, phân tích độ nhạy
-"chỉ sản phẩm cũ", tiêu chí kết luận và họ so sánh đã đăng ký."""
+"""Đánh giá cuối v2 (scripts/23_final_v2.py) và phân tích (scripts/24_report_v2.py): khoá kiểm thử, ablation, không ghi
+lẫn kết quả của dữ liệu khác, tiêu chí kết luận và họ so sánh đã đăng ký."""
 from __future__ import annotations
 
 import importlib.util
+import json
 import sys
 from pathlib import Path
 from types import SimpleNamespace
@@ -32,12 +33,13 @@ def _args(**kw):
 
 
 # ------------------------------------------------------------------ khoá kiểm thử
-def test_opened_seeds_reads_only_v2_final_tags(tmp_path, monkeypatch):
+def test_opened_seeds_reads_only_tags_of_current_holdout(tmp_path, monkeypatch):
     log = tmp_path / "test_access_log.csv"
     log.write_text("time,git_commit,git_dirty,config_hash,config_path,run_tag,models,reason\n"
                    "t,c,False,h,p,final_seed2025,M,r\n"          # nhật ký của giao thức v1: không tính
-                   "t,c,False,h,p,v2_final_seed2024,M,r\n"
-                   "t,c,False,h,p,v2_final_seed42_rerun,M,r\n", encoding="utf-8")
+                   "t,c,False,h,p,v2_final_seed2026,M,r\n"       # khối 1 (hm500k_b, 04/10/2026): mẫu khác, không tính
+                   "t,c,False,h,p,v2_kiemdinh_seed2024,M,r\n"
+                   "t,c,False,h,p,v2_kiemdinh_seed42_rerun,M,r\n", encoding="utf-8")
     monkeypatch.setattr(final, "TEST_LOG", log)
     assert final.opened_seeds() == {2024, 42}
 
@@ -72,6 +74,20 @@ def test_lock_passes_and_overrides_are_explicit(monkeypatch):
     assert final.lock_errors(_args(seeds=[2024], allow_code_change=True), changed, best) == []
 
 
+def test_lock_skips_tuning_hash_when_configs_come_from_other_dataset(monkeypatch):
+    """Amazon (best_configs = cấu hình chọn trên H&M): không có nhật ký tinh chỉnh để so mã băm; các khoá khác giữ nguyên."""
+    monkeypatch.setattr(final, "prereg_committed", lambda p: True)
+    monkeypatch.setattr(final, "git", lambda *a: "")
+    monkeypatch.setattr(final, "tuning_code_hashes", lambda: set())
+    monkeypatch.setattr(final, "opened_seeds", lambda: {42})
+    monkeypatch.setattr(final, "dirty_files", lambda: [])
+    best, prov = {m: {} for m in final.TUNED}, {"git_dirty": False, "code_hash": "abc"}
+    assert final.lock_errors(_args(seeds=[2024]), prov, best)  # H&M: phải có nhật ký tinh chỉnh cùng mã
+    monkeypatch.setattr(final.V, "TUNED_HERE", False)
+    assert final.lock_errors(_args(seeds=[2024]), prov, best) == []
+    assert final.lock_errors(_args(seeds=[42]), prov, best)  # seed đã mở vẫn bị chặn
+
+
 def test_dirty_files_ignores_outputs_and_test_log(monkeypatch):
     status = (' M neumf_project/audit/test_access_log.csv\n M neumf_project/outputs/v2/final/summary.csv\n'
               ' M neumf_project/scripts/v2_common.py\n M "Report DACNTT/content/C4.tex"\n D .vscode/settings.json\n')
@@ -87,20 +103,72 @@ def test_final_runs_every_registered_model():
     assert set(report.MODELS) == set(final.MODELS)
 
 
-# ---------------------------------------------------------- độ nhạy: chỉ sản phẩm cũ
-def test_old_only_records_drop_new_items_from_candidates_and_targets():
-    stage = SimpleNamespace(targets=pd.DataFrame({"user": [0, 0, 1], "item": [1, 3, 3], "day": [5, 5, 5]}),
-                            scoreable=np.array([True, True, True, False]), train_pos=[{0}, {2}])
-    recs = final.old_only_records(stage, SimpleNamespace(n_items=4))
-    assert [r.user for r in recs] == [0]  # user 1 chỉ có sản phẩm đúng mới -> ra khỏi phân tích
-    assert recs[0].positives.tolist() == [1]
-    assert sorted(recs[0].candidates.tolist()) == [1, 2]  # bỏ item 3 (mới) và item 0 (đã mua)
+# Phân tích độ nhạy "chỉ sản phẩm cũ" và tỉ lệ sản phẩm mới đã bỏ: dữ liệu theo product_code không còn sản phẩm mới,
+# chấm "chỉ sản phẩm cũ" ra đúng kết quả chính.
+def test_ablation_skips_variant_identical_to_neumf_f():
+    assert "neumf_f-iddrop" not in final.ablations({"id_dropout": 0.0})
+    assert final.ablations({"id_dropout": 0.25}) == list(final.V.ABLATIONS)
 
 
-def test_beyond_counts_coverage_and_new_share():
-    stage = SimpleNamespace(scoreable=np.array([1, 1, 1, 0, 0], bool), new=np.array([0, 0, 0, 1, 1], bool))
-    out = final.beyond({0: [0, 3], 1: [0, 1]}, stage, k=2)
-    assert out["coverage@2"] == 3 / 5 and out["new_share@2"] == 0.25
+def test_final_refuses_output_dir_with_results_of_other_data(tmp_path):
+    for seed, md5 in ((42, "abc"), (2024, None)):  # seed 2024: kết quả cũ chưa ghi data_md5
+        (tmp_path / f"seed{seed}").mkdir()
+        prov = {"data_md5": md5} if md5 else {}
+        (tmp_path / f"seed{seed}" / "results.json").write_text(json.dumps({"provenance": prov}), encoding="utf-8")
+    assert final.foreign_results(tmp_path, "abc") == ["seed2024"]
+    assert final.foreign_results(tmp_path / "chua_co", "abc") == []
+
+
+def test_beyond_counts_coverage():
+    stage = SimpleNamespace(scoreable=np.array([1, 1, 1, 0, 0], bool))
+    assert final.beyond({0: [0, 2], 1: [0, 1]}, stage, k=2) == {"coverage@2": 1.0}
+
+
+def test_report_runs_end_to_end_on_tiny_results(tmp_path, monkeypatch):
+    """24 chạy trọn trên kết quả giả (2 seed, đủ mô hình, 1 ablation): ghi CSV, hình, bảng, macro; không còn cũ/mới."""
+    rng = np.random.default_rng(0)
+    final_dir, val = tmp_path / "final", {"users": 30, "targets": 40, "train_pairs": 90, "candidates_mean": 9.5}
+    for seed in (42, 2024):
+        names = report.MODELS + (["neumf_f-text"] if seed == 42 else [])
+        per = pd.DataFrame([{"model": m, "seed": seed, "user": u, **{c: rng.random() / 10 for c in report.METRICS}}
+                            for m in names for u in range(30)])
+        (final_dir / f"seed{seed}").mkdir(parents=True)
+        per.to_csv(final_dir / f"seed{seed}" / "per_user.csv.gz", index=False)
+        res = dict(results={m: per[per["model"] == m][report.METRICS].mean().to_dict() for m in names},
+                   beyond={m: {"coverage@10": 0.1} for m in names}, train_meta={}, machine={}, provenance={})
+        (final_dir / f"seed{seed}" / "results.json").write_text(json.dumps(res), encoding="utf-8")
+    (final_dir / "data.json").write_text(json.dumps(dict(n_users=30, n_items=20, val=val, test={
+        **val, "scoreable": 20})), encoding="utf-8")
+    monkeypatch.setattr(report, "dev_info", lambda: dict(n_users=30, n_items=20, val=val))
+    monkeypatch.setattr(sys, "argv", ["24", "--final-dir", str(final_dir), "--report-dir", str(tmp_path / "bc")])
+    report.main()
+    assert sorted(p.name for p in final_dir.glob("*.csv")) == ["ablation.csv", "beyond.csv", "significance.csv",
+                                                                "summary.csv"]
+    txt = (final_dir / "ket_qua.txt").read_text(encoding="utf-8")
+    assert "Kiểm định 10 so sánh" in txt and "Bỏ vector văn bản" in txt and "NeuMF-F (đầy đủ)" in txt
+    tex = tmp_path / "bc" / "content" / "tables" / "v2"
+    assert not (tex / "tab_v2_groups.tex").exists() and (tex / "tab_v2_ablation.tex").exists()
+    assert "old" not in (tex / "results_v2_macros.tex").read_text(encoding="utf-8")
+
+
+def test_by_k_recomputes_metrics_from_saved_ranks():
+    """Chỉ số @K tính lại từ cột ranks (K = 15 không có lúc chấm) đúng như multi_ranking_metrics; cột @K đã có trong
+    summary.csv phải trùng khớp, lệch thì dừng (hạng đã lưu không phải hạng đã chấm)."""
+    import pytest
+    from src.evaluation.metrics import multi_ranking_metrics
+
+    ranks = {0: "1;40", 1: "12", 2: "3;9;30"}
+    per = pd.DataFrame([{"model": m, "seed": s, "user": u, "ranks": r}
+                        for m in ("neumf_f", "gmf") for s in (42, 2024) for u, r in ranks.items()])
+    exp = {k: float(np.mean([multi_ranking_metrics([int(x) for x in r.split(";")], k)["NDCG"]
+                             for r in ranks.values()])) for k in (10, 15)}
+    summary = pd.DataFrame({"model": ["neumf_f", "gmf"], "NDCG@10_mean": [exp[10], exp[10]]})
+    bk = report.by_k(per, ["neumf_f", "gmf"], summary).set_index("model")
+    assert np.isclose(bk.loc["neumf_f", "NDCG@15_mean"], exp[15]) and bk.loc["gmf", "NDCG@15_std"] == 0
+    assert {f"{n}@{k}_mean" for n in report.K_METRICS for k in report.K_ALL} <= set(bk.columns)
+    with pytest.raises(SystemExit):
+        report.by_k(per, ["neumf_f", "gmf"], summary.assign(**{"NDCG@10_mean": exp[10] + 0.01}))
+    assert report.by_k(per.drop(columns="ranks"), ["neumf_f"], summary).empty  # kết quả cũ không có cột ranks
 
 
 # ------------------------------------------------------------------ kiểm định

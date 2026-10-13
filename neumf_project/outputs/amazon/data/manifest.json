@@ -1,0 +1,20 @@
+{
+  "reviews_Beauty_5": {
+    "file": "outputs/amazon/data/reviews_Beauty_5.csv.gz",
+    "md5": "1bbee3d37f6f2d99717b02e13f49c285",
+    "rows": 198502,
+    "customers": 10681,
+    "products": 6069,
+    "kcore_pairs": 94009,
+    "k_core": 5,
+    "test_start": "2014-01-01",
+    "before_test_start": {
+      "articles": 11493,
+      "products": 11493,
+      "article_pairs": 140193,
+      "product_pairs": 140193
+    },
+    "git_commit": "a2ac6227133eab19dd47185615920d212a059bb8",
+    "git_dirty": true
+  }
+}

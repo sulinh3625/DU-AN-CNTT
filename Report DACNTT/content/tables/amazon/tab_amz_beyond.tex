@@ -1,0 +1,29 @@
+% Sinh tự động bởi neumf_project/scripts/24_report_v2.py — KHÔNG sửa tay.
+\begin{table}[htbp]
+    \centering\small
+    \caption{Mô tả danh sách gợi ý top-10 (seed 42) và chi phí huấn luyện trên Amazon Beauty (trung bình qua seed)}
+    \label{tab:amzbeyond}
+    \begin{adjustbox}{max width=\textwidth}
+    \begin{tabular}{lrrr}
+        \toprule
+        Mô hình & Độ phủ ứng viên & Số epoch chọn & Thời gian (phút) \\
+        \midrule
+        LateFusion-F & 15{,}3\% & --- & 0{,}0 \\
+        GMF-F & 32{,}1\% & 14{,}0 & 6{,}1 \\
+        NeuMF-F & 20{,}5\% & 5{,}4 & 4{,}1 \\
+        MLP-F & 5{,}4\% & 8{,}0 & 4{,}9 \\
+        UserKNN & 34{,}6\% & --- & 0{,}1 \\
+        ItemKNN & 63{,}2\% & --- & 0{,}0 \\
+        NeuMF & 17{,}1\% & 8{,}8 & 2{,}9 \\
+        GMF & 25{,}8\% & 11{,}4 & 3{,}4 \\
+        MostPopular-Recent & 0{,}3\% & --- & 0{,}0 \\
+        MLP & 22{,}8\% & 6{,}8 & 2{,}9 \\
+        BPR-MF & 5{,}2\% & --- & 1{,}4 \\
+        Content & 86{,}5\% & --- & 0{,}0 \\
+        Most Popular & 0{,}2\% & --- & 0{,}0 \\
+        Random & 98{,}8\% & --- & 0{,}0 \\
+        \bottomrule
+    \end{tabular}
+    \end{adjustbox}
+    \par\smallskip{\footnotesize Độ phủ: tỉ lệ sản phẩm của không gian ứng viên xuất hiện trong top-10 của ít nhất một người dùng. Số epoch chọn trên tập xác thực Amazon Beauty trước khi huấn luyện lại. Thời gian: chọn epoch + huấn luyện lại (mạng nơ-ron) hoặc khớp mô hình, không gồm thời gian chấm.}
+\end{table}
