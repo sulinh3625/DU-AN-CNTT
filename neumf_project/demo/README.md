@@ -74,9 +74,12 @@ chưa chấm thì mô hình này bị ẩn kèm lệnh cần chạy.
   sách Most Popular gắn nhãn "Gợi ý phổ biến" thay cho lỗi 404 (`inference.popular`); khách có lịch sử nhưng không mua
   món mới nào trong giai đoạn đánh giá vẫn nhận gợi ý của mô hình đang chọn, chỉ không có chỉ số (không có sản phẩm
   đích). Trong bảng chọn khách, gõ một mã không có trong danh sách rồi bấm "Xem gợi ý cho mã …".
-- Số theo từng khách khớp `outputs/v2/final/seed42/per_user.csv.gz` — có test tự động (`demo/tests/test_demo.py`). Đánh
-  giá cuối chạy trên GPU, logit tính lại trên CPU có thể làm vài cặp gần như hoà điểm ở hạng rất sâu (trên 100) đổi chỗ —
-  không ảnh hưởng chỉ số @K.
+- **Đối chiếu với đánh giá cuối.** Với mỗi khách đã được đánh giá, demo so hạng tính lại với
+  `outputs/<bộ dữ liệu>/final/seed42/per_user.csv.gz` (Hybrid-CBCF: `bosung/per_user.csv.gz`) và trả kèm số đã lưu
+  (`evaluation.final`: hạng, chỉ số, `match`). Mô hình không dùng vector văn bản trùng hạng đã lưu trên mọi máy đã thử,
+  kể cả máy chỉ có CPU. Bốn mô hình có đặc trưng, Content và Hybrid-CBCF đọc vector văn bản trong `data/processed/`;
+  tệp này mỗi máy tự dựng và phụ thuộc phiên bản thư viện, nên chỉ trùng khi giống máy đã tạo kết quả. Khi lệch, khối
+  đánh giá hiện số đã lưu kèm lý do. Có test tự động (`demo/tests/test_demo.py`).
 
 ## 5. Biến môi trường
 

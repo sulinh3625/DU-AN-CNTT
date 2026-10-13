@@ -155,4 +155,55 @@ Random              98,8%            —                     0,0
 Độ phủ: tỉ lệ sản phẩm ứng viên xuất hiện trong top-10 của ít nhất một khách. Epoch chọn = 1 ở một seed: seed đó dừng ngay, thường chỉ gợi ý sản phẩm phổ biến.
 
 
-Nguồn: summary.csv, significance.csv, ablation.csv, beyond.csv, by_k.csv cùng thư mục (scripts/24_report_v2.py).
+6. Bổ sung sau đánh giá cuối: mô hình lai truyền thống Hybrid-CBCF (audit/PREREG_bosung.md) — kết quả theo ba nhóm mô hình đối chứng
+
+Nhóm                           Mô hình             NDCG@10            Recall@10          HR@10              Precision@10
+------------------------------------------------------------------------------------------------------------------------
+Mô hình đề xuất                NeuMF-F             0,03277 ± 0,00189  0,05568 ± 0,00403  0,09750 ± 0,00657  0,01092 ± 0,00077
+Nhóm 1: mô hình đơn lẻ         GMF-F               0,03298 ± 0,00259  0,05465 ± 0,00397  0,09410 ± 0,00780  0,01042 ± 0,00088
+Nhóm 1: mô hình đơn lẻ         MLP-F               0,03065 ± 0,00193  0,05107 ± 0,00327  0,08737 ± 0,00656  0,00998 ± 0,00092
+Nhóm 1: mô hình đơn lẻ         GMF                 0,01627 ± 0,00173  0,02533 ± 0,00154  0,05582 ± 0,00303  0,00640 ± 0,00036
+Nhóm 1: mô hình đơn lẻ         MLP                 0,01271 ± 0,00054  0,02045 ± 0,00132  0,04667 ± 0,00324  0,00513 ± 0,00037
+Nhóm 2: học máy truyền thống   Hybrid-CBCF†        0,02664 ± 0,00000  0,03992 ± 0,00000  0,08169 ± 0,00000  0,00998 ± 0,00000
+Nhóm 2: học máy truyền thống   UserKNN             0,02506 ± 0,00000  0,03553 ± 0,00000  0,07716 ± 0,00000  0,00930 ± 0,00000
+Nhóm 2: học máy truyền thống   ItemKNN             0,02333 ± 0,00000  0,03526 ± 0,00000  0,07186 ± 0,00000  0,00870 ± 0,00000
+Nhóm 2: học máy truyền thống   BPR-MF              0,01144 ± 0,00091  0,01691 ± 0,00164  0,04115 ± 0,00309  0,00498 ± 0,00035
+Nhóm 2: học máy truyền thống   Content             0,00945 ± 0,00000  0,01448 ± 0,00000  0,03215 ± 0,00000  0,00356 ± 0,00000
+Nhóm 3: chuyên biệt cho gợi ý  LateFusion-F        0,03747 ± 0,00180  0,06286 ± 0,00167  0,10802 ± 0,00314  0,01222 ± 0,00045
+Nhóm 3: chuyên biệt cho gợi ý  NeuMF               0,01978 ± 0,00176  0,03035 ± 0,00187  0,06694 ± 0,00605  0,00762 ± 0,00090
+Nhóm 3: chuyên biệt cho gợi ý  MostPopular-Recent  0,01401 ± 0,00000  0,02483 ± 0,00000  0,03858 ± 0,00000  0,00416 ± 0,00000
+Nhóm 3: chuyên biệt cho gợi ý  Most Popular        0,00872 ± 0,00000  0,01576 ± 0,00000  0,03744 ± 0,00000  0,00390 ± 0,00000
+Cận dưới                       Random              0,00101 ± 0,00028  0,00168 ± 0,00059  0,00446 ± 0,00143  0,00045 ± 0,00014
+† Bổ sung: kết hợp Content, UserKNN, ItemKNN theo mô hình lai trong luận án của GVHD; cách kết hợp chọn trên tập xác thực của mẫu phát triển H&M: {'fusion': 'lr', 'weights': [1.293776, 6.303423, 2.891216]}.
+Chấm một lần trên cùng tập kiểm thử (tất định, dùng cho mọi seed); không thuộc họ 10 so sánh đăng ký trước.
+
+
+6a. Hybrid-CBCF theo K
+
+Độ đo      @5       @10      @15      @20
+-----------------------------------------
+NDCG       0,02137  0,02664  0,02955  0,03212
+Recall     0,02468  0,03992  0,04980  0,05855
+HR         0,05484  0,08169  0,09909  0,11611
+Precision  0,01233  0,00998  0,00809  0,00720
+
+
+6b. Kiểm định họ bổ sung (NDCG@10; Wilcoxon, hiệu chỉnh Holm trong họ, CI bootstrap 95%)
+
+#   A            B            Chênh (A−B)/B  CI 95% của A−B      p Holm   Kết luận
+----------------------------------------------------------------------------------
+B1  NeuMF-F      Hybrid-CBCF  +23,0%         [0,00138; 0,01083]  < 0,001  NeuMF-F tốt hơn có ý nghĩa
+B2  Hybrid-CBCF  UserKNN      +6,3%          [0,00026; 0,00292]  0,009    Hybrid-CBCF tốt hơn có ý nghĩa
+
+
+6c. Ba thành phần chấm lại cùng lần chấm bổ sung, so với đánh giá cuối đã đăng ký
+
+Thành phần  NDCG@10 (lần bổ sung)  NDCG@10 (đã đăng ký)  Khách trùng hạng
+-------------------------------------------------------------------------
+Content     0,00942                0,00945               545/2644
+UserKNN     0,02506                0,02506               2644/2644
+ItemKNN     0,02333                0,02333               2644/2644
+Máy chạy bổ sung: 11th Gen Intel(R) Core(TM) i5-1135G7 @ 2.40GHz; commit fcf33f3. Tệp đặc trưng văn bản không nằm trong git, mỗi máy tự dựng, nên Content có thể lệch nhẹ; UserKNN, ItemKNN không dùng đặc trưng.
+
+
+Nguồn: summary.csv, significance.csv, ablation.csv, beyond.csv, by_k.csv cùng thư mục (scripts/24_report_v2.py); phân tích bổ sung: bosung/.

@@ -1,0 +1,17 @@
+% Sinh tự động bởi neumf_project/scripts/24_report_v2.py — KHÔNG sửa tay.
+\begin{table}[htbp]
+    \centering\small
+    \caption{Kiểm định các so sánh bổ sung với Hybrid-CBCF trên mẫu kiểm định H\&M (NDCG@10)}
+    \label{tab:v2sigbs}
+    \begin{adjustbox}{max width=\textwidth}
+    \begin{tabular}{rllrrrcrc}
+        \toprule
+        \# & A & B & NDCG@10 A & NDCG@10 B & (A$-$B)/B & CI 95\% của A$-$B & p Holm & Kết luận \\
+        \midrule
+        B1 & NeuMF-F & Hybrid-CBCF & 0{,}04003 & 0{,}03183 & +25{,}8\% & [+0{,}00445; +0{,}01195] & $<$ 0{,}001 & A tốt hơn \\
+        B2 & Hybrid-CBCF & UserKNN & 0{,}03183 & 0{,}03114 & +2{,}2\% & [$-$0{,}00061; +0{,}00195] & 0{,}152 & --- \\
+        \bottomrule
+    \end{tabular}
+    \end{adjustbox}
+    \par\smallskip{\footnotesize Mỗi người dùng lấy trung bình qua 5 seed; kiểm định Wilcoxon theo người dùng, khoảng tin cậy bootstrap 95\%, hiệu chỉnh Holm trong họ bổ sung. ---: không khác biệt có ý nghĩa. Tiêu chí ``tốt hơn'' như họ 10 so sánh đăng ký trước: p Holm $<$ 0,05, CI không chứa 0 và chênh lệch tương đối $\geq$ 5\%. Họ bổ sung được đăng ký sau đánh giá cuối và không làm thay đổi họ 10 so sánh.}
+\end{table}

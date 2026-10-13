@@ -13,6 +13,25 @@ SCORE_KIND = {"MostPopular": "lượt mua train", "BPR-MF": "điểm", "ItemKNN"
               "LateFusion-F": "điểm trộn", "MostPopular-Recent": "giao dịch gần đây", "Content": "cosine",
               "Hybrid-CBCF": "điểm lai"}
 METRIC_NAMES = ("HR", "NDCG", "Recall", "Precision")
+MISMATCH_NOTE = ("Hạng tính lại trên máy này khác hạng đã lưu ở đánh giá cuối. Nguyên nhân: tệp đặc trưng văn bản "
+                 "(TF-IDF + SVD trong data/processed/) được dựng lại bằng phiên bản thư viện khác máy đã chạy đánh giá "
+                 "cuối, nên vector văn bản khác. Số trong báo cáo là số đã lưu.")
+
+
+def metrics_of(ctx, ranks) -> dict:
+    """HR, NDCG, Recall, Precision ở mọi K của demo, từ hạng (tính từ 1) của các sản phẩm đích."""
+    return {f"{name}@{k}": v for k in ctx.k_values
+            for name, v in multi_ranking_metrics(ranks, k).items() if name in METRIC_NAMES}
+
+
+def final_result(ctx, model_name: str, u: int, live_ranks: list[int]) -> dict | None:
+    """Kết quả đã lưu ở đánh giá cuối của khách u (None nếu khách không được đánh giá ở đó), kèm cờ match = hạng tính
+    lại trên máy này trùng hạng đã lưu."""
+    saved = ctx.saved_ranks.get((model_name, int(u)))
+    if saved is None:
+        return None
+    return {"rank": min(saved), "ranks": saved, "metrics": metrics_of(ctx, saved),
+            "match": sorted(live_ranks) == sorted(saved)}
 
 
 @torch.no_grad()
@@ -62,8 +81,7 @@ def rank_from_scores(ctx, u: int, scores: np.ndarray, top_k: int, record) -> dic
     ranked = cand[order]
     pos_idx = np.flatnonzero(np.isin(ranked, record.positives))
     ranks = pos_idx + 1
-    metrics = {f"{name}@{k}": v for k in ctx.k_values
-               for name, v in multi_ranking_metrics(ranks, k).items() if name in METRIC_NAMES}
+    metrics = metrics_of(ctx, ranks)
     return {
         "ranks": [int(r) for r in ranks],
         "item_rank": {int(ranked[i]): int(i) + 1 for i in pos_idx},
@@ -102,6 +120,12 @@ def recommend(ctx, model_name: str, u: int, k: int) -> dict:
     ]
     target_rows = sorted(({**ctx.item_info(i), "rank": r} for i, r in res["item_rank"].items()),
                          key=lambda t: t["rank"])
+    final = final_result(ctx, model_name, u, res["ranks"]) if res["ranks"] else None
+    if not res["ranks"]:
+        note = ("Khách không mua sản phẩm mới nào trong giai đoạn đánh giá: chỉ hiển thị gợi ý trên "
+                f"{res['n_candidates']:,} ứng viên".replace(",", ".") + ", không có sản phẩm đích để đối chiếu.")
+    else:
+        note = MISMATCH_NOTE if final is not None and not final["match"] else None
     return {
         "model": model_name,
         "k": k,
@@ -109,10 +133,8 @@ def recommend(ctx, model_name: str, u: int, k: int) -> dict:
         "items": items,
         "targets": target_rows,
         "evaluation": {"rank": min(res["ranks"]), "ranks": res["ranks"], "n_candidates": res["n_candidates"],
-                       "metrics": res["metrics"]} if res["ranks"] else None,
-        "note": None if res["ranks"] else ("Khách không mua sản phẩm mới nào trong giai đoạn đánh giá: chỉ hiển thị "
-                                            f"gợi ý trên {res['n_candidates']:,} ứng viên".replace(",", ".")
-                                            + ", không có sản phẩm đích để đối chiếu."),
+                       "metrics": res["metrics"], "final": final} if res["ranks"] else None,
+        "note": note,
     }
 
 

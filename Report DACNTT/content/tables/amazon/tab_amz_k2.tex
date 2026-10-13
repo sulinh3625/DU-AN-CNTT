@@ -1,7 +1,7 @@
 % Sinh tự động bởi neumf_project/scripts/24_report_v2.py — KHÔNG sửa tay.
 \begin{table}[htbp]
     \centering\small
-    \caption{HR@K và Precision@K với K = 5, 10, 15, 20 trên tập kiểm thử Amazon Beauty (trung bình qua 5 seed)}
+    \caption{HR@K và Precision@K với K = 5, 10, 15, 20 trên tập kiểm thử Amazon Beauty}
     \label{tab:amzk2}
     \begin{adjustbox}{max width=\textwidth}
     \begin{tabular}{lrrrrrrrr}
@@ -14,6 +14,7 @@
         GMF-F & 0{,}0591 & 0{,}0941 & 0{,}1200 & 0{,}1417 & 0{,}0126 & 0{,}0104 & 0{,}0092 & 0{,}0083 \\
         NeuMF-F & 0{,}0589 & 0{,}0975 & 0{,}1224 & 0{,}1451 & 0{,}0124 & 0{,}0109 & 0{,}0094 & 0{,}0086 \\
         MLP-F & 0{,}0524 & 0{,}0874 & 0{,}1099 & 0{,}1275 & 0{,}0113 & 0{,}0100 & 0{,}0085 & 0{,}0075 \\
+        Hybrid-CBCF\textsuperscript{\dag} & 0{,}0548 & 0{,}0817 & 0{,}0991 & 0{,}1161 & 0{,}0123 & 0{,}0100 & 0{,}0081 & 0{,}0072 \\
         UserKNN & 0{,}0511 & 0{,}0772 & 0{,}0957 & 0{,}1120 & 0{,}0114 & 0{,}0093 & 0{,}0078 & 0{,}0069 \\
         ItemKNN & 0{,}0492 & 0{,}0719 & 0{,}0840 & 0{,}0983 & 0{,}0111 & 0{,}0087 & 0{,}0069 & 0{,}0062 \\
         NeuMF & 0{,}0430 & 0{,}0669 & 0{,}0859 & 0{,}1011 & 0{,}0093 & 0{,}0076 & 0{,}0067 & 0{,}0061 \\
@@ -27,5 +28,5 @@
         \bottomrule
     \end{tabular}
     \end{adjustbox}
-    \par\smallskip{\footnotesize Tính lại từ hạng của từng sản phẩm đúng đã lưu ở lần đánh giá cuối (không chấm lại tập kiểm thử); cột @5, @10, @20 trùng với số của lần đánh giá đó. In đậm: cao nhất mỗi cột. Độ lệch chuẩn qua seed ở tệp by\_k.csv.}
+    \par\smallskip{\footnotesize Trung bình qua 5 seed, tính lại từ hạng của từng sản phẩm đúng đã lưu ở lần đánh giá cuối, không chấm lại tập kiểm thử; cột @5, @10, @20 trùng với số của lần đánh giá đó. In đậm: cao nhất mỗi cột. \textsuperscript{\dag}Mô hình lai truyền thống bổ sung sau đánh giá cuối (hạng đã lưu ở lần chấm bổ sung).}
 \end{table}

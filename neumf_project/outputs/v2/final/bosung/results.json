@@ -1,0 +1,158 @@
+{
+  "model": "hybrid",
+  "name": "Hybrid-CBCF",
+  "dataset": "hm",
+  "seeds": [
+    42,
+    2024,
+    2025,
+    2026,
+    3407
+  ],
+  "evaluated_on": "tập kiểm thử của mẫu kiểm định",
+  "reason": "Bổ sung mô hình lai truyền thống Hybrid-CBCF theo góp ý GVHD (PREREG_bosung, commit fcf33f3)",
+  "run_tag": "bosung_hybrid_hm",
+  "provenance": {
+    "config_path": "configs/v2.yaml",
+    "config_hash": "a42c8430ab08b6a2",
+    "code_hash": "6a0c777afa432125",
+    "git_commit": "fcf33f3728a27f25c0a1d6356cd3f4597cf015b1",
+    "git_dirty": false,
+    "feature_md5": {
+      "catalog": "496f356658ac52ed5f66b11eb34a0628",
+      "sales": "dff91ea93c8bd6e9dcee1bf44126a4e1"
+    },
+    "data_md5": "ba5498d1071b903ef77a78b0e6125def",
+    "configs_from": "audit/v2/bosung_best_configs.json",
+    "components_from": "audit/v2/best_configs.json"
+  },
+  "machine": {
+    "device": "cpu",
+    "cpu": "11th Gen Intel(R) Core(TM) i5-1135G7 @ 2.40GHz",
+    "gpu": null,
+    "cpu_count": 8,
+    "python": "3.13.3",
+    "torch": "2.13.0+cpu",
+    "os": "Windows-11-10.0.26300-SP0"
+  },
+  "date": "2026-10-13T17:23:35",
+  "elapsed_min": 0.7,
+  "config": {
+    "params": {
+      "fusion": "lr",
+      "weights": [
+        1.293776,
+        6.303423,
+        2.891216
+      ]
+    },
+    "config_hash": "2a9758d6a7d67274",
+    "code_hash": "6a0c777afa432125",
+    "data_md5": "f7e79f29e1535a2bf4d1feefeadee410",
+    "feature_md5": {
+      "catalog": "496f356658ac52ed5f66b11eb34a0628",
+      "sales": "dff91ea93c8bd6e9dcee1bf44126a4e1"
+    },
+    "val": {
+      "NDCG@10": 0.028150379109945556,
+      "Recall@10": 0.03870686344823684,
+      "HR@10": 0.10587777345270533,
+      "Precision@10": 0.012183729077462048,
+      "NDCG@5": 0.023031467242217007,
+      "NDCG@20": 0.035100202242146744
+    },
+    "components": {
+      "content": {
+        "half_life": 30
+      },
+      "userknn": {
+        "k": 200,
+        "shrink": 0.0
+      },
+      "itemknn": {
+        "k": 100,
+        "shrink": 50.0
+      }
+    },
+    "components_val": {
+      "content": {
+        "NDCG@10": 0.004349769996967965,
+        "Recall@10": 0.0075086850857922225,
+        "HR@10": 0.02140910860256909,
+        "Precision@10": 0.002218762164266251,
+        "NDCG@5": 0.0030030212396875483,
+        "NDCG@20": 0.006795891340059513
+      },
+      "userknn": {
+        "NDCG@10": 0.027529747854967288,
+        "Recall@10": 0.038052874961205053,
+        "HR@10": 0.1043207473725185,
+        "Precision@10": 0.011872323861424679,
+        "NDCG@5": 0.023262258859596676,
+        "NDCG@20": 0.03351624133482688
+      },
+      "itemknn": {
+        "NDCG@10": 0.0259936478627962,
+        "Recall@10": 0.03530201805257332,
+        "HR@10": 0.09536784741144415,
+        "Precision@10": 0.011015959517321917,
+        "NDCG@5": 0.02164890329754103,
+        "NDCG@20": 0.032317613580100255
+      }
+    },
+    "pairwise": {
+      "n_neg": 50,
+      "seed": 0,
+      "C": 1.0,
+      "folds": 2
+    }
+  },
+  "results": {
+    "hybrid": {
+      "NDCG@5": 0.025500243510581746,
+      "NDCG@10": 0.031826640184225236,
+      "NDCG@20": 0.0419370081431654,
+      "HR@5": 0.07930489731437598,
+      "HR@10": 0.12353870458135861,
+      "HR@20": 0.19462875197472354,
+      "Recall@5": 0.028179521300000225,
+      "Recall@10": 0.046414146074909346,
+      "Recall@20": 0.07644770939952371,
+      "Precision@5": 0.016682464454976304,
+      "Precision@10": 0.013617693522906793,
+      "Precision@20": 0.01156398104265403,
+      "users": 3165
+    }
+  },
+  "beyond": {
+    "hybrid": {
+      "coverage@10": 0.10801600237072159
+    }
+  },
+  "train_meta": {
+    "hybrid": {
+      "fit_time_s": 8.1,
+      "eval_time_s": 13.5
+    }
+  },
+  "components_check": {
+    "content": {
+      "NDCG@10": 0.004810759638387732,
+      "registered_NDCG10": 0.005057161259831619,
+      "users": 3165,
+      "users_same_ranks": 16
+    },
+    "userknn": {
+      "NDCG@10": 0.031144201767491924,
+      "registered_NDCG10": 0.031144201767491914,
+      "users": 3165,
+      "users_same_ranks": 3165
+    },
+    "itemknn": {
+      "NDCG@10": 0.02860236273654237,
+      "registered_NDCG10": 0.02860236273654237,
+      "users": 3165,
+      "users_same_ranks": 3165
+    }
+  }
+}

@@ -1,7 +1,9 @@
 """Nạp đúng dữ liệu và checkpoint của đánh giá cuối (outputs/v2/final/seed42/, scripts/23_final_v2.py) cho demo.
 
 Dữ liệu dựng lại bằng chính scripts/v2_common.py rồi đối chiếu với data.json của lần chạy; mô hình chỉ dùng ID được bọc
-MaskedScorer/MaskedScoreFn như lúc chấm, nên số per-user khớp outputs/v2/final/seed42/per_user.csv.gz. Chỉ dùng khi kết
+MaskedScorer/MaskedScoreFn như lúc chấm, nên số per-user khớp outputs/v2/final/seed42/per_user.csv.gz. Mô hình dùng tệp
+đặc trưng văn bản (data/processed/, mỗi máy tự dựng) chỉ khớp khi tệp này giống máy đã chạy đánh giá cuối; mỗi lần gợi ý,
+demo đối chiếu hạng tính lại với hạng đã lưu (saved_final_ranks) và hiện kèm số đã lưu khi khác. Chỉ dùng khi kết
 quả được tạo từ đúng file dữ liệu đã lọc hiện tại (data_md5 khớp outputs/data/manifest.json) — kiểm TRƯỚC khi dựng dữ
 liệu, để demo không dựng tập kiểm thử của mẫu kiểm định cho một kết quả cũ. DEMO_V2_DIR=outputs/v2/dry_run để thử với
 bản chạy thử (mẫu phát triển, tập xác thực).
@@ -120,6 +122,19 @@ def v2_available(seed: int = SEED, dataset: str = "hm") -> bool:
     return unavailable_reason(dataset, seed) is None
 
 
+def saved_final_ranks(root: Path, seed: int = SEED) -> dict[tuple[str, int], list[int]]:
+    """Hạng của các sản phẩm đích đã lưu ở đánh giá cuối (seed<seed>/per_user.csv.gz) và ở lần chấm bổ sung
+    (bosung/per_user.csv.gz), khoá (tên mô hình hiển thị, khách). Demo dùng để đối chiếu hạng tính lại trên máy đang
+    chạy: mô hình dùng tệp đặc trưng văn bản (data/processed/, không nằm trong git) có thể xếp khác khi tệp này được dựng
+    lại bằng phiên bản thư viện khác máy đã chạy đánh giá cuối."""
+    frames = [root / f"seed{seed}" / "per_user.csv.gz", root / "bosung" / "per_user.csv.gz"]
+    df = pd.concat([pd.read_csv(p, usecols=["model", "seed", "user", "ranks"]) for p in frames if p.exists()],
+                   ignore_index=True)
+    df = df[(df["seed"] == seed) & df["model"].isin(V.DISPLAY)]
+    return {(V.DISPLAY[m], int(u)): [int(x) for x in str(r).split(";")]
+            for m, u, r in zip(df["model"], df["user"], df["ranks"])}
+
+
 def product_table(articles: pd.DataFrame, item_product: np.ndarray) -> pd.DataFrame:
     """Một dòng mỗi sản phẩm (index = chỉ số item, theo item_product): cột của biến thể có article_id nhỏ nhất và số
     màu (số biến thể) của mẫu. Sản phẩm không có trong articles thì ghi "Unknown"."""
@@ -228,6 +243,7 @@ class DataContext:
                              "targets": len(ev.targets), "train_pairs": len(tr), "n_kept_pairs": len(D.kept),
                              "date_min": str(day0 + int(D.kept["day"].min())), "val_start": cfg["val_start"],
                              "test_start": cfg["test_start"], "k_core": cfg["k_core"]}
+        self.saved_ranks = saved_final_ranks(root, SEED)  # (mô hình, khách) -> hạng đã lưu của các sản phẩm đích
 
         self.models: dict[str, torch.nn.Module] = {}
         self.scorers: dict = {}  # mô hình không phải mạng PyTorch: tên -> đối tượng có score_items(user, items)

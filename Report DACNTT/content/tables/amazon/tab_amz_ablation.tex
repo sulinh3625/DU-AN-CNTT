@@ -1,7 +1,7 @@
 % Sinh tự động bởi neumf_project/scripts/24_report_v2.py — KHÔNG sửa tay.
 \begin{table}[htbp]
     \centering\small
-    \caption{Ablation của NeuMF-F trên tập kiểm thử Amazon Beauty (seed 42; cùng siêu tham số, tắt một thành phần)}
+    \caption{Phân tích bóc tách NeuMF-F trên tập kiểm thử Amazon Beauty}
     \label{tab:amzablation}
     \begin{adjustbox}{max width=\textwidth}
     \begin{tabular}{lrrc}
@@ -16,5 +16,5 @@
         \bottomrule
     \end{tabular}
     \end{adjustbox}
-    \par\smallskip{\footnotesize Thay đổi: (biến thể $-$ đầy đủ)/đầy đủ. CI: bootstrap theo người dùng của hiệu biến thể $-$ đầy đủ. Chỉ mô tả, không kiểm định. Biến thể trùng NeuMF-F (vd. không bỏ ID ngẫu nhiên khi cấu hình chọn đã có tỉ lệ bỏ ID bằng 0) không chạy. Amazon không có thuộc tính khách: ``bỏ thông tin khách hàng'' là bỏ đặc trưng thời gian của khách.}
+    \par\smallskip{\footnotesize Seed 42; cùng siêu tham số, mỗi biến thể tắt một thành phần. Thay đổi: (biến thể $-$ đầy đủ)/đầy đủ. CI: khoảng tin cậy bootstrap theo người dùng của hiệu (biến thể $-$ đầy đủ). Chỉ mô tả, không kiểm định. Biến thể trùng NeuMF-F, ví dụ không bỏ ID ngẫu nhiên khi cấu hình chọn đã có xác suất bỏ ID bằng 0, không được chạy. Amazon không có thuộc tính khách: ``bỏ thông tin khách hàng'' là bỏ đặc trưng thời gian của khách.}
 \end{table}

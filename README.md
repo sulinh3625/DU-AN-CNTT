@@ -16,9 +16,8 @@ bộ dữ liệu thứ hai, Amazon Beauty.
   GMF-F đứng riêng; trên Amazon, hợp nhất muộn LateFusion-F tốt hơn NeuMF-F.
 - Baseline đã xếp theo ba nhóm (mô hình đơn lẻ, học máy truyền thống, chuyên biệt cho gợi ý). Nhóm học máy truyền thống
   có thêm mô hình lai truyền thống Hybrid-CBCF (Content + UserKNN + ItemKNN, theo luận án của cô) — phân tích bổ sung
-  có kế hoạch đăng ký riêng; đã tinh chỉnh, chưa chấm tập kiểm thử.
-- Còn lại: chấm tập kiểm thử cho Hybrid-CBCF (H&M, Amazon), chờ cô xác nhận cách xếp nhóm và các câu hỏi còn lại, làm
-  slide, gửi cô checkpoint.
+  có kế hoạch đăng ký riêng; đã chấm tập kiểm thử trên cả hai bộ, NeuMF-F tốt hơn nó có ý nghĩa.
+- Còn lại: chờ cô xác nhận cách xếp nhóm và các câu hỏi còn lại, làm slide, gửi cô checkpoint.
 
 Số liệu, tiến độ chi tiết và đối chiếu góp ý: [`tong_hop.md`](tong_hop.md).
 

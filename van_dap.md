@@ -3,7 +3,8 @@
 File này giúp trả lời 17 góp ý của cô trong buổi họp. Mỗi câu có: **Trả lời** (ý chính, nói trong 1–2 phút) và
 **Mở ở đâu** (mục trong báo cáo hoặc file trong repo). Cập nhật theo kết quả đánh giá cuối trên H&M ngày 10/10/2026
 (mẫu kiểm định khối 2), kết quả kiểm chứng trên Amazon Beauty (10–11/10/2026) và bản báo cáo sửa theo góp ý họp 04/10
-(13/10/2026: K = 15, Amazon, bảng ba nghiên cứu nền tảng, vẽ lại hình, mã giả, khách hàng mới).
+(13/10/2026: K = 15, Amazon, bảng ba nghiên cứu nền tảng, vẽ lại hình, mã giả, khách hàng mới, baseline ba nhóm và
+phân tích bổ sung với mô hình lai truyền thống Hybrid-CBCF).
 
 > **Quy tắc tránh nói sai**
 > - Kết quả cuối trên mẫu kiểm định H&M **đã có** (10/10/2026). Nói đúng như sau: NeuMF-F **tốt hơn có ý nghĩa** NeuMF
@@ -25,6 +26,9 @@ File này giúp trả lời 17 góp ý của cô trong buổi họp. Mỗi câu 
 > - Không gọi MLP đứng riêng là "early fusion" (đó là mạng DNN thuần).
 > - Số của giai đoạn phát triển ban đầu và của khối 1 (04/10) chỉ nhắc khi được hỏi về lịch sử; không đặt cạnh số bản
 >   cuối.
+> - **Hybrid-CBCF là phân tích bổ sung** sau đánh giá cuối: NeuMF-F tốt hơn nó có ý nghĩa trên cả hai bộ; Hybrid-CBCF
+>   không khác biệt có ý nghĩa với UserKNN trên H&M nhưng tốt hơn trên Amazon. Không tính nó vào "14 mô hình" hay họ 10
+>   so sánh.
 
 ---
 
@@ -71,14 +75,15 @@ File này giúp trả lời 17 góp ý của cô trong buổi họp. Mỗi câu 
 | Kết quả tinh chỉnh (tập xác thực của mẫu phát triển, NDCG@10) | LateFusion-F 0,03556 · NeuMF-F 0,03337 · MLP-F 0,03212 · GMF-F 0,03162 · GMF 0,02857 · UserKNN 0,02753 · MLP 0,02742 · NeuMF 0,02696 · BPR-MF 0,02636 · ItemKNN 0,02599 · MostPopular-Recent 0,02334 · Most Popular 0,02174 · Content 0,00459 | mục 4.3 |
 | Tập kiểm thử mẫu kiểm định | 3.165 khách; 10.285 cặp đúng; trung bình 6.710 ứng viên mỗi khách | mục 4.1 |
 | Kết quả cuối H&M (NDCG@10, 5 seed) | **LateFusion-F 0,04093** · **NeuMF-F 0,04003** · GMF-F 0,03902 · MLP-F 0,03480 · UserKNN 0,03114 · ItemKNN 0,02860 · NeuMF 0,02783 · MostPopular-Recent 0,02760 · GMF 0,02695 · BPR-MF 0,02661 · MLP 0,02373 · Most Popular 0,02184 · Content 0,00506 · Random 0,00098 | mục 4.4.1; `outputs/v2/final/ket_qua.txt` |
-| Theo K (H&M, NeuMF-F) | NDCG@5/10/15/20 = 0,03120 / 0,04003 / 0,04644 / 0,05166; HR@15 = 0,19406. Ở mọi K và mọi độ đo, thứ tự đầu luôn là LateFusion-F, NeuMF-F, GMF-F, MLP-F | mục 4.4.2, Bảng 4.3–4.4 |
+| Theo K (H&M, NeuMF-F) | NDCG@5/10/15/20 = 0,03120 / 0,04003 / 0,04644 / 0,05166; HR@15 = 0,19406. Ở mọi K và mọi độ đo, thứ tự đầu luôn là LateFusion-F, NeuMF-F, GMF-F, MLP-F | mục 4.4.2, Bảng 4.5–4.6 |
 | 10 so sánh H&M | NeuMF-F tốt hơn 7 (NeuMF +43,8%, MLP-F +15,0%, BPR-MF +50,4%, ItemKNN +39,9%, UserKNN +28,5%, MostPopular-Recent +45,0%, Content +691,5%); ngang 2 (GMF-F +2,6%, LateFusion-F −2,2%). NeuMF vs BPR-MF: ngang (+4,6%, p Holm 0,059) | mục 4.4.3 |
-| Ablation H&M (seed 42) | Bỏ thời gian **−42,3%**, bỏ thông tin khách −10,3% (cả hai khoảng tin cậy không chứa 0); bỏ thuộc tính −3,7%, văn bản −2,7% (khoảng tin cậy chứa 0) | mục 4.4.4 |
+| Ablation H&M (seed 42) | Bỏ thời gian **−42,3%**, bỏ thông tin khách −10,3% (cả hai khoảng tin cậy không chứa 0); bỏ thuộc tính −3,7%, văn bản −2,7% (khoảng tin cậy chứa 0) | mục 4.4.5 |
 | Lần chạy H&M | 10/10/2026, GPU RTX 3050, 7,5 giờ cho 5 seed; seed 42 chạy lại một lần (lần đầu dừng giữa chừng) | mục 4.1 |
 | Amazon Beauty — dữ liệu | Bản 5-core: 198.502 đánh giá, 22.363 khách, 12.101 sản phẩm. Lọc 5-core trước 01/01/2014: 10.681 khách, 6.069 sản phẩm, 94.009 cặp. Kiểm thử 01/01–23/07/2014: 2.644 khách, 6.107 cặp đúng, 6.058 ứng viên mỗi khách | mục 3.2.6, Bảng 3.6 |
 | Amazon — kết quả (NDCG@10, 5 seed) | **LateFusion-F 0,03747** · GMF-F 0,03298 · NeuMF-F 0,03277 · MLP-F 0,03065 · UserKNN 0,02506 · ItemKNN 0,02333 · NeuMF 0,01978 · GMF 0,01627 · MostPopular-Recent 0,01401 · MLP 0,01271 · BPR-MF 0,01144 · Content 0,00945 · Most Popular 0,00872 | mục 4.5.1 |
-| Amazon — 10 so sánh | NeuMF-F tốt hơn NeuMF +65,7% và cả 5 baseline (từ +30,8% với UserKNN); ngang GMF-F (−0,6%) và MLP-F (+6,9%, p Holm ≈ 0,05 nhưng CI chứa 0); **LateFusion-F tốt hơn NeuMF-F** (NeuMF-F −12,5%) | mục 4.5.2, Bảng 4.11–4.12 |
+| Amazon — 10 so sánh | NeuMF-F tốt hơn NeuMF +65,7% và cả 5 baseline (từ +30,8% với UserKNN); ngang GMF-F (−0,6%) và MLP-F (+6,9%, p Holm ≈ 0,05 nhưng CI chứa 0); **LateFusion-F tốt hơn NeuMF-F** (NeuMF-F −12,5%) | mục 4.5.2, Bảng 4.15–4.16 |
 | Amazon — ablation | Bỏ thời gian −31,6%, bỏ thuộc tính −14,4% (CI không chứa 0); bỏ văn bản −9,8%, bỏ thông tin khách +1,3% (CI chứa 0) | mục 4.5.3 |
+| Hybrid-CBCF (bổ sung, 13/10) | H&M: NDCG@10 0,03183, hạng 5/15; NeuMF-F tốt hơn +25,8%; so với UserKNN +2,2% (không khác biệt có ý nghĩa). Amazon: 0,02664, hạng 5/15; NeuMF-F tốt hơn +23,0%; so với UserKNN +6,3% (Hybrid-CBCF tốt hơn) | mục 4.4.4, 4.5.1 (Bảng 4.8, 4.14) |
 
 Số tinh chỉnh chỉ dùng để **chọn cấu hình**; kết luận chỉ lấy từ tập kiểm thử của mẫu kiểm định (và được kiểm chứng
 trên Amazon).
@@ -207,7 +212,7 @@ Mở ở đâu: mục 2.1.4, 2.4.1, 3.2.4, **3.7** (Thuật toán 3.7), 4.6, 4.7
 
 **Cách tính trong đề tài:**
 - Chỉ số chính: **NDCG@10** (đăng ký trước); phụ: Recall@10, HR@10, Precision@10, NDCG@5, NDCG@20.
-- Báo cáo đủ bốn chỉ số ở **K = 5, 10, 15, 20** (Bảng 4.3–4.4 cho H&M, 4.9–4.10 cho Amazon). K = 15 tính lại từ hạng
+- Báo cáo đủ bốn chỉ số ở **K = 5, 10, 15, 20** (Bảng 4.5–4.6 cho H&M, 4.12–4.13 cho Amazon). K = 15 tính lại từ hạng
   của từng món đúng đã lưu ở lần đánh giá cuối — không chạy lại mô hình, không mở lại tập kiểm thử; cách tính lại cho
   đúng từng số @5, @10, @20 của lần đánh giá đó.
 - Lấy trung bình theo khách, rồi trung bình ± độ lệch chuẩn qua 5 seed.
@@ -339,9 +344,17 @@ Mô hình đề xuất: **NeuMF-F** (early fusion). Random là cận dưới.
   trên tập xác thực, không nhìn tập kiểm thử; tập kiểm thử mở thêm đúng một lần cho mô hình này; hai so sánh bổ sung
   (NeuMF-F vs Hybrid-CBCF, Hybrid-CBCF vs UserKNN) hiệu chỉnh Holm riêng; họ 10 so sánh và kết luận cũ giữ nguyên. Điều
   phải nói thẳng: lúc thêm, nhóm đã biết kết quả kiểm thử của ba thành phần.
-- **Kết quả trên tập kiểm thử:** chưa chấm (chờ commit rồi chạy `python run.py bosung-final`).
+- **Kết quả trên tập kiểm thử** (chấm một lần mỗi bộ, 13/10/2026):
+  - H&M: Hybrid-CBCF đạt NDCG@10 0,03183, hạng 5/15, ngay sau bốn mô hình có đặc trưng. NeuMF-F hơn nó **+25,8%, có ý
+    nghĩa**. So với UserKNN, Hybrid-CBCF chỉ hơn +2,2%, **không khác biệt có ý nghĩa** — trọng số dồn vào UserKNN, còn
+    Content đứng riêng rất yếu.
+  - Amazon (dùng nguyên trọng số chọn trên H&M): 0,02664, hạng 5/15. NeuMF-F hơn **+23,0%, có ý nghĩa**; Hybrid-CBCF hơn
+    UserKNN **+6,3%, có ý nghĩa**. Có thể vì Content trên Amazon không quá yếu (hơn 1/3 NDCG@10 của UserKNN, so với
+    khoảng 1/6 trên H&M) — nhận định, chưa kiểm chứng.
+  - Câu trả lời ngắn: ghép điểm các kỹ thuật truyền thống giúp ít; thêm đặc trưng vào mô hình lai học sâu giúp nhiều hơn
+    hẳn.
 
-Mở ở đâu: mục 2.1.1, 3.6 (Thuật toán 3.6), 4.2, 4.3, 4.4 ("Phân tích bổ sung").
+Mở ở đâu: mục 2.1.1, 3.6 (Thuật toán 3.6), 4.2 (Bảng 4.1), 4.3 (Bảng 4.3), 4.4.4 (Bảng 4.8), 4.5.1 (Bảng 4.14), 4.8.
 
 ### 15. Sơ đồ kiến trúc
 
@@ -433,7 +446,7 @@ quả ở lần chạy lại. Các seed khác mở tập kiểm thử đúng m�
   là kiểm tra kết luận có còn đúng khi đổi dữ liệu mà **không** được chỉnh lại theo dữ liệu mới. Chỉ số epoch được chọn
   trên tập xác thực Amazon.
 - Hệ quả: mô hình nào có cấu hình không hợp với Amazon sẽ bị thiệt — rõ nhất là BPR-MF (0,01144, kém cả ItemKNN và
-  MostPopular-Recent). Vì vậy hai so sánh có BPR-MF trên Amazon không dùng làm bằng chứng; báo cáo ghi rõ ở Bảng 4.12.
+  MostPopular-Recent). Vì vậy hai so sánh có BPR-MF trên Amazon không dùng làm bằng chứng; báo cáo ghi rõ ở Bảng 4.16.
 - Kết luận về đặc trưng vẫn đúng dù không tinh chỉnh — đó là điểm vững nhất.
 
 **"K = 15 lấy ở đâu ra, có chạy lại không?"**

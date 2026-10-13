@@ -16,9 +16,11 @@ from demo.backend.data_context import (SEED, V2_DIR, DataContext, product_table,
 from demo.backend.routes import filter_users, user_position, user_rows
 
 TOL = 1e-6
-# Logit tính lại trên CPU có thể lệch ~1e-7 so với GPU lúc đánh giá cuối -> hai item gần như hoà điểm có thể đổi chỗ
-# ở hạng rất sâu. Mọi hạng trong vùng top-DEEP phải trùng tuyệt đối; sâu hơn cho phép lệch vài vị trí.
-DEEP, DEEP_SLACK = 100, 3
+# Mô hình không đọc tệp đặc trưng văn bản (data/processed/, mỗi máy tự dựng, không nằm trong git): hạng tính lại phải trùng
+# hạng đã lưu ở mọi máy, kể cả checkpoint tạo trên GPU chấm lại trên CPU. Mô hình đọc tệp này (bốn mô hình có đặc trưng,
+# Content, Hybrid-CBCF qua Content) chỉ trùng khi tệp giống máy đã chạy; tệp dựng bằng phiên bản thư viện khác cho vector
+# văn bản khác, khi đó demo phải báo lệch và trả đúng số đã lưu.
+TEXT_FREE = {"NeuMF", "GMF", "MLP", "BPR-MF", "UserKNN", "ItemKNN", "MostPopular", "MostPopular-Recent"}
 V2_KEY = {"NeuMF-F": "neumf_f", "GMF-F": "gmf_f", "MLP-F": "mlp_f", "NeuMF": "neumf", "GMF": "gmf", "MLP": "mlp",
           "LateFusion-F": "late_f", "BPR-MF": "bpr", "UserKNN": "userknn", "ItemKNN": "itemknn",
           "MostPopular-Recent": "recent_pop", "Content": "content", "MostPopular": "popularity",
@@ -36,8 +38,9 @@ def vctx():
 
 # ------------------------------------------------------------- khớp đánh giá cuối
 def test_metrics_match_per_user_file(vctx):
-    """Chỉ số per-user của demo khớp outputs/v2/final/seed42/per_user.csv.gz (số của Chương 4) và, khi đã chấm bổ sung,
-    bosung/per_user.csv.gz của mô hình lai truyền thống."""
+    """Demo đối chiếu với outputs/v2/final/seed42/per_user.csv.gz (số của Chương 4) và, khi đã chấm bổ sung,
+    bosung/per_user.csv.gz của mô hình lai truyền thống: số đã lưu trả kèm luôn đúng; hạng tính lại trùng số đã lưu (mô
+    hình trong TEXT_FREE thì bắt buộc), hoặc demo báo lệch kèm lý do."""
     per = pd.read_csv(V2_DIR / f"seed{SEED}" / "per_user.csv.gz")
     bs = V2_DIR / "bosung" / "per_user.csv.gz"
     if bs.exists():  # scripts/25_bosung.py: mô hình tất định, một bản cho mỗi seed
@@ -49,13 +52,18 @@ def test_metrics_match_per_user_file(vctx):
     assert {"NeuMF-F", "NeuMF", "GMF-F", "MLP-F", "LateFusion-F", "BPR-MF"} <= set(vctx.available_models)
     for m in vctx.available_models:
         for u in users:
-            out = inference.recommend(vctx, m, int(u), 10)["evaluation"]
+            res = inference.recommend(vctx, m, int(u), 10)
+            out, fin = res["evaluation"], res["evaluation"]["final"]
             row = per.loc[(V2_KEY[m], int(u))]
             want = [int(x) for x in str(row["ranks"]).split(";")]
             assert out["n_candidates"] == row["n_candidates"]
-            for got, exp in zip(out["ranks"], want):
-                assert got == exp if min(got, exp) <= DEEP else abs(got - exp) <= DEEP_SLACK, (m, u, got, exp)
-            assert abs(out["metrics"]["NDCG@10"] - row["NDCG@10"]) <= TOL, (m, u)
+            assert fin["ranks"] == want and abs(fin["metrics"]["NDCG@10"] - row["NDCG@10"]) <= TOL, (m, u)
+            assert fin["match"] or m not in TEXT_FREE, (m, u, out["ranks"], want)
+            if fin["match"]:
+                assert out["ranks"] == want and abs(out["metrics"]["NDCG@10"] - row["NDCG@10"]) <= TOL, (m, u)
+                assert res["note"] is None
+            else:
+                assert res["note"] == inference.MISMATCH_NOTE, (m, u)
 
 
 def test_new_customer_gets_popular_list_instead_of_error(vctx, monkeypatch):

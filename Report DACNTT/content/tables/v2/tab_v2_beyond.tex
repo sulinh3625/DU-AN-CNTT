@@ -1,7 +1,7 @@
 % Sinh tự động bởi neumf_project/scripts/24_report_v2.py — KHÔNG sửa tay.
 \begin{table}[htbp]
     \centering\small
-    \caption{Mô tả danh sách gợi ý top-10 (seed 42) và chi phí huấn luyện trên H\&M, mẫu kiểm định (trung bình qua seed)}
+    \caption{Độ phủ danh sách top-10 và chi phí huấn luyện trên mẫu kiểm định H\&M}
     \label{tab:v2beyond}
     \begin{adjustbox}{max width=\textwidth}
     \begin{tabular}{lrrr}
@@ -12,6 +12,7 @@
         NeuMF-F & 13{,}3\% & 3{,}0 & 15{,}2 \\
         GMF-F & 6{,}9\% & 4{,}4 & 13{,}7 \\
         MLP-F & 5{,}3\% & 4{,}6 & 16{,}4 \\
+        Hybrid-CBCF\textsuperscript{\dag} & 10{,}8\% & --- & 0{,}1 \\
         UserKNN & 5{,}7\% & --- & 0{,}0 \\
         ItemKNN & 20{,}4\% & --- & 0{,}0 \\
         NeuMF & 6{,}0\% & 4{,}2 & 6{,}2 \\
@@ -25,5 +26,5 @@
         \bottomrule
     \end{tabular}
     \end{adjustbox}
-    \par\smallskip{\footnotesize Độ phủ: tỉ lệ sản phẩm của không gian ứng viên xuất hiện trong top-10 của ít nhất một người dùng. Số epoch chọn trên tập xác thực của mẫu kiểm định trước khi huấn luyện lại. Thời gian: chọn epoch + huấn luyện lại (mạng nơ-ron) hoặc khớp mô hình, không gồm thời gian chấm.}
+    \par\smallskip{\footnotesize Độ phủ (seed 42): tỉ lệ sản phẩm của tập ứng viên xuất hiện trong top-10 của ít nhất một người dùng. Số epoch và thời gian là trung bình qua seed; số epoch chọn trên tập xác thực của mẫu kiểm định trước khi huấn luyện lại. Thời gian gồm chọn epoch và huấn luyện lại (mạng nơ-ron) hoặc khớp mô hình, không gồm thời gian chấm. \textsuperscript{\dag}Bổ sung sau đánh giá cuối; thời gian đo trên máy chỉ có CPU.}
 \end{table}

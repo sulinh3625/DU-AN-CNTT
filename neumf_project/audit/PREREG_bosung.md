@@ -104,4 +104,11 @@ Random là cận dưới. Thứ hạng "xếp thứ k trong 14 mô hình" trong 
 
 ## 8. Lệch kế hoạch
 
-Chưa có.
+Không có lệch kế hoạch. Ghi chú về hai lần chấm ngày 13/10/2026 (commit `fcf33f3`, máy chỉ có CPU):
+- H&M chạy lúc 17:22:58 trên cây mã sạch; Amazon Beauty chạy ngay sau đó lúc 17:23:46. Dòng nhật ký của Amazon có
+  `git_dirty = True` vì lần chạy H&M vừa ghi `outputs/` và `audit/test_access_log.csv`, hai chỗ khoá kiểm thử cho phép
+  (mục 3); không có file mã nguồn nào bị sửa.
+- Mỗi bộ dữ liệu chấm đúng một lần, không dùng `--allow-rerun`.
+- Đối chiếu thành phần: UserKNN và ItemKNN trùng hạng ở mọi khách (H&M 3.165/3.165, Amazon 2.644/2.644). Content lệch như
+  đã biết ở mục 3: NDCG@10 trên tập kiểm thử 0,00481 so với 0,00506 lúc đánh giá cuối (H&M), 0,00942 so với 0,00945
+  (Amazon).

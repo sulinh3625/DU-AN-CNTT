@@ -1,7 +1,7 @@
 % Sinh tự động bởi neumf_project/scripts/24_report_v2.py — KHÔNG sửa tay.
 \begin{table}[htbp]
     \centering\small
-    \caption{Cấu hình tốt nhất của từng mô hình trên tập xác thực của mẫu phát triển (seed 42; 6 cấu hình mỗi mô hình có học, mô hình một tham số thử đủ lưới)}
+    \caption{Cấu hình tốt nhất của từng mô hình trên tập xác thực của mẫu phát triển}
     \label{tab:v2tuning}
     \begin{adjustbox}{max width=\textwidth}
     \begin{tabular}{llrr}
@@ -21,9 +21,9 @@
         Content & chu kỳ bán rã 30 ngày & 0{,}00459 & 0{,}02180 \\
         MostPopular-Recent & cửa sổ 28 ngày & 0{,}02334 & 0{,}10432 \\
         Most Popular & --- & 0{,}02174 & 0{,}09420 \\
-        Hybrid-CBCF\textsuperscript{\dag} & trọng số học theo cặp: Content 0{,}12; UserKNN 0{,}60; ItemKNN 0{,}28 & 0{,}02815 & 0{,}10588 \\
+        Hybrid-CBCF\textsuperscript{\dag} & tổng có trọng số học theo cặp: Content 0{,}12; UserKNN 0{,}60; ItemKNN 0{,}28 & 0{,}02815 & 0{,}10588 \\
         \bottomrule
     \end{tabular}
     \end{adjustbox}
-    \par\smallskip{\footnotesize d: số chiều embedding; neg: số mẫu âm mỗi mẫu dương; wd: weight decay; bỏ ID: xác suất bỏ embedding ID của sản phẩm khi huấn luyện. Số trên tập xác thực dùng để chọn cấu hình, không dùng để kết luận. \textsuperscript{\dag}Mô hình lai truyền thống bổ sung sau đánh giá cuối: 4 cách kết hợp; trọng số chia cho tổng; NDCG@10 của cách trọng số tính bằng khớp chéo theo khách (\bangrefV{tab_v2_hybrid.tex}{tab:v2hybrid}).}
+    \par\smallskip{\footnotesize Seed 42. Mỗi mô hình có học thử 6 cấu hình; mô hình chỉ có một tham số thử đủ lưới. d: số chiều vector nhúng; lr: tốc độ học; reg: hệ số điều chuẩn; neg: số mẫu âm cho mỗi mẫu dương; wd: hệ số điều chuẩn L2; shrink: hệ số co; bỏ ID: xác suất bỏ vector nhúng ID của sản phẩm khi huấn luyện. Số trên tập xác thực dùng để chọn cấu hình, không dùng để kết luận. \textsuperscript{\dag}Mô hình lai truyền thống bổ sung sau đánh giá cuối; trọng số đã chia cho tổng; NDCG@10 tính bằng khớp chéo theo khách (\bangrefV{tab_v2_hybrid.tex}{tab:v2hybrid}).}
 \end{table}

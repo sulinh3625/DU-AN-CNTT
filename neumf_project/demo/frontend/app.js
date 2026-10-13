@@ -541,10 +541,16 @@ function renderAnswer(recs, hist) {
     const e = r.evaluation;
     const rows = CTX.k_values.map((k) => `<tr><td>K = ${k}</td>${metricCols.map((m) =>
       `<td>${fmt(e.metrics[`${m}@${k}`], m === "HR" ? 0 : 4)}</td>`).join("")}</tr>`).join("");
+    // Hạng tính lại khác hạng đã lưu ở đánh giá cuối (tệp đặc trưng văn bản dựng lại trên máy khác): hiện kèm số đã lưu.
+    const f = e.final;
+    const saved = f && !f.match
+      ? `<div class="missing" style="margin-top:8px">Đánh giá cuối (đã lưu): hạng tốt nhất ${num(f.rank)}, NDCG@${r.k} = ${fmt(f.metrics[`NDCG@${r.k}`], 4)}.
+         <div class="note" style="margin-top:4px">${esc(r.note || "")}</div></div>`
+      : "";
     return `<div class="eval-block"><h3 style="color:${color(r.model)}">${esc(show(r.model))}</h3>
       <dl class="kv"><dt>Hạng tốt nhất</dt><dd>${num(e.rank)} / ${num(e.n_candidates)}</dd>
       <dt>Số candidates</dt><dd>${num(e.n_candidates)}</dd></dl>
-      <table style="margin-top:8px"><tr><th></th>${metricCols.map((m) => `<th>${m}@K</th>`).join("")}</tr>${rows}</table></div>`;
+      <table style="margin-top:8px"><tr><th></th>${metricCols.map((m) => `<th>${m}@K</th>`).join("")}</tr>${rows}</table>${saved}</div>`;
   }).join("");
   const title = `${targets.length} ${targetLabel()}: sản phẩm khách mua lần đầu từ ${esc(CTX.test_start)}`;
   const targetRows = targets.map((t) => rowItem(t, "",

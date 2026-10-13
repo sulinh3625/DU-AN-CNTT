@@ -1,7 +1,7 @@
 % Sinh tự động bởi neumf_project/scripts/24_report_v2.py — KHÔNG sửa tay.
 \begin{table}[htbp]
     \centering\small
-    \caption{Kết quả trên tập kiểm thử Amazon Beauty theo ba nhóm mô hình đối chứng: trung bình $\pm$ độ lệch chuẩn qua 5 seed (xếp hạng trên toàn bộ tập ứng viên; 2.644 người dùng)}
+    \caption{Kết quả trên tập kiểm thử Amazon Beauty theo ba nhóm mô hình đối chứng}
     \label{tab:amzmain}
     \begin{adjustbox}{max width=\textwidth}
     \begin{tabular}{lrrrrrr}
@@ -16,6 +16,7 @@
         GMF & 0{,}01627\,{\scriptsize$\pm$\,0{,}00173} & 0{,}02533\,{\scriptsize$\pm$\,0{,}00154} & 0{,}05582\,{\scriptsize$\pm$\,0{,}00303} & 0{,}00640\,{\scriptsize$\pm$\,0{,}00036} & 0{,}01287\,{\scriptsize$\pm$\,0{,}00180} & 0{,}02090\,{\scriptsize$\pm$\,0{,}00166} \\
         MLP & 0{,}01271\,{\scriptsize$\pm$\,0{,}00054} & 0{,}02045\,{\scriptsize$\pm$\,0{,}00132} & 0{,}04667\,{\scriptsize$\pm$\,0{,}00324} & 0{,}00513\,{\scriptsize$\pm$\,0{,}00037} & 0{,}00978\,{\scriptsize$\pm$\,0{,}00080} & 0{,}01694\,{\scriptsize$\pm$\,0{,}00062} \\
         \midrule \multicolumn{7}{l}{\textit{Nhóm 2: học máy truyền thống}} \\
+        Hybrid-CBCF\textsuperscript{\dag} & 0{,}02664\,{\scriptsize$\pm$\,0{,}00000} & 0{,}03992\,{\scriptsize$\pm$\,0{,}00000} & 0{,}08169\,{\scriptsize$\pm$\,0{,}00000} & 0{,}00998\,{\scriptsize$\pm$\,0{,}00000} & 0{,}02137\,{\scriptsize$\pm$\,0{,}00000} & 0{,}03212\,{\scriptsize$\pm$\,0{,}00000} \\
         UserKNN & 0{,}02506\,{\scriptsize$\pm$\,0{,}00000} & 0{,}03553\,{\scriptsize$\pm$\,0{,}00000} & 0{,}07716\,{\scriptsize$\pm$\,0{,}00000} & 0{,}00930\,{\scriptsize$\pm$\,0{,}00000} & 0{,}02059\,{\scriptsize$\pm$\,0{,}00000} & 0{,}03096\,{\scriptsize$\pm$\,0{,}00000} \\
         ItemKNN & 0{,}02333\,{\scriptsize$\pm$\,0{,}00000} & 0{,}03526\,{\scriptsize$\pm$\,0{,}00000} & 0{,}07186\,{\scriptsize$\pm$\,0{,}00000} & 0{,}00870\,{\scriptsize$\pm$\,0{,}00000} & 0{,}01895\,{\scriptsize$\pm$\,0{,}00000} & 0{,}02789\,{\scriptsize$\pm$\,0{,}00000} \\
         BPR-MF & 0{,}01144\,{\scriptsize$\pm$\,0{,}00091} & 0{,}01691\,{\scriptsize$\pm$\,0{,}00164} & 0{,}04115\,{\scriptsize$\pm$\,0{,}00309} & 0{,}00498\,{\scriptsize$\pm$\,0{,}00035} & 0{,}00883\,{\scriptsize$\pm$\,0{,}00077} & 0{,}01476\,{\scriptsize$\pm$\,0{,}00082} \\
@@ -30,5 +31,5 @@
         \bottomrule
     \end{tabular}
     \end{adjustbox}
-    \par\smallskip{\footnotesize In đậm: trung bình cao nhất mỗi cột. Mô hình tất định (Most Popular, MostPopular-Recent, Content, ItemKNN, UserKNN) cho cùng kết quả ở mọi seed. Không tinh chỉnh trên bộ này: cấu hình chọn trên tập xác thực của mẫu phát triển H\&M, chỉ số epoch của mạng nơ-ron được chọn trên tập xác thực của chính bộ này.}
+    \par\smallskip{\footnotesize Trung bình $\pm$ độ lệch chuẩn qua 5 seed; xếp hạng trên toàn bộ tập ứng viên của 2.644 người dùng. In đậm: trung bình cao nhất mỗi cột. Mô hình tất định (Most Popular, MostPopular-Recent, Content, ItemKNN, UserKNN, Hybrid-CBCF) cho cùng kết quả ở mọi seed. \textsuperscript{\dag}Mô hình lai truyền thống bổ sung sau đánh giá cuối theo góp ý của giảng viên hướng dẫn: chấm một lần trên cùng tập kiểm thử, không thuộc họ 10 so sánh đăng ký trước. Không tinh chỉnh trên bộ này: cấu hình chọn trên tập xác thực của mẫu phát triển H\&M, chỉ số epoch của mạng nơ-ron được chọn trên tập xác thực của chính bộ này.}
 \end{table}

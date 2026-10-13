@@ -1,7 +1,7 @@
 % Sinh tự động bởi neumf_project/scripts/24_report_v2.py — KHÔNG sửa tay.
 \begin{table}[htbp]
     \centering\small
-    \caption{Kết quả trên tập kiểm thử của mẫu kiểm định theo ba nhóm mô hình đối chứng: trung bình $\pm$ độ lệch chuẩn qua 5 seed (xếp hạng trên toàn bộ tập ứng viên; 3.165 người dùng)}
+    \caption{Kết quả trên tập kiểm thử của mẫu kiểm định H\&M theo ba nhóm mô hình đối chứng}
     \label{tab:v2main}
     \begin{adjustbox}{max width=\textwidth}
     \begin{tabular}{lrrrrrr}
@@ -16,6 +16,7 @@
         GMF & 0{,}02695\,{\scriptsize$\pm$\,0{,}00311} & 0{,}04007\,{\scriptsize$\pm$\,0{,}00539} & 0{,}11179\,{\scriptsize$\pm$\,0{,}00909} & 0{,}01243\,{\scriptsize$\pm$\,0{,}00121} & 0{,}02105\,{\scriptsize$\pm$\,0{,}00181} & 0{,}03562\,{\scriptsize$\pm$\,0{,}00297} \\
         MLP & 0{,}02373\,{\scriptsize$\pm$\,0{,}00207} & 0{,}03510\,{\scriptsize$\pm$\,0{,}00316} & 0{,}10306\,{\scriptsize$\pm$\,0{,}00765} & 0{,}01129\,{\scriptsize$\pm$\,0{,}00092} & 0{,}01812\,{\scriptsize$\pm$\,0{,}00153} & 0{,}03269\,{\scriptsize$\pm$\,0{,}00195} \\
         \midrule \multicolumn{7}{l}{\textit{Nhóm 2: học máy truyền thống}} \\
+        Hybrid-CBCF\textsuperscript{\dag} & 0{,}03183\,{\scriptsize$\pm$\,0{,}00000} & 0{,}04641\,{\scriptsize$\pm$\,0{,}00000} & 0{,}12354\,{\scriptsize$\pm$\,0{,}00000} & 0{,}01362\,{\scriptsize$\pm$\,0{,}00000} & 0{,}02550\,{\scriptsize$\pm$\,0{,}00000} & 0{,}04194\,{\scriptsize$\pm$\,0{,}00000} \\
         UserKNN & 0{,}03114\,{\scriptsize$\pm$\,0{,}00000} & 0{,}04686\,{\scriptsize$\pm$\,0{,}00000} & 0{,}12354\,{\scriptsize$\pm$\,0{,}00000} & 0{,}01365\,{\scriptsize$\pm$\,0{,}00000} & 0{,}02446\,{\scriptsize$\pm$\,0{,}00000} & 0{,}04086\,{\scriptsize$\pm$\,0{,}00000} \\
         ItemKNN & 0{,}02860\,{\scriptsize$\pm$\,0{,}00000} & 0{,}04146\,{\scriptsize$\pm$\,0{,}00000} & 0{,}11311\,{\scriptsize$\pm$\,0{,}00000} & 0{,}01267\,{\scriptsize$\pm$\,0{,}00000} & 0{,}02330\,{\scriptsize$\pm$\,0{,}00000} & 0{,}03835\,{\scriptsize$\pm$\,0{,}00000} \\
         BPR-MF & 0{,}02661\,{\scriptsize$\pm$\,0{,}00114} & 0{,}03895\,{\scriptsize$\pm$\,0{,}00106} & 0{,}11179\,{\scriptsize$\pm$\,0{,}00381} & 0{,}01238\,{\scriptsize$\pm$\,0{,}00040} & 0{,}02045\,{\scriptsize$\pm$\,0{,}00126} & 0{,}03641\,{\scriptsize$\pm$\,0{,}00163} \\
@@ -30,5 +31,5 @@
         \bottomrule
     \end{tabular}
     \end{adjustbox}
-    \par\smallskip{\footnotesize In đậm: trung bình cao nhất mỗi cột. Mô hình tất định (Most Popular, MostPopular-Recent, Content, ItemKNN, UserKNN) cho cùng kết quả ở mọi seed.}
+    \par\smallskip{\footnotesize Trung bình $\pm$ độ lệch chuẩn qua 5 seed; xếp hạng trên toàn bộ tập ứng viên của 3.165 người dùng. In đậm: trung bình cao nhất mỗi cột. Mô hình tất định (Most Popular, MostPopular-Recent, Content, ItemKNN, UserKNN, Hybrid-CBCF) cho cùng kết quả ở mọi seed. \textsuperscript{\dag}Mô hình lai truyền thống bổ sung sau đánh giá cuối theo góp ý của giảng viên hướng dẫn: chấm một lần trên cùng tập kiểm thử, không thuộc họ 10 so sánh đăng ký trước.}
 \end{table}

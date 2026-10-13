@@ -7,8 +7,8 @@ Bốn phần:
   1. Tái lập: outputs/v2/final/{summary,significance,ablation,beyond,by_k}.csv so với bản đã commit (git HEAD) — độ
      lệch tuyệt đối lớn nhất (chạy lại đánh giá cuối trên cùng máy kỳ vọng lệch 0).
   2. Khẳng định bằng chữ trong báo cáo mà macro số liệu không tự cập nhật — mỗi khẳng định là một điều kiện trên CSV
-     của outputs/v2/final/ (H&M), outputs/amazon/final/ (Amazon Beauty) hoặc audit/v2/best_configs.json; sai thì in
-     tệp:dòng cần sửa.
+     của outputs/v2/final/ (H&M), outputs/amazon/final/ (Amazon Beauty), thư mục bosung/ của hai nơi này (Hybrid-CBCF)
+     hoặc audit/v2/*best_configs.json; sai thì in tệp:dòng cần sửa.
   3. Số chép tay trong tong_hop.md, van_dap.md, README.md: nếu số v2 khác bản đã commit, liệt kê các dòng còn ghi số
      cũ.
   4. Mọi macro (\\VRes, \\VSig, ... của H&M; \\ARes, \\ASig, ... của Amazon; \\Res, \\Sig của lịch sử phát triển), mọi
@@ -86,6 +86,9 @@ class Data:
         self.HL = None if log is None else {json.loads(p)["fusion"]: v for p, v in zip(log["params"], log["val_NDCG@10"])}
         res = {r: r / "bosung" / "results.json" for r in (FINAL_V2, FINAL_AMZ)}
         self.RB2, self.RBA = (json.loads(p.read_text(encoding="utf-8")) if p.exists() else None for p in res.values())
+        # bảng 15 mô hình, họ so sánh bổ sung B1–B2 và độ phủ có Hybrid-CBCF (scripts/24_report_v2.py ghi vào bosung/)
+        self.SB2, self.GB2, self.BB2, _, _ = load(FINAL_V2 / "bosung")
+        self.SBA, self.GBA, self.BBA, _, _ = load(FINAL_AMZ / "bosung")
 
 
 def order(s: pd.Series) -> list:
@@ -172,22 +175,42 @@ def claims(d: Data):
 
     knn_same = lambda r: all(r["components_check"][k]["users_same_ranks"] == r["components_check"][k]["users"]  # noqa: E731
                              for k in ("userknn", "itemknn"))
+    SB2, GB2, BB2, SBA, GBA, BBA = d.SB2, d.GB2, d.BB2, d.SBA, d.GBA, d.BBA
+    # họ so sánh bổ sung: B1 = (neumf_f, hybrid), B2 = (hybrid, userknn)
+    bs = lambda G, a, b, col="verdict": G.loc[(a, b), col]  # noqa: E731
+    bs_rel = lambda G, a, b: abs(bs(G, a, b, "rel_diff"))  # noqa: E731
+
+    def hyb_fifth(S):
+        """Trong 15 mô hình (không tính Random): bốn mô hình có đặc trưng đứng đầu, Hybrid-CBCF thứ năm."""
+        o = order(S["NDCG@10_mean"].drop("random", errors="ignore"))
+        return set(o[:4]) == FEAT and o[4] == "hybrid"
+
+    b1_both = lambda: bs(GB2, "neumf_f", "hybrid") == BETTER == bs(GBA, "neumf_f", "hybrid")  # noqa: E731
+    content_ratio = lambda S: S.loc["content", "NDCG@10_mean"] / S.loc["userknn", "NDCG@10_mean"]  # noqa: E731
+    # tất cả so sánh có ý nghĩa trên H&M đều là "NeuMF-F tốt hơn"
+    hm_sig_all_neumff = lambda: all(v == NOT_SIG or (v == BETTER and a == "neumf_f")  # noqa: E731
+                                    for (a, _), v in G2["verdict"].items())
+    comp_content = lambda r: r["components_check"]["content"]  # noqa: E731
     return [
-        # ---- C4: kết quả
-        ("content/C4.tex", "Thang giá trị tuyệt đối thấp", "v2: NDCG@10 cao nhất < 0,05",
+        # ---- C4: kết quả trên H&M
+        ("content/C4.tex", "Giá trị tuyệt đối của các độ đo thấp", "v2: NDCG@10 cao nhất < 0,05",
          lambda: S2["NDCG@10_mean"].max() < 0.05, ["S2"]),
-        ("content/C4.tex", "mỗi khách có vài sản phẩm đúng giữa khoảng",
-         "v2: trung bình số sản phẩm đúng mỗi khách < 10",
-         lambda: info["test"]["targets"] / info["test"]["users"] < 10, ["info2"]),
+        ("content/C4.tex", "mỗi khách chỉ có vài sản phẩm đúng giữa hàng nghìn ứng viên",
+         "v2: trung bình số sản phẩm đúng mỗi khách < 10, số ứng viên trung bình > 1.000",
+         lambda: info["test"]["targets"] / info["test"]["users"] < 10 and info["test"]["candidates_mean"] > 1000,
+         ["info2"]),
         ("content/C4.tex", "Trên tập xác thực của mẫu phát triển, bốn mô hình có đặc trưng đứng đầu",
-         "v2: 4 mô hình có đặc trưng đứng đầu NDCG@10 xác thực", lambda: set(val()[:4]) == FEAT, ["S2"]),
-        ("content/C4.tex", "Trong các baseline, cao nhất là UserKNN",
+         "v2: 4 mô hình có đặc trưng đứng đầu NDCG@10 xác thực, LateFusion-F và NeuMF-F dẫn đầu",
+         lambda: set(val()[:4]) == FEAT and val()[:2] == ["late_f", "neumf_f"], ["S2"]),
+        ("content/C4.tex", "mô hình đối chứng không dùng mạng nơ-ron cao nhất là UserKNN",
          "v2: baseline cao nhất lúc tinh chỉnh: UserKNN, rồi BPR-MF, ItemKNN",
          lambda: [m for m in val() if m in BASELINES][:3] == ["userknn", "bpr", "itemknn"], ["S2"]),
-        ("content/C4.tex", "LateFusion-F đạt NDCG@10 cao nhất", "v2: LateFusion-F cao nhất, NeuMF-F thứ hai",
+        ("content/C4.tex", "LateFusion-F đạt NDCG@10 cao nhất (\\VRes{LateF}", "v2: LateFusion-F cao nhất, NeuMF-F thứ hai",
          top_late_neumf, ["S2"]),
         ("content/C4.tex", "bốn mô hình có đặc trưng đứng đầu, như trên tập xác thực",
          "v2: 4 mô hình có đặc trưng đứng đầu NDCG@10 kiểm thử", lambda: set(test()[:4]) == FEAT, ["S2"]),
+        ("content/C4.tex", "Mô hình đứng ngay sau nhóm này là UserKNN", "v2: UserKNN thứ năm, ngay sau 4 mô hình có đặc trưng",
+         lambda: set(test()[:4]) == FEAT and test()[4] == "userknn", ["S2"]),
         ("content/C4.tex", "khoảng 15\\% số khách", "v2: HR@10 của NeuMF-F làm tròn 15%",
          lambda: round(100 * S2.loc["neumf_f", "HR@10_mean"]) == 15, ["S2"]),
         ("content/C4.tex", "trùng với chính NeuMF-F, vì cấu hình được chọn của NeuMF-F",
@@ -217,7 +240,15 @@ def claims(d: Data):
                   == {"gmf", "mlp", "itemknn"}
                   and set(S2.index[S2["NDCG@10_mean"] < S2["val_NDCG@10"]]) == {"gmf", "mlp"})(rank_shift()),
          ["S2"]),
-        ("content/C4.tex", "NeuMF-F vượt cả năm baseline trong họ so sánh",
+        # kiểm định họ 10 so sánh (mục 4.4.3)
+        ("content/C4.tex", "NeuMF-F tốt hơn có ý nghĩa ở \\VSig{all}{nsig} so sánh",
+         "v2: mọi so sánh có ý nghĩa đều là NeuMF-F tốt hơn: NeuMF, MLP-F, cả 5 baseline (nhỏ nhất UserKNN, lớn nhất "
+         "Content)", lambda: hm_abstract_family() and hm_sig_all_neumff(), ["G2"]),
+        ("content/C4.tex", "Ba so sánh còn lại không khác biệt có ý nghĩa",
+         "v2: NeuMF-F ~ GMF-F, ~ LateFusion-F; NeuMF ~ BPR-MF",
+         lambda: not_gmf_late() and verdict("neumf", "bpr") == NOT_SIG, ["G2"]),
+        # thảo luận (mục 4.8)
+        ("content/C4.tex", "NeuMF-F vượt cả năm mô hình đối chứng trong họ so sánh",
          "v2: NeuMF-F tốt hơn có ý nghĩa cả 5 baseline; chênh nhỏ nhất UserKNN, lớn nhất Content",
          lambda: all(verdict("neumf_f", b) == BETTER for b in COMPARED_BASELINES)
          and min(COMPARED_BASELINES, key=lambda b: rel("neumf_f", b)) == "userknn"
@@ -234,73 +265,83 @@ def claims(d: Data):
          lambda: test()[0] == "late_f" and verdict("neumf_f", "late_f") == NOT_SIG, ["S2", "G2"]),
         ("content/C4.tex", "chỉ được ủng hộ so với nhánh MLP-F", "v2: NeuMF-F tốt hơn MLP-F, không khác biệt với GMF-F "
          "và LateFusion-F", fusion, ["G2"]),
-        # ---- C3, C5, tóm tắt
+        # ---- C3
         ("content/C3.tex", "cấu hình NeuMF-F được chọn có $\\rho = 0$", "v2: cấu hình NeuMF-F đã chọn có id_dropout = 0",
          rho0, ["best"]),
-        ("content/C5.tex", "sau LateFusion-F với", "v2: LateFusion-F cao nhất, NeuMF-F thứ hai", top_late_neumf, ["S2"]),
-        ("content/C5.tex", "trong đó đặc trưng thời gian đóng góp nhiều nhất",
-         "v2: ablation — bỏ đặc trưng thời gian giảm nhiều nhất", time_most, ["A2"]),
-        ("content/C5.tex", "Hợp nhất sớm hai nhánh vượt nhánh MLP-F đứng riêng",
-         "v2: NeuMF-F tốt hơn MLP-F, không khác biệt với GMF-F và LateFusion-F", fusion, ["G2"]),
-        ("frontmatter/abstract.tex", "trong 14 mô hình, sau LateFusion-F", "v2: LateFusion-F cao nhất, NeuMF-F thứ hai",
-         top_late_neumf, ["S2"]),
-        ("frontmatter/abstract.tex", "NeuMF-F không khác biệt có ý nghĩa với nhánh GMF-F đứng riêng",
+        # ---- C5: kết luận
+        ("content/C5.tex", "nhánh MLP-F và các mô hình đối chứng trong họ so sánh",
+         "v2: NeuMF-F tốt hơn có ý nghĩa NeuMF, MLP-F và cả 5 baseline", hm_abstract_family, ["G2"]),
+        ("content/C5.tex", "kết luận về đặc trưng lặp lại trên Amazon Beauty",
+         "Amazon: NeuMF-F tốt hơn NeuMF có ý nghĩa", lambda: a_verdict("neumf_f", "neumf") == BETTER, ["GA"]),
+        ("content/C5.tex", "Trong các nhóm đặc trưng, đặc trưng thời gian đóng góp nhiều nhất",
+         "ablation H&M và Amazon: bỏ đặc trưng thời gian giảm nhiều nhất",
+         lambda: time_most() and a_abl().index[0] == "neumf_f-time", ["A2", "AA"]),
+        ("content/C5.tex", "không khác biệt có ý nghĩa với nhánh GMF-F đứng riêng trên cả hai bộ dữ liệu",
+         "NeuMF-F không khác biệt có ý nghĩa với GMF-F trên H&M và Amazon",
+         lambda: verdict("neumf_f", "gmf_f") == NOT_SIG == a_verdict("neumf_f", "gmf_f"), ["G2", "GA"]),
+        ("content/C5.tex", "và kém LateFusion-F trên Amazon",
+         "NeuMF-F ~ LateFusion-F trên H&M; LateFusion-F tốt hơn có ý nghĩa trên Amazon",
+         lambda: verdict("neumf_f", "late_f") == NOT_SIG and a_late_wins(), ["G2", "GA"]),
+        ("content/C5.tex", "NeuMF-F cũng vượt một mô hình lai truyền thống",
+         "bổ sung: NeuMF-F tốt hơn Hybrid-CBCF có ý nghĩa trên H&M và Amazon", b1_both, ["GB2", "GBA"]),
+        ("content/C5.tex", "chỉ dùng mã ID khó vượt nhân tử hóa ma trận được tinh chỉnh kỹ",
+         "v2: NeuMF vs BPR-MF không khác biệt có ý nghĩa", lambda: verdict("neumf", "bpr") == NOT_SIG, ["G2"]),
+        # ---- tóm tắt (không chứa số liệu)
+        ("frontmatter/abstract.tex", "nhánh MLP-F và các mô hình đối chứng trong họ so sánh",
+         "v2: NeuMF-F tốt hơn có ý nghĩa NeuMF, MLP-F và cả 5 baseline", hm_abstract_family, ["G2"]),
+        ("frontmatter/abstract.tex", "không khác biệt có ý nghĩa với nhánh GMF-F đứng riêng và với mô hình hợp nhất muộn",
          "v2: NeuMF-F không khác biệt có ý nghĩa với GMF-F và LateFusion-F", not_gmf_late, ["G2"]),
-        ("frontmatter/abstract.tex", "đặc trưng thời gian đóng góp nhiều nhất trong ablation",
+        ("frontmatter/abstract.tex", "trong đó đặc trưng thời gian đóng góp nhiều nhất",
          "v2: ablation — bỏ đặc trưng thời gian giảm nhiều nhất", time_most, ["A2"]),
-        ("frontmatter/abstract_english.tex", "second of 14 models after LateFusion-F",
-         "v2: LateFusion-F cao nhất, NeuMF-F thứ hai", top_late_neumf, ["S2"]),
-        ("frontmatter/abstract_english.tex", "is not significantly different from its GMF-F branch alone",
+        ("frontmatter/abstract.tex", "LateFusion-F tốt hơn NeuMF-F có ý nghĩa",
+         "Amazon: NeuMF-F tốt hơn NeuMF; LateFusion-F tốt hơn NeuMF-F có ý nghĩa",
+         lambda: a_verdict("neumf_f", "neumf") == BETTER and a_late_wins(), ["GA"]),
+        ("frontmatter/abstract.tex", "NeuMF-F cũng tốt hơn có ý nghĩa một mô hình lai truyền thống",
+         "bổ sung: NeuMF-F tốt hơn Hybrid-CBCF có ý nghĩa trên H&M và Amazon", b1_both, ["GB2", "GBA"]),
+        ("frontmatter/abstract_english.tex", "its MLP-F branch and the baselines of the comparison family",
+         "v2: NeuMF-F tốt hơn có ý nghĩa NeuMF, MLP-F và cả 5 baseline", hm_abstract_family, ["G2"]),
+        ("frontmatter/abstract_english.tex", "it is not significantly different from its GMF-F branch alone",
          "v2: NeuMF-F không khác biệt có ý nghĩa với GMF-F và LateFusion-F", not_gmf_late, ["G2"]),
-        ("frontmatter/abstract_english.tex", "time features matter most in the ablation",
+        ("frontmatter/abstract_english.tex", "with time features contributing most",
          "v2: ablation — bỏ đặc trưng thời gian giảm nhiều nhất", time_most, ["A2"]),
+        ("frontmatter/abstract_english.tex", "LateFusion-F significantly outperforms NeuMF-F",
+         "Amazon: NeuMF-F tốt hơn NeuMF; LateFusion-F tốt hơn NeuMF-F có ý nghĩa",
+         lambda: a_verdict("neumf_f", "neumf") == BETTER and a_late_wins(), ["GA"]),
+        ("frontmatter/abstract_english.tex", "NeuMF-F also significantly outperforms a traditional hybrid",
+         "bổ sung: NeuMF-F tốt hơn Hybrid-CBCF có ý nghĩa trên H&M và Amazon", b1_both, ["GB2", "GBA"]),
         # ---- theo K (H&M)
         ("content/C4.tex", "thứ tự của bốn mô hình có đặc trưng giữ nguyên",
          "theo K: ở mọi K và mọi độ đo, thứ tự đầu là LateFusion-F, NeuMF-F, GMF-F, MLP-F",
          lambda: feat_lead_all_k(K2), ["K2"]),
-        ("content/C4.tex", "còn Precision@$K$ giảm từ",
+        ("content/C4.tex", "còn Precision@$K$ giảm",
          "theo K: HR@K, Recall@K của NeuMF-F tăng, Precision@K giảm từ K = 5 đến 20", neumff_k_trend, ["K2"]),
         ("content/C4.tex", "MostPopular-Recent vượt UserKNN ở HR@15 và HR@20",
          "theo K: MostPopular-Recent cao hơn UserKNN ở HR@15, HR@20", recpop_over_uknn, ["K2"]),
-        ("content/C5.tex", "Bốn mô hình có đặc trưng giữ nguyên thứ tự",
-         "theo K: ở mọi K và mọi độ đo, thứ tự đầu là LateFusion-F, NeuMF-F, GMF-F, MLP-F",
-         lambda: feat_lead_all_k(K2), ["K2"]),
-        ("frontmatter/abstract.tex", "Bốn mô hình có đặc trưng giữ nguyên thứ tự",
-         "theo K: ở mọi K và mọi độ đo, thứ tự đầu là LateFusion-F, NeuMF-F, GMF-F, MLP-F",
-         lambda: feat_lead_all_k(K2), ["K2"]),
-        ("frontmatter/abstract_english.tex", "The four feature-based models keep their order",
-         "theo K: ở mọi K và mọi độ đo, thứ tự đầu là LateFusion-F, NeuMF-F, GMF-F, MLP-F",
-         lambda: feat_lead_all_k(K2), ["K2"]),
-        ("frontmatter/abstract.tex", "nhánh MLP-F (\\VSig{3}{rel}) và cả năm baseline",
-         "v2: NeuMF-F tốt hơn có ý nghĩa NeuMF, MLP-F và cả 5 baseline; chênh nhỏ nhất UserKNN, lớn nhất Content",
-         hm_abstract_family, ["G2"]),
-        ("frontmatter/abstract_english.tex", "its MLP-F branch",
-         "v2: NeuMF-F tốt hơn có ý nghĩa NeuMF, MLP-F và cả 5 baseline; chênh nhỏ nhất UserKNN, lớn nhất Content",
-         hm_abstract_family, ["G2"]),
         # ---- Amazon Beauty
         ("content/C4.tex", "LateFusion-F đạt NDCG@10 cao nhất (\\ARes{LateF}{NDCG10}",
          "Amazon: LateFusion-F cao nhất, rồi GMF-F, NeuMF-F", lambda: a_test()[:3] == ["late_f", "gmf_f", "neumf_f"],
          ["SA"]),
-        ("content/C4.tex", "Như trên H\\&M, bốn mô hình có đặc trưng đứng đầu, rồi đến UserKNN",
+        ("content/C4.tex",
+         "Như trên H\\&M, bốn mô hình có đặc trưng đứng đầu; trong các mô hình đăng ký trước, tiếp theo là UserKNN",
          "Amazon: 4 mô hình có đặc trưng đứng đầu, rồi UserKNN, ItemKNN",
          lambda: set(a_test()[:4]) == FEAT and a_test()[4:6] == ["userknn", "itemknn"], ["SA"]),
         ("content/C4.tex", "BPR-MF chỉ đạt", "Amazon: BPR-MF thấp hơn ItemKNN, UserKNN và MostPopular-Recent",
          a_bpr_weak, ["SA"]),
-        ("content/C4.tex", "Trên Amazon, LateFusion-F cao nhất ở mọi $K$",
+        ("content/C4.tex", "LateFusion-F cao nhất ở mọi $K$ và với cả bốn độ đo",
          "Amazon theo K: LateFusion-F cao nhất ở mọi K và mọi độ đo", a_late_top_all_k, ["KA"]),
         ("content/C4.tex", "NeuMF-F và GMF-F bám sát nhau và đổi chỗ tùy độ đo",
          "Amazon theo K: GMF-F cao hơn NeuMF-F ở NDCG@K; NeuMF-F cao hơn ở Recall/HR/Precision @10, @15, @20",
          a_k_swap, ["KA"]),
-        ("content/C4.tex", "Kết luận (1) -- đặc trưng so với chỉ dùng ID: còn đúng",
+        ("content/C4.tex", "Kết luận thứ nhất, về đặc trưng so với chỉ dùng ID, còn đúng",
          "Amazon: NeuMF-F tốt hơn NeuMF có ý nghĩa, 4 mô hình có đặc trưng đứng đầu, tốt hơn cả 5 baseline",
          lambda: a_verdict("neumf_f", "neumf") == BETTER and set(a_test()[:4]) == FEAT and a_all_baselines(),
          ["SA", "GA"]),
-        ("content/C4.tex", "Kết luận (2) -- NeuMF-F so với từng nhánh và với hợp nhất muộn: chỉ đúng một phần",
+        ("content/C4.tex", "Kết luận thứ hai, về NeuMF-F so với từng nhánh và với hợp nhất muộn, chỉ đúng một phần",
          "Amazon: NeuMF-F ~ GMF-F, ~ MLP-F; LateFusion-F tốt hơn NeuMF-F có ý nghĩa; trên H&M NeuMF-F tốt hơn MLP-F",
          lambda: a_gmf_mlp_tie() and a_late_wins() and verdict("neumf_f", "mlp_f") == BETTER, ["GA", "G2"]),
         ("content/C4.tex", "giá trị $p$ đã hiệu chỉnh xấp xỉ ngưỡng 0,05",
          "Amazon: NeuMF-F vs MLP-F có p Holm gần 0,05 nhưng CI chứa 0", a_mlp_borderline, ["GA"]),
-        ("content/C4.tex", "Kết luận (3) -- NeuMF chỉ dùng ID so với BPR-MF: không đối chiếu được",
+        ("content/C4.tex", "Kết luận thứ ba, về NeuMF chỉ dùng ID so với BPR-MF, không đối chiếu được",
          "NeuMF vs BPR-MF: không khác biệt trên H&M, tốt hơn trên Amazon; BPR-MF Amazon yếu hơn ItemKNN, RecPop",
          lambda: verdict("neumf", "bpr") == NOT_SIG and a_verdict("neumf", "bpr") == BETTER and a_bpr_weak(),
          ["G2", "GA", "SA"]),
@@ -314,7 +355,7 @@ def claims(d: Data):
         ("content/C4.tex", "Most Popular và MostPopular-Recent vẫn thấp nhất",
          "Amazon: Most Popular, MostPopular-Recent có độ phủ top-10 thấp nhất",
          lambda: set(BA["coverage10"].nsmallest(2).index) == {"popularity", "recent_pop"}, ["BA"]),
-        ("content/C4.tex", "trên Amazon Beauty, NeuMF-F cũng vượt cả năm baseline",
+        ("content/C4.tex", "NeuMF-F cũng vượt cả năm mô hình đối chứng",
          "Amazon: NeuMF-F tốt hơn có ý nghĩa cả 5 baseline; chênh nhỏ nhất UserKNN", a_all_baselines, ["GA"]),
         ("content/C4.tex", "Trên Amazon, đặc trưng thời gian cũng đóng góp nhiều nhất",
          "Amazon ablation: bỏ đặc trưng thời gian giảm nhiều nhất", lambda: a_abl().index[0] == "neumf_f-time",
@@ -324,25 +365,50 @@ def claims(d: Data):
          ["S2", "SA"]),
         ("content/C4.tex", "bị bác bỏ ở so sánh với hợp nhất muộn trên Amazon",
          "Amazon: LateFusion-F tốt hơn NeuMF-F có ý nghĩa", a_late_wins, ["GA"]),
-        ("content/C5.tex", "NeuMF-F không khác biệt có ý nghĩa với GMF-F lẫn MLP-F",
-         "Amazon: NeuMF-F ~ GMF-F, ~ MLP-F; LateFusion-F tốt hơn NeuMF-F có ý nghĩa",
-         lambda: a_gmf_mlp_tie() and a_late_wins(), ["GA"]),
-        ("frontmatter/abstract.tex", "hợp nhất muộn LateFusion-F tốt hơn NeuMF-F có ý nghĩa",
-         "Amazon: NeuMF-F tốt hơn NeuMF; LateFusion-F tốt hơn NeuMF-F có ý nghĩa",
-         lambda: a_verdict("neumf_f", "neumf") == BETTER and a_late_wins(), ["GA"]),
-        ("frontmatter/abstract_english.tex", "but there late fusion significantly outperforms NeuMF-F",
-         "Amazon: NeuMF-F tốt hơn NeuMF; LateFusion-F tốt hơn NeuMF-F có ý nghĩa",
-         lambda: a_verdict("neumf_f", "neumf") == BETTER and a_late_wins(), ["GA"]),
         # ---- bổ sung: mô hình lai truyền thống
         ("content/C4.tex", "Bỏ phiếu lấy trung bình đạt NDCG@10",
          "bổ sung (tập xác thực): trung bình < UserKNN; min, max < trung bình; trọng số cao nhất, hơn mọi thành phần",
          hybrid_val_order, ["HB", "HL"]),
         ("content/C4.tex", "lọc cộng tác giữ vai trò chính",
          "bổ sung: trọng số UserKNN + ItemKNN lớn hơn Content, UserKNN lớn nhất", cf_weights_lead, ["HB"]),
-        ("content/C4.tex", "UserKNN và ItemKNN cho cùng hạng của các sản phẩm đúng",
-         "bổ sung (H&M): UserKNN, ItemKNN chấm lại trùng hạng với đánh giá cuối ở mọi khách",
-         lambda: knn_same(d.RB2), ["RB2"]),
+        ("content/C4.tex", "cho kết quả trùng lần đánh giá cuối, trừ Content lệch nhẹ",
+         "bổ sung (H&M): UserKNN, ItemKNN chấm lại trùng hạng ở mọi khách; Content lệch dưới 0,001",
+         lambda: knn_same(d.RB2) and abs(comp_content(d.RB2)["NDCG@10"] - comp_content(d.RB2)["registered_NDCG10"])
+         < 0.001, ["RB2"]),
+        ("content/C4.tex", "Như vậy Hybrid-CBCF đứng ngay sau bốn mô hình có đặc trưng",
+         "bổ sung (H&M): 4 mô hình có đặc trưng đứng đầu, Hybrid-CBCF thứ năm trong 15 mô hình",
+         lambda: hyb_fifth(SB2), ["SB2"]),
+        ("content/C4.tex", "mô hình lai học sâu có đặc trưng vượt rõ mô hình lai truyền thống",
+         "bổ sung (H&M): NeuMF-F tốt hơn Hybrid-CBCF có ý nghĩa", lambda: bs(GB2, "neumf_f", "hybrid") == BETTER,
+         ["GB2"]),
+        ("content/C4.tex", "Hybrid-CBCF so với UserKNN chỉ chênh",
+         "bổ sung (H&M): Hybrid-CBCF cao hơn UserKNN nhưng không khác biệt có ý nghĩa",
+         lambda: bs(GB2, "hybrid", "userknn") == NOT_SIG and bs(GB2, "hybrid", "userknn", "rel_diff") > 0, ["GB2"]),
+        ("content/C4.tex", "nằm giữa độ phủ của hai thành phần cộng tác",
+         "bổ sung (H&M): độ phủ UserKNN < Hybrid-CBCF < ItemKNN; NeuMF-F vẫn chỉ sau Content, ItemKNN",
+         lambda: BB2.loc["userknn", "coverage10"] < BB2.loc["hybrid", "coverage10"] < BB2.loc["itemknn", "coverage10"]
+         and order(BB2["coverage10"].drop(["random", "popularity", "recent_pop"]))[:3]
+         == ["content", "itemknn", "neumf_f"], ["BB2"]),
+        ("content/C4.tex", "tức cũng đứng ngay sau bốn mô hình có đặc trưng",
+         "bổ sung (Amazon): 4 mô hình có đặc trưng đứng đầu, Hybrid-CBCF thứ năm trong 15 mô hình",
+         lambda: hyb_fifth(SBA), ["SBA"]),
+        ("content/C4.tex", "Khác H\\&M, trên Amazon Hybrid-CBCF tốt hơn UserKNN có ý nghĩa",
+         "bổ sung: NeuMF-F tốt hơn Hybrid-CBCF trên cả hai bộ; Hybrid-CBCF vs UserKNN: H&M không khác biệt, Amazon "
+         "tốt hơn", lambda: b1_both() and bs(GB2, "hybrid", "userknn") == NOT_SIG
+         and bs(GBA, "hybrid", "userknn") == BETTER, ["GB2", "GBA"]),
+        ("content/C4.tex", "chỉ bằng khoảng một phần sáu của UserKNN trên H\\&M",
+         "NDCG@10 Content/UserKNN: khoảng 1/6 trên H&M, hơn 1/3 trên Amazon",
+         lambda: 0.14 < content_ratio(S2) < 0.19 and content_ratio(SA) > 1 / 3, ["S2", "SA"]),
+        ("content/C4.tex", "NeuMF-F tốt hơn có ý nghĩa Hybrid-CBCF trên cả hai bộ dữ liệu",
+         "bổ sung: B1 tốt hơn trên cả hai bộ; B2 không khác biệt trên H&M, tốt hơn trên Amazon, cả hai chênh dưới 10%",
+         lambda: b1_both() and bs(GB2, "hybrid", "userknn") == NOT_SIG and bs(GBA, "hybrid", "userknn") == BETTER
+         and all(bs_rel(G, "hybrid", "userknn") < 0.10 for G in (GB2, GBA)), ["GB2", "GBA"]),
+        ("content/C4.tex", "Như vậy ghép điểm của các kỹ thuật truyền thống giúp được ít",
+         "bổ sung: NeuMF-F tốt hơn Hybrid-CBCF trên cả hai bộ; chênh B2 nhỏ hơn B1",
+         lambda: b1_both() and all(bs_rel(G, "hybrid", "userknn") < bs_rel(G, "neumf_f", "hybrid") for G in (GB2, GBA)),
+         ["GB2", "GBA"]),
     ]
+
 
 
 def find_line(rel: str, anchor: str) -> int | None:

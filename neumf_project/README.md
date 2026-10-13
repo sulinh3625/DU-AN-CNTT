@@ -218,9 +218,15 @@ pytest -q              # tests/ (108 test) — không cần dữ liệu thật
 pytest demo/tests -q   # demo (14 test) — test nạp checkpoint bỏ qua khi chưa có dữ liệu và outputs/v2/final/seed42/
 ```
 
-Ngày 13/10/2026, trên máy chỉ có CPU: `tests/` 108/108 qua; `demo/tests` 13/14 qua. Test còn lại,
-`test_metrics_match_per_user_file`, lệch hạng ở rất sâu trong danh sách (khoảng hạng 200), không lệch trong top-K.
-Nguyên nhân: checkpoint được tạo trên GPU, demo tính lại logit trên CPU, nên vài cặp gần như hoà điểm đổi chỗ.
+Ngày 14/10/2026, trên máy chỉ có CPU: `tests/` 108/108 qua; `demo/tests` 14/14 qua.
+
+**Tái lập trên máy khác.** Mô hình không dùng vector văn bản (NeuMF, GMF, MLP, BPR-MF, UserKNN, ItemKNN, hai mô hình
+phổ biến) cho đúng từng hạng đã lưu khi chấm lại, kể cả checkpoint tạo trên GPU chấm lại trên CPU. Vector văn bản thì
+nằm trong tệp đặc trưng `data/processed/hm/catalog_v2.npz` (Amazon: `data/processed/amazon/catalog.npz`). Tệp này
+không nằm trong git; mỗi máy tự dựng bằng TF-IDF và TruncatedSVD của scikit-learn, và phiên bản thư viện khác cho vector
+khác. Vì vậy bốn mô hình có đặc trưng, Content và Hybrid-CBCF chỉ cho đúng hạng đã lưu khi dùng đúng tệp đặc trưng của
+máy đã tạo kết quả. Muốn khớp tuyệt đối với đánh giá cuối, chép tệp này từ máy đã chạy đánh giá cuối. Demo đối chiếu
+từng kết quả với hạng đã lưu và báo khi lệch (mục 5); test `test_metrics_match_per_user_file` kiểm tra điều đó.
 
 ## 5. Demo
 

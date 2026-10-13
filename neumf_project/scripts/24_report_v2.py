@@ -91,9 +91,11 @@ HEADER = "% Sinh tự động bởi neumf_project/scripts/24_report_v2.py — KH
 # chứng (một bộ, chia theo thời gian, cấu hình chọn trên H&M — audit/PREREG_amazon.md), macro \ARes, \ASig, ... riêng.
 TEXT = {
     "hm": dict(test="tập kiểm thử của mẫu kiểm định", test_fig="Tập kiểm thử của mẫu kiểm định H&M",
-               sel="tập xác thực của mẫu kiểm định", where="H\\&M, mẫu kiểm định", subdir="v2", tab="tab_v2_",
+               test_cap="tập kiểm thử của mẫu kiểm định H\\&M",
+               sel="tập xác thực của mẫu kiểm định", where="mẫu kiểm định H\\&M", subdir="v2", tab="tab_v2_",
                label="tab:v2", macro="v", macros_file="results_v2_macros.tex"),
     "amazon": dict(test="tập kiểm thử Amazon Beauty", test_fig="Tập kiểm thử Amazon Beauty",
+                   test_cap="tập kiểm thử Amazon Beauty",
                    sel="tập xác thực Amazon Beauty", where="Amazon Beauty", subdir="amazon", tab="tab_amz_",
                    label="tab:amz", macro="a", macros_file="results_amazon_macros.tex"),
 }[V.DATASET]
@@ -319,8 +321,8 @@ def num(x) -> str:
     return f"{x:g}".replace(".", "{,}")
 
 
-HYBRID_FUSION = {"mean": "bỏ phiếu: trung bình", "max": "bỏ phiếu: max", "min": "bỏ phiếu: min",
-                 "lr": "trọng số học theo cặp"}
+HYBRID_FUSION = {"mean": "bỏ phiếu: trung bình", "max": "bỏ phiếu: lớn nhất", "min": "bỏ phiếu: nhỏ nhất",
+                 "lr": "tổng có trọng số học theo cặp"}
 
 
 def hybrid_weights(p: dict) -> np.ndarray:
@@ -481,10 +483,10 @@ def export_data_amazon(m: Macros, tables: Path, info: dict, entry: dict) -> None
         if st in info:
             m.add("data", st, "cand", thousands(round(info[st]["candidates_mean"])))
     (tables / f"{TEXT['tab']}data.tex").write_text(table(
-        f"{TEXT['label']}data", "Quy mô dữ liệu Amazon Beauty (2014, 5-core): một bộ dữ liệu, chia theo thời gian",
-        "lr", ["", "Amazon Beauty"], rows,
-        f"Một sản phẩm = một asin. Lọc {k}-core chỉ trên các cặp trước mốc kiểm thử {ts}. Tập xác thực ({vs} -- "
-        f"{vn_date(str(np.datetime64(V.CFG['test_start'], 'D') - 1))}) chỉ dùng để chọn số epoch; không tinh chỉnh "
+        f"{TEXT['label']}data", "Quy mô dữ liệu Amazon Beauty", "lr", ["", "Amazon Beauty"], rows,
+        f"Bản 5-core năm 2014, một bộ dữ liệu chia theo thời gian. Mỗi sản phẩm là một mã asin. Lọc {k}-core chỉ dùng "
+        f"các cặp trước mốc kiểm thử {ts}. Tập xác thực, từ {vs} đến "
+        f"{vn_date(str(np.datetime64(V.CFG['test_start'], 'D') - 1))}, chỉ dùng để chọn số epoch; không tinh chỉnh "
         "trên bộ này. Ứng viên và cặp đúng chỉ gồm sản phẩm đã có cặp huấn luyện trước mốc của giai đoạn."),
         encoding="utf-8")
 
@@ -518,14 +520,15 @@ def export_data(m: Macros, tables: Path, info_a: dict, info_b: dict | None) -> N
         for k in ("users", "targets", "scoreable", "train_pairs"):
             m.add("data", "Btest", k.replace("_", ""), thousands(tb["test"][k]))
         m.add("data", "Btest", "cand", thousands(round(tb["test"]["candidates_mean"])))
-    note = ("Một sản phẩm = một product\\_code (gộp mọi màu). Lọc 10-core chỉ trên các cặp trước mốc kiểm thử "
-            "29/07/2020. Ứng viên và cặp đúng chỉ gồm sản phẩm đã có cặp huấn luyện trước mốc của giai đoạn. Tập "
-            "kiểm thử của mẫu phát triển không được dựng.")
+    note = ("Mỗi sản phẩm là một mẫu thiết kế (\\texttt{product\\_code}), gộp mọi màu. Mẫu kiểm định gồm những khách "
+            "hàng không có trong mẫu phát triển. Mẫu phát triển chỉ dùng tập xác thực; tập kiểm thử của nó không được "
+            "dựng. Lọc 10-core chỉ dùng các cặp trước mốc kiểm thử 29/07/2020. Ứng viên và cặp đúng chỉ gồm sản phẩm "
+            "đã có cặp huấn luyện trước mốc của giai đoạn.")
     if not tb:
         note += " Mẫu kiểm định chỉ được dựng ở lần đánh giá cuối."
     (tables / "tab_v2_data.tex").write_text(table(
-        "tab:v2data", "Quy mô dữ liệu H\\&M: mẫu phát triển (chỉ dùng tập xác thực) và mẫu kiểm định (khách hàng khác "
-        "hẳn mẫu phát triển)", "lrr", ["", "Mẫu phát triển", "Mẫu kiểm định"], rows, note),
+        "tab:v2data", "Quy mô dữ liệu H\\&M của mẫu phát triển và mẫu kiểm định", "lrr",
+        ["", "Mẫu phát triển", "Mẫu kiểm định"], rows, note),
         encoding="utf-8")
 
 
@@ -558,14 +561,15 @@ def export_tuning(m: Macros, tables: Path, best: dict, bs: dict | None = None) -
             m.add("cfg", "all", "nneural", str(len(neural)))
             m.add("cfg", "all", "epochmax", str(int(neural["best_epoch"].max())))
             m.add("cfg", "all", "epochmedian", vn(float(neural["best_epoch"].median()), 0))
-    note = ("d: số chiều embedding; neg: số mẫu âm mỗi mẫu dương; wd: weight decay; bỏ ID: xác suất bỏ embedding ID của "
-            "sản phẩm khi huấn luyện. Số trên tập xác thực dùng để chọn cấu hình, không dùng để kết luận.")
+    note = ("Seed 42. Mỗi mô hình có học thử 6 cấu hình; mô hình chỉ có một tham số thử đủ lưới. d: số chiều vector "
+            "nhúng; lr: tốc độ học; reg: hệ số điều chuẩn; neg: số mẫu âm cho mỗi mẫu dương; wd: hệ số điều chuẩn L2; "
+            "shrink: hệ số co; bỏ ID: xác suất bỏ vector nhúng ID của sản phẩm khi huấn luyện. Số trên tập xác thực "
+            "dùng để chọn cấu hình, không dùng để kết luận.")
     if "hybrid" in bs:
-        note += (f" {DAGGER}Mô hình lai truyền thống bổ sung sau đánh giá cuối: 4 cách kết hợp; trọng số chia cho tổng; "
-                 "NDCG@10 của cách trọng số tính bằng khớp chéo theo khách (\\bangrefV{tab_v2_hybrid.tex}{tab:v2hybrid}).")
+        note += (f" {DAGGER}Mô hình lai truyền thống bổ sung sau đánh giá cuối; trọng số đã chia cho tổng; NDCG@10 "
+                 "tính bằng khớp chéo theo khách (\\bangrefV{tab_v2_hybrid.tex}{tab:v2hybrid}).")
     (tables / "tab_v2_tuning.tex").write_text(table(
-        "tab:v2tuning", "Cấu hình tốt nhất của từng mô hình trên tập xác thực của mẫu phát triển (seed 42; 6 cấu hình "
-        "mỗi mô hình có học, mô hình một tham số thử đủ lưới)", "llrr",
+        "tab:v2tuning", "Cấu hình tốt nhất của từng mô hình trên tập xác thực của mẫu phát triển", "llrr",
         ["Mô hình", "Cấu hình chọn", "NDCG@10", "HR@10"], rows, note),
         encoding="utf-8")
 
@@ -580,19 +584,25 @@ def export_hybrid_tuning(m: Macros, tables: Path, best: dict, hb: dict) -> None:
     t = t[t["model"] == "hybrid"].drop_duplicates("params", keep="last")
     chosen = json.dumps(hb["params"], sort_keys=True)
     parts = hb.get("components_val") or {k: best[k]["val"] for k in ("content", "userknn", "itemknn")}
-    rows = []
+    # (nhãn, NDCG@10, HR@10): ba thành phần đứng riêng rồi bốn cách kết hợp; in đậm số cao nhất mỗi cột như các bảng khác
+    comp = [(NAME[k], parts[k]["NDCG@10"], parts[k]["HR@10"]) for k in ("content", "userknn", "itemknn")]
     for k in ("content", "userknn", "itemknn"):
-        rows.append([f"{NAME[k]} (đứng riêng)", vn(parts[k]["NDCG@10"]), vn(parts[k]["HR@10"])])
         m.add("val", "Hyb" + KEY[k], "NDCG10", vn(parts[k]["NDCG@10"]))
     differ = [k for k in parts if vn(parts[k]["NDCG@10"]) != vn(best[k]["val"]["NDCG@10"])]
+    fus = []
     for _, r in t.iterrows():
         p = json.loads(r["params"])
-        label = HYBRID_FUSION[p["fusion"]] + (" (khớp chéo theo khách)" if p["fusion"] == "lr" else "")
-        cells = [vn(r["val_NDCG@10"]), vn(r["val_HR@10"])]
+        label = HYBRID_FUSION[p["fusion"]].capitalize()
         if json.dumps(p, sort_keys=True) == chosen:
-            label, cells = rf"\textbf{{{label}}}", [rf"\textbf{{{c}}}" for c in cells]
-        rows.append([f"Hybrid-CBCF -- {label}", *cells])
+            label += " (được chọn)"
+        fus.append((label, r["val_NDCG@10"], r["val_HR@10"]))
         m.add("val", "Hyb" + p["fusion"].capitalize(), "NDCG10", vn(r["val_NDCG@10"]))
+    top = [max(x[i] for x in comp + fus) for i in (1, 2)]
+    bold = lambda v, i: rf"\textbf{{{vn(v)}}}" if v == top[i] else vn(v)  # noqa: E731
+    rows = [[r"\multicolumn{3}{l}{\textit{Thành phần đứng riêng}}"]]
+    rows += [[lab, bold(a, 0), bold(b, 1)] for lab, a, b in comp]
+    rows += [[r"\midrule \multicolumn{3}{l}{\textit{Hybrid-CBCF theo cách kết hợp}}"]]
+    rows += [[lab, bold(a, 0), bold(b, 1)] for lab, a, b in fus]
     w = hybrid_weights(hb["params"]) if hb["params"]["fusion"] == "lr" else None
     if w is not None:
         for name, x in zip(("wCont", "wUKNN", "wIKNN"), w):
@@ -600,18 +610,16 @@ def export_hybrid_tuning(m: Macros, tables: Path, best: dict, hb: dict) -> None:
     m.add("cfg", "Hyb", "fusion", HYBRID_FUSION[hb["params"]["fusion"]])
     m.add("cfg", "Hyb", "nneg", str(hb.get("pairwise", {}).get("n_neg", "")))
     (tables / "tab_v2_hybrid.tex").write_text(table(
-        "tab:v2hybrid", "Mô hình lai truyền thống Hybrid-CBCF (bổ sung): ba thành phần đứng riêng và bốn cách kết hợp "
-        "trên tập xác thực của mẫu phát triển (in đậm: cách được chọn)", "lrr",
+        "tab:v2hybrid", "Các cách kết hợp của Hybrid-CBCF trên tập xác thực của mẫu phát triển", "lrr",
         ["Mô hình", "NDCG@10", "HR@10"], rows,
-        "Điểm của mỗi thành phần chuẩn hoá min--max trên tập ứng viên của khách. Bỏ phiếu: lấy trung bình, max hoặc "
-        "min của ba điểm. Trọng số: tổng có trọng số, trọng số học bằng hồi quy logistic trên các cặp (sản phẩm đúng, "
-        f"sản phẩm không đúng) của cùng một khách, {hb.get('pairwise', {}).get('n_neg', 50)} sản phẩm không đúng mỗi "
-        "sản phẩm đúng; NDCG@10 tính bằng khớp chéo hai phần theo khách. Số trên tập xác thực chỉ dùng để chọn. Mọi "
-        "dòng tính trên cùng máy và cùng tệp đặc trưng"
-        + ("" if not differ else "; khác lần tinh chỉnh đã đăng ký (\\bangrefV{tab_v2_tuning.tex}{tab:v2tuning}) ở "
-           + ", ".join(f"{NAME[k]} ({vn(best[k]['val']['NDCG@10'])})" for k in differ)
-           + " vì tệp đặc trưng văn bản được dựng lại trên máy khác")
-        + "."), encoding="utf-8")
+        "In đậm: cao nhất mỗi cột. Điểm của mỗi thành phần được chuẩn hoá min--max trên tập ứng viên của khách. Bỏ "
+        "phiếu lấy trung bình, giá trị lớn nhất hoặc nhỏ nhất của ba điểm. Tổng có trọng số dùng trọng số học bằng hồi "
+        "quy logistic trên các cặp (sản phẩm đúng, sản phẩm không đúng) của cùng một khách, "
+        f"{hb.get('pairwise', {}).get('n_neg', 50)} sản phẩm không đúng cho mỗi sản phẩm đúng; NDCG@10 của cách này "
+        "tính bằng khớp chéo hai phần theo khách. Số trên tập xác thực chỉ dùng để chọn."
+        + ("" if not differ else " " + ", ".join(f"{NAME[k]} khác \\bangrefV{{tab_v2_tuning.tex}}{{tab:v2tuning}} "
+                                                f"({vn(best[k]['val']['NDCG@10'])})" for k in differ)
+           + " do vector văn bản được dựng lại.")), encoding="utf-8")
 
 
 def tex_escape(text: str) -> str:
@@ -662,13 +670,12 @@ def export_supplement(m: Macros, tables: Path, sig_bs: pd.DataFrame, sup: dict, 
         m.add("sig", "bs", "n", str(len(sig_bs)))
         m.add("sig", "bs", "nsig", str(int((sig_bs["verdict"] != NOT_SIG).sum())))
         (tables / f"{tab}sigbs.tex").write_text(table(
-            f"{lab}sigbs", f"Phân tích bổ sung: kiểm định họ {len(sig_bs)} so sánh với mô hình lai truyền thống "
-            f"Hybrid-CBCF trên NDCG@10 ({where}, mỗi người dùng lấy trung bình qua {n_seed} seed): Wilcoxon "
-            "signed-rank, hiệu chỉnh Holm trong họ, khoảng tin cậy bootstrap 95\\%",
+            f"{lab}sigbs", f"Kiểm định các so sánh bổ sung với Hybrid-CBCF trên {where} (NDCG@10)",
             "rllrrrcrc", SIG_HEADER, rows,
-            "---: không khác biệt có ý nghĩa. Cùng tiêu chí ``tốt hơn'' như họ 10 so sánh đăng ký trước (p Holm $<$ "
-            "0,05, CI không chứa 0, chênh lệch tương đối $\\geq$ 5\\%); họ bổ sung được đăng ký sau đánh giá cuối và "
-            "hiệu chỉnh riêng, không làm thay đổi họ 10 so sánh."), encoding="utf-8")
+            f"Mỗi người dùng lấy trung bình qua {n_seed} seed; kiểm định Wilcoxon theo người dùng, khoảng tin cậy "
+            "bootstrap 95\\%, hiệu chỉnh Holm trong họ bổ sung. ---: không khác biệt có ý nghĩa. Tiêu chí ``tốt hơn'' "
+            "như họ 10 so sánh đăng ký trước: p Holm $<$ 0,05, CI không chứa 0 và chênh lệch tương đối $\\geq$ 5\\%. "
+            "Họ bổ sung được đăng ký sau đánh giá cuối và không làm thay đổi họ 10 so sánh."), encoding="utf-8")
     prov, mach = sup.get("provenance", {}), sup.get("machine", {})
     m.add("data", "bs", "commit", str(prov.get("git_commit") or "")[:7])
     m.add("data", "bs", "cpu", tex_escape(str(mach.get("cpu", ""))))
@@ -723,8 +730,10 @@ def export_results(m: Macros, tables: Path, seeds, summary, sig, abl, bey, info_
             m.add("rank", KEY[mm], "all", ORDINAL.get(k, str(k)))
     m.add("rank", "all", "n", str(len(shown)))
     n_users = info_b.get("test", info_b["val"])["users"]
-    note = ("In đậm: trung bình cao nhất mỗi cột. Mô hình tất định (Most Popular, MostPopular-Recent, Content, ItemKNN, "
-            "UserKNN" + (", Hybrid-CBCF" if any(mm in SUP for mm in shown) else "") + ") cho cùng kết quả ở mọi seed.")
+    note = (f"Trung bình $\\pm$ độ lệch chuẩn qua {n_seed} seed; xếp hạng trên toàn bộ tập ứng viên của "
+            f"{thousands(n_users)} người dùng. In đậm: trung bình cao nhất mỗi cột. Mô hình tất định (Most Popular, "
+            "MostPopular-Recent, Content, ItemKNN, UserKNN" + (", Hybrid-CBCF" if any(mm in SUP for mm in shown) else "")
+            + ") cho cùng kết quả ở mọi seed.")
     if any(mm in SUP for mm in shown):
         note += (f" {DAGGER}Mô hình lai truyền thống bổ sung sau đánh giá cuối theo góp ý của giảng viên hướng dẫn: "
                  "chấm một lần trên cùng tập kiểm thử, không thuộc họ 10 so sánh đăng ký trước.")
@@ -732,8 +741,7 @@ def export_results(m: Macros, tables: Path, seeds, summary, sig, abl, bey, info_
         note += (" Không tinh chỉnh trên bộ này: cấu hình chọn trên tập xác thực của mẫu phát triển H\\&M, chỉ số epoch "
                  "của mạng nơ-ron được chọn trên tập xác thực của chính bộ này.")
     (tables / f"{tab}main.tex").write_text(table(
-        f"{lab}main", f"Kết quả trên {TEXT['test']} theo ba nhóm mô hình đối chứng: trung bình $\\pm$ độ lệch chuẩn qua "
-        f"{n_seed} seed (xếp hạng trên toàn bộ tập ứng viên; {thousands(n_users)} người dùng)",
+        f"{lab}main", f"Kết quả trên {TEXT['test_cap']} theo ba nhóm mô hình đối chứng",
         "l" + "r" * len(TABLE_METRICS), ["Mô hình", *TABLE_METRICS], rows, note), encoding="utf-8")
     m.add("data", "run", "seeds", str(n_seed))
     models = shown  # bảng độ phủ: mọi mô hình của bảng chính
@@ -747,11 +755,11 @@ def export_results(m: Macros, tables: Path, seeds, summary, sig, abl, bey, info_
         m.add("sig", "all", "nsig", str(int((sig["verdict"] != NOT_SIG).sum())))
         m.add("sig", "all", "n", str(len(sig)))
         (tables / f"{tab}sig.tex").write_text(table(
-            f"{lab}sig", f"Kiểm định họ {len(sig)} so sánh đã đăng ký trước trên NDCG@10 ({where}, mỗi người dùng lấy "
-            f"trung bình qua {n_seed} seed): Wilcoxon signed-rank, hiệu chỉnh Holm, khoảng tin cậy bootstrap 95\\%",
+            f"{lab}sig", f"Kiểm định họ {len(sig)} so sánh đã đăng ký trước trên {where} (NDCG@10)",
             "rllrrrcrc", SIG_HEADER, rows,
-            "---: không khác biệt có ý nghĩa. ``A tốt hơn'' (hoặc ``B tốt hơn'') chỉ khi đồng thời p Holm $<$ 0,05, "
-            "CI không chứa 0 và chênh lệch tương đối $\\geq$ 5\\%."), encoding="utf-8")
+            f"Mỗi người dùng lấy trung bình qua {n_seed} seed; kiểm định Wilcoxon theo người dùng, khoảng tin cậy "
+            "bootstrap 95\\%, hiệu chỉnh Holm. ---: không khác biệt có ý nghĩa. ``A tốt hơn'' (hoặc ``B tốt hơn'') chỉ "
+            "khi đồng thời p Holm $<$ 0,05, CI không chứa 0 và chênh lệch tương đối $\\geq$ 5\\%."), encoding="utf-8")
 
     # Ablation
     if not abl.empty:
@@ -768,14 +776,14 @@ def export_results(m: Macros, tables: Path, seeds, summary, sig, abl, bey, info_
                 m.add("abl", key, "lo", vn(r["ci_low"], sign=True))
                 m.add("abl", key, "hi", vn(r["ci_high"], sign=True))
         m.add("abl", "Full", "NDCG10", vn(abl.iloc[0]["NDCG@10"]))
-        note = ("Thay đổi: (biến thể $-$ đầy đủ)/đầy đủ. CI: bootstrap theo người dùng của hiệu biến thể $-$ đầy đủ. "
-                "Chỉ mô tả, không kiểm định. Biến thể trùng NeuMF-F (vd. không bỏ ID ngẫu nhiên khi cấu hình chọn đã "
-                "có tỉ lệ bỏ ID bằng 0) không chạy.")
+        note = (f"Seed {int(abl.iloc[0]['seed'])}; cùng siêu tham số, mỗi biến thể tắt một thành phần. Thay đổi: "
+                "(biến thể $-$ đầy đủ)/đầy đủ. CI: khoảng tin cậy bootstrap theo người dùng của hiệu (biến thể $-$ đầy "
+                "đủ). Chỉ mô tả, không kiểm định. Biến thể trùng NeuMF-F, ví dụ không bỏ ID ngẫu nhiên khi cấu hình chọn "
+                "đã có xác suất bỏ ID bằng 0, không được chạy.")
         if V.DATASET == "amazon":
             note += " Amazon không có thuộc tính khách: ``bỏ thông tin khách hàng'' là bỏ đặc trưng thời gian của khách."
         (tables / f"{tab}ablation.tex").write_text(table(
-            f"{lab}ablation", f"Ablation của NeuMF-F trên {TEXT['test']} (seed {int(abl.iloc[0]['seed'])}; "
-            "cùng siêu tham số, tắt một thành phần)", "lrrc",
+            f"{lab}ablation", f"Phân tích bóc tách NeuMF-F trên {TEXT['test_cap']}", "lrrc",
             ["Biến thể", "NDCG@10", "Thay đổi", "CI 95\\% của hiệu"], rows, note), encoding="utf-8")
 
     # Mô tả top-10 và thời gian
@@ -790,13 +798,12 @@ def export_results(m: Macros, tables: Path, seeds, summary, sig, abl, bey, info_
         if not np.isnan(ep):
             m.add("bey", KEY[mm], "epoch", vn(ep, 1))
     (tables / f"{tab}beyond.tex").write_text(table(
-        f"{lab}beyond", f"Mô tả danh sách gợi ý top-10 (seed 42) và chi phí huấn luyện trên {where} (trung bình qua "
-        "seed)", "lrrr",
+        f"{lab}beyond", f"Độ phủ danh sách top-10 và chi phí huấn luyện trên {where}", "lrrr",
         ["Mô hình", "Độ phủ ứng viên", "Số epoch chọn", "Thời gian (phút)"], rows,
-        "Độ phủ: tỉ lệ sản phẩm của không gian ứng viên xuất hiện trong top-10 của ít nhất một người dùng. Số epoch "
-        f"chọn trên {TEXT['sel']} trước khi huấn luyện lại. Thời gian: chọn epoch + huấn luyện lại (mạng nơ-ron) "
-        "hoặc khớp mô hình, không gồm thời gian chấm."
-        + (f" {DAGGER}Bổ sung sau đánh giá cuối, chạy trên máy khác (chỉ CPU)." if any(mm in SUP for mm in models)
+        "Độ phủ (seed 42): tỉ lệ sản phẩm của tập ứng viên xuất hiện trong top-10 của ít nhất một người dùng. Số epoch "
+        f"và thời gian là trung bình qua seed; số epoch chọn trên {TEXT['sel']} trước khi huấn luyện lại. Thời gian "
+        "gồm chọn epoch và huấn luyện lại (mạng nơ-ron) hoặc khớp mô hình, không gồm thời gian chấm."
+        + (f" {DAGGER}Bổ sung sau đánh giá cuối; thời gian đo trên máy chỉ có CPU." if any(mm in SUP for mm in models)
            else "")), encoding="utf-8")
 
 
@@ -827,14 +834,13 @@ def export_by_k(m: Macros, tables: Path, bk: pd.DataFrame, n_seed: int) -> None:
                  rf"\multicolumn{{{len(K_ALL)}}}{{c}}{{{pair[1]}@K}} \\"
                  + "\n" + rf"        \cmidrule(lr){{2-{1 + len(K_ALL)}}}\cmidrule(lr){{{2 + len(K_ALL)}-"
                  rf"{1 + 2 * len(K_ALL)}}}")
-        note = ("Tính lại từ hạng của từng sản phẩm đúng đã lưu ở lần đánh giá cuối (không chấm lại tập kiểm thử); cột "
-                "@5, @10, @20 trùng với số của lần đánh giá đó. In đậm: cao nhất mỗi cột. Độ lệch chuẩn qua seed ở tệp "
-                "by\\_k.csv.")
+        note = (f"Trung bình qua {n_seed} seed, tính lại từ hạng của từng sản phẩm đúng đã lưu ở lần đánh giá cuối, "
+                "không chấm lại tập kiểm thử; cột @5, @10, @20 trùng với số của lần đánh giá đó. In đậm: cao nhất mỗi "
+                "cột.")
         if any(mm in SUP for mm in by.index):
             note += f" {DAGGER}Mô hình lai truyền thống bổ sung sau đánh giá cuối (hạng đã lưu ở lần chấm bổ sung)."
-        text = table(f"{lab}k{part}", f"{pair[0]}@K và {pair[1]}@K với K = "
-                     f"{', '.join(map(str, K_ALL))} trên {TEXT['test']} (trung bình qua {n_seed} seed)",
-                     "l" + "r" * len(cols), header, rows, note)
+        text = table(f"{lab}k{part}", f"{pair[0]}@K và {pair[1]}@K với K = {', '.join(map(str, K_ALL))} trên "
+                     f"{TEXT['test_cap']}", "l" + "r" * len(cols), header, rows, note)
         (tables / f"{tab}k{part}.tex").write_text(text.replace("        \\toprule\n",
                                                                   "        \\toprule\n" + group + "\n", 1),
                                                      encoding="utf-8")
@@ -949,7 +955,7 @@ def plot_ablation(abl: pd.DataFrame, fig_dir: Path):
     style(ax, "x")
     ax.set_yticks(y, names, fontsize=9.5, color=INK)
     ax.invert_yaxis()
-    fig.suptitle(f"Ablation của NeuMF-F — {TEXT['test_fig'].lower()[0]}{TEXT['test_fig'][1:]} "
+    fig.suptitle(f"Phân tích bóc tách NeuMF-F —{TEXT['test_fig'].lower()[0]}{TEXT['test_fig'][1:]} "
                  f"(seed {int(abl.iloc[0]['seed'])})", fontsize=12, color=INK, y=1.04)
     fig.savefig(fig_dir / "v2_ablation.png", dpi=200, bbox_inches="tight", facecolor=SURFACE)
     plt.close(fig)
