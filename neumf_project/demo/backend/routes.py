@@ -53,7 +53,7 @@ def ctx(dataset: str = "hm") -> DataContext:
 
 def _user(c: DataContext, customer_id: str) -> int | None:
     """Mã nội bộ của khách; None = khách chưa có trong dữ liệu đã học (khách mới, hoặc quá ít lần mua để qua lọc k-core)
-    — demo gợi ý sản phẩm phổ biến cho khách này thay vì báo lỗi (báo cáo, Thuật toán suy diễn Top-K)."""
+    — demo gợi ý sản phẩm phổ biến cho khách này thay vì báo lỗi (báo cáo, Thuật toán suy luận Top-K)."""
     try:
         return c.resolve_user(customer_id)
     except KeyError:

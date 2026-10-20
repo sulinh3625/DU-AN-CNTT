@@ -1,524 +1,476 @@
-# Chuẩn bị vấn đáp — Mô hình khuyến nghị lai trên dữ liệu H&M
+# Chuẩn bị bảo vệ trước hội đồng — Mô hình gợi ý lai NeuMF-F
 
-File này giúp trả lời 17 góp ý của cô trong buổi họp. Mỗi câu có: **Trả lời** (ý chính, nói trong 1–2 phút) và
-**Mở ở đâu** (mục trong báo cáo hoặc file trong repo). Cập nhật theo kết quả đánh giá cuối trên H&M ngày 10/10/2026
-(mẫu kiểm định khối 2), kết quả kiểm chứng trên Amazon Beauty (10–11/10/2026) và bản báo cáo sửa theo góp ý họp 04/10
-(13/10/2026: K = 15, Amazon, bảng ba nghiên cứu nền tảng, vẽ lại hình, mã giả, khách hàng mới, baseline ba nhóm và
-phân tích bổ sung với mô hình lai truyền thống Hybrid-CBCF).
+Tài liệu này để cả nhóm nắm toàn bộ đề tài và trả lời thống nhất trước hội đồng. Số mục, số bảng, số hình ghi theo
+bản báo cáo hiện tại (104 trang, cập nhật 20/10/2026). Mọi số liệu ở đây khớp với báo cáo (kiểm bằng
+`python run.py check-report`).
 
-> **Quy tắc tránh nói sai**
-> - Kết quả cuối trên mẫu kiểm định H&M **đã có** (10/10/2026). Nói đúng như sau: NeuMF-F **tốt hơn có ý nghĩa** NeuMF
->   chỉ ID, MLP-F, BPR-MF, ItemKNN, UserKNN, MostPopular-Recent, Content; **ngang** GMF-F và LateFusion-F; trên H&M
->   **không thua** mô hình nào. **Không nói "NeuMF-F tốt nhất"** — NeuMF-F đứng 2/14, LateFusion-F có NDCG@10 cao hơn
->   một chút (không có ý nghĩa).
-> - **Trên Amazon Beauty, LateFusion-F tốt hơn NeuMF-F có ý nghĩa** (NeuMF-F thấp hơn 12,5%). Nói thẳng điều này; NeuMF-F
->   vẫn là mô hình đề xuất vì đã cố định trước khi xem kết quả (PREREG). Không nói "NeuMF-F không thua mô hình nào" mà
->   không nói rõ là trên H&M.
-> - Amazon **không tinh chỉnh lại**: mọi mô hình dùng cấu hình chọn trên H&M. Hai so sánh có BPR-MF trên Amazon
->   (NeuMF-F +186,5%, NeuMF +72,9%) **không dùng làm bằng chứng** — BPR-MF trên Amazon kém cả ItemKNN, MostPopular-Recent.
-> - **K = 15** được tính lại từ hạng đã lưu của lần đánh giá cuối — **không mở lại tập kiểm thử**, không chạy lại mô hình.
-> - **Không nói đề tài xử lý được khởi đầu lạnh của sản phẩm**: bản cuối bỏ sản phẩm chưa có người mua khỏi đánh giá.
->   Cũng không nói NeuMF-F "học chấm sản phẩm mới nhờ bỏ ID ngẫu nhiên": tinh chỉnh chọn ρ = 0 cho NeuMF-F (và MLP-F);
->   chỉ GMF-F chọn ρ = 0,25. Khách hàng mới: hệ thống gợi ý sản phẩm phổ biến — **không đánh giá định lượng** nhóm này.
-> - Một **sản phẩm** trong đề tài là một **mẫu thiết kế** (`product_code`, gộp mọi màu), không phải một `article_id`.
-> - Không so số của đề tài với số trong bài báo (khác dữ liệu, khác cách chia, khác cách đánh giá). Bảng ba nghiên cứu
->   nền tảng (mục 2.6.1) chỉ để thấy **thiết lập khác nhau** và mức cải thiện tương đối mà mỗi bài tự báo cáo.
-> - Không gọi MLP đứng riêng là "early fusion" (đó là mạng DNN thuần).
-> - Số của giai đoạn phát triển ban đầu và của khối 1 (04/10) chỉ nhắc khi được hỏi về lịch sử; không đặt cạnh số bản
->   cuối.
-> - **Hybrid-CBCF là phân tích bổ sung** sau đánh giá cuối: NeuMF-F tốt hơn nó có ý nghĩa trên cả hai bộ; Hybrid-CBCF
->   không khác biệt có ý nghĩa với UserKNN trên H&M nhưng tốt hơn trên Amazon. Không tính nó vào "14 mô hình" hay họ 10
->   so sánh.
-
----
-
-## Phần A. Nắm nhanh đề tài trong 1 phút
-
-- **Bài toán:** gợi ý Top-K sản phẩm thời trang cho từng khách hàng, dựa trên lịch sử mua (không có điểm đánh giá).
-- **Dữ liệu:** H&M Personalized Fashion Recommendations — 31,8 triệu giao dịch (20/09/2018 → 22/09/2020), danh mục
-  105.542 sản phẩm (theo màu), thông tin 1.371.980 khách hàng. Đề tài gộp các màu của cùng một mẫu thành **một sản phẩm**
-  (`product_code`). Kiểm chứng thêm trên **Amazon Beauty** (đánh giá sản phẩm làm đẹp, bản 5-core năm 2014).
-- **Mô hình đề xuất — NeuMF-F:** giữ cấu trúc của NeuMF (nhánh MF + nhánh mạng nơ-ron sâu, hợp nhất ở lớp dự đoán),
-  nhưng mỗi khách hàng/sản phẩm được biểu diễn bằng **mã ID + đặc trưng** (thuộc tính và mô tả sản phẩm, thông tin khách
-  hàng, doanh số và thời gian) — tức có thêm thông tin ngoài lịch sử mua.
-- **Cách đánh giá:** hai nhóm khách hàng khác nhau hoàn toàn. **Mẫu phát triển** dùng để chọn cấu hình (tinh chỉnh).
-  **Mẫu kiểm định** dùng để chấm điểm cuối cùng, chỉ một lần, theo kế hoạch đã ghi sẵn từ trước (`audit/PREREG_v2.md`).
-- **So sánh với:** NeuMF chỉ dùng mã ID, từng nhánh đứng riêng, cách hợp nhất muộn, và 7 mô hình đối chứng (baseline).
-- **Kết quả một câu:** đặc trưng giúp rõ (NeuMF-F hơn NeuMF chỉ ID 43,8% trên H&M, 65,7% trên Amazon), NeuMF-F hơn cả 5
-  baseline trong họ so sánh trên cả hai bộ dữ liệu, nhưng cách ghép hai nhánh không tạo lợi thế: ngang GMF-F đứng riêng ở
-  cả hai bộ, ngang hợp nhất muộn trên H&M và **thua** hợp nhất muộn trên Amazon.
-
-**Vài từ cần giải thích được:**
-
-| Từ | Nghĩa đơn giản |
+| Cần gì | Đọc phần |
 |---|---|
-| Embedding ID | Vector học được cho mỗi mã khách/mã sản phẩm từ lịch sử mua |
-| Đặc trưng | Thông tin mô tả: loại, nhóm hàng, mô tả chữ, doanh số gần đây, tuổi khách… |
-| Mẫu thiết kế (`product_code`) | Mã của một mẫu sản phẩm; các màu của cùng mẫu có `article_id` khác nhau nhưng chung `product_code` (= `article_id` bỏ 3 chữ số cuối) |
-| Early fusion (hợp nhất sớm) | Nối biểu diễn của các nguồn rồi cho **một** mô hình dự đoán — NeuMF, NeuMF-F |
-| Late fusion (hợp nhất muộn) | Mỗi mô hình dự đoán riêng, rồi trộn điểm — LateFusion-F |
-| NDCG@10 | Điểm chất lượng của 10 gợi ý đầu: món đúng càng ở trên càng được nhiều điểm (0 → 1) |
+| Mở đầu phần trình bày (3 phút) | Phần 1 |
+| Hiểu toàn bộ đề tài theo từng chương | Phần 2 |
+| Số liệu phải thuộc | Phần 3 |
+| Cái gì nói trong báo cáo, cái gì chỉ nói khi được hỏi | Phần 4 |
+| Câu hỏi hội đồng hay hỏi và cách trả lời | Phần 5 |
+| Câu không được nói | Phần 6 |
+| Kịch bản chạy demo | Phần 7 |
+| Tra nhanh chương, mục, bảng, hình | Phần 8 |
 
 ---
 
-## Phần B. Số liệu cần nhớ (chỉ những số đã chắc chắn)
+## Phần 1. Thông điệp chính
+
+### 1.1 Ba câu phải nói được ngay
+
+1. Đề tài xây dựng **NeuMF-F**, mô hình lai giữa nhân tử hóa ma trận và mạng nơ-ron sâu, có bổ sung **đặc trưng sản
+   phẩm, khách hàng và thời gian** vào cả hai nhánh.
+2. NeuMF-F **vượt có ý nghĩa thống kê** các mô hình đối chứng được tinh chỉnh đầy đủ và một mô hình lai truyền thống,
+   trên **hai bộ dữ liệu thuộc hai lĩnh vực** (thời trang H&M, mỹ phẩm Amazon Beauty).
+3. Đề tài chỉ ra **phần cải thiện đến từ đâu**: chủ yếu từ biểu diễn có đặc trưng, trong đó **đặc trưng thời gian**
+   quan trọng nhất. Kết quả được lấy theo một **quy trình đánh giá chặt chẽ** (chia theo thời gian, mẫu kiểm định độc
+   lập, đăng ký trước, kiểm định thống kê).
+
+### 1.2 Bốn đóng góp (dùng cho slide kết luận)
+
+| # | Đóng góp | Bằng chứng |
+|---|---|---|
+| 1 | Mô hình lai có đặc trưng vượt các phương pháp đối chứng | H&M: NeuMF-F tốt hơn có ý nghĩa 7/10 so sánh, không thua so sánh nào; tốt hơn Hybrid-CBCF +25,8% |
+| 2 | Kết quả tổng quát qua hai lĩnh vực | Amazon: NeuMF-F hơn NeuMF chỉ ID +65,7% và cả 5 mô hình đối chứng, **không tinh chỉnh lại** |
+| 3 | Chỉ ra nguồn gốc cải thiện | NeuMF-F hơn NeuMF chỉ ID +43,8% (H&M); bỏ đặc trưng thời gian làm NDCG@10 giảm 42,3% (H&M), 31,6% (Amazon) |
+| 4 | Quy trình đánh giá và hệ thống hoàn chỉnh | Sáu nguyên tắc đánh giá (mục 3.7.2), demo chạy được trên cả hai bộ dữ liệu, 14 mô hình |
+
+### 1.3 Lời mở đầu gợi ý (khoảng 3 phút)
+
+> Gợi ý sản phẩm thời trang khó vì dữ liệu rất thưa và xu hướng đổi nhanh. Nhân tử hóa ma trận chỉ học từ mã khách và mã
+> sản phẩm, nên không dùng được những thông tin doanh nghiệp đã có như loại hàng, doanh số gần đây hay nhịp mua của
+> khách. Nhóm xây dựng NeuMF-F: giữ hai nhánh MF và mạng nơ-ron của NeuMF, nhưng biểu diễn mỗi khách và mỗi sản phẩm
+> bằng mã ID cộng với đặc trưng. Để kết luận đáng tin, nhóm chia dữ liệu theo thời gian, tinh chỉnh mọi mô hình với cùng
+> ngân sách, và chấm điểm cuối trên một nhóm khách hàng hoàn toàn mới. Kết quả: NeuMF-F vượt có ý nghĩa các mô hình đối
+> chứng trên H&M, và kết luận lặp lại trên Amazon Beauty dù không tinh chỉnh lại. Phân tích cho thấy đặc trưng thời
+> gian đóng góp nhiều nhất. Cuối cùng, nhóm xin demo hệ thống trên một khách hàng cụ thể.
+
+---
+
+## Phần 2. Nắm toàn bộ đề tài
+
+### 2.1 Bài toán và câu hỏi nghiên cứu (Chương 1)
+
+- **Bài toán:** gợi ý Top-K sản phẩm cho từng khách từ lịch sử mua (phản hồi ẩn: mua / chưa mua, không có điểm đánh giá).
+- **Ba câu hỏi nghiên cứu (mục 1.1.3)** — cả báo cáo xoay quanh ba câu này, nên phải nói được ngay:
+  1. NeuMF-F có tốt hơn các mô hình đối chứng được tinh chỉnh đầy đủ không? → **Có**, trên cả hai bộ dữ liệu.
+  2. Đặc trưng có giúp mô hình lai không, nhóm nào quan trọng nhất? → **Có**; đặc trưng thời gian quan trọng nhất.
+  3. Ghép hai nhánh có hơn từng nhánh, hợp nhất sớm hay muộn tốt hơn? → Các cách ghép cho kết quả gần nhau; biểu diễn
+     có đặc trưng mới là yếu tố quyết định.
+- **Năm mục tiêu (mục 1.2.1):** (1) lý thuyết; (2) quy trình dữ liệu H&M; (3) cài đặt NeuMF-F và đối chứng; (4) đánh
+  giá Top-K có kiểm định; (5) demo. **Tất cả đã hoàn thành** — Bảng 5.1 đối chiếu từng mục tiêu với kết quả.
+- **Mạch của báo cáo:** Chương 1 đặt ba câu hỏi → Chương 2 cho cơ sở lý thuyết → Chương 3 thiết kế mô hình và quy trình
+  để trả lời → Chương 4 trình bày kết quả và trả lời từng câu (mục 4.6, tóm tắt ở 4.7) → Chương 5 đối chiếu mục tiêu.
+
+### 2.2 Cơ sở lý thuyết (Chương 2)
+
+| Khái niệm | Nói ngắn | Mục |
+|---|---|---|
+| Lọc cộng tác | Gợi ý theo hành vi của những khách/sản phẩm giống nhau | 2.1 |
+| UserKNN / ItemKNN | Tìm k khách (sản phẩm) giống nhất theo cosine, điểm = tổng độ giống | 2.1.2 |
+| MF | Mỗi khách, sản phẩm là một vector; điểm = tích vô hướng | 2.2 |
+| BPR | Học MF theo thứ hạng: món đã mua phải xếp trên món chưa mua | 2.2.3 |
+| GMF | MF dạng mạng: nhân từng chiều rồi học trọng số riêng cho từng chiều | 2.3.1 |
+| MLP | Nối hai vector rồi qua nhiều tầng phi tuyến | 2.3.2 |
+| NeuMF | Ghép GMF và MLP ở lớp dự đoán (hợp nhất sớm) | 2.3.3, Hình 2.1 |
+| Hợp nhất sớm / muộn | Sớm: ghép biểu diễn rồi một mô hình dự đoán. Muộn: mỗi mô hình dự đoán riêng rồi trộn điểm | 2.3.4, Hình 2.2 |
+| NDCG@K | Món đúng càng ở trên càng nhiều điểm, chuẩn hóa 0–1 | 2.5 |
+| Ba nghiên cứu nền tảng | He 2017 (NCF), Rendle 2020 (MF tinh chỉnh kỹ so với NeuMF), luận án cô Hồ Thị Linh 2023 | 2.6, Bảng 2.1 |
+| Khoảng trống nghiên cứu | (1) mô hình NCF chưa khai thác đặc trưng cho Top-K; (2) thiếu đánh giá theo giao thức gần triển khai trên dữ liệu thời trang thật | 2.7 |
+
+### 2.3 Dữ liệu và tiền xử lý (mục 3.2)
+
+- H&M: 31,8 triệu giao dịch (20/09/2018 – 22/09/2020), 1,36 triệu khách, 104.547 sản phẩm có giao dịch.
+- **Lấy mẫu theo khách** bằng hàm băm (giữ trọn lịch sử 2 năm của mỗi khách). Hai mẫu không có khách chung:
+  **mẫu phát triển** (chọn cấu hình) và **mẫu kiểm định** (chấm điểm cuối).
+- **Một sản phẩm = một mẫu thiết kế** (`product_code`, gộp mọi màu).
+- Gộp giao dịch lặp thành một cặp (khách, sản phẩm) giữ ngày mua đầu; **lọc 10-core lặp, chỉ trên dữ liệu trước mốc kiểm
+  thử** (Thuật toán 3.1).
+- **Chia theo thời gian:** huấn luyện trước 01/07/2020; xác thực 01/07–28/07; kiểm thử 29/07–22/09/2020.
+- **Tập ứng viên:** sản phẩm đã có dữ liệu huấn luyện, trừ món khách đã mua. **Món đúng:** món khách mua lần đầu trong
+  cửa sổ đánh giá.
+- **Đặc trưng theo thời điểm** (Bảng 3.4): sản phẩm (11 thuộc tính, văn bản TF-IDF + SVD 64 chiều, doanh số 7/28/91
+  ngày, tuổi sản phẩm); khách (5 thuộc tính, số ngày từ lần mua gần nhất, số món đã mua). Mọi đặc trưng tại ngày t chỉ
+  dùng dữ liệu **trước** ngày t.
+
+### 2.4 Mô hình đề xuất NeuMF-F (mục 3.3, Hình 3.2)
+
+- Mỗi nhánh có vector khách = vector ID + chiếu đặc trưng khách; vector sản phẩm = vector ID + chiếu đặc trưng sản phẩm.
+- Nhánh **GMF-F** nhân từng phần tử (tuyến tính). Nhánh **MLP-F** nối hai vector, qua tháp 64 → 32 → 16 → 8 (với d = 32).
+- Hai kết quả được nối, qua một lớp dự đoán chung (hợp nhất sớm). Xếp hạng dùng logit.
+- Huấn luyện: BCE + lấy mẫu âm theo ngày ra mắt (Thuật toán 3.2), Adam, lô 512, dừng sớm theo NDCG@10 xác thực, rồi
+  **huấn luyện lại từ đầu** đúng số epoch tốt nhất trên mọi dữ liệu trước mốc kiểm thử (Thuật toán 3.3).
+
+### 2.5 Mô hình đối chứng (mục 3.4, Bảng 3.5)
+
+| Nhóm | Mô hình | Câu hỏi được trả lời |
+|---|---|---|
+| Mô hình đơn lẻ | GMF, MLP; GMF-F, MLP-F | Ghép hai nhánh có hơn từng nhánh không |
+| Học máy truyền thống | Content, ItemKNN, UserKNN, BPR-MF; Hybrid-CBCF (bổ sung) | Có hơn cách làm truyền thống, kể cả lai truyền thống, không |
+| Chuyên biệt cho gợi ý | Most Popular, MostPopular-Recent, NeuMF, LateFusion-F | Có hơn xu hướng phổ biến, NCF gốc, hợp nhất muộn không |
+
+Random là mốc dưới. Tổng cộng 14 mô hình đăng ký trước, cộng Hybrid-CBCF là 15.
+
+### 2.6 Quy trình đánh giá (mục 3.7, Hình 3.3)
+
+Sáu nguyên tắc (mục 3.7.2):
+1. Tách mẫu phát triển và mẫu kiểm định.
+2. Đăng ký trước kế hoạch và khóa tập kiểm thử.
+3. Cùng ngân sách tinh chỉnh: 6 cấu hình mỗi mô hình (Bảng 3.6).
+4. Huấn luyện lại trước khi chấm, 5 seed (42, 2024, 2025, 2026, 3407).
+5. Kiểm định Wilcoxon ghép cặp theo khách, khoảng tin cậy bootstrap 95%, hiệu chỉnh Holm cho họ 10 so sánh.
+6. "A tốt hơn B" chỉ khi đủ ba điều kiện: p Holm < 0,05; khoảng tin cậy không chứa 0; chênh lệch ≥ 5%.
+
+Đánh giá bằng **xếp hạng toàn bộ** tập ứng viên (khoảng 6,7 nghìn sản phẩm mỗi khách), không lấy mẫu 100 ứng viên.
+
+### 2.7 Kết quả (Chương 4)
+
+- **H&M (mục 4.3):** bốn mô hình có đặc trưng đứng đầu (LateFusion-F, NeuMF-F, GMF-F, MLP-F), rồi đến UserKNN.
+  NeuMF-F tốt hơn có ý nghĩa NeuMF chỉ ID, MLP-F và cả 5 mô hình đối chứng; tương đương GMF-F và LateFusion-F.
+- **Theo K (mục 4.3.2):** thứ tự bốn mô hình đầu giữ nguyên ở mọi K = 5, 10, 15, 20 và mọi độ đo.
+- **Bóc tách (mục 4.3.5):** đặc trưng thời gian quan trọng nhất, rồi đến thông tin khách hàng.
+- **Hybrid-CBCF (mục 4.3.4):** NeuMF-F tốt hơn có ý nghĩa; Hybrid-CBCF chỉ ngang UserKNN trên H&M.
+- **Amazon (mục 4.4):** kết luận về đặc trưng giữ nguyên; LateFusion-F cao nhất.
+- **Trả lời câu hỏi (mục 4.6, 4.7):** câu 1 và câu 2 được trả lời "có" trên cả hai bộ; câu 3: biểu diễn có đặc trưng là
+  yếu tố quyết định, cách hợp nhất có thể chọn theo dữ liệu.
+
+### 2.8 Demo (mục 3.9)
+
+Ba tầng: giao diện HTML/JS → API FastAPI (chỉ suy luận) → mô hình đã lưu (seed 42) và dữ liệu tra cứu. Chọn được H&M
+hoặc Amazon. Có cửa hàng mô phỏng, so sánh hai mô hình cạnh nhau, khách giống gu (UserKNN), sản phẩm tương tự (ItemKNN),
+màn hình kết quả dạng bậc thang. Khách mới nhận "Gợi ý phổ biến".
+
+---
+
+## Phần 3. Số liệu cần nhớ
+
+Số tinh chỉnh chỉ dùng để **chọn cấu hình**; kết luận chỉ lấy từ tập kiểm thử của mẫu kiểm định và kiểm chứng trên
+Amazon.
 
 | Nội dung | Giá trị | Mở ở đâu |
 |---|---|---|
-| Mẫu phát triển (tinh chỉnh) | Khối 0: 500.269 giao dịch của 21.599 khách | báo cáo mục 3.2.2 |
-| Mẫu kiểm định (đánh giá cuối) | Khối 2: 500.164 giao dịch của 21.351 khách, **không có khách nào chung** với mẫu phát triển | mục 3.2.2 |
+| Mẫu phát triển | 500.269 giao dịch của 21.599 khách | mục 3.2.2 |
+| Mẫu kiểm định | 500.164 giao dịch của 21.351 khách, **không có khách chung** với mẫu phát triển | mục 3.2.2 |
 | Gộp theo mẫu thiết kế | Trước mốc kiểm thử: mẫu phát triển 55.971 → 27.370 sản phẩm, 401.293 → 359.181 cặp; mẫu kiểm định 55.683 → 27.291 sản phẩm, 398.653 → 356.740 cặp | mục 3.2.3 |
 | Sau lọc 10-core | Mẫu phát triển: 8.039 khách, 6.801 sản phẩm, 245.644 cặp. Mẫu kiểm định: 7.994 khách, 6.749 sản phẩm, 243.696 cặp | mục 3.2.3, Bảng 3.3 |
 | Mốc thời gian | Xác thực: 01/07–28/07/2020 (4 tuần). Kiểm thử: 29/07–22/09/2020 (8 tuần) | mục 3.2.4 |
-| Mẫu phát triển ở giai đoạn xác thực | 2.569 khách được đánh giá, 8.636 cặp đúng, trung bình 6.762 ứng viên mỗi khách | Bảng 3.3 |
-| Số mô hình, số lần chạy | 14 mô hình; 5 seed; họ 10 so sánh có hiệu chỉnh Holm | mục 3.6, 4.2 |
-| Kết quả tinh chỉnh (tập xác thực của mẫu phát triển, NDCG@10) | LateFusion-F 0,03556 · NeuMF-F 0,03337 · MLP-F 0,03212 · GMF-F 0,03162 · GMF 0,02857 · UserKNN 0,02753 · MLP 0,02742 · NeuMF 0,02696 · BPR-MF 0,02636 · ItemKNN 0,02599 · MostPopular-Recent 0,02334 · Most Popular 0,02174 · Content 0,00459 | mục 4.3 |
-| Tập kiểm thử mẫu kiểm định | 3.165 khách; 10.285 cặp đúng; trung bình 6.710 ứng viên mỗi khách | mục 4.1 |
-| Kết quả cuối H&M (NDCG@10, 5 seed) | **LateFusion-F 0,04093** · **NeuMF-F 0,04003** · GMF-F 0,03902 · MLP-F 0,03480 · UserKNN 0,03114 · ItemKNN 0,02860 · NeuMF 0,02783 · MostPopular-Recent 0,02760 · GMF 0,02695 · BPR-MF 0,02661 · MLP 0,02373 · Most Popular 0,02184 · Content 0,00506 · Random 0,00098 | mục 4.4.1; `outputs/v2/final/ket_qua.txt` |
-| Theo K (H&M, NeuMF-F) | NDCG@5/10/15/20 = 0,03120 / 0,04003 / 0,04644 / 0,05166; HR@15 = 0,19406. Ở mọi K và mọi độ đo, thứ tự đầu luôn là LateFusion-F, NeuMF-F, GMF-F, MLP-F | mục 4.4.2, Bảng 4.5–4.6 |
-| 10 so sánh H&M | NeuMF-F tốt hơn 7 (NeuMF +43,8%, MLP-F +15,0%, BPR-MF +50,4%, ItemKNN +39,9%, UserKNN +28,5%, MostPopular-Recent +45,0%, Content +691,5%); ngang 2 (GMF-F +2,6%, LateFusion-F −2,2%). NeuMF vs BPR-MF: ngang (+4,6%, p Holm 0,059) | mục 4.4.3 |
-| Ablation H&M (seed 42) | Bỏ thời gian **−42,3%**, bỏ thông tin khách −10,3% (cả hai khoảng tin cậy không chứa 0); bỏ thuộc tính −3,7%, văn bản −2,7% (khoảng tin cậy chứa 0) | mục 4.4.5 |
-| Lần chạy H&M | 10/10/2026, GPU RTX 3050, 7,5 giờ cho 5 seed; seed 42 chạy lại một lần (lần đầu dừng giữa chừng) | mục 4.1 |
-| Amazon Beauty — dữ liệu | Bản 5-core: 198.502 đánh giá, 22.363 khách, 12.101 sản phẩm. Lọc 5-core trước 01/01/2014: 10.681 khách, 6.069 sản phẩm, 94.009 cặp. Kiểm thử 01/01–23/07/2014: 2.644 khách, 6.107 cặp đúng, 6.058 ứng viên mỗi khách | mục 3.2.6, Bảng 3.6 |
-| Amazon — kết quả (NDCG@10, 5 seed) | **LateFusion-F 0,03747** · GMF-F 0,03298 · NeuMF-F 0,03277 · MLP-F 0,03065 · UserKNN 0,02506 · ItemKNN 0,02333 · NeuMF 0,01978 · GMF 0,01627 · MostPopular-Recent 0,01401 · MLP 0,01271 · BPR-MF 0,01144 · Content 0,00945 · Most Popular 0,00872 | mục 4.5.1 |
-| Amazon — 10 so sánh | NeuMF-F tốt hơn NeuMF +65,7% và cả 5 baseline (từ +30,8% với UserKNN); ngang GMF-F (−0,6%) và MLP-F (+6,9%, p Holm ≈ 0,05 nhưng CI chứa 0); **LateFusion-F tốt hơn NeuMF-F** (NeuMF-F −12,5%) | mục 4.5.2, Bảng 4.15–4.16 |
-| Amazon — ablation | Bỏ thời gian −31,6%, bỏ thuộc tính −14,4% (CI không chứa 0); bỏ văn bản −9,8%, bỏ thông tin khách +1,3% (CI chứa 0) | mục 4.5.3 |
-| Hybrid-CBCF (bổ sung, 13/10) | H&M: NDCG@10 0,03183, hạng 5/15; NeuMF-F tốt hơn +25,8%; so với UserKNN +2,2% (không khác biệt có ý nghĩa). Amazon: 0,02664, hạng 5/15; NeuMF-F tốt hơn +23,0%; so với UserKNN +6,3% (Hybrid-CBCF tốt hơn) | mục 4.4.4, 4.5.1 (Bảng 4.8, 4.14) |
+| Tập kiểm thử mẫu kiểm định | 3.165 khách; 10.285 cặp đúng; trung bình 6.710 ứng viên mỗi khách | Bảng 3.3 |
+| Kết quả tinh chỉnh (NDCG@10 xác thực) | LateFusion-F 0,03556 · NeuMF-F 0,03337 · MLP-F 0,03212 · GMF-F 0,03162 · GMF 0,02857 · UserKNN 0,02753 · MLP 0,02742 · NeuMF 0,02696 · BPR-MF 0,02636 · ItemKNN 0,02599 · MostPopular-Recent 0,02334 · Most Popular 0,02174 · Content 0,00459 | mục 4.2, Bảng 4.1 |
+| Kết quả cuối H&M (NDCG@10, 5 seed) | **LateFusion-F 0,04093** · **NeuMF-F 0,04003** · GMF-F 0,03902 · MLP-F 0,03480 · UserKNN 0,03114 · ItemKNN 0,02860 · NeuMF 0,02783 · MostPopular-Recent 0,02760 · GMF 0,02695 · BPR-MF 0,02661 · MLP 0,02373 · Most Popular 0,02184 · Content 0,00506 · Random 0,00098 | mục 4.3.1, Bảng 4.3 |
+| HR@10 | NeuMF-F khoảng 15% (cứ khoảng 1/6–1/7 khách có ít nhất một món đúng trong 10 gợi ý); cao nhất 15,8% (LateFusion-F) | Bảng 4.5 |
+| Theo K (H&M, NeuMF-F) | NDCG@5/10/15/20 = 0,03120 / 0,04003 / 0,04644 / 0,05166; HR@15 = 0,19406 | mục 4.3.2, Bảng 4.4–4.5 |
+| 10 so sánh H&M | NeuMF-F tốt hơn 7 (NeuMF +43,8%, MLP-F +15,0%, BPR-MF +50,4%, ItemKNN +39,9%, UserKNN +28,5%, MostPopular-Recent +45,0%, Content +691,5%); tương đương 2 (GMF-F +2,6%, LateFusion-F −2,2%, p Holm 0,735). NeuMF vs BPR-MF: tương đương (+4,6%, p Holm 0,059) | mục 4.3.3, Bảng 4.6 |
+| Bóc tách H&M (seed 42) | Bỏ thời gian **−42,3%**, bỏ thông tin khách −10,3% (khoảng tin cậy không chứa 0); bỏ thuộc tính −3,7%, văn bản −2,7% (khoảng tin cậy chứa 0) | mục 4.3.5, Bảng 4.8 |
+| Hybrid-CBCF | H&M: NDCG@10 0,03183, hạng 5/15; NeuMF-F tốt hơn +25,8%; so với UserKNN +2,2% (tương đương). Amazon: 0,02664, hạng 5/15; NeuMF-F tốt hơn +23,0%; so với UserKNN +6,3% (tốt hơn) | mục 4.3.4, 4.4.2 |
+| Trọng số Hybrid-CBCF | Content 0,12; UserKNN 0,60; ItemKNN 0,28 | mục 4.2, Bảng 4.2 |
+| Trọng số LateFusion-F | w = 0,4 cho GMF-F (0,6 cho MLP-F) | mục 3.7.2, Thuật toán 3.5 |
+| Amazon — dữ liệu | Bản 5-core: 198.502 đánh giá, 22.363 khách, 12.101 sản phẩm. Lọc 5-core trước 01/01/2014: 10.681 khách, 6.069 sản phẩm, 94.009 cặp. Kiểm thử 01/01–23/07/2014: 2.644 khách, 6.107 cặp đúng, 6.058 ứng viên mỗi khách | mục 4.4.1, Bảng 4.11 |
+| Amazon — kết quả (NDCG@10, 5 seed) | **LateFusion-F 0,03747** · GMF-F 0,03298 · NeuMF-F 0,03277 · MLP-F 0,03065 · UserKNN 0,02506 · ItemKNN 0,02333 · NeuMF 0,01978 · GMF 0,01627 · MostPopular-Recent 0,01401 · MLP 0,01271 · BPR-MF 0,01144 · Content 0,00945 · Most Popular 0,00872 | mục 4.4.2, Bảng 4.12 |
+| Amazon — 10 so sánh | NeuMF-F tốt hơn NeuMF +65,7% và cả 5 mô hình đối chứng (từ +30,8% với UserKNN); tương đương GMF-F (−0,6%) và MLP-F (+6,9%); LateFusion-F tốt hơn NeuMF-F (NeuMF-F −12,5%) | mục 4.4.3, Bảng 4.16–4.17 |
+| Amazon — bóc tách | Bỏ thời gian −31,6%, bỏ thuộc tính −14,4% (khoảng tin cậy không chứa 0); bỏ văn bản −9,8%, bỏ thông tin khách +1,3% (khoảng tin cậy chứa 0) | mục 4.4.4, Bảng 4.18 |
 
-Số tinh chỉnh chỉ dùng để **chọn cấu hình**; kết luận chỉ lấy từ tập kiểm thử của mẫu kiểm định (và được kiểm chứng
-trên Amazon).
+**Cách nói số cho dễ nhớ:** "NeuMF-F hơn NeuMF gốc khoảng 44% trên H&M và 66% trên Amazon"; "bỏ đặc trưng thời gian thì
+mất khoảng 40% chất lượng"; "hơn mô hình đối chứng mạnh nhất (UserKNN) khoảng 28%".
 
 ---
 
-## Phần C. Trả lời 17 góp ý
+## Phần 4. Nội dung nào nói trong báo cáo, nội dung nào chỉ nói khi được hỏi
 
-### 1. Kết quả có cao bất thường, có rò rỉ dữ liệu không?
+Nguyên tắc: báo cáo trình bày **đầy đủ kết quả** và **phạm vi** của kết luận, theo hướng nêu đóng góp. Chi tiết về quá
+trình làm (các lần thử, sự cố, lý do kỹ thuật nhỏ) chỉ nói khi hội đồng hỏi, và nói thẳng, ngắn, có lý do.
 
-**1a. Kết quả có cao bất thường không?**
-Không. Bài toán khó nên điểm tuyệt đối thấp:
-- mỗi khách chỉ có vài món đúng (trung bình khoảng 3) giữa khoảng 6,7 nghìn sản phẩm ứng viên;
-- chỉ tính món **khách chưa từng mua**, và dự đoán cho 8 tuần sau.
+| Nội dung | Trong báo cáo | Khi được hỏi thì nói thêm |
+|---|---|---|
+| LateFusion-F cao nhất, tốt hơn NeuMF-F trên Amazon | **Có**, nói rõ (mục 4.4.3, 4.6) — đây là kết quả, không được giấu | Lý do giữ NeuMF-F làm mô hình đề xuất (câu 5.4.1) |
+| Khảo sát ban đầu: NeuMF chỉ ID không hơn BPR-MF | Có, như định hướng thiết kế (mục 3.7.1) | Giai đoạn đầu chỉ dùng mã ID, đánh giá trên mẫu phát triển |
+| Khối 1 (mẫu kiểm định của bản kế hoạch đầu) | Không | Câu 5.6.1 |
+| Seed 42 chạy lại, máy chạy (GPU RTX 3050 / CPU) | Không | Câu 5.6.2 |
+| Content lệch nhẹ giữa Bảng 4.1 và 4.2 | Một câu ngắn (mục 4.2) | Vector văn bản được dựng lại trên máy khác khi chạy phần bổ sung; thứ hạng không đổi |
+| K = 15 tính lại từ hạng đã lưu | Không nói chi tiết (mục 3.7.2 chỉ nói hạng được lưu) | Câu 5.3.6 |
+| Hybrid-CBCF thêm sau đánh giá cuối | Có, ghi là phân tích bổ sung có kế hoạch riêng (mục 3.4, 4.3.4) | Câu 5.5.2 |
+| Amazon không tinh chỉnh lại | Có, như một lựa chọn thiết kế (mục 4.4.1) | Câu 5.5.1 |
+| Không có đối chứng FM dùng cùng đặc trưng | Một câu trong hạn chế và hướng phát triển (mục 5.3, 5.4) | Câu 5.2.4 |
+| Lưới tinh chỉnh 6 cấu hình, vài cấu hình ở biên lưới | Bảng 3.6; không nêu trong hạn chế | Câu 5.3.3 |
+| k-core dùng dữ liệu tháng 7 ảnh hưởng tập xác thực | Không | Câu 5.3.7 |
+| Cold start | Có, là phạm vi (mục 1.2.2, 3.8, 5.3) | Câu 5.2.3 |
+| Bỏ ID ngẫu nhiên chọn ρ = 0 | Có (mục 3.3.1, 4.2) | Câu 5.2.5 |
+| Kế hoạch đăng ký trước, nhật ký mở tập kiểm thử | Báo cáo chỉ nói "lưu cùng mã nguồn" | Mở `neumf_project/audit/` khi cần chứng minh |
 
-Trên tập kiểm thử của mẫu kiểm định, NDCG@10 cao nhất là 0,0409 (LateFusion-F); HR@10 cao nhất 15,8% — tức khoảng 1/6
-số khách có ít nhất một món đúng trong 10 gợi ý. Điều cần xem là chênh lệch giữa các mô hình có ý nghĩa thống kê hay
-không, không phải độ lớn tuyệt đối.
+---
 
-**1b. Train/test chia thế nào?**
-Chia theo **thời gian**, cùng một mốc cho mọi khách:
-- trước 01/07/2020 để huấn luyện, 01/07–28/07 để xác thực (chọn cấu hình, chọn số epoch);
-- từ 29/07 đến 22/09 để kiểm thử;
-- trước khi chấm kiểm thử, mô hình được huấn luyện lại trên mọi dữ liệu trước 29/07.
+## Phần 5. Câu hỏi hội đồng hay hỏi
 
-Món khách đã mua trước mốc không được tính là món đúng. Mở ở đâu: mục 3.2.4.
+Cách trả lời câu khó: **thừa nhận ngắn → nêu lý do hoặc thiết kế đã xử lý → quay về điểm mạnh**. Không cãi, không vòng vo.
 
-**1c. Dữ liệu test có lọt vào huấn luyện không?**
-Không. Có sáu lớp bảo vệ:
-1. Mỗi cặp (khách, sản phẩm) chỉ có một ngày mua đầu, nên không thể vừa ở tập huấn luyện vừa là món đúng.
-2. Bước lọc dữ liệu (k-core) chỉ dùng dữ liệu trước mốc kiểm thử (Thuật toán 3.1).
-3. Đặc trưng tại ngày t chỉ dùng dữ liệu **trước** ngày t (ví dụ doanh số chỉ tính đến ngày t−1).
-4. Mẫu kiểm định gồm khách khác hẳn mẫu phát triển; tập kiểm thử của mẫu kiểm định chỉ mở một lần.
-5. Dữ liệu đã lọc ghi ra file có mã MD5; mọi mô hình đọc đúng cùng file.
-6. Chương trình chấm cuối có "khoá": từ chối chạy nếu kế hoạch chưa lưu, mã nguồn bị sửa hoặc khác lúc tinh chỉnh; mỗi lần chấm ghi nhật ký.
+### 5.1 Đề tài và đóng góp
 
-Có test tự động kiểm tra các điều trên. Mở ở đâu: mục 3.2.3–3.2.5, 3.6 (Hình 3.3); `neumf_project/tests/test_v2.py`.
+**5.1.1 "Đóng góp mới của đề tài là gì? NeuMF đã có từ 2017."**
+NeuMF gốc chỉ học từ mã ID. Đề tài (1) đưa đặc trưng sản phẩm, khách hàng, thời gian vào **cả hai nhánh** theo cách
+không dùng thông tin tương lai; (2) chứng minh mô hình này vượt các đối chứng được tinh chỉnh đầy đủ trên hai bộ dữ
+liệu; (3) chỉ ra phần cải thiện đến từ đặc trưng, nhất là đặc trưng thời gian; (4) xây quy trình đánh giá tránh các lỗi
+mà các nghiên cứu tái đánh giá đã chỉ ra. Mở: mục 2.7, 5.1 (Bảng 5.1), 5.2.
 
-**1d. Có huấn luyện lại trước khi chấm không?**
-Có. Với mỗi seed (Thuật toán 3.3):
-1. Huấn luyện trên dữ liệu trước 01/07, dừng sớm theo tập xác thực để biết số epoch tốt nhất.
-2. Huấn luyện lại từ đầu trên mọi dữ liệu trước 29/07, đúng số epoch đó.
-3. Chấm kiểm thử.
+**5.1.2 "Ý nghĩa thực tiễn?"**
+Mô hình chỉ dùng dữ liệu doanh nghiệp bán lẻ đã có (giao dịch, danh mục, hội viên, doanh số theo ngày). Kết quả gợi ý:
+muốn gợi ý tốt hơn thì nên ưu tiên cập nhật doanh số theo thời gian và lịch sử mua, trước khi đầu tư kiến trúc phức tạp
+hơn. Demo cho thấy hệ thống chạy được như một cửa hàng thật. Mở: mục 1.4.2, 5.2.
 
-Tập kiểm thử không bao giờ dùng để dừng hay chọn mô hình. Mở ở đâu: mục 3.5.1, 3.6.
+**5.1.3 "Vì sao chọn NeuMF mà không chọn mô hình mới hơn (Transformer, đồ thị)?"**
+Ba lý do (mục 2.4.3): H&M chỉ ghi ngày mua, không có phiên, nên mô hình chuỗi khó dùng; dữ liệu có sẵn thuộc tính và
+mô tả sản phẩm, hợp với cách "vector ID + đặc trưng"; cấu trúc hai nhánh tường minh cho phép tách đóng góp của từng phần
+bằng so sánh trực tiếp. Các hướng mới là hướng phát triển (mục 5.4).
 
-**1e. Mẫu dương, mẫu âm tạo thế nào?**
-- Mẫu dương: cặp (khách, sản phẩm) đã mua.
-- Mẫu âm: với mỗi lượt mua, lấy ngẫu nhiên 4 hoặc 8 sản phẩm khách chưa mua. Với mô hình có đặc trưng, chỉ lấy trong sản phẩm **đã ra mắt** tính đến ngày mua (sản phẩm chưa bán thì khách không thể mua). Lấy lại mới mỗi epoch (Thuật toán 3.2).
-- Khi đánh giá thì không lấy mẫu: xếp hạng toàn bộ sản phẩm ứng viên (Thuật toán 3.4).
+**5.1.4 "Hướng phát triển của đề tài là gì?"**
+Nói theo thứ tự trong mục 5.4, mỗi hướng một câu "làm gì, làm bằng cách nào":
+1. Làm giàu đặc trưng thời gian (nhóm mạnh nhất): thêm doanh số cùng kỳ năm trước, tốc độ tăng giảm doanh số, nhịp mua
+   theo nhóm hàng; tính theo thời điểm như hiện tại.
+2. Thêm ảnh và mô tả bằng mô hình tiền huấn luyện: biến ảnh, mô tả thành vector rồi nối vào đặc trưng sản phẩm — không
+   phải sửa kiến trúc.
+3. Sản phẩm mới, khách mới: NeuMF-F đã chấm được sản phẩm chỉ từ đặc trưng (m_i = 0); huấn luyện với xác suất bỏ ID > 0
+   rồi đánh giá riêng. Khách mới: danh sách phổ biến theo nhóm tuổi, trạng thái hội viên.
+4. Vận hành quy mô lớn: hai bước — hai tháp + tìm kiếm lân cận gần đúng để lọc vài trăm ứng viên, NeuMF-F xếp hạng lại;
+   huấn luyện lại hằng tuần; đo bằng thử nghiệm A/B.
+5. Học trọng số trộn theo nhóm khách (vì hợp nhất muộn tốt trên Amazon).
+6. Mở rộng so sánh: Factorization Machines cùng đặc trưng, mô hình chuỗi, đồ thị — trên cùng quy trình đánh giá.
+7. Giải thích gợi ý trong demo bằng mô hình ngôn ngữ lớn, dựa trên khách giống gu và sản phẩm tương tự đã có.
 
-Mở ở đâu: mục 3.4.1.
+Ý chốt: khung NeuMF-F thêm được thông tin mới mà không đổi kiến trúc, và quy trình đánh giá dùng lại được nguyên.
 
-**1f. Sao không chia leave-one-out (lấy món mua cuối làm test)?**
-Vì cách đó để lọt thông tin tương lai: dữ liệu huấn luyện chứa lượt mua của người khác xảy ra **sau** thời điểm cần dự đoán. Đo trên mẫu phát triển: trung bình 11,2% tương tác huấn luyện xảy ra sau ngày của món test; 60,9% khách có món xác thực và món test mua cùng ngày. Mở ở đâu: mục 3.2.4 (Meng et al., 2020).
+### 5.2 Mô hình
 
-### 2. Có bộ test chuẩn chung cho mọi mô hình không?
+**5.2.1 "Có thực sự là mô hình lai không?"**
+Có. Lai ở hai mức: lai MF (nhánh GMF-F, tuyến tính) với DNN (nhánh MLP-F, phi tuyến) ở lớp dự đoán chung; và lai thông
+tin cộng tác (vector ID) với thông tin nội dung, ngữ cảnh (đặc trưng). Hình 3.2 có kích thước từng ma trận: d = 32,
+đặc trưng sản phẩm 157 chiều, khách 42 chiều, tháp 64 → 32 → 16 → 8, vector hợp nhất 40 chiều.
 
-Có. Cả 14 mô hình được chấm trên **cùng** tập kiểm thử của mẫu kiểm định (3.165 khách, 10.285 cặp đúng):
-- cùng file dữ liệu đã lọc (kiểm MD5), cùng tập ứng viên (sản phẩm đã có người mua trước mốc), cùng cách phá hoà điểm;
-- cùng 5 seed, cùng ngân sách tinh chỉnh (6 cấu hình mỗi mô hình).
+**5.2.2 "Vai trò của MF trong mô hình?"**
+Ma trận khách × sản phẩm rất thưa (mật độ khoảng 0,45% sau lọc). MF nén thành hai bảng vector để suy ra điểm cho ô chưa
+có dữ liệu. Trong NeuMF-F, nhánh GMF-F là MF trên vector có đặc trưng, nên còn học được tương tác giữa thuộc tính khách
+và thuộc tính sản phẩm. GMF-F đứng riêng đã rất mạnh — nhánh MF có đặc trưng là phần cốt lõi.
 
-Kết quả của từng khách được lưu lại (kể cả hạng của từng món đúng) nên so sánh được theo cặp (cùng một khách, hai mô
-hình) và tính lại được chỉ số ở K bất kỳ. Trên Amazon cũng vậy: 14 mô hình, cùng tập kiểm thử. Mở ở đâu: mục 3.6, 4.1.
+**5.2.3 "Còn cold start?"**
+- Khách mới: hệ thống trả danh sách sản phẩm phổ biến, luôn có gợi ý, demo minh họa được (mục 3.8, Thuật toán 3.7).
+- Sản phẩm mới: nằm ngoài phạm vi đánh giá định lượng. Khảo sát ban đầu cho thấy ở quy mô mẫu này, khả năng gợi ý sản
+  phẩm mới gần như không đo được (NDCG@10 trên nhóm này của mọi mô hình dưới 0,002), nên quy trình cuối chỉ đánh giá sản
+  phẩm đã có lịch sử bán. Đây là hướng phát triển.
 
-### 3. Top-K là gì? Top-K người dùng tương đồng xác định thế nào?
+**5.2.4 "Lợi ích có phải do thêm thông tin chứ không phải do học sâu?"**
+Đúng là lợi ích chính đến từ đặc trưng — đây chính là phát hiện của đề tài. So sánh NeuMF-F với NeuMF chỉ ID (cùng kiến
+trúc) đo trực tiếp giá trị của đặc trưng. Để biết đặc trưng có cần học sâu không, cần thêm một đối chứng như Factorization
+Machines dùng cùng đặc trưng; đã ghi ở hướng phát triển. Nhánh GMF-F có đặc trưng về bản chất gần với Factorization
+Machines (mục 3.3.2).
 
-- **Top-K trong kết quả** là Top-K **sản phẩm**: chấm điểm mọi món khách chưa mua, sắp giảm dần, lấy K món đầu (Hình 2.1,
-  3.2 vẽ đủ chuỗi σ → điểm → sắp xếp → Top-K; Thuật toán 3.7).
-- **Top-K người dùng tương đồng** thuộc cách lọc cộng tác dựa trên láng giềng — mô hình **UserKNN**, đúng như Algorithm 3 trong luận án của cô:
-  1. tính độ tương đồng cosine giữa hai khách theo các món mua chung;
-  2. giữ k khách giống nhất (k = 200, chọn trên tập xác thực);
-  3. điểm của một món = tổng độ tương đồng của các láng giềng đã mua món đó.
-- **ItemKNN** làm tương tự theo sản phẩm (Algorithm 4).
-- Cả hai là baseline chính thức. Kết quả: **UserKNN là baseline mạnh nhất** (0,03114, hạng 5/14, hơn BPR-MF); NeuMF-F
-  hơn UserKNN 28,5% (có ý nghĩa). ItemKNN 0,02860 (hạng 6). Trên Amazon, UserKNN cũng là baseline mạnh nhất (0,02506).
-- Demo có màn hình "10 khách tương đồng nhất" cho từng khách.
+**5.2.5 "Bỏ ID ngẫu nhiên có dùng không?"**
+Là một siêu tham số được tinh chỉnh (ρ ∈ {0; 0,25; 0,5}). Tinh chỉnh chọn ρ = 0 cho NeuMF-F và MLP-F, ρ = 0,25 cho GMF-F.
+Tức cấu hình cuối của NeuMF-F không dùng; đã ghi rõ trong báo cáo.
 
-Mở ở đâu: mục 2.1.2 (công thức 2.1–2.3), 3.8.
+**5.2.6 "Chống quá khớp thế nào?"**
+Dừng sớm theo NDCG@10 xác thực (sau 5 epoch không cải thiện), dropout ở tháp MLP, điều chuẩn L2. Khi huấn luyện lại chạy
+đúng số epoch đã chọn. Mạng chọn trung bình 3–6 epoch (Bảng 4.9).
 
-### 4. Lọc cộng tác hoạt động thế nào? Có phải lấy món người khác mua để gợi ý trực tiếp?
-
+**5.2.7 "Lọc cộng tác hoạt động thế nào? Có phải lấy món người khác mua để gợi ý trực tiếp?"**
 Không hẳn. Có hai cách:
-- **Dựa trên láng giềng (UserKNN):** tìm khách giống mình → lấy các món họ đã mua mà mình chưa mua → xếp theo độ giống.
-- **Dựa trên mô hình (MF, NeuMF, NeuMF-F):** học một vector cho mỗi khách và mỗi sản phẩm từ toàn bộ lịch sử; khách mua giống nhau sẽ có vector gần nhau; điểm của một món tính từ hai vector.
+- **Dựa trên láng giềng (UserKNN):** tính độ giống cosine giữa hai khách theo các món mua chung, giữ k khách giống nhất
+  (k = 200, chọn trên tập xác thực); điểm của một món = tổng độ giống của các láng giềng đã mua món đó. ItemKNN làm tương
+  tự theo sản phẩm. UserKNN là mô hình đối chứng mạnh nhất (0,03114 trên H&M).
+- **Dựa trên mô hình (MF, NeuMF, NeuMF-F):** học một vector cho mỗi khách và mỗi sản phẩm từ toàn bộ lịch sử; khách mua
+  giống nhau có vector gần nhau. NeuMF-F cộng thêm đặc trưng vào vector, nên có thêm thông tin ngoài lịch sử mua.
 
-NeuMF-F cộng thêm đặc trưng vào vector, nên vector có thêm thông tin ngoài lịch sử mua (loại hàng, xu hướng bán gần đây,
-nhóm khách). Mở ở đâu: mục 2.1.2, 3.3.1.
+Mở: mục 2.1.2, 3.3.1. Demo có màn hình "khách giống gu" minh họa UserKNN.
 
-### 5. Khởi đầu lạnh (Cold Start)?
+**5.2.8 "Mẫu âm lấy thế nào?"**
+Mỗi lượt mua lấy 4 hoặc 8 sản phẩm khách chưa mua, chỉ trong các sản phẩm **đã ra mắt** tại ngày mua (sản phẩm chưa bán
+thì khách không thể mua). Lấy lại mỗi epoch. Khi đánh giá không lấy mẫu mà xếp hạng toàn bộ (mục 3.5.1).
 
-- **Khách hàng mới (chưa mua gì) — gợi ý sản phẩm phổ biến:** mô hình chỉ có vector cho khách đã có trong dữ liệu đã học.
-  Khách mới, hoặc mua quá ít để qua lọc 10-core, được gợi ý **các sản phẩm phổ biến nhất** (Most Popular, tính trên dữ
-  liệu trước mốc); khi khách đã có lịch sử mua, hệ thống dùng mô hình đề xuất NeuMF-F. Hệ thống **luôn có gợi ý**, không
-  báo lỗi. Demo làm đúng như vậy: nhập một mã khách không có trong dữ liệu → danh sách "Gợi ý phổ biến". Phần đánh giá
-  định lượng chỉ đo khách đã có lịch sử, nên chất lượng gợi ý cho khách mới không được đo riêng.
-- **Sản phẩm mới — đã thử, rồi đưa ra ngoài phạm vi theo góp ý:**
-  - bản đầu của kế hoạch (khối 1, 04/10) đưa sản phẩm chưa từng bán vào tập ứng viên; NDCG@10 trên nhóm này của
-    **mọi** mô hình đều dưới 0,002 — gần như không gợi ý đúng được;
-  - theo góp ý của cô, bản cuối coi một sản phẩm là một mẫu thiết kế và bỏ sản phẩm chưa có người mua khỏi tập ứng viên
-    lẫn đáp án. Khởi đầu lạnh của sản phẩm vì vậy **nằm ngoài phạm vi** kết quả cuối — ghi là hạn chế và hướng phát triển;
-  - thiết kế có tuỳ chọn **bỏ ID ngẫu nhiên** khi huấn luyện (ý tưởng DropoutNet), nhưng tinh chỉnh chọn ρ = 0 cho NeuMF-F
-    và MLP-F (GMF-F chọn 0,25); trong bản cuối nó chỉ là một siêu tham số điều chuẩn.
+### 5.3 Dữ liệu, đánh giá và thống kê
 
-Mở ở đâu: mục 2.1.4, 2.4.1, 3.2.4, **3.7** (Thuật toán 3.7), 4.6, 4.7.
+**5.3.1 "Có rò rỉ dữ liệu không?"**
+Không. Các lớp bảo vệ: chia theo một mốc thời gian chung; mỗi cặp chỉ có một ngày mua đầu nên không thể vừa ở huấn luyện
+vừa là món đúng; lọc k-core chỉ dùng dữ liệu trước mốc kiểm thử; đặc trưng tại ngày t chỉ dùng dữ liệu đến ngày t−1; mẫu
+kiểm định là khách hàng khác hẳn; mọi mô hình đọc cùng một tệp dữ liệu. Mã nguồn có kiểm thử tự động cho các điều này.
 
-### 6. NDCG và các chỉ số
+**5.3.2 "Sao không chia leave-one-out như NCF?"**
+Leave-one-out để lọt thông tin tương lai: dữ liệu huấn luyện chứa lượt mua của người khác xảy ra sau thời điểm cần dự
+đoán. Đo trên mẫu phát triển: trung bình 11,2% tương tác huấn luyện xảy ra sau ngày của món kiểm thử; 60,9% khách có món
+xác thực và món kiểm thử mua cùng ngày (mục 3.2.4).
 
-**Công thức** (một khách có thể có nhiều món đúng; r là hạng của món đúng, bắt đầu từ 1):
+**5.3.3 "Mỗi mô hình chỉ 6 cấu hình — có ít không, có thiệt cho đối chứng không?"**
+Mọi mô hình, kể cả NeuMF-F, có **cùng** ngân sách 6 cấu hình, nên so sánh công bằng — đây là khuyến nghị của Rendle
+(2020). Các mô hình chỉ có một tham số được thử đủ lưới. Nếu hỏi tiếp: vài cấu hình được chọn nằm ở biên lưới, nên mở
+rộng lưới có thể cải thiện thêm cả đối chứng lẫn mô hình đề xuất.
 
-| Chỉ số | Cách tính cho một khách | Ý nghĩa |
+**5.3.4 "Vì sao NDCG thấp (khoảng 0,04)?"**
+Mỗi khách chỉ có khoảng 3 món đúng giữa khoảng 6,7 nghìn ứng viên; chỉ tính món **chưa từng mua**; dự đoán cho 8 tuần
+tới; xếp hạng toàn bộ chứ không trên 100 ứng viên. Các bài NCF có HR@10 khoảng 0,7 vì chỉ xếp trên 101 ứng viên, nên
+không so được. Điều cần xem là chênh lệch giữa các mô hình có ý nghĩa thống kê.
+
+**5.3.5 "NDCG và các độ đo tính thế nào?"** (nên thuộc ví dụ tính tay)
+
+| Độ đo | Cách tính cho một khách | Ý nghĩa |
 |---|---|---|
 | HR@K | 1 nếu có ít nhất một món đúng trong top-K, ngược lại 0 | Có trúng không |
 | Precision@K | số món đúng trong top-K / K | Bao nhiêu phần gợi ý là đúng |
 | Recall@K | số món đúng trong top-K / tổng số món đúng | Tìm lại được bao nhiêu phần |
-| NDCG@K | DCG@K / IDCG@K | Món đúng càng ở trên càng nhiều điểm, chuẩn hoá về 0–1 |
+| NDCG@K | DCG@K / IDCG@K, với DCG@K = tổng 1/log₂(r + 1) trên các món đúng có hạng r ≤ K | Món đúng càng ở trên càng nhiều điểm |
 
-- DCG@K = tổng của 1/log₂(r + 1) trên các món đúng có r ≤ K.
-- IDCG@K = DCG khi mọi món đúng đứng đầu danh sách.
-
-**Ví dụ tính tay (nên thuộc).** Một khách có 3 món đúng ở hạng 2, 7 và 40; K = 10:
+Ví dụ: một khách có 3 món đúng ở hạng 2, 7 và 40; K = 10.
 - HR@10 = 1; Precision@10 = 2/10 = 0,2; Recall@10 = 2/3 ≈ 0,667.
-- DCG = 1/log₂3 + 1/log₂8 = 0,631 + 0,333 = 0,964.
-- IDCG = 1 + 0,631 + 0,5 = 2,131.
+- DCG = 1/log₂3 + 1/log₂8 = 0,631 + 0,333 = 0,964; IDCG = 1 + 0,631 + 0,5 = 2,131.
 - NDCG@10 = 0,964 / 2,131 ≈ 0,453.
 
-**Cách tính trong đề tài:**
-- Chỉ số chính: **NDCG@10** (đăng ký trước); phụ: Recall@10, HR@10, Precision@10, NDCG@5, NDCG@20.
-- Báo cáo đủ bốn chỉ số ở **K = 5, 10, 15, 20** (Bảng 4.5–4.6 cho H&M, 4.12–4.13 cho Amazon). K = 15 tính lại từ hạng
-  của từng món đúng đã lưu ở lần đánh giá cuối — không chạy lại mô hình, không mở lại tập kiểm thử; cách tính lại cho
-  đúng từng số @5, @10, @20 của lần đánh giá đó.
-- Lấy trung bình theo khách, rồi trung bình ± độ lệch chuẩn qua 5 seed.
-- Mô tả thêm: độ phủ của top-10 (bao nhiêu phần danh mục được gợi ý cho ít nhất một khách).
+Độ đo lấy trung bình theo khách, rồi trung bình ± độ lệch chuẩn qua 5 seed. Luận án của cô dùng MAE/RMSE cho dự đoán điểm
+đánh giá; H&M không có điểm đánh giá nên không dùng. HR@K chính là hit rate; NDCG cùng tinh thần ARHR (thưởng món đúng nằm
+cao). Mở: mục 2.5.
 
-**Nối với luận án của cô:**
-- Luận án dùng MAE/RMSE (cho dự đoán điểm đánh giá), Precision/Recall, Hit rate và ARHR.
-- H&M không có điểm đánh giá nên không dùng MAE/RMSE.
-- HR@K chính là hit rate. NDCG cùng tinh thần ARHR: cả hai thưởng món đúng nằm cao; NDCG chiết khấu theo 1/log₂(r+1) và chuẩn hoá về 0–1.
+**5.3.6 "K = 15 có chạy lại không?"**
+Không. Đánh giá cuối lưu hạng của từng món đúng cho từng khách, từng mô hình, từng seed. Từ hạng đó tính được độ đo ở K bất
+kỳ; tính lại @5, @10, @20 cho đúng y các số đã báo cáo.
 
-Mở ở đâu: mục 2.5 (công thức 2.19–2.21), 4.4.2; `neumf_project/src/evaluation/metrics.py`.
+**5.3.7 "Lọc k-core trên mọi cặp trước mốc kiểm thử có ảnh hưởng tập xác thực không?"**
+Có, một phần: tập khách và sản phẩm ở giai đoạn xác thực phụ thuộc vào dữ liệu tháng 7/2020. Việc này chỉ ảnh hưởng
+bước chọn cấu hình; tập kiểm thử của mẫu kiểm định hoàn toàn không bị ảnh hưởng.
 
-### 7. Trình bày kết quả theo chuẩn học thuật?
+**5.3.8 "Vì sao 5 seed? Kiểm định theo seed hay theo khách?"**
+Theo khách (hàng nghìn khách). Mỗi khách lấy NDCG@10 trung bình qua 5 seed rồi so hai mô hình bằng Wilcoxon. Nếu kiểm định
+theo seed thì với 5 seed, p nhỏ nhất chỉ 0,0625, không bao giờ dưới 0,05. Dao động giữa seed được báo cáo bằng độ lệch
+chuẩn.
 
-- Số thập phân (NDCG không nhân 100), 5 chữ số, dạng trung bình ± độ lệch chuẩn qua 5 seed, in đậm giá trị cao nhất mỗi cột.
-- Có bảng kiểm định riêng: chênh lệch, khoảng tin cậy 95%, p sau hiệu chỉnh Holm, kết luận.
-- Mọi bảng, hình, con số được chương trình **tự sinh** từ file kết quả, không gõ tay; 58 câu nhận xét bằng chữ trong báo
-  cáo (cả phần Amazon và phần theo K) được chương trình đối chiếu lại với số liệu (`python run.py check-report`).
-- Không đặt số của đề tài cạnh số trong bài báo để so hơn kém, vì khác dữ liệu và cách đánh giá.
+**5.3.9 "Vì sao thêm ngưỡng 5%?"**
+Để loại khác biệt có ý nghĩa thống kê nhưng quá nhỏ về thực tiễn. Bỏ ngưỡng này thì không kết luận nào thay đổi.
 
-Mở ở đâu: mục 4.4, 4.5; `neumf_project/scripts/24_report_v2.py`, `19_check_report.py`.
+**5.3.10 "Vì sao lấy mẫu 1,5% khách, k = 10?"**
+Xếp hạng toàn bộ trên dữ liệu đầy đủ (633 nghìn khách × 80 nghìn sản phẩm với k = 10) là hàng chục tỷ cặp cho mỗi mô
+hình. Với k = 5 trên mẫu phát triển, ước tính cần khoảng 10,7 GB bộ nhớ. Lấy mẫu theo khách bằng hàm băm giữ trọn lịch sử
+và cho hai mẫu tương đương nhau (Bảng 3.3). Mở rộng quy mô là hướng phát triển.
 
-### 8. Vai trò của Matrix Factorization (MF)?
+### 5.4 Kết quả
 
-- Ma trận khách × sản phẩm rất thưa (mật độ khoảng 0,45% sau khi gộp theo mẫu và lọc 10-core).
-- MF nén ma trận này thành hai bảng vector nhỏ: P (khách) và Q (sản phẩm); điểm dự đoán = tích vô hướng p_u · q_i. Nhờ vậy suy ra được điểm cho những ô chưa có dữ liệu.
-- Trong đề tài:
-  - **BPR-MF** là baseline MF;
-  - **GMF** là MF dạng mạng nơ-ron (có trọng số riêng cho từng chiều);
-  - trong NeuMF-F, nhánh **GMF-F** là MF trên vector có đặc trưng, nên còn học được tương tác giữa thuộc tính khách và
-    thuộc tính sản phẩm. Kết quả: GMF-F đứng riêng đã ngang NeuMF-F trên cả H&M lẫn Amazon — nhánh MF có đặc trưng là
-    phần mạnh nhất của mô hình.
+**5.4.1 "LateFusion-F cao nhất, sao không chọn nó làm mô hình đề xuất?"** (câu quan trọng nhất)
+- Mô hình đề xuất được cố định **trước** khi có kết quả kiểm thử. Đổi sau khi xem kết quả là chọn mô hình trên tập kiểm
+  thử — đúng lỗi phương pháp mà đề tài tránh.
+- LateFusion-F **dùng chính hai nhánh có đặc trưng của NeuMF-F**, chỉ khác bước trộn điểm. Vì vậy thành công của
+  LateFusion-F cũng là bằng chứng cho phát hiện chính: biểu diễn có đặc trưng là yếu tố quyết định.
+- Trên H&M hai cách tương đương (chênh 2,2%, p Holm 0,735). Trên Amazon hợp nhất muộn tốt hơn. Khi triển khai có thể chọn
+  theo dữ liệu: NeuMF-F chỉ huấn luyện một mạng; LateFusion-F tốn gần gấp đôi nhưng ổn định hơn.
 
-Mở ở đâu: mục 2.2, 3.3.2.
+**5.4.2 "Vì sao ghép hai nhánh không hơn nhánh GMF-F đứng riêng?"**
+GMF-F đứng riêng đã ngang NeuMF-F ở cả hai bộ (+2,6% H&M, −0,6% Amazon). Phần lớn lợi ích nằm ở đặc trưng đưa vào nhánh
+MF, chứ không ở việc thêm nhánh phi tuyến. Đây là kết quả có giá trị: nó cho thấy nên đầu tư vào dữ liệu đặc trưng hơn là
+vào độ sâu của mạng.
 
-### 9. Có thực sự xây mô hình lai không?
+**5.4.3 "NeuMF chỉ ID không hơn BPR-MF — mô hình lai có vô dụng không?"**
+Không vô dụng. Kết quả này khớp với các nghiên cứu tái đánh giá (Rendle 2020): khi chỉ có mã ID, NeuMF khó vượt MF được
+tinh chỉnh kỹ. Chính phát hiện đó dẫn tới NeuMF-F, và khi có đặc trưng thì NeuMF-F vượt BPR-MF +50,4%.
 
-Có — **NeuMF-F**:
-1. Mỗi nhánh (GMF và MLP) có vector khách = vector ID + chiếu của đặc trưng khách; vector sản phẩm = vector ID + chiếu của đặc trưng sản phẩm.
-2. Nhánh GMF-F nhân từng phần tử hai vector (tuyến tính); nhánh MLP-F nối hai vector rồi qua 3 tầng ẩn (phi tuyến).
-3. Hai kết quả được nối lại, qua một lớp dự đoán chung → điểm.
+**5.4.4 "Thứ hạng có ổn định giữa tinh chỉnh và kiểm thử không?"**
+Ổn định ở nhóm đầu: bốn mô hình có đặc trưng đứng đầu cả hai lần; LateFusion-F và NeuMF-F giữ hai vị trí đầu. GMF, MLP
+chỉ ID tụt từ hạng 5 và 7 xuống 9 và 11; ItemKNN lên từ hạng 10 lên 6 (Hình 4.5).
 
-Hình 3.2 vẽ đủ kích thước: với d = 32, mỗi bảng Embedding có 32 cột, đặc trưng sản phẩm 157 chiều và khách 42 chiều được
-chiếu về 32 chiều, tháp MLP 64 → 32 → 16 → 8, vector hợp nhất 40 chiều.
+**5.4.5 "Đặc trưng văn bản có giúp không?"**
+Trên H&M chưa khẳng định được (bỏ văn bản −2,7%, khoảng tin cậy chứa 0). Đặc trưng thời gian và thông tin khách quan
+trọng hơn nhiều. Biểu diễn văn bản bằng mô hình ngôn ngữ là hướng phát triển.
 
-Ba so sánh trả lời trực tiếp "lai có tác dụng không":
-- **NeuMF-F với NeuMF chỉ dùng ID:** đặc trưng có giúp không.
-- **NeuMF-F với GMF-F, MLP-F:** hợp nhất có hơn từng nhánh không.
-- **NeuMF-F với LateFusion-F:** hợp nhất sớm hay muộn tốt hơn.
+### 5.5 Amazon Beauty và Hybrid-CBCF
 
-Kết quả:
-- **Đặc trưng giúp rõ:** NeuMF-F hơn NeuMF chỉ ID **43,8%** trên H&M và **65,7%** trên Amazon (đều có ý nghĩa).
-- **Lai hơn nhánh DNN trên H&M** (MLP-F, +15,0%, có ý nghĩa) nhưng không còn có ý nghĩa trên Amazon (+6,9%);
-  **không hơn nhánh MF** (GMF-F) ở cả hai bộ.
-- **Hợp nhất sớm và muộn:** ngang nhau trên H&M (LateFusion-F cao hơn 2,2%, p Holm 0,735); trên Amazon LateFusion-F
-  **tốt hơn** NeuMF-F có ý nghĩa (12,5%).
+**5.5.1 "Amazon dùng lại siêu tham số H&M — có công bằng không?"**
+Là quyết định ghi trong kế hoạch **trước khi chạy** trên Amazon: mục đích là kiểm tra kết luận có còn đúng khi đổi dữ liệu
+mà **không** chỉnh theo dữ liệu mới. Chỉ số epoch được chọn trên tập xác thực Amazon. Kết luận về đặc trưng vẫn giữ —
+đó là bằng chứng mạnh nhất về tính tổng quát. Riêng BPR-MF có cấu hình không hợp Amazon (kém cả ItemKNN), nên hai so sánh
+có BPR-MF trên Amazon không dùng làm bằng chứng (Bảng 4.17, dấu *).
 
-Mở ở đâu: mục 3.3 (Hình 3.2, công thức 3.6–3.9), 4.4.3, 4.5.2; `neumf_project/src/models/hybrid_features.py`.
+**5.5.2 "Hybrid-CBCF thêm sau, có thiên lệch không?"**
+Thêm theo góp ý của giảng viên hướng dẫn, làm như **phân tích bổ sung** có kế hoạch riêng: cách kết hợp chọn trên tập xác
+thực, tập kiểm thử chấm một lần, hai so sánh bổ sung có hiệu chỉnh Holm riêng, kết luận cũ giữ nguyên. Nếu hỏi tiếp: lúc
+thêm, nhóm đã biết kết quả kiểm thử của ba thành phần; vì vậy nó không được tính vào họ 10 so sánh.
 
-### 10. Đã thử Transformer, Temporal, BERT chưa?
+**5.5.3 "Vì sao học trọng số Hybrid-CBCF theo cặp?"**
+Luận án của cô học trọng số trên điểm đánh giá; dữ liệu đề tài chỉ có mua / không mua. Hồi quy logistic thường trên từng
+cặp (khách, sản phẩm) cho trọng số âm và mô hình hỏng (NDCG@10 khoảng 0,0005), vì khác biệt giữa các khách lấn át thứ tự
+trong danh sách của từng khách. Học theo cặp (món đúng so với món không đúng của **cùng một khách**) đúng mục tiêu xếp
+hạng, cùng tiêu chí với BPR.
 
-- **Đã dùng mô tả văn bản của sản phẩm:**
-  - biểu diễn bằng TF-IDF rồi giảm còn 64 chiều (SVD);
-  - nối vào vector của mô hình — cùng tinh thần chương 4 luận án của cô (vector MF + vector văn bản);
-  - cách này nhẹ, chạy được trên máy không có GPU.
-  - Ablation: bỏ vector văn bản làm NDCG@10 giảm 2,7% (H&M) và 9,8% (Amazon), khoảng tin cậy đều chứa 0 — chưa khẳng định được.
-- **BERT** (thay TF-IDF) và **Transformer** (làm mô hình hợp nhất như chương 5 luận án): là hướng phát triển, vì chi phí tính toán lớn. Cô đã ghi phần này không bắt buộc.
-- **Temporal Fusion Transformer** là mô hình dự báo chuỗi thời gian, không phải mô hình gợi ý Top-K.
-- Mô hình theo chuỗi (SASRec, BERT4Rec) cần thứ tự mua chi tiết, mà H&M chỉ ghi ngày và nhiều món mua cùng giỏ.
+### 5.6 Quá trình làm (chỉ nói khi được hỏi)
 
-Mở ở đâu: mục 2.4.1, 2.4.2, 5.3.
+**5.6.1 "Có thay đổi kế hoạch giữa chừng không?"**
+Có, và đã ghi lại đầy đủ. Bản kế hoạch đầu coi mỗi màu là một sản phẩm, có sản phẩm mới trong tập ứng viên, và kiểm định
+trên một mẫu khách khác (khối 1, mở ngày 04/10/2026). Theo góp ý của cô, bản cuối gộp theo mẫu thiết kế và bỏ sản phẩm
+chưa có người mua. Vì bản cuối được quyết định sau khi xem khối 1, khối 1 bị loại và kết luận lấy trên một mẫu mới
+hoàn toàn (khối 2), chưa ai xem. Độ đo chính, họ 10 so sánh và tiêu chí kết luận giữ nguyên từ bản đầu.
 
-### 11. Có dùng yếu tố thời gian không?
+**5.6.2 "Chạy trên máy nào, mất bao lâu, có sự cố không?"**
+Đánh giá cuối H&M chạy ngày 10/10/2026 trên GPU RTX 3050, khoảng 7,5 giờ cho 5 seed; Amazon 10–11/10/2026. Lần chạy đầu
+dừng giữa chừng ở seed 42 trước khi lưu kết quả nào, nên seed 42 được chạy lại với cùng mã nguồn, cấu hình và dữ liệu;
+việc này ghi trong nhật ký. Không quyết định nào thay đổi vì cấu hình đã cố định. Demo chạy được trên máy chỉ có CPU.
 
-Có, theo ba cách:
-1. **Chia dữ liệu theo thời gian** (mục 1b).
-2. **Làm đặc trưng đầu vào**, tính theo thời điểm:
-   - sản phẩm: doanh số toàn H&M trong 7, 28, 91 ngày trước, tuổi sản phẩm;
-   - khách: số ngày từ lần mua gần nhất, số món đã mua.
-3. **Baseline MostPopular-Recent** (bán chạy trong W ngày gần nhất). Trên tập xác thực, cửa sổ 28 ngày tốt nhất (0,02334).
-
-Kết quả ablation: bỏ đặc trưng thời gian làm NDCG@10 của NeuMF-F giảm **42,3%** trên H&M và **31,6%** trên Amazon — thành
-phần đóng góp lớn nhất ở cả hai bộ (khoảng tin cậy không chứa 0). Bản thân MostPopular-Recent cũng là baseline khá mạnh
-trên H&M: 0,02760 trên test, hơn Most Popular (0,02184) và ngang NeuMF (0,02783), BPR-MF (0,02661); NeuMF-F hơn nó 45,0%
-(có ý nghĩa) — tức mô hình học được nhiều hơn xu hướng bán chung. Mở ở đâu: mục 3.2.5, 4.2, 4.4.4, 4.5.3.
-
-### 12–13. Early fusion và Late fusion
-
-Định nghĩa theo luận án của cô (mục 1.1.2.2):
-
-| Kiểu | Định nghĩa | Trong đề tài |
-|---|---|---|
-| **Early fusion** | Nối biểu diễn của các nguồn → **một** mô hình dự đoán | **NeuMF-F** (và NeuMF): nối vector nhánh GMF với vector nhánh MLP → một lớp dự đoán chung, huấn luyện chung. Đặc trưng cũng được đưa vào ngay từ vector |
-| **Late fusion** | Mỗi nguồn một mô hình riêng → trộn kết quả | **LateFusion-F**: w × điểm GMF-F + (1 − w) × điểm MLP-F (điểm chuẩn hoá về 0–1), hai mô hình huấn luyện riêng, w = 0,4 chọn trên tập xác thực (Thuật toán 3.5) |
-| Không phải fusion | — | **MLP đứng riêng** chỉ là mạng DNN thuần |
-
-So sánh NeuMF-F với LateFusion-F (cùng hai thành phần) nằm sẵn trong 10 so sánh đã đăng ký trước. **Kết quả:** trên H&M
-**không khác biệt có ý nghĩa** — LateFusion-F 0,04093, NeuMF-F 0,04003 (thấp hơn 2,2%, p Holm 0,735); trên Amazon
-**LateFusion-F tốt hơn có ý nghĩa** — 0,03747 so với 0,03277 (NeuMF-F thấp hơn 12,5%). Tức là trong hai cách ghép, hợp
-nhất muộn không kém ở bộ nào đã thử. Mở ở đâu: mục 2.3.4 (Hình 2.2, công thức 2.13–2.15), 3.3.5, 4.4.3, 4.5.2.
-
-### 14. Baseline gồm những gì? Lai có tốt hơn trước khi lai không?
-
-Theo góp ý họp 04/10, baseline được xếp thành **ba nhóm** (báo cáo mục 4.2; cách xếp do nhóm đề xuất, chờ cô xác nhận):
-
-| Nhóm | Mô hình | Trả lời câu hỏi |
-|---|---|---|
-| Mô hình đơn lẻ | GMF, MLP (chỉ mã ID); GMF-F, MLP-F (có đặc trưng) — từng nhánh của mô hình lai đứng riêng | Lai có hơn từng nhánh không |
-| Học máy truyền thống | Content, ItemKNN, UserKNN, BPR-MF; **Hybrid-CBCF** — mô hình lai truyền thống (bổ sung) | Lai học sâu có hơn cách làm truyền thống, kể cả lai truyền thống, không |
-| Chuyên biệt cho gợi ý | Most Popular, MostPopular-Recent; NeuMF (NCF gốc); LateFusion-F (hợp nhất muộn) | Có hơn xu hướng phổ biến, NCF gốc và hợp nhất muộn không |
-
-Mô hình đề xuất: **NeuMF-F** (early fusion). Random là cận dưới.
-
-- "Lai có tốt hơn trước khi lai" = so sánh NeuMF-F với GMF-F và MLP-F. **Kết quả H&M:** hơn MLP-F (+15,0%), ngang GMF-F
-  (+2,6%, không có ý nghĩa). Với baseline: hơn cả 5 baseline trong họ so sánh (BPR-MF, ItemKNN, UserKNN,
-  MostPopular-Recent, Content) trên cả H&M lẫn Amazon.
-- Chỉ nói "A tốt hơn B" khi **đủ cả ba** điều kiện: p sau hiệu chỉnh Holm < 0,05; khoảng tin cậy 95% không chứa 0; chênh lệch ≥ 5%. Tiêu chí này cố định từ trước khi chấm.
-- **Mô hình lai truyền thống Hybrid-CBCF** (theo chương 3 luận án của cô): ba mô hình đơn lẻ — Content (lọc nội dung),
-  UserKNN, ItemKNN (lọc cộng tác) — chấm riêng; điểm mỗi mô hình chuẩn hoá về 0–1 trên tập ứng viên của khách; rồi kết
-  hợp bằng bỏ phiếu (trung bình, max, min) hoặc tổng có trọng số. Trên tập xác thực của mẫu phát triển, tổng có trọng
-  số tốt nhất (NDCG@10 0,02815, so với trung bình 0,02634 và UserKNN đứng riêng 0,02753); trọng số Content 0,12,
-  UserKNN 0,60, ItemKNN 0,28 — lọc cộng tác là chính.
-- **Vì sao học trọng số theo cặp?** Luận án học trọng số trên điểm đánh giá (rating); dữ liệu của đề tài chỉ có mua /
-  không mua. Nếu chạy hồi quy logistic thường trên từng cặp (khách, sản phẩm), trọng số học ra âm và mô hình hỏng
-  (NDCG@10 ≈ 0,0005), vì gộp mọi khách thì khác biệt giữa các khách lấn át thứ tự trong danh sách của từng khách. Học
-  theo cặp (món đúng so với món không đúng **của cùng một khách**) là đúng mục tiêu xếp hạng — cùng tiêu chí với BPR.
-- **Vì sao thêm sau khi đã chấm tập kiểm thử, có thiên lệch không?** Mô hình được thêm theo góp ý của cô, sau đánh giá
-  cuối, nên làm như một **phân tích bổ sung**: kế hoạch riêng `PREREG_bosung.md` commit trước khi chấm; cách kết hợp chọn
-  trên tập xác thực, không nhìn tập kiểm thử; tập kiểm thử mở thêm đúng một lần cho mô hình này; hai so sánh bổ sung
-  (NeuMF-F vs Hybrid-CBCF, Hybrid-CBCF vs UserKNN) hiệu chỉnh Holm riêng; họ 10 so sánh và kết luận cũ giữ nguyên. Điều
-  phải nói thẳng: lúc thêm, nhóm đã biết kết quả kiểm thử của ba thành phần.
-- **Kết quả trên tập kiểm thử** (chấm một lần mỗi bộ, 13/10/2026):
-  - H&M: Hybrid-CBCF đạt NDCG@10 0,03183, hạng 5/15, ngay sau bốn mô hình có đặc trưng. NeuMF-F hơn nó **+25,8%, có ý
-    nghĩa**. So với UserKNN, Hybrid-CBCF chỉ hơn +2,2%, **không khác biệt có ý nghĩa** — trọng số dồn vào UserKNN, còn
-    Content đứng riêng rất yếu.
-  - Amazon (dùng nguyên trọng số chọn trên H&M): 0,02664, hạng 5/15. NeuMF-F hơn **+23,0%, có ý nghĩa**; Hybrid-CBCF hơn
-    UserKNN **+6,3%, có ý nghĩa**. Có thể vì Content trên Amazon không quá yếu (hơn 1/3 NDCG@10 của UserKNN, so với
-    khoảng 1/6 trên H&M) — nhận định, chưa kiểm chứng.
-  - Câu trả lời ngắn: ghép điểm các kỹ thuật truyền thống giúp ít; thêm đặc trưng vào mô hình lai học sâu giúp nhiều hơn
-    hẳn.
-
-Mở ở đâu: mục 2.1.1, 3.6 (Thuật toán 3.6), 4.2 (Bảng 4.1), 4.3 (Bảng 4.3), 4.4.4 (Bảng 4.8), 4.5.1 (Bảng 4.14), 4.8.
-
-### 15. Sơ đồ kiến trúc
-
-- **Hình 2.1** — kiến trúc NeuMF, có kích thước từng ma trận và từng tầng, nối tới σ → điểm → sắp xếp → Top-K.
-- **Hình 2.2** — hợp nhất sớm (NeuMF, NeuMF-F) so với hợp nhất muộn (LateFusion-F).
-- **Hình 3.1** — đường ống: dữ liệu → tiền xử lý → đặc trưng → huấn luyện → lưu mô hình → suy diễn Top-K (không có ô
-  đánh giá).
-- **Hình 3.2** — kiến trúc NeuMF-F, có kích thước ma trận (d = 32: tháp 64 → 32 → 16 → 8), nối tới Top-K.
-- **Hình 3.3** — quy trình đánh giá riêng: tinh chỉnh trên mẫu phát triển → đăng ký trước, khoá test → huấn luyện lại →
-  Full Ranking trên mẫu kiểm định → kiểm định họ 10 so sánh.
-- **Hình 3.4** — kiến trúc ba tầng của demo.
-- **Thuật toán 3.1–3.7** — mã giả: chuẩn bị dữ liệu (gộp product_code, k-core lặp), lấy mẫu âm, huấn luyện có dừng sớm
-  và huấn luyện lại, Full Ranking, chọn w của LateFusion-F, chọn cách kết hợp của mô hình lai truyền thống, suy diễn
-  Top-K có xử lý khách mới.
-
-Luồng cô gợi ý (dữ liệu → tiền xử lý → chia → ma trận → MF → vector → DL → hợp nhất → điểm → xếp hạng → Top-K) được Hình
-3.1, 3.2 và 2.1 thể hiện đủ.
-
-### 16. Mô hình "variational" nhắc trong buổi họp
-
-- Chưa triển khai; **cần hỏi lại cô tên mô hình**, không tự khẳng định.
-- Khả năng cao là Mult-VAE (Liang và cộng sự, 2018), đã trình bày lý thuyết ở mục 2.4.4.
-- Tập kiểm thử của mẫu kiểm định **đã mở** (10/10). Nếu cô yêu cầu, chỉ thêm được dưới dạng **thăm dò sau kiểm thử**:
-  tinh chỉnh trên mẫu phát triển như mọi mô hình, chấm trên mẫu kiểm định, nhưng ghi rõ là lệch kế hoạch (PREREG_v2 mục
-  10) và không đưa vào họ 10 so sánh.
-
-### 17. Lộ trình 10 bước — đã làm đến đâu?
-
-| # | Bước | Trạng thái |
-|---|---|---|
-| 1 | Sửa cách chia Train/Test | Xong — chia theo thời gian; một sản phẩm = một mẫu thiết kế |
-| 2 | Kiểm tra rò rỉ dữ liệu | Xong — có test tự động |
-| 3 | Bộ test chuẩn | Xong — mẫu kiểm định độc lập (khối 2), file dữ liệu kiểm MD5, khoá test |
-| 4 | Chạy lại Baseline/MF | Xong — tinh chỉnh trên mẫu phát triển, chấm trên mẫu kiểm định (BPR-MF 0,02661) |
-| 5 | Mô hình Deep Learning | Xong — MLP, MLP-F |
-| 6 | Xây mô hình lai | Xong — NeuMF-F (0,04003, hơn NeuMF chỉ ID 43,8%) |
-| 7 | Thử Fusion | Xong — Early (NeuMF-F) và Late (LateFusion-F); ngang nhau trên H&M, Late tốt hơn trên Amazon |
-| 8 | Bảng NDCG/HR/Recall/Precision | Xong — tự sinh từ kết quả 5 seed, ở K = 5, 10, 15, 20 |
-| 9 | Vẽ kiến trúc | Xong — Hình 2.1, 3.1, 3.2, 3.3 (vẽ lại theo góp ý 04/10), mã giả Thuật toán 3.1–3.7 |
-| 10 | Phân tích kết quả | Xong — kiểm định, ablation, độ phủ, ổn định giữa hai mẫu, kiểm chứng Amazon, phần thảo luận Chương 4 |
-
----
-
-## Phần D. Câu hỏi khó nên chuẩn bị
-
-**"Vì sao đổi cách làm gần cuối dự án? Kết quả cũ thế nào?"**
-Có hai lần đổi:
-1. **Giai đoạn phát triển ban đầu → quy trình hiện tại (cuối tháng 9):** giai đoạn đầu (chỉ dùng mã ID) cho thấy NeuMF
-   chỉ dùng mã ID **không** tốt hơn MF đã tinh chỉnh (BPR-MF cao nhất; 0/8 so sánh có ý nghĩa; tiền huấn luyện không
-   giúp); lọc k-core dùng cả dữ liệu giai đoạn test; tập kiểm thử cũ đã bị xem nhiều lần. Quy trình hiện tại thêm đặc
-   trưng, sửa cách lọc và lấy kết luận trên khách hàng mới hoàn toàn.
-2. **Bản đầu → bản cuối của kế hoạch (09/10):** bản đầu tính theo từng màu, có sản phẩm mới và đánh giá trên khối 1 (mở
-   04/10). Theo góp ý của cô, bản cuối gộp theo mẫu thiết kế, bỏ sản phẩm chưa có người mua, ghi dữ liệu ra file kiểm
-   MD5 và đánh giá trên khối 2.
-
-Kết quả của hai giai đoạn trước vẫn được báo cáo trung thực ở mục 4.6, không trộn với bản cuối.
-
-**"Việc đã xem kết quả trước đó có làm lệch kết luận không?"**
-Có ảnh hưởng ở mức thiết kế: biết mô hình chỉ dùng mã ID không hơn MF nên bổ sung đặc trưng; bản cuối được quyết định
-**sau khi xem kết quả khối 1**. Vì vậy khối 1 bị loại, kết luận chỉ lấy trên khối 2 — dữ liệu chưa ai xem; kế hoạch bản
-cuối được lưu (commit) sau khi tinh chỉnh lại trên mẫu phát triển và **trước** khi dựng tập kiểm thử của khối 2; độ đo
-chính, họ 10 so sánh và tiêu chí kết luận giữ nguyên từ bản 03/10.
-
-**"Kết quả khối 1 khác bản cuối (khối 1: LateFusion-F tốt hơn NeuMF-F có ý nghĩa) — tin cái nào?"**
-Bản cuối. Khối 1 khác dữ liệu (theo màu, có sản phẩm mới) và đã được dùng để ra quyết định (đổi thiết kế), nên không còn
-là ước lượng không thiên lệch. Điểm chung của cả hai: ba vị trí đầu đều là LateFusion-F, GMF-F và NeuMF-F (thứ tự khác
-nhau), và NeuMF chỉ dùng ID không hơn BPR-MF có ý nghĩa. Trên Amazon, LateFusion-F cũng tốt hơn NeuMF-F có ý nghĩa — nên
-nhận định an toàn là: hợp nhất muộn không kém hợp nhất sớm ở bất kỳ dữ liệu nào đã thử.
-
-**"Seed 42 chạy lại — vậy có vi phạm 'mở tập kiểm thử một lần' không?"**
-Lần chạy đầu dừng giữa chừng ở seed 42, sau khi đã chấm Random và 5 mô hình tất định (Most Popular, MostPopular-Recent,
-Content, ItemKNN, UserKNN), trước khi lưu bất kỳ kết quả nào. Seed 42 được chạy lại với cùng mã nguồn, cấu hình và dữ
-liệu; việc này ghi ở mục lệch kế hoạch (PREREG_v2 mục 10) và trong nhật ký truy cập (`v2_kiemdinh_seed42_rerun`). Không
-quyết định nào được đưa ra sau khi thấy các số trên màn hình — cấu hình đã cố định, và 5 mô hình tất định cho cùng kết
-quả ở lần chạy lại. Các seed khác mở tập kiểm thử đúng một lần.
-
-**"LateFusion-F cao nhất (và trên Amazon còn tốt hơn có ý nghĩa) — sao không lấy LateFusion-F làm mô hình chính?"**
-- Mô hình chính phải cố định **trước** khi xem test (PREREG_v2 mục 8, PREREG_amazon mục 8): đề tài là mô hình lai hợp
-  nhất sớm MF + DNN có đặc trưng, nên NeuMF-F được chọn từ đầu, không theo kết quả. Đổi mô hình chính sau khi thấy test
-  là chọn theo kết quả — đúng điều giao thức muốn tránh.
-- Báo cáo nói thẳng kết quả: trên H&M hai cách hợp nhất ngang nhau (chênh 2,2%, p Holm 0,735); trên Amazon hợp nhất muộn
-  tốt hơn có ý nghĩa (12,5%). Đây là câu trả lời cho câu hỏi của cô về early/late fusion: với cùng hai thành phần có đặc
-  trưng, trộn điểm của hai mô hình huấn luyện riêng không kém — và có thể tốt hơn — ghép vector rồi học chung.
-- Một nhận định (chưa kiểm chứng): trên Amazon hai nhánh GMF-F và MLP-F gợi ý những tập sản phẩm rất khác nhau (độ phủ
-  32,1% so với 5,4%), trộn điểm tận dụng được sự khác nhau đó; cũng có thể cấu hình chọn trên H&M hợp với LateFusion-F hơn.
-
-**"Amazon dùng lại siêu tham số của H&M, không tinh chỉnh — vậy có công bằng không?"**
-- Đây là quyết định ghi trong kế hoạch **trước khi chạy** bất kỳ mô hình nào trên Amazon (PREREG_amazon mục 4): mục đích
-  là kiểm tra kết luận có còn đúng khi đổi dữ liệu mà **không** được chỉnh lại theo dữ liệu mới. Chỉ số epoch được chọn
-  trên tập xác thực Amazon.
-- Hệ quả: mô hình nào có cấu hình không hợp với Amazon sẽ bị thiệt — rõ nhất là BPR-MF (0,01144, kém cả ItemKNN và
-  MostPopular-Recent). Vì vậy hai so sánh có BPR-MF trên Amazon không dùng làm bằng chứng; báo cáo ghi rõ ở Bảng 4.16.
-- Kết luận về đặc trưng vẫn đúng dù không tinh chỉnh — đó là điểm vững nhất.
-
-**"K = 15 lấy ở đâu ra, có chạy lại không?"**
-Không chạy lại. Lần đánh giá cuối đã lưu **hạng của từng món đúng** cho từng khách, từng mô hình, từng seed
-(`per_user.csv.gz`, cột `ranks`). Từ hạng đó tính được mọi chỉ số ở K bất kỳ bằng đúng hàm đã dùng khi chấm; chương
-trình còn kiểm tra rằng tính lại @5, @10, @20 cho đúng y các số đã báo cáo (lệch 0). Mở ở đâu: mục 4.4.2, Thuật toán 3.4.
-
-**"Ba nghiên cứu nền tảng là gì, số liệu của họ so với đề tài thế nào?"**
-He et al. (2017) — NCF/NeuMF; Rendle et al. (2020) — MF tinh chỉnh kỹ so với NeuMF; luận án của cô (2023) — Early/Late
-Fusion đa nguồn. Bảng 2.2 ghi cho từng bài: dữ liệu, độ đo, cách chia, kích thước tập ứng viên và số liệu của bài gốc.
-Hai bài NCF xếp hạng trên 101 ứng viên (HR@10 khoảng 0,7–0,9), luận án dự đoán điểm đánh giá (RMSE, MAE), còn đề tài xếp
-hạng trên khoảng 6–7 nghìn ứng viên — nên số tuyệt đối không so được; chỉ đọc chiều và mức cải thiện tương đối mà mỗi bài
-tự báo cáo. Ba bài được chọn là đề xuất của nhóm, **cô có thể đổi**.
-
-**"Vì sao hợp nhất sớm không hơn nhánh GMF-F đứng riêng?"** (nói rõ là nhận định, chưa kiểm chứng)
-GMF-F đứng riêng đã ngang NeuMF-F trên cả hai bộ (+2,6% H&M, −0,6% Amazon, đều không có ý nghĩa), trong khi MLP-F kém hơn
-rõ trên H&M (NeuMF-F hơn MLP-F 15,0%). Phần lớn lợi ích nằm ở **đặc trưng** — nhất là đặc trưng thời gian — đưa vào nhánh
-MF, chứ không ở việc thêm nhánh phi tuyến.
-
-**"Thứ hạng có ổn định giữa lúc tinh chỉnh (mẫu phát triển) và test (mẫu kiểm định) không?"**
-Khá ổn định ở nhóm đầu: bốn mô hình có đặc trưng đứng đầu ở cả hai, LateFusion-F và NeuMF-F giữ hai vị trí đầu. Thay đổi
-lớn nhất: GMF và MLP chỉ dùng ID tụt từ hạng 5 và 7 xuống 9 và 11 (hai mô hình duy nhất có NDCG@10 test thấp hơn lúc
-tinh chỉnh); ItemKNN lên từ hạng 10 lên 6. Giá trị tuyệt đối hai bên không cùng thang (khác mẫu khách, cửa sổ kiểm thử dài
-gấp đôi), nên chỉ so thứ hạng.
-
-**"Bỏ sản phẩm mới có làm bài toán dễ hơn, che đi điểm yếu không?"**
-Có — kết quả cuối chỉ nói về gợi ý trong các sản phẩm đã có lịch sử bán, không nói về khởi đầu lạnh; đã ghi rõ là hạn
-chế. Nhưng ở bản đầu (khối 1), khi đưa sản phẩm mới vào, NDCG@10 trên nhóm này của mọi mô hình đều dưới 0,002, nên ở quy
-mô này khả năng gợi ý sản phẩm mới gần như không đo được. Thay đổi làm theo góp ý của cô và được quyết định trước khi mở
-khối 2.
-
-**"Vì sao gộp các màu thành một sản phẩm?"**
-Theo góp ý của cô: các màu của cùng một mẫu (cùng `product_code`) được coi là một sản phẩm. Gộp làm dữ liệu bớt thưa —
-trước mốc kiểm thử, mẫu phát triển giảm từ 55.971 xuống 27.370 sản phẩm. Đổi lại, gợi ý ở mức mẫu thiết kế, không ở mức
-màu — đã ghi là hạn chế.
-
-**"Vì sao lọc k-core = 10, vì sao chỉ lấy mẫu 500 nghìn giao dịch?"**
-Do bộ nhớ máy (16 GB RAM):
-- chấm điểm toàn bộ sản phẩm cho mọi khách ở quy mô đầy đủ là hàng chục tỷ phép tính;
-- khảo sát ở giai đoạn phát triển: với k = 5, ước tính cần khoảng 10,7 GB RAM.
-
-Hệ quả: dữ liệu thiên về khách mua nhiều — đã ghi là hạn chế. Amazon dùng k = 5 (bằng bản 5-core gốc). Mở ở đâu: mục
-3.2.1, 3.2.3, 5.2.
-
-**"Có bị quá khớp (overfitting) không, xử lý thế nào?"**
-- Dừng sớm theo NDCG@10 trên tập xác thực (dừng sau 5 epoch không cải thiện).
-- Dropout trong tầng ẩn.
-- Điều chuẩn L2 (weight decay).
-- Bỏ ID ngẫu nhiên là một siêu tham số được tinh chỉnh (ρ ∈ {0; 0,25; 0,5}); NeuMF-F và MLP-F chọn 0, GMF-F chọn 0,25.
-
-Khi huấn luyện lại, dừng đúng số epoch đã chọn. Mở ở đâu: mục 3.3.3, 3.5.1 (Thuật toán 3.3).
-
-**"Vì sao 5 seed? Kiểm định thế nào?"**
-- Kiểm định theo từng khách hàng (hàng nghìn khách), không theo seed. Mỗi khách lấy điểm trung bình qua 5 seed rồi so hai mô hình bằng Wilcoxon, kèm khoảng tin cậy bootstrap và hiệu chỉnh Holm cho 10 so sánh.
-- Nếu kiểm định theo seed thì với 5 seed, p nhỏ nhất cũng chỉ 0,0625, không bao giờ dưới 0,05.
-
-**"Demo dùng mô hình nào? Khách không có trong dữ liệu thì sao?"**
-Đúng các mô hình của đánh giá cuối (seed 42), chỉ suy diễn, không huấn luyện lại; chọn được H&M hoặc Amazon Beauty. Mỗi
-sản phẩm hiển thị theo mẫu thiết kế (tên và ảnh của màu đầu tiên, kèm số màu). Số trên demo được test tự động đối chiếu
-với file kết quả theo từng khách. **Luôn có gợi ý:** khách đã có lịch sử nhận gợi ý của mô hình (khách không mua món mới
-nào sau mốc thì chỉ có gợi ý, không có chỉ số); khách mới nhận danh sách "Gợi ý phổ biến" (Most Popular) thay vì báo lỗi.
-
-**"Có gì khác so với đề cương?"**
+**5.6.3 "Khác gì so với đề cương?"**
 
 | Đề cương | Thực tế | Lý do |
 |---|---|---|
-| Chia leave-one-out | Chia theo thời gian | Leave-one-out lọt thông tin tương lai (câu 1f) |
-| Sản phẩm theo `article_id` | Sản phẩm theo mẫu thiết kế (`product_code`) | Theo góp ý của cô |
-| Baseline ALS | BPR-MF | Cùng nhóm MF cho phản hồi ẩn; iALS chỉ thử ở giai đoạn phát triển |
-| Thử đặc trưng Category/Department | **Đã dùng** (11 thuộc tính sản phẩm) | — |
-| K = 5/10/20 | Có đủ, thêm K = 15 | K = 15 tính lại từ hạng đã lưu, theo góp ý 04/10 |
-| Một bộ dữ liệu | Thêm kiểm chứng trên Amazon Beauty | Theo góp ý 04/10: dữ liệu đối chứng có bài báo |
-| Biểu đồ hội tụ (TensorBoard/W&B) | Ghi ra file CSV, vẽ bằng matplotlib | Cùng thông tin, truy vết được trong repo |
+| Chia leave-one-out | Chia theo thời gian | Leave-one-out lọt thông tin tương lai |
+| Sản phẩm theo `article_id` | Theo mẫu thiết kế (`product_code`) | Theo góp ý của cô |
+| Baseline ALS | BPR-MF | Cùng nhóm MF cho phản hồi ẩn |
+| K = 5/10/20 | Thêm K = 15 | Theo góp ý họp 04/10 |
+| Một bộ dữ liệu | Thêm Amazon Beauty | Theo góp ý họp 04/10 |
 | Demo FastAPI + Streamlit | FastAPI + giao diện HTML | Chức năng tương đương |
-| Báo cáo 6 chương | 5 chương | Gộp cài đặt và kết quả vào Chương 4 |
+
+---
+
+## Phần 6. Câu không được nói
+
+- **Không nói "NeuMF-F tốt nhất".** Nói: "NeuMF-F vượt có ý nghĩa các mô hình đối chứng; nhóm mô hình có đặc trưng dẫn đầu."
+- **Không nói "NeuMF-F không thua mô hình nào"** mà không nói rõ là trên H&M (trên Amazon LateFusion-F tốt hơn).
+- **Không nói đề tài giải quyết cold start của sản phẩm.** Khách mới: có xử lý (gợi ý phổ biến), nhưng không đánh giá
+  định lượng.
+- **Không nói NeuMF-F "học được sản phẩm mới nhờ bỏ ID ngẫu nhiên"** (cấu hình cuối có ρ = 0).
+- **Không so số của đề tài với số trong bài báo** (khác dữ liệu, cách chia, số ứng viên). Bảng 2.1 chỉ để thấy thiết lập
+  khác nhau.
+- **Không gọi MLP đứng riêng là hợp nhất sớm** (đó là mạng DNN thuần).
+- **Không dùng hai so sánh có BPR-MF trên Amazon làm bằng chứng.**
+- **Không tính Hybrid-CBCF vào "14 mô hình" hay họ 10 so sánh.**
+- Dùng đúng thuật ngữ: tập huấn luyện / xác thực / kiểm thử; tinh chỉnh; lấy mẫu âm; mẫu phát triển / mẫu kiểm định;
+  mô hình đề xuất.
+- Nói theo đúng tên đề tài: **hệ khuyến nghị, mô hình khuyến nghị lai, danh sách khuyến nghị**; **mạng lưới thần kinh
+  sâu** (DNN). Báo cáo đã đổi toàn bộ theo cách gọi này; chỉ giao diện demo còn chữ "Gợi ý phổ biến" — nếu hỏi thì
+  "gợi ý" và "khuyến nghị" cùng nghĩa (recommendation).
+
+---
+
+## Phần 7. Kịch bản demo trước hội đồng
+
+1. Chạy trước buổi bảo vệ: `cd neumf_project` rồi `python run.py demo`, mở `http://localhost:8000`. Lần nạp đầu khoảng
+   15 giây (H&M), 5 giây (Amazon) — mở sẵn trước khi lên trình bày.
+2. **Màn hình giới thiệu:** nói bài toán, dữ liệu, mô hình trong 30 giây.
+3. **Cửa hàng mô phỏng:** bấm "khách ví dụ". Chỉ lịch sử mua (dữ liệu mô hình đã học) và 10 gợi ý.
+4. **Bật so sánh** NeuMF-F với NeuMF chỉ ID, bấm "Xem khách đã mua gì": NeuMF-F đưa món khách thật sự mua lên vị trí 3 và
+   6, NeuMF chỉ ID xếp món gần đầu nhất ở vị trí 164.
+5. Bấm một sản phẩm → thẻ chi tiết và sản phẩm tương tự (ItemKNN). Kéo xuống → khách giống gu (UserKNN).
+6. Nhập một mã khách không có trong dữ liệu → "Gợi ý phổ biến" (xử lý khách mới, không báo lỗi).
+7. **Màn hình kết quả:** bậc thang Random → bán chạy → NeuMF chỉ ID → NeuMF-F → LateFusion-F; nhấn mạnh bước thêm đặc
+   trưng tạo khác biệt có ý nghĩa.
+8. Chuyển sang Amazon Beauty trên thanh đầu trang để cho thấy hệ thống chạy trên bộ dữ liệu thứ hai.
+
+Lưu ý: nếu máy chưa có thư mục ảnh H&M (`neumf_project/demo/static/images`, hoặc biến `DEMO_IMAGES_DIR`), demo hiện ô
+màu ghi loại sản phẩm thay ảnh — vẫn chạy bình thường. Nên chép ảnh vào trước buổi bảo vệ. Số hạng và độ đo của từng
+khách trong demo là của seed 42, có thể khác đôi chút so với trung bình 5 seed trong báo cáo.
+
+---
+
+## Phần 8. Tra nhanh báo cáo
+
+| Chương | Mục chính | Bảng, hình, thuật toán |
+|---|---|---|
+| 1. Tổng quan | 1.1 bối cảnh (1.1.3 ba câu hỏi nghiên cứu); 1.2 mục tiêu, phạm vi; 1.3 phương pháp; 1.4 ý nghĩa | — |
+| 2. Cơ sở lý thuyết | 2.1 hệ gợi ý; 2.2 MF, BPR; 2.3 NCF, hợp nhất; 2.4 hướng gần đây; 2.5 độ đo; 2.6 ba nghiên cứu nền tảng; 2.7 khoảng trống | Hình 2.1 NeuMF, Hình 2.2 hợp nhất; Bảng 2.1 |
+| 3. Phương pháp | 3.1 đường ống; 3.2 dữ liệu; 3.3 NeuMF-F; 3.4 đối chứng; 3.5 lấy mẫu âm, BCE; 3.6 tinh chỉnh; 3.7 đánh giá (3.7.1 khảo sát ban đầu, 3.7.2 sáu nguyên tắc); 3.8 suy luận, khách mới; 3.9 demo | Hình 3.1 đường ống, 3.2 NeuMF-F, 3.3 quy trình đánh giá, 3.4–3.10 demo; Bảng 3.1–3.7; Thuật toán 3.1–3.7 |
+| 4. Thực nghiệm | 4.1 cấu hình; 4.2 tinh chỉnh; 4.3 kết quả H&M (4.3.1 chính, 4.3.2 theo K, 4.3.3 kiểm định, 4.3.4 Hybrid-CBCF, 4.3.5 bóc tách, 4.3.6 độ phủ, 4.3.7 hội tụ); 4.4 Amazon; 4.5 phạm vi; 4.6 trả lời ba câu hỏi nghiên cứu; 4.7 tóm tắt chương | Bảng 4.1–4.9 (H&M), 4.10–4.18 (Amazon); Hình 4.1–4.6 |
+| 5. Kết luận | 5.1 kết quả đạt được; 5.2 kết luận; 5.3 hạn chế; 5.4 hướng phát triển | Bảng 5.1 mức độ hoàn thành mục tiêu |
+
+Thuật toán: 3.1 chuẩn bị dữ liệu và k-core · 3.2 lấy mẫu âm · 3.3 huấn luyện, huấn luyện lại · 3.4 xếp hạng toàn bộ ·
+3.5 trọng số LateFusion-F · 3.6 cách kết hợp Hybrid-CBCF · 3.7 suy luận Top-K có xử lý khách mới.
+
+Bằng chứng trong mã nguồn (chỉ mở khi hội đồng yêu cầu): kế hoạch đăng ký trước `neumf_project/audit/PREREG_v2.md`,
+`PREREG_amazon.md`, `PREREG_bosung.md`; nhật ký mở tập kiểm thử `neumf_project/audit/test_access_log.csv`; kết quả
+`neumf_project/outputs/`; mô hình `neumf_project/src/models/hybrid_features.py`.

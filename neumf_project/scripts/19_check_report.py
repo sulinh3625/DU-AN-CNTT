@@ -173,8 +173,6 @@ def claims(d: Data):
         w = HB["params"]["weights"]  # Content, UserKNN, ItemKNN
         return w[1] + w[2] > w[0] and max(range(3), key=lambda i: w[i]) == 1
 
-    knn_same = lambda r: all(r["components_check"][k]["users_same_ranks"] == r["components_check"][k]["users"]  # noqa: E731
-                             for k in ("userknn", "itemknn"))
     SB2, GB2, BB2, SBA, GBA, BBA = d.SB2, d.GB2, d.BB2, d.SBA, d.GBA, d.BBA
     # họ so sánh bổ sung: B1 = (neumf_f, hybrid), B2 = (hybrid, userknn)
     bs = lambda G, a, b, col="verdict": G.loc[(a, b), col]  # noqa: E731
@@ -190,7 +188,6 @@ def claims(d: Data):
     # tất cả so sánh có ý nghĩa trên H&M đều là "NeuMF-F tốt hơn"
     hm_sig_all_neumff = lambda: all(v == NOT_SIG or (v == BETTER and a == "neumf_f")  # noqa: E731
                                     for (a, _), v in G2["verdict"].items())
-    comp_content = lambda r: r["components_check"]["content"]  # noqa: E731
     return [
         # ---- C4: kết quả trên H&M
         ("content/C4.tex", "Giá trị tuyệt đối của các độ đo thấp", "v2: NDCG@10 cao nhất < 0,05",
@@ -202,7 +199,7 @@ def claims(d: Data):
         ("content/C4.tex", "Trên tập xác thực của mẫu phát triển, bốn mô hình có đặc trưng đứng đầu",
          "v2: 4 mô hình có đặc trưng đứng đầu NDCG@10 xác thực, LateFusion-F và NeuMF-F dẫn đầu",
          lambda: set(val()[:4]) == FEAT and val()[:2] == ["late_f", "neumf_f"], ["S2"]),
-        ("content/C4.tex", "mô hình đối chứng không dùng mạng nơ-ron cao nhất là UserKNN",
+        ("content/C4.tex", "mô hình đối chứng không dùng mạng lưới thần kinh cao nhất là UserKNN",
          "v2: baseline cao nhất lúc tinh chỉnh: UserKNN, rồi BPR-MF, ItemKNN",
          lambda: [m for m in val() if m in BASELINES][:3] == ["userknn", "bpr", "itemknn"], ["S2"]),
         ("content/C4.tex", "LateFusion-F đạt NDCG@10 cao nhất (\\VRes{LateF}", "v2: LateFusion-F cao nhất, NeuMF-F thứ hai",
@@ -227,7 +224,7 @@ def claims(d: Data):
          "v2: Most Popular, MostPopular-Recent có độ phủ top-10 thấp nhất",
          lambda: set(cov().nsmallest(2).index) == {"popularity", "recent_pop"}, ["B2"]),
         ("content/C4.tex", "MLP chỉ dùng ID có độ phủ thấp nhất",
-         "v2: độ phủ — MLP thấp nhất trong mô hình cá nhân hoá; NeuMF-F cao nhất trong mạng nơ-ron, sau ItemKNN, Content",
+         "v2: độ phủ — MLP thấp nhất trong mô hình cá nhân hoá; NeuMF-F cao nhất trong mạng lưới thần kinh, sau ItemKNN, Content",
          lambda: personal().idxmin() == "mlp" and cov()[NEURAL].idxmax() == "neumf_f"
          and order(personal())[:3] == ["content", "itemknn", "neumf_f"], ["B2"]),
         ("content/C4.tex", "LateFusion-F và NeuMF-F giữ hai vị trí đầu",
@@ -263,7 +260,7 @@ def claims(d: Data):
         ("content/C4.tex", "LateFusion-F có NDCG@10 trung bình cao nhất nhưng không khác biệt có ý nghĩa",
          "v2: LateFusion-F cao nhất, không khác biệt có ý nghĩa với NeuMF-F",
          lambda: test()[0] == "late_f" and verdict("neumf_f", "late_f") == NOT_SIG, ["S2", "G2"]),
-        ("content/C4.tex", "chỉ được ủng hộ so với nhánh MLP-F", "v2: NeuMF-F tốt hơn MLP-F, không khác biệt với GMF-F "
+        ("content/C4.tex", "hợp nhất sớm tốt hơn nhánh MLP-F trên H\\&M", "v2: NeuMF-F tốt hơn MLP-F, không khác biệt với GMF-F "
          "và LateFusion-F", fusion, ["G2"]),
         # ---- C5: kết luận
         ("content/C5.tex", "nhánh MLP-F và các mô hình đối chứng trong họ so sánh",
@@ -276,15 +273,15 @@ def claims(d: Data):
         ("content/C5.tex", "không khác biệt có ý nghĩa với nhánh GMF-F đứng riêng trên cả hai bộ dữ liệu",
          "NeuMF-F không khác biệt có ý nghĩa với GMF-F trên H&M và Amazon",
          lambda: verdict("neumf_f", "gmf_f") == NOT_SIG == a_verdict("neumf_f", "gmf_f"), ["G2", "GA"]),
-        ("content/C5.tex", "và kém LateFusion-F trên Amazon",
+        ("content/C5.tex", "tương đương trên H\\&M và tốt hơn trên Amazon",
          "NeuMF-F ~ LateFusion-F trên H&M; LateFusion-F tốt hơn có ý nghĩa trên Amazon",
          lambda: verdict("neumf_f", "late_f") == NOT_SIG and a_late_wins(), ["G2", "GA"]),
         ("content/C5.tex", "NeuMF-F cũng vượt một mô hình lai truyền thống",
          "bổ sung: NeuMF-F tốt hơn Hybrid-CBCF có ý nghĩa trên H&M và Amazon", b1_both, ["GB2", "GBA"]),
-        ("content/C5.tex", "chỉ dùng mã ID khó vượt nhân tử hóa ma trận được tinh chỉnh kỹ",
+        ("content/C5.tex", "chỉ dùng mã ID khó vượt nhân tử hoá ma trận được tinh chỉnh kỹ",
          "v2: NeuMF vs BPR-MF không khác biệt có ý nghĩa", lambda: verdict("neumf", "bpr") == NOT_SIG, ["G2"]),
         # ---- tóm tắt (không chứa số liệu): một câu kết luận chung
-        ("frontmatter/abstract.tex", "bổ sung đặc trưng giúp mô hình gợi ý tốt hơn rõ rệt so với khi chỉ dùng mã định danh",
+        ("frontmatter/abstract.tex", "bổ sung đặc trưng giúp mô hình khuyến nghị tốt hơn rõ rệt so với khi chỉ dùng mã định danh",
          "NeuMF-F tốt hơn NeuMF chỉ dùng ID có ý nghĩa trên H&M và Amazon",
          lambda: verdict("neumf_f", "neumf") == BETTER == a_verdict("neumf_f", "neumf"), ["G2", "GA"]),
         ("frontmatter/abstract_english.tex", "adding features clearly improves recommendation quality",
@@ -303,14 +300,14 @@ def claims(d: Data):
          "Amazon: LateFusion-F cao nhất, rồi GMF-F, NeuMF-F", lambda: a_test()[:3] == ["late_f", "gmf_f", "neumf_f"],
          ["SA"]),
         ("content/C4.tex",
-         "Như trên H\\&M, bốn mô hình có đặc trưng đứng đầu; trong các mô hình đăng ký trước, tiếp theo là UserKNN",
+         "Trong các mô hình đăng ký trước, tiếp theo là UserKNN",
          "Amazon: 4 mô hình có đặc trưng đứng đầu, rồi UserKNN, ItemKNN",
          lambda: set(a_test()[:4]) == FEAT and a_test()[4:6] == ["userknn", "itemknn"], ["SA"]),
         ("content/C4.tex", "BPR-MF chỉ đạt", "Amazon: BPR-MF thấp hơn ItemKNN, UserKNN và MostPopular-Recent",
          a_bpr_weak, ["SA"]),
         ("content/C4.tex", "LateFusion-F cao nhất ở mọi $K$ và với cả bốn độ đo",
          "Amazon theo K: LateFusion-F cao nhất ở mọi K và mọi độ đo", a_late_top_all_k, ["KA"]),
-        ("content/C4.tex", "NeuMF-F và GMF-F bám sát nhau và đổi chỗ tùy độ đo",
+        ("content/C4.tex", "NeuMF-F và GMF-F bám sát nhau và đổi chỗ tuỳ độ đo",
          "Amazon theo K: GMF-F cao hơn NeuMF-F ở NDCG@K; NeuMF-F cao hơn ở Recall/HR/Precision @10, @15, @20",
          a_k_swap, ["KA"]),
         ("content/C4.tex", "Kết luận thứ nhất, về đặc trưng so với chỉ dùng ID, còn đúng",
@@ -344,19 +341,16 @@ def claims(d: Data):
         ("content/C4.tex", "hợp nhất muộn không kém hơn ở bộ dữ liệu nào",
          "LateFusion-F có NDCG@10 trung bình không thấp hơn NeuMF-F trên cả H&M và Amazon", late_not_worse,
          ["S2", "SA"]),
-        ("content/C4.tex", "bị bác bỏ ở so sánh với hợp nhất muộn trên Amazon",
-         "Amazon: LateFusion-F tốt hơn NeuMF-F có ý nghĩa", a_late_wins, ["GA"]),
+        ("content/C4.tex", "tương đương trên H\\&M và tốt hơn trên Amazon",
+         "NeuMF-F ~ LateFusion-F trên H&M; LateFusion-F tốt hơn có ý nghĩa trên Amazon",
+         lambda: verdict("neumf_f", "late_f") == NOT_SIG and a_late_wins(), ["G2", "GA"]),
         # ---- bổ sung: mô hình lai truyền thống
         ("content/C4.tex", "Bỏ phiếu lấy trung bình đạt NDCG@10",
          "bổ sung (tập xác thực): trung bình < UserKNN; min, max < trung bình; trọng số cao nhất, hơn mọi thành phần",
          hybrid_val_order, ["HB", "HL"]),
         ("content/C4.tex", "lọc cộng tác giữ vai trò chính",
          "bổ sung: trọng số UserKNN + ItemKNN lớn hơn Content, UserKNN lớn nhất", cf_weights_lead, ["HB"]),
-        ("content/C4.tex", "cho kết quả trùng lần đánh giá cuối, trừ Content lệch nhẹ",
-         "bổ sung (H&M): UserKNN, ItemKNN chấm lại trùng hạng ở mọi khách; Content lệch dưới 0,001",
-         lambda: knn_same(d.RB2) and abs(comp_content(d.RB2)["NDCG@10"] - comp_content(d.RB2)["registered_NDCG10"])
-         < 0.001, ["RB2"]),
-        ("content/C4.tex", "Như vậy Hybrid-CBCF đứng ngay sau bốn mô hình có đặc trưng",
+        ("content/C4.tex", "đứng ngay sau bốn mô hình có đặc trưng và trên mọi mô hình đối chứng còn lại",
          "bổ sung (H&M): 4 mô hình có đặc trưng đứng đầu, Hybrid-CBCF thứ năm trong 15 mô hình",
          lambda: hyb_fifth(SB2), ["SB2"]),
         ("content/C4.tex", "mô hình lai học sâu có đặc trưng vượt rõ mô hình lai truyền thống",
@@ -370,7 +364,7 @@ def claims(d: Data):
          lambda: BB2.loc["userknn", "coverage10"] < BB2.loc["hybrid", "coverage10"] < BB2.loc["itemknn", "coverage10"]
          and order(BB2["coverage10"].drop(["random", "popularity", "recent_pop"]))[:3]
          == ["content", "itemknn", "neumf_f"], ["BB2"]),
-        ("content/C4.tex", "tức cũng đứng ngay sau bốn mô hình có đặc trưng",
+        ("content/C4.tex", "cũng đứng ngay sau bốn mô hình có đặc trưng",
          "bổ sung (Amazon): 4 mô hình có đặc trưng đứng đầu, Hybrid-CBCF thứ năm trong 15 mô hình",
          lambda: hyb_fifth(SBA), ["SBA"]),
         ("content/C4.tex", "Khác H\\&M, trên Amazon Hybrid-CBCF tốt hơn UserKNN có ý nghĩa",

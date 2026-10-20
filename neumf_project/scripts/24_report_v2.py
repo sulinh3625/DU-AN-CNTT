@@ -71,7 +71,7 @@ COMPARISONS_BS = [("neumf_f", "hybrid"), ("hybrid", "userknn")]
 GROUPS = [("Mô hình đề xuất", ("neumf_f",)),
           ("Nhóm 1: mô hình đơn lẻ", ("gmf_f", "mlp_f", "gmf", "mlp")),
           ("Nhóm 2: học máy truyền thống", ("hybrid", "userknn", "itemknn", "bpr", "content")),
-          ("Nhóm 3: chuyên biệt cho gợi ý", ("late_f", "neumf", "recent_pop", "popularity")),
+          ("Nhóm 3: chuyên biệt cho khuyến nghị", ("late_f", "neumf", "recent_pop", "popularity")),
           ("Cận dưới", ("random",))]
 GROUP_COLOR = dict(zip([g for g, _ in GROUPS], ["#2a78d6", "#8fb8ea", "#1baf7a", "#eb6834", "#898781"]))
 GROUP_OF = {m: g for g, ms in GROUPS for m in ms}

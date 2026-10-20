@@ -147,7 +147,7 @@ báo cáo (mục 10.4).
 | Code và kiểm thử | 100% | 108/108 test; demo 14/14 (mục 10.3) |
 | Demo | 100% | Luôn có gợi ý; 3 ảnh trong báo cáo |
 | Báo cáo | 98% | Đủ kết quả, kể cả Hybrid-CBCF; đã viết lại văn phong và rà câu dài (14/10); tóm tắt Việt, Anh mỗi bản một trang; còn chỉnh theo ý cô cho 5 câu hỏi |
-| Chuẩn bị bảo vệ | Một phần | `van_dap.md` xong; chưa làm slide, chưa gửi cô checkpoint |
+| Chuẩn bị bảo vệ | Một phần | `van_dap.md` viết lại cho hội đồng (20/10); chưa làm slide, chưa gửi cô checkpoint |
 
 ---
 
@@ -910,7 +910,7 @@ Số mục, bảng, hình và thuật toán trong bảng này là số của bá
 
 ## 12. Đối chiếu 17 góp ý trước của GVHD
 
-Đây là 17 góp ý có từ trước buổi họp 04/10 (trả lời chi tiết trong `van_dap.md`). Mức: **Đạt** = đã làm và có số liệu
+Đây là 17 góp ý có từ trước buổi họp 04/10 (cách trả lời trước hội đồng ở `van_dap.md` Phần 5). Mức: **Đạt** = đã làm và có số liệu
 hoặc bằng chứng; **Một phần** = làm được một phần, phần còn lại ghi là hạn chế; **Chưa** = chưa làm.
 
 | # | Góp ý | Mức | Bằng chứng | Còn lại |
@@ -918,9 +918,9 @@ hoặc bằng chứng; **Một phần** = làm được một phần, phần cò
 | 1 | Kết quả cao bất thường, rò rỉ | **Đạt** | Chia theo thời gian, k-core trước mốc, đặc trưng theo thời điểm, mẫu kiểm định độc lập, khoá kiểm thử; test tự động. NDCG@10 cao nhất trên H&M là 0,0409 — hợp lý với khoảng 6,7 nghìn ứng viên | — |
 | 2 | Bộ kiểm thử chuẩn chung | **Đạt** | 14 mô hình cùng một tập kiểm thử của mẫu kiểm định (3.165 khách, 10.285 cặp đúng), cùng ứng viên, cùng 5 seed, cùng file dữ liệu kiểm MD5; Amazon cũng vậy (2.644 khách) | — |
 | 3 | Top-K khách và sản phẩm tương đồng | **Đạt** | UserKNN (k = 200) hạng 5/14 — baseline mạnh nhất trên cả hai bộ; ItemKNN hạng 6; demo có thẻ 10 khách tương đồng | — |
-| 4 | Lọc cộng tác hoạt động thế nào | **Đạt** | Báo cáo mục 2.1.2, 3.3.1; `van_dap.md` câu 4 | — |
+| 4 | Lọc cộng tác hoạt động thế nào | **Đạt** | Báo cáo mục 2.1.2, 3.3.1; `van_dap.md` câu 5.2.7 | — |
 | 5 | Khởi đầu lạnh | **Một phần** | Khách mới: gợi ý sản phẩm phổ biến (báo cáo mục 3.7, demo). Bản đầu kế hoạch (khối 1) đã thử đưa sản phẩm mới vào đánh giá: NDCG@10 trên nhóm này của mọi mô hình dưới 0,002; bản cuối bỏ sản phẩm chưa có người mua theo góp ý | Không đo chất lượng gợi ý cho khách mới và sản phẩm mới — ghi là hạn chế và hướng phát triển |
-| 6 | NDCG và các chỉ số | **Đạt** | NDCG, Recall, HR, Precision ở K = 5, 10, 15, 20 cho cả hai bộ; ví dụ tính tay trong `van_dap.md` | — |
+| 6 | NDCG và các chỉ số | **Đạt** | NDCG, Recall, HR, Precision ở K = 5, 10, 15, 20 cho cả hai bộ; ví dụ tính tay ở `van_dap.md` câu 5.3.5 | — |
 | 7 | Trình bày kết quả | **Đạt** | Bảng, hình, macro tự sinh; `ket_qua.txt`; 73/73 câu nhận xét khớp số liệu; PDF 99 trang | — |
 | 8 | Vai trò của MF | **Đạt** | BPR-MF, GMF; nhánh GMF-F là thành phần mạnh nhất của NeuMF-F (GMF-F ngang NeuMF-F trên cả hai bộ) | — |
 | 9 | Mô hình lai thực sự | **Đạt** | NeuMF-F = MF + DNN + đặc trưng; hơn NeuMF chỉ dùng ID 43,8% (H&M) và 65,7% (Amazon), có ý nghĩa | — |
@@ -931,7 +931,7 @@ hoặc bằng chứng; **Một phần** = làm được một phần, phần cò
 | 14 | Baseline; lai có hơn trước khi lai | **Đạt** | Trên H&M, NeuMF-F hơn NeuMF, MLP-F, BPR-MF, ItemKNN, UserKNN, MostPopular-Recent, Content; ngang GMF-F. Trên Amazon hơn NeuMF và cả năm baseline. Phân tích bổ sung: NeuMF-F hơn mô hình lai truyền thống Hybrid-CBCF trên cả hai bộ (+25,8%, +23,0%) | Baseline đã trình bày theo ba nhóm; chờ cô xác nhận cách xếp |
 | 15 | Sơ đồ kiến trúc | **Đạt** | Hình 2.1 (NeuMF) và 3.2 (NeuMF-F) vẽ lại theo góp ý 04/10; Hình 3.1 (đường ống) và 3.3 (quy trình đánh giá) mới; Hình 2.2 (hai cách hợp nhất), 3.4 (kiến trúc demo); 3 ảnh demo (Hình 3.5–3.7) | — |
 | 16 | Mô hình "variational" | **Chưa** | Lý thuyết Mult-VAE ở báo cáo mục 2.4.4; hướng phát triển ở báo cáo mục 5.3 | Buổi họp 04/10 không nêu lại. Tập kiểm thử đã mở, nên nếu cô yêu cầu thì chỉ thêm được dưới dạng **thăm dò sau kiểm thử**, ghi lệch kế hoạch, không đưa vào họ 10 so sánh |
-| 17 | Lộ trình 10 bước | **Đạt** | Bước 1–10 đều có kết quả, kể cả phần thảo luận Chương 4 (`van_dap.md` câu 17) | — |
+| 17 | Lộ trình 10 bước | **Đạt** | Bước 1–10 đều có kết quả, kể cả phần thảo luận Chương 4 | — |
 
 **Tổng: 14/17 Đạt, 2/17 Một phần, 1/17 Chưa.**
 
