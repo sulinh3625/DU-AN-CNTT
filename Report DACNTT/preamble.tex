@@ -215,8 +215,11 @@
 % (and, in, pages, andothers). Dùng chuỗi tiếng Anh, riêng "and"/"et al." đổi sang tiếng Việt.
 \DeclareLanguageMapping{vietnamese}{english}
 \DefineBibliographyStrings{vietnamese}{andothers={và cộng sự}, and={và}}
-\usepackage{xurl} 
-\let\parencite\cite 
+\usepackage{xurl}
+% Cho phép ngắt DOI/URL sau chữ số và chữ hoa (DOI 10.1109/ICDM... từng tràn lề phải)
+\setcounter{biburlnumpenalty}{100}
+\setcounter{biburlucpenalty}{100}
+\let\parencite\cite
 
 
 

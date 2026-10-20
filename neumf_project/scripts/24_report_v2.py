@@ -948,9 +948,7 @@ def plot_ablation(abl: pd.DataFrame, fig_dir: Path):
     ax.set_title("NDCG@10", fontsize=10.5, color=INK, loc="left")
     style(ax, "x")
     ax.set_yticks(y, names, fontsize=9.5, color=INK)
-    ax.invert_yaxis()
-    fig.suptitle(f"Phân tích bóc tách NeuMF-F —{TEXT['test_fig'].lower()[0]}{TEXT['test_fig'][1:]} "
-                 f"(seed {int(abl.iloc[0]['seed'])})", fontsize=12, color=INK, y=1.04)
+    ax.invert_yaxis()  # không đặt suptitle: chú thích LaTeX đã là tiêu đề của hình
     fig.savefig(fig_dir / "v2_ablation.png", dpi=200, bbox_inches="tight", facecolor=SURFACE)
     plt.close(fig)
 

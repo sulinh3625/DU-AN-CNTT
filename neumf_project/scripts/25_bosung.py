@@ -109,8 +109,9 @@ def tune(args) -> None:
     feats = [hyb.features(r.user, r.candidates) for r in st.records]
     labels = [np.isin(r.candidates, r.positives) for r in st.records]
     users = [r.user for r in st.records]
+    comps = ", ".join(f"{k} {reg[k]['params']}" for k in COMPONENTS)
     print(f"[{V.NAME}] mẫu phát triển, tập xác thực: {len(st.records):,} người dùng, {len(st.targets):,} cặp đúng | "
-          f"thành phần {', '.join(f'{k} {reg[k]["params"]}' for k in COMPONENTS)} | code {prov['code_hash']} "
+          f"thành phần {comps} | code {prov['code_hash']} "
           f"({time.time() - t0:.0f}s)", flush=True)
     # Ba thành phần đứng riêng trên cùng máy, cùng tệp đặc trưng (min–max không đổi thứ tự): để đặt cạnh các cách kết
     # hợp; Content có thể lệch nhẹ so với lần tinh chỉnh đã đăng ký (PREREG_bosung mục 3).
