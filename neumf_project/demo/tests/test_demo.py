@@ -129,8 +129,25 @@ def test_neighbors_are_sorted_and_counted(vctx):
         assert {t["item_idx"] for t in n["bought_target"]} <= set(vctx.target_items[u])
 
 
+def test_similar_items_follow_itemknn(vctx):
+    """Sản phẩm tương tự của thẻ chi tiết = láng giềng ItemKNN: độ tương đồng giảm dần, khớp công thức cosine có hệ số co,
+    không gồm chính sản phẩm; sản phẩm H&M có mô tả gốc."""
+    knn = vctx.scorers["ItemKNN"].fn
+    X = knn.X.tocsc()
+    i = int(np.argmax(vctx.train_item_counts))  # sản phẩm bán chạy nhất: chắc chắn có láng giềng
+    rows = vctx.similar_items(i, 6)
+    assert len(rows) == 6 and i not in {r["item_idx"] for r in rows}
+    sims = [r["similarity"] for r in rows]
+    assert sims == sorted(sims, reverse=True)
+    buyers = lambda j: set(X.indices[X.indptr[j]:X.indptr[j + 1]])  # noqa: E731
+    for r in rows:
+        a, b = buyers(i), buyers(r["item_idx"])
+        assert r["similarity"] == pytest.approx(len(a & b) / (np.sqrt(len(a) * len(b)) + knn.shrink), abs=1e-4)
+    assert vctx.item_info(i)["description"]
+
+
 def test_best_ranks_match_recommend(vctx):
-    """Hạng dùng để lọc khách gợi ý trúng = đúng hạng mà màn Kiểm thử mô hình hiển thị cho từng khách."""
+    """Hạng dùng để lọc khách gợi ý trúng = đúng hạng mà màn Gợi ý theo khách hiển thị cho từng khách."""
     users = vctx.target_users[:12]
     for m in ("GMF", "MostPopular", "LateFusion-F"):
         got = inference.best_ranks(vctx, m, users, chunk=5)
@@ -247,3 +264,99 @@ def test_dataset_without_final_results_reports_command_not_training(tmp_path, mo
     assert e.value.status_code == 503 and "amazon-final" in e.value.detail
     listed = {d["key"]: d for d in routes.datasets()}
     assert listed["amazon"]["label"] == "Amazon Beauty" and listed["amazon"]["reason"] == why
+
+
+def test_showcase_users_hit_for_a_and_miss_for_b(vctx, monkeypatch):
+    """Nút "Xem ví dụ": mô hình a có món đích trong top-k, mô hình b thì không; xếp theo mức chênh hạng giảm dần; hạng
+    hiển thị trùng hạng đã lưu ở đánh giá cuối với cả hai mô hình."""
+    from demo.backend import routes
+
+    monkeypatch.setattr(routes, "_cache", {"hm": vctx})
+    out = routes.showcase(a="NeuMF-F", b="NeuMF", k=10, dataset="hm", limit=20)
+    items = out["items"]
+    assert items and len(items) <= 20
+    assert all(r["best_rank"] <= 10 < r["rank_b"] for r in items)
+    gaps = [r["rank_b"] - r["best_rank"] for r in items]
+    assert gaps == sorted(gaps, reverse=True)
+    r = items[0]
+    for model, want in (("NeuMF-F", r["best_rank"]), ("NeuMF", r["rank_b"])):
+        ev = inference.recommend(vctx, model, vctx.resolve_user(r["customer_id"]), 10)["evaluation"]
+        assert ev["rank"] == want and ev["final"]["rank"] == want
+
+
+# ------------------------------------------------------------- trang Tổng quan / Kết quả đánh giá
+REPORT_TABLES = data_context.PROJECT_ROOT.parent / "Report DACNTT" / "content" / "tables"
+
+
+def _report_tools():
+    """KEY, vn, pct, ABL của scripts/24_report_v2.py — đúng cách báo cáo định dạng số."""
+    import importlib.util
+
+    spec = importlib.util.spec_from_file_location("report_v2", data_context.PROJECT_ROOT / "scripts" / "24_report_v2.py")
+    mod = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(mod)
+    return mod
+
+
+def _macros(path):
+    import re
+
+    text = path.read_text(encoding="utf-8")
+    return dict(re.findall(r"\\csname ([^\\]+)\\endcsname\{([^\n]*)\}\n", text))
+
+
+@pytest.mark.parametrize("dataset,prefix,macro_file", [("hm", "v", "v2/results_v2_macros.tex"),
+                                                        ("amazon", "a", "amazon/results_amazon_macros.tex")])
+def test_results_page_matches_report_macros(dataset, prefix, macro_file):
+    """Mọi số của /api/results trùng macro số liệu trong báo cáo (cùng định dạng): NDCG@10, HR@10 từng mô hình,
+    chênh lệch của họ 10 so sánh, thay đổi của bóc tách."""
+    from types import SimpleNamespace
+
+    from demo.backend import overview
+
+    root = data_context.results_dir(dataset)
+    if not (root / "summary.csv").exists() or not (REPORT_TABLES / macro_file).exists():
+        pytest.skip("Chưa có kết quả đánh giá cuối hoặc macro của báo cáo")
+    info = json.loads((root / "data.json").read_text(encoding="utf-8"))
+    fake = SimpleNamespace(results_dir=root, dataset=dataset, run_metadata={"test_start": info.get("test_start", "")})
+    res = overview.results(fake)
+    rep, mac = _report_tools(), _macros(REPORT_TABLES / macro_file)
+    for m in res["models"]:
+        key = rep.KEY[m["key"]]
+        assert rep.vn(m["ndcg10"]) == mac[f"{prefix}res-{key}-NDCG10"], (dataset, m["name"])
+        assert rep.vn(m["hr10"]) == mac[f"{prefix}res-{key}-HR10"], (dataset, m["name"])
+    for p in res["pairs"]:
+        assert rep.pct(p["rel"]) == mac[f"{prefix}sig-{p['id']}-rel"], (dataset, p["id"])
+    for a in res["ablation"]:
+        if a["key"] in rep.ABL:
+            assert rep.pct(a["rel"]) == mac[f"{prefix}abl-{rep.ABL[a['key']][0]}-rel"], (dataset, a["key"])
+    assert res["users"] == info["test"]["users"]
+
+
+def test_research_answers_follow_significance():
+    """Câu trả lời của ba câu hỏi suy ra từ kết luận kiểm định NeuMF-F với từng mô hình, không gõ tay."""
+    from demo.backend.overview import answers
+
+    def pairs(**v):
+        return [{"a": "neumf_f", "b": b, "verdict": x} for b, x in v.items()]
+
+    got = {a["id"]: a["answer"] for a in answers(pairs(neumf="A", mlp_f="A", gmf_f="=", late_f="="))}
+    assert got == {"features": "yes", "branches": "part", "fusion": "no"}
+    got = {a["id"]: a["answer"] for a in answers(pairs(neumf="A", mlp_f="=", gmf_f="=", late_f="B"))}
+    assert got == {"features": "yes", "branches": "no", "fusion": "no"}
+    got = {a["id"]: a["answer"] for a in answers(pairs(neumf="=", mlp_f="A", gmf_f="A", late_f="A"))}
+    assert got == {"features": "no", "branches": "yes", "fusion": "yes"}
+
+
+def test_overview_example_matches_saved_ranks(vctx, monkeypatch):
+    """Khách ví dụ của trang Tổng quan: NeuMF-F có món đích trong top-10, NeuMF thì không, và hạng của cả hai mô hình
+    trùng hạng đã lưu ở đánh giá cuối."""
+    from demo.backend import routes
+
+    monkeypatch.setattr(routes, "_cache", {"hm": vctx})
+    monkeypatch.setattr(routes, "_examples", {})
+    ex = routes.example(dataset="hm")
+    assert any(it["is_target"] for it in ex["a"]["items"]) and not any(it["is_target"] for it in ex["b"]["items"])
+    for r in (ex["a"], ex["b"]):
+        assert r["evaluation"]["final"]["match"]
+    assert 6 <= ex["profile"]["train_count"] <= 40 and len(ex["history"]) == ex["profile"]["train_count"]

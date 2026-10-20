@@ -11,7 +11,7 @@ from scipy import sparse
 
 from src.data_pipeline.feature_dataset import FeatureTrainDataset
 from src.data_pipeline.features import (COLOUR_COLS, ITEM_CAT_COLS, ITEM_TIME_DIM, Catalog, DailySales,
-                                        group_by_product, item_time_features, to_day, user_time_features)
+                                        group_by_product, item_time_features, user_time_features)
 from src.data_pipeline.protocol_v2 import build_v2
 from src.models.hybrid_features import ContentProfile, MaskedScoreFn, MaskedScorer, NeuMFF, RecentPopularity
 

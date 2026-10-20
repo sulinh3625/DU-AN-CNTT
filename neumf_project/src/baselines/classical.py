@@ -112,7 +112,7 @@ class BPRMFBaseline:
         np.savez(path, P=self.P, Q=self.Q)
 
     @classmethod
-    def load(cls, path) -> "BPRMFBaseline":
+    def load(cls, path) -> BPRMFBaseline:
         npz = np.load(path)
         model = cls.__new__(cls)
         model.P, model.Q = npz["P"], npz["Q"]

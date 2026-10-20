@@ -7,39 +7,32 @@
 \subsection{Quan sát ban đầu từ dữ liệu và động lực chọn đề tài}
 \label{subsec:thuctrang}
 
-Đề tài xuất phát từ việc khảo sát bộ dữ liệu H\&M Personalized Fashion Recommendations \parencite{hm2022kaggle}. Tệp giao dịch gốc gồm 31.788.324 lượt mua của 1.362.281 khách hàng trên 104.547 sản phẩm thời trang trong hai năm (mục~\ref{subsec:hm_description}). Dữ liệu này có hai đặc điểm đặt ra yêu cầu cho mô hình gợi ý.
+Đề tài xuất phát từ việc khảo sát bộ dữ liệu H\&M Personalized Fashion Recommendations \parencite{hm2022kaggle}. Tệp giao dịch gốc có khoảng 31,8 triệu lượt mua của 1,36 triệu khách hàng trên 104.547 sản phẩm thời trang trong hai năm.
 
-Thứ nhất, ma trận tương tác rất thưa. Mỗi khách chỉ mua một phần rất nhỏ của danh mục, và lượt mua tập trung vào một nhóm nhỏ sản phẩm phổ biến. Ngay cả sau khi lọc $k$-core, mật độ của toàn bộ dữ liệu chỉ khoảng 0,03\% (Bảng~\ref{tab:kcore_hm_full}).
+Bộ dữ liệu có hai đặc điểm gây khó cho hệ gợi ý. Thứ nhất, ma trận tương tác rất thưa: mỗi khách chỉ mua một phần rất nhỏ của danh mục, nên kể cả sau khi lọc $k$-core, mật độ ma trận chỉ khoảng 0,03--0,05\%. Thứ hai, nhu cầu thời trang thay đổi nhanh theo mùa và theo xu hướng, nên sản phẩm bán chạy trong vài tuần gần đây chưa chắc là sản phẩm bán nhiều nhất trong hai năm.
 
-Thứ hai, nhu cầu thời trang thay đổi theo mùa và theo xu hướng. Sản phẩm bán chạy trong vài tuần gần đây chưa chắc là sản phẩm bán nhiều nhất trong hai năm.
+Một mô hình chỉ học từ mã khách hàng và mã sản phẩm không dùng được những thông tin như doanh số gần đây, loại sản phẩm hay nhóm khách hàng. Trong khi đó, bộ dữ liệu có sẵn thuộc tính và mô tả văn bản của sản phẩm, thông tin khách hàng và ngày mua.
 
-Một mô hình chỉ học từ mã khách hàng và mã sản phẩm không khai thác được những thông tin như xu hướng bán gần đây, loại sản phẩm hay nhóm khách hàng. Trong khi đó, bộ dữ liệu có sẵn thuộc tính và mô tả văn bản của sản phẩm, thông tin khách hàng và doanh số theo ngày.
+Từ đó, đề tài đặt câu hỏi: mô hình lai giữa nhân tử hóa ma trận và mạng nơ-ron sâu, có bổ sung đặc trưng sản phẩm, khách hàng và thời gian, có gợi ý tốt hơn các mô hình đối chứng được tinh chỉnh đầy đủ không, và có tốt hơn chính các thành phần của nó không. Đề tài trả lời câu hỏi này bằng thực nghiệm trên dữ liệu H\&M, với dữ liệu chia theo thời gian để mô hình không dùng thông tin tương lai.
 
-Từ đó, đề tài đặt hai câu hỏi nghiên cứu cho mô hình lai giữa nhân tử hóa ma trận và mạng nơ-ron sâu, có bổ sung đặc trưng sản phẩm, khách hàng và thời gian. Trên dữ liệu giao dịch thời trang thực tế, mô hình này có gợi ý tốt hơn các mô hình đối chứng được tinh chỉnh đầy đủ không? Nó có tốt hơn chính các thành phần của nó không? Đề tài xây dựng và đánh giá mô hình trực tiếp trên dữ liệu H\&M, với cách chia dữ liệu và quy trình đánh giá riêng.
-Về ứng dụng, gợi ý cá nhân hóa giúp khách hàng tìm sản phẩm nhanh hơn và giúp doanh nghiệp đưa đúng sản phẩm tới đúng khách. Với ngành thời trang, gợi ý còn cần phản ánh xu hướng theo thời gian, không chỉ sở thích lâu dài của khách.
-
-\subsection{Giới hạn của nhân tử hóa ma trận trên dữ liệu này}
+\subsection{Hạn chế của nhân tử hóa ma trận truyền thống}
 \label{subsec:hanche_cf}
 
-Cách tiếp cận cơ bản cho bài toán trên là nhân tử hóa ma trận (\textit{matrix factorization}, MF) \parencite{koren2009matrix}. Mỗi người dùng $u$ và sản phẩm $i$ được gán một vector ẩn $p_u, q_i \in \mathbb{R}^d$, và mức độ tương tác được dự đoán bằng tích vô hướng:
+Cách tiếp cận cơ bản cho lọc cộng tác là nhân tử hóa ma trận (\textit{matrix factorization}, MF) \parencite{koren2009matrix}. Mỗi người dùng $u$ và sản phẩm $i$ được gán một vector ẩn $p_u, q_i \in \mathbb{R}^d$, và mức độ quan tâm được dự đoán bằng tích vô hướng:
 \begin{equation}
     \hat{y}_{ui} = p_u^T q_i = \sum_{f=1}^{d} p_{uf} q_{if}
     \label{eq:mf_intro}
 \end{equation}
-Công thức này có hai giới hạn trên dữ liệu H\&M.
-
-Giới hạn thứ nhất là về biểu diễn. Tích vô hướng cộng các chiều ẩn với trọng số như nhau và chỉ mô hình hóa được tương tác tuyến tính. He và cộng sự \parencite{he2017ncf} lấy đây làm động cơ để bổ sung một thành phần phi tuyến.
-
-Giới hạn thứ hai là về thông tin. Vector $q_i$ chỉ học được từ các lần sản phẩm $i$ được mua, nên sản phẩm ít người mua có biểu diễn kém tin cậy, còn sản phẩm chưa ai mua thì không có biểu diễn. Những gì đã biết về chính sản phẩm và về khách hàng không được dùng. Giới hạn này không khắc phục được bằng cách làm mô hình phức tạp hơn mà cần bổ sung thông tin.
+Công thức này có hai hạn chế trên dữ liệu H\&M. Về biểu diễn, tích vô hướng cộng các chiều ẩn với trọng số như nhau nên chỉ mô hình hóa được tương tác tuyến tính; \textcite{he2017ncf} lấy đây làm động cơ để bổ sung một thành phần phi tuyến. Về thông tin, vector $q_i$ chỉ học được từ các lần sản phẩm $i$ được mua, nên sản phẩm ít người mua có biểu diễn kém tin cậy, còn sản phẩm chưa ai mua thì không có biểu diễn. Hạn chế thứ hai không khắc phục được bằng cách tăng số chiều hay số epoch, mà cần bổ sung thông tin về sản phẩm và khách hàng.
 
 \subsection{Lựa chọn mô hình: NeuMF bổ sung đặc trưng (NeuMF-F)}
 \label{subsec:sumenh_neumf}
 
-NeuMF khắc phục giới hạn thứ nhất bằng cách kết hợp chứ không thay thế MF. Nhánh GMF (\textit{generalized matrix factorization}) giữ khả năng học tương tác tuyến tính. Nhánh MLP (\textit{multi-layer perceptron}) chạy song song để học tương tác phi tuyến. Hai nhánh được hợp nhất ở lớp dự đoán. Tuy nhiên, ở giai đoạn phát triển của đề tài, NeuMF chỉ dùng mã ID không vượt được MF đã tinh chỉnh trên dữ liệu H\&M (mục~\ref{sec:v1_history}).
+NeuMF khắc phục hạn chế về biểu diễn bằng hai nhánh chạy song song. Nhánh GMF (\textit{generalized matrix factorization}) học tương tác tuyến tính qua tích từng phần tử của hai vector ẩn. Nhánh MLP (\textit{multi-layer perceptron}) học tương tác phi tuyến. Hai nhánh được ghép ở lớp dự đoán. Tuy nhiên, ở giai đoạn phát triển của đề tài, NeuMF chỉ dùng mã ID không vượt được MF đã tinh chỉnh trên dữ liệu H\&M.
 
-Đề tài vì vậy xây dựng mô hình đề xuất NeuMF-F. Mô hình giữ nguyên hai nhánh GMF và MLP của NeuMF, nhưng biểu diễn mỗi khách hàng và sản phẩm bằng tổng của vector nhúng mã ID và một phép chiếu của đặc trưng. Đặc trưng gồm thuộc tính và mô tả sản phẩm, thông tin khách hàng, doanh số và thời gian. Chúng cho mô hình biết điều mà mã ID không mang: sản phẩm thuộc loại gì, có đang bán chạy không, khách thuộc nhóm nào và mua gần đây hay không.
+Đề tài vì vậy xây dựng mô hình đề xuất NeuMF-F. Mô hình giữ nguyên hai nhánh GMF và MLP, nhưng biểu diễn mỗi khách hàng và sản phẩm bằng tổng của vector nhúng mã ID và một phép chiếu tuyến tính của đặc trưng. Đặc trưng gồm thuộc tính và mô tả văn bản của sản phẩm, thông tin khách hàng, doanh số gần đây của sản phẩm và nhịp mua của khách.
 
-Cấu trúc hai nhánh tường minh cho phép tách riêng từng đóng góp bằng so sánh trực tiếp. So với NeuMF chỉ dùng ID, ta đo được đóng góp của đặc trưng. So với từng nhánh đứng riêng, ta đo được lợi ích của việc hợp nhất. So với hợp nhất muộn của cùng hai nhánh, ta so được hai cách hợp nhất.
+Cấu trúc hai nhánh tường minh cũng cho phép tách riêng từng đóng góp. So sánh NeuMF-F với NeuMF chỉ dùng ID cho biết đóng góp của đặc trưng. So sánh với từng nhánh đứng riêng (GMF-F, MLP-F) cho biết lợi ích của việc ghép hai nhánh. So sánh với hợp nhất muộn (LateFusion-F) cho biết cách ghép nào phù hợp hơn.
 
 \section{Mục tiêu và phạm vi nghiên cứu}
 \label{sec:muctieu_phamvi}
@@ -60,22 +53,22 @@ Cấu trúc hai nhánh tường minh cho phép tách riêng từng đóng góp b
 
 Đối tượng nghiên cứu là kiến trúc NCF (GMF, MLP, NeuMF), mở rộng có đặc trưng của nó (NeuMF-F), hai cách hợp nhất nhân tử hóa ma trận với mạng nơ-ron sâu và các phương pháp đánh giá hệ gợi ý Top-$K$.
 
-Dữ liệu chính là bộ H\&M, gồm tệp giao dịch, tệp danh mục sản phẩm và tệp thông tin khách hàng. Khảo sát quy mô dùng toàn bộ 31,8 triệu giao dịch. Huấn luyện và đánh giá dùng hai mẫu, mỗi mẫu khoảng 500.000 giao dịch của khoảng 21.000 khách hàng chọn ngẫu nhiên theo hàm băm. Hai mẫu không có khách chung và giữ trọn lịch sử hai năm của mỗi khách (mục~\ref{subsec:hm_sampling}). Mỗi sản phẩm là một mẫu thiết kế (\texttt{product\_code}), tức mọi màu của cùng một mẫu được gộp lại. Ảnh sản phẩm không được dùng làm đầu vào của mô hình. Để kiểm chứng, toàn bộ đánh giá cuối được chạy lại trên bộ Amazon Beauty \parencite{mcauley2015image} với cấu hình đã chọn trên H\&M (mục~\ref{subsec:amazon_data}).
+Dữ liệu chính là bộ H\&M, gồm tệp giao dịch, tệp danh mục sản phẩm và tệp thông tin khách hàng. Khảo sát quy mô dùng toàn bộ 31,8 triệu giao dịch. Huấn luyện và đánh giá dùng hai mẫu, mỗi mẫu khoảng 500.000 giao dịch của khoảng 21.000 khách hàng chọn ngẫu nhiên theo hàm băm. Hai mẫu không có khách chung và giữ trọn lịch sử hai năm của mỗi khách. Mỗi sản phẩm là một mẫu thiết kế (\texttt{product\_code}), tức mọi màu của cùng một mẫu được gộp lại. Ảnh sản phẩm không được dùng làm đầu vào của mô hình. Để kiểm chứng, toàn bộ đánh giá cuối được chạy lại trên bộ Amazon Beauty \parencite{mcauley2015image} với cấu hình đã chọn trên H\&M.
 
 Tín hiệu tương tác là phản hồi ẩn nhị phân từ lịch sử mua hàng (đã mua hoặc chưa mua), kèm ngày mua.
 
-Khởi đầu lạnh nằm ngoài phạm vi đánh giá định lượng. Sản phẩm chưa có người mua trước thời điểm dự đoán và khách hàng chưa có lịch sử mua đều không được đánh giá (mục~\ref{subsec:split_sampling}). Khi hệ thống được sử dụng, khách hàng mới nhận danh sách sản phẩm phổ biến, còn khách đã có lịch sử mua nhận gợi ý của mô hình đề xuất (mục~\ref{sec:inference}).
+Khởi đầu lạnh nằm ngoài phạm vi đánh giá định lượng. Sản phẩm chưa có người mua trước thời điểm dự đoán và khách hàng chưa có lịch sử mua đều không được đánh giá. Khi hệ thống được sử dụng, khách hàng mới nhận danh sách sản phẩm phổ biến, còn khách đã có lịch sử mua nhận gợi ý của mô hình đề xuất.
 
 \section{Phương pháp nghiên cứu}
 \label{sec:phuongphap}
 
-Đề tài kết hợp bốn nhóm phương pháp, trình bày lần lượt trong các chương sau.
-\begin{enumerate}
-    \item Nghiên cứu lý thuyết: phân tích và tổng hợp tài liệu về lọc cộng tác, nhân tử hóa ma trận, kiến trúc NeuMF và mô hình lai dựa trên đặc trưng. Các hướng nghiên cứu gần đây được khảo sát để xác định vị trí của đề tài (Chương~\ref{chap:lythuyet}).
-    \item Xử lý dữ liệu: xây dựng quy trình tiền xử lý tái lập được và kiểm chứng được ở từng bước. Quy trình gồm lấy mẫu theo khách hàng, gộp giao dịch, lọc $k$-core chỉ trên dữ liệu trước mốc kiểm thử, chia giai đoạn theo thời gian và tính đặc trưng theo thời điểm, bảo đảm không dùng thông tin tương lai (Chương~\ref{chap:thietke_trienkhai}).
-    \item Thực nghiệm: cài đặt các mô hình, huấn luyện bằng hàm mất mát entropy chéo nhị phân với lấy mẫu âm theo thời điểm, và tinh chỉnh mọi mô hình với cùng ngân sách, chỉ trên tập xác thực của mẫu phát triển.
-    \item Đánh giá và kiểm định: xếp hạng toàn bộ tập ứng viên, đăng ký trước kế hoạch đánh giá và khoá tập kiểm thử. Kết luận được lấy trên một mẫu khách hàng độc lập bằng kiểm định Wilcoxon theo người dùng, khoảng tin cậy bootstrap và hiệu chỉnh Holm, rồi được kiểm chứng trên bộ dữ liệu thứ hai (Chương~\ref{chap:thucnghiem}).
-\end{enumerate}
+Đề tài triển khai theo bốn nhóm hoạt động liên tiếp. Trước hết, đề tài tổng hợp tài liệu về lọc cộng tác, nhân tử hóa ma trận, kiến trúc NeuMF và mô hình lai dựa trên đặc trưng, đồng thời khảo sát các hướng nghiên cứu gần đây để xác định vị trí của đề tài.
+
+Tiếp theo là xây dựng quy trình tiền xử lý tái lập được và kiểm chứng được ở từng bước. Quy trình gồm lấy mẫu theo khách hàng, gộp giao dịch, lọc $k$-core chỉ trên dữ liệu trước mốc kiểm thử, chia giai đoạn theo thời gian và tính đặc trưng theo thời điểm, bảo đảm không dùng thông tin tương lai.
+
+Sau đó, đề tài cài đặt các mô hình, huấn luyện bằng hàm mất mát entropy chéo nhị phân với lấy mẫu âm theo thời điểm, và tinh chỉnh mọi mô hình với cùng ngân sách tính toán, chỉ dùng tập xác thực của mẫu phát triển để chọn siêu tham số.
+
+Cuối cùng, đề tài xếp hạng toàn bộ tập ứng viên trên một mẫu khách hàng độc lập theo kế hoạch đã đăng ký trước. Kết luận được lấy bằng kiểm định Wilcoxon theo người dùng, khoảng tin cậy bootstrap và hiệu chỉnh Holm, rồi được kiểm chứng trên bộ dữ liệu thứ hai (Amazon Beauty).
 
 \section{Ý nghĩa khoa học và thực tiễn của đề tài}
 \label{sec:ynghia}
@@ -83,10 +76,12 @@ Khởi đầu lạnh nằm ngoài phạm vi đánh giá định lượng. Sản 
 \subsection{Ý nghĩa khoa học}
 \label{subsec:ynghia_khoahoc}
 
+Giá trị khoa học của đề tài nằm ở việc tách được nguồn gốc của phần cải thiện trong một mô hình lai MF và DNN, trên dữ liệu giao dịch thật và với kết luận có kiểm định thống kê.
 \begin{itemize}
-    \item Trả lời bằng thực nghiệm có kiểm định thống kê câu hỏi: mô hình lai MF và DNN có đặc trưng có vượt các mô hình đối chứng, vượt NeuMF chỉ dùng ID và vượt từng nhánh của nó hay không. Câu trả lời dựa trên dữ liệu giao dịch thời trang thực tế, lấy trên một mẫu khách hàng chưa từng dùng để ra quyết định, và được kiểm chứng lại trên bộ dữ liệu thứ hai.
-    \item So sánh trực tiếp hợp nhất sớm và hợp nhất muộn trên cùng hai thành phần MF và DNN, và so sánh mô hình lai học sâu với một mô hình lai truyền thống.
-    \item Xây dựng một quy trình đánh giá hạn chế thiên lệch, dùng lại được cho các nghiên cứu hệ gợi ý khác: đặc trưng được tính theo thời điểm, mọi mô hình được tinh chỉnh với cùng ngân sách, và kết luận lấy trên mẫu kiểm định độc lập theo kế hoạch đăng ký trước, với kiểm định có hiệu chỉnh đa so sánh.
+    \item Đề tài cho thấy phần cải thiện của mô hình lai đến từ việc bổ sung đặc trưng sản phẩm, khách hàng và thời gian, chứ không đến từ cách ghép hai nhánh MF và DNN. Kết luận này được lấy trên một mẫu khách hàng chưa từng dùng để ra quyết định và lặp lại trên bộ dữ liệu thứ hai.
+    \item Trong các nhóm đặc trưng, đặc trưng thời gian như doanh số gần đây của sản phẩm và nhịp mua của khách mang nhiều thông tin nhất về lần mua tiếp theo, hơn mô tả tĩnh của sản phẩm.
+    \item Khi chỉ dùng mã ID, mô hình lai NeuMF không vượt được nhân tử hóa ma trận đã tinh chỉnh kỹ. Kết quả này lặp lại nhận định của các nghiên cứu tái đánh giá trên một loại dữ liệu khác, dữ liệu giao dịch thời trang.
+    \item Đề tài xây dựng một quy trình đánh giá hạn chế thiên lệch, dùng lại được cho các nghiên cứu hệ gợi ý khác: đặc trưng được tính theo thời điểm, mọi mô hình được tinh chỉnh với cùng ngân sách, và kết luận lấy trên mẫu kiểm định độc lập theo kế hoạch đăng ký trước, với kiểm định có hiệu chỉnh đa so sánh.
 \end{itemize}
 
 \subsection{Ý nghĩa thực tiễn}
@@ -94,6 +89,7 @@ Khởi đầu lạnh nằm ngoài phạm vi đánh giá định lượng. Sản 
 
 \begin{itemize}
     \item Mô hình chỉ dùng dữ liệu mà doanh nghiệp bán lẻ sẵn có: lịch sử giao dịch, danh mục sản phẩm, thông tin hội viên và doanh số theo ngày. Mọi đặc trưng được tính theo thời điểm, nên cách huấn luyện và chấm điểm dùng được nguyên khi triển khai.
+    \item Với một doanh nghiệp muốn cải thiện gợi ý, kết quả của đề tài cho thấy nên ưu tiên thu thập và cập nhật dữ liệu doanh số theo thời gian và lịch sử mua của khách, trước khi đầu tư vào một kiến trúc mạng phức tạp hơn.
     \item Quy trình xử lý dữ liệu chạy được trên máy tính cá nhân và áp dụng được cho bộ dữ liệu thương mại điện tử khác, như đã làm với Amazon Beauty.
     \item Hệ thống demo cho phép so sánh trực quan các mô hình trên từng khách hàng và luôn có gợi ý: khách hàng mới nhận danh sách sản phẩm phổ biến.
 \end{itemize}
@@ -103,9 +99,9 @@ Khởi đầu lạnh nằm ngoài phạm vi đánh giá định lượng. Sản 
 
 Báo cáo gồm năm chương.
 \begin{itemize}
-    \item Chương 1 trình bày bối cảnh, mục tiêu, phạm vi, phương pháp nghiên cứu và ý nghĩa của đề tài.
-    \item Chương 2 trình bày cơ sở lý thuyết về hệ gợi ý, nhân tử hóa ma trận, kiến trúc NCF và NeuMF, các cách hợp nhất mô hình, mô hình lai, các độ đo đánh giá và các công trình liên quan.
-    \item Chương 3 trình bày dữ liệu, cách chia giai đoạn, đặc trưng theo thời điểm, kiến trúc NeuMF-F, cách huấn luyện, quy trình đánh giá, cách suy diễn và hệ thống demo.
-    \item Chương 4 trình bày kết quả tinh chỉnh, kết quả đánh giá cuối, kiểm định thống kê, phân tích bóc tách, kiểm chứng trên Amazon Beauty và thảo luận.
-    \item Chương 5 tổng kết kết quả, hạn chế và hướng phát triển.
+    \item Chương~\ref{chap:tongquan} trình bày bối cảnh, mục tiêu, phạm vi, phương pháp nghiên cứu và ý nghĩa của đề tài.
+    \item Chương~\ref{chap:lythuyet} trình bày cơ sở lý thuyết về hệ gợi ý, nhân tử hóa ma trận, kiến trúc NCF và NeuMF, các cách hợp nhất mô hình, mô hình lai, các độ đo đánh giá và ba nghiên cứu đối chứng.
+    \item Chương~\ref{chap:thietke_trienkhai} trình bày dữ liệu, cách chia giai đoạn, đặc trưng theo thời điểm, kiến trúc NeuMF-F, các mô hình đối chứng, cách huấn luyện, quy trình đánh giá, cách suy diễn và hệ thống demo.
+    \item Chương~\ref{chap:thucnghiem} trình bày kết quả tinh chỉnh, kết quả đánh giá cuối, kiểm định thống kê, phân tích bóc tách, kiểm chứng trên Amazon Beauty và thảo luận.
+    \item Chương~\ref{chap:ketluan} tổng kết kết quả, hạn chế và hướng phát triển.
 \end{itemize}

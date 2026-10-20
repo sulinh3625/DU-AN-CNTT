@@ -9,29 +9,29 @@ Chương này trình bày cơ sở lý thuyết về hệ gợi ý, các mô hì
 \subsection{Lọc nội dung, lọc cộng tác và lọc lai}
 \label{subsec:khainiem_rs}
 
-Hệ gợi ý có ba hướng tiếp cận chính. Lọc dựa trên nội dung (\textit{content-based filtering}) gợi ý những sản phẩm có đặc tính giống các sản phẩm người dùng đã thích, dựa trên mô tả sản phẩm và hồ sơ sở thích của người dùng \parencite{lops2011content}. Lọc cộng tác (\textit{collaborative filtering}, CF) khai thác lịch sử tương tác của nhiều người dùng: những người từng mua giống nhau có khả năng sẽ mua giống nhau. Lọc cộng tác chỉ cần ma trận tương tác giữa người dùng và sản phẩm, không cần đặc trưng mô tả \parencite{su2009survey}. Lọc lai (\textit{hybrid filtering}) kết hợp nhiều kỹ thuật, thường gặp nhất là kết hợp nội dung với cộng tác, để bù hạn chế của từng kỹ thuật.
+Hệ gợi ý có ba hướng tiếp cận chính, khác nhau ở loại thông tin được dùng. Lọc dựa trên nội dung (\textit{content-based filtering}) nhìn vào bản thân sản phẩm: khách vừa mua một chiếc áo len sẽ được gợi ý những mẫu có loại hàng, nhóm hàng hay mô tả gần với chiếc áo đó \parencite{lops2011content}. Lọc cộng tác (\textit{collaborative filtering}, CF) không đọc mô tả mà nhìn vào hành vi của nhiều khách cùng lúc: nếu nhiều người đã mua chung hai mẫu quần, khách mua mẫu thứ nhất có khả năng cũng quan tâm mẫu thứ hai \parencite{su2009survey}. Hướng này cần đủ lượt mua để so sánh khách với nhau, nên kém đi khi ma trận tương tác thưa. Lọc lai (\textit{hybrid filtering}) dùng cả hai nguồn thông tin để hướng này bù chỗ yếu của hướng kia.
 
 Trước khi có học sâu, hệ gợi ý lai được ghép từ các kỹ thuật truyền thống. \textcite{burke2002hybrid} phân loại bảy cách lai:
 \begin{itemize}
-    \item lai có trọng số (\textit{weighted}): cộng có trọng số điểm của nhiều kỹ thuật;
-    \item lai chuyển đổi (\textit{switching}): chọn một kỹ thuật tùy tình huống;
-    \item lai hỗn hợp (\textit{mixed}): trình bày đồng thời gợi ý của nhiều kỹ thuật;
-    \item kết hợp đặc trưng (\textit{feature combination}): dùng dữ liệu của kỹ thuật này làm đặc trưng cho kỹ thuật kia;
-    \item lai phân tầng (\textit{cascade}): kỹ thuật sau tinh chỉnh kết quả của kỹ thuật trước;
-    \item tăng cường đặc trưng (\textit{feature augmentation}): đầu ra của kỹ thuật này làm đầu vào cho kỹ thuật kia;
-    \item lai mức mô hình (\textit{meta-level}): mô hình học được của kỹ thuật này làm đầu vào cho kỹ thuật kia.
+    \item Lai có trọng số (\textit{weighted}): cộng có trọng số điểm của nhiều kỹ thuật.
+    \item Lai chuyển đổi (\textit{switching}): chọn một kỹ thuật tùy tình huống.
+    \item Lai hỗn hợp (\textit{mixed}): trình bày đồng thời gợi ý của nhiều kỹ thuật.
+    \item Kết hợp đặc trưng (\textit{feature combination}): dùng dữ liệu của kỹ thuật này làm đặc trưng cho kỹ thuật kia.
+    \item Lai phân tầng (\textit{cascade}): kỹ thuật sau tinh chỉnh kết quả của kỹ thuật trước.
+    \item Tăng cường đặc trưng (\textit{feature augmentation}): đầu ra của kỹ thuật này làm đầu vào cho kỹ thuật kia.
+    \item Lai mức mô hình (\textit{meta-level}): mô hình học được của kỹ thuật này làm đầu vào cho kỹ thuật kia.
 \end{itemize}
 
-Chương 3 luận án của \textcite{holinh2023multisource} đề xuất một mô hình lai thuộc loại này. Ba mô hình đơn lẻ là lọc nội dung, lọc cộng tác theo người dùng và lọc cộng tác theo sản phẩm, mỗi mô hình dự đoán độc lập. Điểm của chúng sau đó được kết hợp bằng bỏ phiếu (lấy giá trị lớn nhất, nhỏ nhất hoặc trung bình) hoặc bằng tổng có trọng số, với trọng số học bởi một mạng truyền thẳng. Đề tài dùng đúng cấu trúc này, điều chỉnh cho phản hồi ẩn và xếp hạng Top-$K$, làm mô hình lai truyền thống trong nhóm đối chứng học máy truyền thống (Hybrid-CBCF, mục~\ref{sec:baselines}). Mô hình đề xuất là một mô hình lai học sâu, nên so sánh hai mô hình này cho biết lợi ích của việc dùng mạng nơ-ron để hợp nhất các nguồn thông tin.
+Dựa trên cách phân loại này, Chương 3 luận án của \textcite{holinh2023multisource} xây dựng một mô hình lai từ ba thành phần: lọc nội dung, lọc cộng tác theo người dùng (UserKNN) và lọc cộng tác theo sản phẩm (ItemKNN). Điểm dự đoán của các thành phần được tổng hợp qua một mạng truyền thẳng để học trọng số phi tuyến. Đề tài dùng lại ý tưởng này, đổi hàm mục tiêu sang học theo cặp cho phản hồi ẩn, và làm mô hình lai truyền thống trong nhóm đối chứng (Hybrid-CBCF). So sánh NeuMF-F với Hybrid-CBCF cho biết lợi ích của việc hợp nhất biểu diễn bằng mạng nơ-ron so với việc ghép điểm của các kỹ thuật truyền thống.
 
-Đề tài chọn hướng lai vì đặc điểm của dữ liệu. Bộ dữ liệu H\&M (mục~\ref{subsec:hm_description}) có lịch sử giao dịch đủ dài để lọc cộng tác học được sở thích của khách mua thường xuyên. Tuy nhiên, nhiều sản phẩm chỉ có ít lượt mua, và danh mục thời trang thay đổi nhanh. Lọc cộng tác chỉ dựa trên mã ID có rất ít thông tin về những sản phẩm này, trong khi bộ dữ liệu có sẵn thuộc tính, mô tả văn bản của sản phẩm, thông tin khách hàng và doanh số theo thời gian. Vì vậy lõi của mô hình là lọc cộng tác dựa trên mô hình, kết hợp nhân tử hóa ma trận với mạng nơ-ron sâu (mục~\ref{sec:cf_mf}, \ref{sec:ncf_architecture}), được bổ sung đặc trưng nội dung và ngữ cảnh (mục~\ref{subsec:deep_ctr}). Các mô hình chỉ dùng mã ID và mô hình gợi ý theo nội dung thuần được giữ làm đối chứng để đo riêng đóng góp của từng nguồn thông tin.
+Đề tài chọn hướng lai vì đặc điểm của dữ liệu H\&M. Lịch sử hai năm đủ dài để lọc cộng tác học được sở thích của khách mua thường xuyên. Nhưng danh mục thời trang thay đổi liên tục, nhiều sản phẩm có ít lượt mua, và lọc cộng tác chỉ dùng mã ID khó gợi ý tốt các sản phẩm này. Bộ dữ liệu lại có sẵn mô tả văn bản, nhóm hàng và doanh số theo ngày. Vì vậy lõi của mô hình là lọc cộng tác dựa trên mô hình, kết hợp nhân tử hóa ma trận với mạng nơ-ron sâu, được bổ sung đặc trưng nội dung và thời gian.
 
 \subsection{Lọc cộng tác dựa trên bộ nhớ và dựa trên mô hình}
 \label{subsec:memory_model_based}
 
 Theo cách khai thác dữ liệu tương tác, lọc cộng tác chia thành hai nhánh.
 
-Lọc cộng tác dựa trên bộ nhớ (\textit{memory-based}) tính trực tiếp độ tương đồng giữa người dùng hoặc giữa sản phẩm từ ma trận tương tác, không qua bước học tham số. Nguyên lý này có từ hệ thống GroupLens \parencite{resnick1994grouplens}. Với lọc cộng tác theo sản phẩm (ItemKNN) \parencite{sarwar2001item}, độ tương đồng cosine giữa hai sản phẩm $i$ và $j$ được tính trên vector cột tương tác của chúng:
+Nhánh dựa trên bộ nhớ (\textit{memory-based}) giữ nguyên ma trận tương tác và so trực tiếp các hàng hoặc các cột của nó: hai khách giống nhau nếu đã mua nhiều sản phẩm chung, hai sản phẩm giống nhau nếu có nhiều người mua chung. Không có tham số nào phải học. Cách làm này đã có từ hệ thống GroupLens \parencite{resnick1994grouplens}. Với lọc cộng tác theo sản phẩm (ItemKNN) \parencite{sarwar2001item}, độ tương đồng cosine giữa hai sản phẩm $i$ và $j$ được tính trên vector cột tương tác của chúng:
 \begin{equation}
     \text{sim}(i, j) = \cos(\vec{i}, \vec{j}) = \frac{\vec{i} \cdot \vec{j}}{\lVert \vec{i} \rVert \, \lVert \vec{j} \rVert}
     \label{eq:cosine_sim}
@@ -48,12 +48,12 @@ Lọc cộng tác theo người dùng (UserKNN) làm đối xứng. Mô hình t�
 \end{equation}
 Trong cài đặt của đề tài, độ tương đồng cosine được tính trên vector mua nhị phân. Mẫu số có thêm hệ số co $\lambda$ để giảm trọng số của các cặp có quá ít tương tác chung: $\text{sim}(a, b) = |\mathcal{I}_a \cap \mathcal{I}_b| / (\sqrt{|\mathcal{I}_a|\,|\mathcal{I}_b|} + \lambda)$, với $\mathcal{I}_a$ là tập sản phẩm $a$ đã mua (hoặc tập người dùng đã mua sản phẩm $a$). Mỗi hàng của ma trận tương đồng chỉ giữ $k$ láng giềng và được lưu dạng ma trận thưa. Số láng giềng $k$ và hệ số co $\lambda$ được chọn trên tập xác thực. Ưu điểm của nhánh này là đơn giản, không cần huấn luyện và dễ giải thích, vì chỉ ra được những người dùng hay sản phẩm nào dẫn tới một gợi ý. Nhược điểm là ma trận tương đồng đầy đủ tăng theo bình phương số đối tượng, và chất lượng giảm khi dữ liệu quá thưa.
 
-Lọc cộng tác dựa trên mô hình (\textit{model-based}) không tính tương đồng trực tiếp mà học một hàm có tham số, như nhân tử hóa ma trận hay mạng nơ-ron. Hàm này nén thông tin tương tác thành các vector ẩn có số chiều thấp, nên tổng quát hóa tốt hơn trên dữ liệu thưa và có chi phí tăng tuyến tính theo số tương tác. Các mô hình MF, GMF, MLP và NeuMF trình bày từ mục~\ref{sec:cf_mf} thuộc nhánh này.
+Nhánh dựa trên mô hình (\textit{model-based}) làm ngược lại: thay vì giữ cả ma trận, nó học một hàm có tham số, chẳng hạn nhân tử hóa ma trận hay mạng nơ-ron, để tóm tắt mỗi khách và mỗi sản phẩm bằng một vector ngắn. Vì mỗi đối tượng chỉ còn vài chục con số thay cho hàng nghìn ô của ma trận, mô hình vẫn chấm điểm được những cặp chưa từng xuất hiện, và chi phí huấn luyện chỉ tăng tuyến tính theo số tương tác. Các mô hình MF, GMF, MLP và NeuMF trình bày từ mục~\ref{sec:cf_mf} thuộc nhánh này.
 
 \subsection{Phản hồi ẩn}
 \label{subsec:feedback_types}
 
-Phản hồi của người dùng có hai dạng. Phản hồi hiện (\textit{explicit feedback}) là điểm đánh giá trực tiếp, ví dụ từ 1 đến 5 sao. Phản hồi ẩn (\textit{implicit feedback}) được suy ra từ hành vi, như lịch sử mua hay lượt nhấp. Tệp giao dịch H\&M không có cột điểm đánh giá nào, chỉ có các giao dịch đã xảy ra. Vì vậy đề tài dùng phản hồi ẩn dạng nhị phân, lấy từ sự kiện mua hàng:
+Thông tin về sở thích có thể đến từ hai nguồn. Phản hồi hiện (\textit{explicit feedback}) là khi người dùng tự nói ra mức yêu thích, chẳng hạn chấm sao cho một bộ phim. Phản hồi ẩn (\textit{implicit feedback}) phải đoán ra từ việc người dùng làm, như mua, xem hay bấm vào sản phẩm. Tệp giao dịch H\&M không có cột điểm đánh giá nào, chỉ có các giao dịch đã xảy ra. Vì vậy đề tài dùng phản hồi ẩn dạng nhị phân, lấy từ sự kiện mua hàng:
 \begin{equation}
     y_{ui} = \begin{cases}
         1, & \text{nếu người dùng } u \text{ đã mua sản phẩm } i \\
@@ -61,16 +61,16 @@ Phản hồi của người dùng có hai dạng. Phản hồi hiện (\textit{e
     \end{cases}
     \label{eq:implicit_binary}
 \end{equation}
-Nhãn $y_{ui} = 1$ chỉ xác nhận khách đã mua, không xác nhận khách hài lòng. Nhãn $y_{ui} = 0$ có thể nghĩa là khách chưa biết đến sản phẩm, không nhất thiết là không thích. Do đó các cặp chưa tương tác không thể coi là nhãn âm chắc chắn, và kỹ thuật lấy mẫu âm (mục~\ref{subsec:dynamic_sampling}) phải được thiết kế cẩn thận.
+Nhãn $y_{ui} = 1$ chỉ xác nhận khách đã mua, không xác nhận khách hài lòng. Nhãn $y_{ui} = 0$ có thể nghĩa là khách chưa biết đến sản phẩm, không nhất thiết là không thích. Do đó các cặp chưa tương tác không thể coi là nhãn âm chắc chắn, và kỹ thuật lấy mẫu âm phải được thiết kế cẩn thận.
 
 \subsection{Độ thưa dữ liệu và khởi đầu lạnh}
 \label{subsec:thachthuc_sparsity}
 
-Hai thách thức quen thuộc của lọc cộng tác định hình thiết kế mô hình và phạm vi thực nghiệm của đề tài (mục~\ref{subsec:phamvi}).
+Hai thách thức quen thuộc của lọc cộng tác định hình thiết kế mô hình và phạm vi thực nghiệm của đề tài.
 
-Độ thưa dữ liệu: số cặp người dùng và sản phẩm có tương tác chỉ chiếm một phần rất nhỏ của ma trận $M \times N$. Trên dữ liệu của đề tài, sau khi lọc $k$-core, mật độ khoảng 0,28\% trên mẫu thực nghiệm với $k = 10$ (Bảng~\ref{tab:kcore_hm}), và khoảng 0,03\% trên toàn bộ dữ liệu với $k = 5$ (Bảng~\ref{tab:kcore_hm_full}).
+Độ thưa dữ liệu: mỗi khách chỉ mua một phần rất nhỏ trong hàng nghìn sản phẩm, nên gần như mọi ô của ma trận $M \times N$ đều trống. Trên dữ liệu của đề tài, sau khi lọc $k$-core, mật độ khoảng 0,28\% trên mẫu thực nghiệm với $k = 10$, và khoảng 0,03\% trên toàn bộ dữ liệu với $k = 5$.
 
-Khởi đầu lạnh xảy ra khi một người dùng hoặc sản phẩm chưa có lịch sử tương tác, nên mô hình lọc cộng tác không có dữ liệu để học vector biểu diễn của đối tượng đó \parencite{schein2002coldstart}. Đề tài phân biệt hai trường hợp. Khởi đầu lạnh của người dùng nằm ngoài phạm vi đánh giá định lượng: mọi khách được đánh giá đều có lịch sử mua trước mốc dự đoán (mục~\ref{subsec:interaction_matrix}). Khi hệ thống được sử dụng, khách mới nhận danh sách sản phẩm phổ biến, và chỉ khi khách đã có lịch sử mua thì mô hình đề xuất mới được dùng (mục~\ref{sec:inference}). Khởi đầu lạnh của sản phẩm cũng nằm ngoài phạm vi đánh giá, vì tập ứng viên chỉ gồm sản phẩm đã có dữ liệu huấn luyện trước mốc dự đoán (mục~\ref{subsec:split_sampling}). Dù vậy, do dữ liệu thưa, nhiều sản phẩm và khách hàng chỉ có ít tương tác, nên vector mã ID của chúng được học từ rất ít dữ liệu. Đây là lý do đề tài bổ sung đặc trưng nội dung và ngữ cảnh (mục~\ref{subsec:deep_ctr}, \ref{sec:model_design}).
+Khởi đầu lạnh là tình huống của một khách vừa đăng ký hoặc một mẫu áo vừa lên kệ: chưa có lượt mua nào, nên lọc cộng tác không có gì để học vector cho đối tượng đó \parencite{schein2002coldstart}. Đề tài phân biệt hai trường hợp. Khởi đầu lạnh của người dùng nằm ngoài phạm vi đánh giá định lượng: mọi khách được đánh giá đều có lịch sử mua trước mốc dự đoán. Khi hệ thống được sử dụng, khách mới nhận danh sách sản phẩm phổ biến, và chỉ khi khách đã có lịch sử mua thì mô hình đề xuất mới được dùng. Khởi đầu lạnh của sản phẩm cũng nằm ngoài phạm vi đánh giá, vì tập ứng viên chỉ gồm sản phẩm đã có dữ liệu huấn luyện trước mốc dự đoán. Dù vậy, do dữ liệu thưa, nhiều sản phẩm và khách hàng chỉ có ít tương tác, nên vector mã ID của chúng được học từ rất ít dữ liệu. Đây là lý do đề tài bổ sung đặc trưng nội dung và ngữ cảnh.
 
 \section{Lọc cộng tác và nhân tử hóa ma trận}
 \label{sec:cf_mf}
@@ -78,27 +78,27 @@ Khởi đầu lạnh xảy ra khi một người dùng hoặc sản phẩm chưa
 \subsection{Mô hình nhân tử hóa ma trận}
 \label{subsec:mf_model}
 
-Nhân tử hóa ma trận chiếu người dùng và sản phẩm vào một không gian ẩn chung có số chiều $d \ll \min(M, N)$ \parencite{koren2009matrix}. Người dùng $u$ được biểu diễn bởi vector $p_u \in \mathbb{R}^d$, sản phẩm $i$ bởi vector $q_i \in \mathbb{R}^d$, và mức độ tương tác dự đoán là tích vô hướng:
+Ý tưởng của nhân tử hóa ma trận \parencite{koren2009matrix} là mô tả mỗi người dùng và mỗi sản phẩm bằng $d$ con số, với $d \ll \min(M, N)$. Có thể hình dung mỗi chiều như một ``khẩu vị'' ẩn, chẳng hạn thiên về đồ thể thao hay đồ công sở, dù mô hình không đặt tên cho các chiều này. Người dùng $u$ ứng với vector $p_u \in \mathbb{R}^d$, sản phẩm $i$ ứng với $q_i \in \mathbb{R}^d$, và điểm dự đoán là tích vô hướng của hai vector:
 \begin{equation}
     \hat{y}_{ui} = p_u^T q_i = \sum_{f=1}^{d} p_{uf} q_{if}
     \label{eq:mf_dot}
 \end{equation}
-Các biến thể của MF khác nhau ở cách học hai ma trận $P$ và $Q$. Phân rã giá trị kỳ dị (SVD) cổ điển cần ma trận đầy đủ, nên không áp dụng trực tiếp được cho ma trận tương tác thưa, nơi phần lớn ô chưa được quan sát. Các biến thể dùng trong hệ gợi ý thay vào đó tối ưu sai số trên các ô đã biết, kèm điều chuẩn. Với phản hồi ẩn, BPR (mục~\ref{subsec:bpr}) tối ưu trực tiếp thứ hạng theo cặp; đề tài dùng BPR-MF làm mô hình đối chứng MF chính.
+Các biến thể của MF khác nhau ở cách học hai ma trận $P$ và $Q$. Phân rã giá trị kỳ dị (SVD) cổ điển cần ma trận đầy đủ, nên không áp dụng trực tiếp được cho ma trận tương tác thưa, nơi phần lớn ô chưa được quan sát. Các biến thể dùng trong hệ gợi ý thay vào đó tối ưu sai số trên các ô đã biết, kèm điều chuẩn. Với phản hồi ẩn, BPR tối ưu trực tiếp thứ hạng theo cặp; đề tài dùng BPR-MF làm mô hình đối chứng MF chính.
 
 \subsection{Hạn chế của tích vô hướng}
 \label{subsec:mf_limitations}
 
-Tích vô hướng kết hợp các chiều ẩn theo dạng tuyến tính. Các tác giả của kiến trúc NCF (mục~\ref{sec:ncf_architecture}) lập luận rằng vì vậy phép toán này không học được tương tác phi tuyến giữa các chiều ẩn của người dùng và sản phẩm. Lập luận này là động cơ của kiến trúc NCF. Việc bổ sung thành phần phi tuyến có thực sự cải thiện chất lượng gợi ý hay không phụ thuộc vào dữ liệu, và được đề tài kiểm tra bằng thực nghiệm trên dữ liệu H\&M (Chương~\ref{chap:thucnghiem}).
+Tích vô hướng kết hợp các chiều ẩn theo dạng tuyến tính. Các tác giả của kiến trúc NCF lập luận rằng vì vậy phép toán này không học được tương tác phi tuyến giữa các chiều ẩn của người dùng và sản phẩm. Lập luận này là động cơ của kiến trúc NCF. Việc bổ sung thành phần phi tuyến có thực sự cải thiện chất lượng gợi ý hay không phụ thuộc vào dữ liệu, và được đề tài kiểm tra bằng thực nghiệm trên dữ liệu H\&M.
 
 \subsection{Tối ưu thứ hạng theo cặp: BPR}
 \label{subsec:bpr}
 
-Các mô hình MF, GMF và MLP dự đoán độc lập từng điểm $\hat{y}_{ui}$ rồi so với nhãn nhị phân. Bayesian Personalized Ranking (BPR) \parencite{rendle2009bpr} thay vào đó tối ưu trực tiếp thứ hạng tương đối theo cặp. BPR giả định người dùng ưa thích sản phẩm đã tương tác $i$ hơn sản phẩm chưa tương tác $j$. Với mỗi bộ ba $(u, i, j)$ trong đó $i \in \mathcal{I}_u$ và $j \notin \mathcal{I}_u$, hàm mất mát BPR là:
+MF, GMF và MLP được huấn luyện như bài toán phân loại: mỗi cặp $(u, i)$ được chấm riêng thành $\hat{y}_{ui}$ rồi so với nhãn 0 hoặc 1. Điều hệ gợi ý thật sự cần lại là thứ tự: món khách sẽ mua phải đứng trên món khách không mua. Bayesian Personalized Ranking (BPR) \parencite{rendle2009bpr} huấn luyện thẳng theo yêu cầu này, với giả định người dùng thích một sản phẩm đã tương tác $i$ hơn một sản phẩm chưa tương tác $j$. Với mỗi bộ ba $(u, i, j)$ trong đó $i \in \mathcal{I}_u$ và $j \notin \mathcal{I}_u$, hàm mất mát BPR là:
 \begin{equation}
     \mathcal{L}_{BPR} = -\sum_{(u,i,j) \in \mathcal{D}_S} \ln \sigma\left(\hat{y}_{ui} - \hat{y}_{uj}\right) + \lambda_\Theta \lVert \Theta \rVert^2
     \label{eq:bpr_loss}
 \end{equation}
-trong đó $\mathcal{D}_S$ là tập các bộ ba được lấy mẫu. Khi $\hat{y}_{ui}$ được tính theo Công thức~\eqref{eq:mf_dot}, ta có mô hình BPR-MF dùng làm đối chứng ở Chương~\ref{chap:thucnghiem}. Mục tiêu theo cặp của BPR sát với bài toán xếp hạng Top-$K$ hơn hàm mất mát theo từng điểm, nhưng BPR-MF vẫn là mô hình tuyến tính.
+trong đó $\mathcal{D}_S$ là tập các bộ ba được lấy mẫu. Khi $\hat{y}_{ui}$ được tính theo Công thức~\eqref{eq:mf_dot}, ta có mô hình BPR-MF, một mô hình đối chứng của đề tài. Mục tiêu theo cặp của BPR sát với bài toán xếp hạng Top-$K$ hơn hàm mất mát theo từng điểm, nhưng BPR-MF vẫn là mô hình tuyến tính.
 
 \section{Kiến trúc lọc cộng tác bằng mạng nơ-ron (NCF)}
 \label{sec:ncf_architecture}
@@ -108,7 +108,7 @@ Kiến trúc NCF (\textit{neural collaborative filtering}) do \textcite{he2017nc
 \subsection{Generalized Matrix Factorization (GMF)}
 \label{subsec:gmf}
 
-GMF là dạng mạng nơ-ron của MF. Mô hình nhân từng phần tử (tích Hadamard, ký hiệu $\odot$) vector nhúng của người dùng $p_u^G$ với vector nhúng của sản phẩm $q_i^G$:
+GMF viết lại MF dưới dạng một mạng nơ-ron. Thay vì cộng ngay các tích $p_{uf} q_{if}$ như Công thức~\eqref{eq:mf_dot}, GMF giữ chúng thành một vector bằng phép nhân từng phần tử (tích Hadamard, ký hiệu $\odot$) giữa vector nhúng của người dùng $p_u^G$ và của sản phẩm $q_i^G$:
 \begin{equation}
     \phi^{GMF} = p_u^G \odot q_i^G
     \label{eq:gmf_hadamard}
@@ -117,7 +117,7 @@ GMF là dạng mạng nơ-ron của MF. Mô hình nhân từng phần tử (tíc
     \hat{y}_{ui}^{GMF} = \sigma \left( h^T \phi^{GMF} \right) = \sigma \left( h^T (p_u^G \odot q_i^G) \right)
     \label{eq:gmf_predict}
 \end{equation}
-trong đó $h$ là vector trọng số của lớp đầu ra và $\sigma(x) = 1 / (1 + e^{-x})$ là hàm sigmoid.
+trong đó $h$ là vector trọng số của lớp đầu ra và $\sigma(x) = 1 / (1 + e^{-x})$ là hàm sigmoid. Nếu mọi phần tử của $h$ bằng 1 và bỏ hàm sigmoid, GMF trở về đúng MF; khi $h$ được học, mỗi chiều ẩn có trọng số riêng.
 
 \subsection{Multi-Layer Perceptron (MLP)}
 \label{subsec:mlp}
@@ -145,7 +145,7 @@ NeuMF ghép song song nhánh tuyến tính GMF và nhánh phi tuyến MLP trư�
     \hat{y}_{ui} = \sigma \left( h^T \begin{bmatrix} p_u^G \odot q_i^G \\ \phi_L^{MLP} \end{bmatrix} \right)
     \label{eq:neumf_prediction}
 \end{equation}
-Chữ ``lai'' trong tên đề tài trước hết chỉ việc kết hợp hai cách mô hình hóa tương tác, nhân tử hóa ma trận (tuyến tính) và mạng nơ-ron sâu (phi tuyến), trong cùng một mô hình. Theo phân loại ở mục~\ref{subsec:early_late_fusion}, NeuMF là mô hình hợp nhất sớm ở mức biểu diễn. Mô hình đề xuất NeuMF-F (mục~\ref{sec:model_design}) giữ cấu trúc này và bổ sung đặc trưng sản phẩm, khách hàng và thời gian vào vector của cả hai nhánh. Vì kết hợp lọc cộng tác với thông tin nội dung, NeuMF-F cũng là một hệ gợi ý lai theo nghĩa rộng của phân loại ở mục~\ref{subsec:khainiem_rs}. Hình~\ref{fig:neumf_architecture} trình bày kiến trúc NeuMF với kích thước của từng ma trận và từng tầng.
+Chữ ``lai'' trong tên đề tài trước hết chỉ việc kết hợp hai cách mô hình hóa tương tác, nhân tử hóa ma trận (tuyến tính) và mạng nơ-ron sâu (phi tuyến), trong cùng một mô hình. NeuMF ghép hai nhánh ngay ở mức biểu diễn, trước lớp dự đoán, nên là một mô hình hợp nhất sớm. Mô hình đề xuất NeuMF-F giữ cấu trúc này và bổ sung đặc trưng sản phẩm, khách hàng và thời gian vào vector của cả hai nhánh. Vì kết hợp lọc cộng tác với thông tin nội dung, NeuMF-F cũng là một hệ gợi ý lai theo nghĩa rộng của phân loại ở mục~\ref{subsec:khainiem_rs}. Hình~\ref{fig:neumf_architecture} trình bày kiến trúc NeuMF với kích thước của từng ma trận và từng tầng. Trong hình, $M$ là số người dùng, $N$ là số sản phẩm và $d$ là số chiều vector nhúng. Trong cài đặt của đề tài, hai nhánh dùng cùng $d$, và tháp MLP giảm một nửa số chiều qua mỗi tầng.
 
 \begin{figure}[htbp]
     \centering
@@ -197,7 +197,7 @@ Chữ ``lai'' trong tên đề tài trước hết chỉ việc kết hợp hai 
         \draw[arrow] (sort) -- (topk);
     \end{tikzpicture}
     \end{adjustbox}
-    \caption[Kiến trúc NeuMF]{Kiến trúc NeuMF từ đầu vào đến danh sách Top-$K$. $M$ là số người dùng, $N$ là số sản phẩm và $d$ là số chiều vector nhúng. Trong cài đặt của đề tài, hai nhánh dùng cùng $d$ và tháp MLP giảm một nửa số chiều qua mỗi tầng.}
+    \caption{Kiến trúc NeuMF}
     \label{fig:neumf_architecture}
 \end{figure}
 
@@ -216,11 +216,11 @@ Khi hệ gợi ý kết hợp nhiều nguồn thông tin, hay nhiều góc nhìn
         p = F\big(h_1(v_1),\, h_2(v_2),\, \dots,\, h_m(v_m)\big)
         \label{eq:late_fusion}
     \end{equation}
-    Khi $F$ là tổng có trọng số, đây chính là cách lai có trọng số trong phân loại ở mục~\ref{subsec:khainiem_rs}. Mô hình lai ở chương 3 luận án (mục~\ref{subsec:khainiem_rs}) thuộc loại này, và mô hình đối chứng Hybrid-CBCF của đề tài cũng vậy. Ở hai mô hình này, $F$ là bỏ phiếu hoặc tổng có trọng số của điểm từ ba mô hình truyền thống.
+    Khi $F$ là tổng có trọng số, đây chính là cách lai có trọng số trong phân loại ở mục~\ref{subsec:khainiem_rs}. Mô hình lai ở chương 3 luận án thuộc loại này, và mô hình đối chứng Hybrid-CBCF của đề tài cũng vậy. Ở hai mô hình này, $F$ là bỏ phiếu hoặc tổng có trọng số của điểm từ ba mô hình truyền thống.
 \end{itemize}
 Hợp nhất sớm học được tương tác giữa các góc nhìn nhưng cần một mô hình phù hợp với mọi góc nhìn. Hợp nhất muộn linh hoạt hơn nhưng không nắm được tương tác giữa các góc nhìn, vì chỉ làm việc trên kết quả dự đoán.
 
-Trong đề tài, hai góc nhìn chính là hai cách mô hình hóa tương tác: góc nhìn tuyến tính của nhánh MF (vector $p_u^G \odot q_i^G$ của GMF) và góc nhìn phi tuyến của nhánh DNN (vector cuối $\phi_L^{MLP}$ của MLP). NeuMF nối hai vector này rồi đưa qua một lớp dự đoán chung (Công thức~\eqref{eq:neumf_concat}, \eqref{eq:neumf_prediction}), nên là mô hình hợp nhất sớm ở mức biểu diễn và được huấn luyện chung từ đầu đến cuối (Hình~\ref{fig:fusion_compare}a). NeuMF-F giữ cách hợp nhất này với hai nhánh có đặc trưng GMF-F và MLP-F. Ngoài ra, đặc trưng nội dung và ngữ cảnh được cộng vào vector của từng nhánh ngay ở đầu vào, tức cũng được hợp nhất sớm với thông tin cộng tác (mục~\ref{subsec:embedding_design}).
+Trong đề tài, hai góc nhìn chính là hai cách mô hình hóa tương tác: góc nhìn tuyến tính của nhánh MF (vector $p_u^G \odot q_i^G$ của GMF) và góc nhìn phi tuyến của nhánh DNN (vector cuối $\phi_L^{MLP}$ của MLP). NeuMF nối hai vector này rồi đưa qua một lớp dự đoán chung (Công thức~\eqref{eq:neumf_concat}, \eqref{eq:neumf_prediction}), nên là mô hình hợp nhất sớm ở mức biểu diễn và được huấn luyện chung từ đầu đến cuối (Hình~\ref{fig:fusion_compare}a). NeuMF-F giữ cách hợp nhất này với hai nhánh có đặc trưng GMF-F và MLP-F. Ngoài ra, đặc trưng nội dung và ngữ cảnh được cộng vào vector của từng nhánh ngay ở đầu vào, tức cũng được hợp nhất sớm với thông tin cộng tác.
 
 Hợp nhất muộn tương ứng là trộn điểm của hai mô hình MF và DNN được huấn luyện riêng:
 \begin{equation}
@@ -267,14 +267,14 @@ trong đó điểm $s_{ui}$ của mỗi mô hình được chuẩn hóa min--max
         \draw[arrow] (nmb) -- (fb);
         \draw[arrow] (fb) -- (yb);
     \end{tikzpicture}}
-    \caption{Hợp nhất sớm ở mức biểu diễn (NeuMF, NeuMF-F) và hợp nhất muộn ở mức điểm dự đoán (LateFusion-F)}
+    \caption{Hợp nhất sớm và hợp nhất muộn}
     \label{fig:fusion_compare}
 \end{figure}
 
 \subsection{Lấy mẫu âm và hàm mất mát entropy chéo nhị phân}
 \label{subsec:negative_sampling_loss}
 
-Phản hồi ẩn chỉ cho các tương tác dương ($y_{ui} = 1$). Kỹ thuật lấy mẫu âm (\textit{negative sampling}) chọn ngẫu nhiên các sản phẩm người dùng chưa tương tác để gán nhãn âm ($y_{ui} = 0$); đây là cách huấn luyện NCF. Hàm mất mát entropy chéo nhị phân (\textit{binary cross-entropy}, BCE) được dùng để tối ưu tham số mô hình:
+Dữ liệu mua hàng chỉ cho biết khách đã mua gì, tức chỉ có nhãn dương ($y_{ui} = 1$). Để mô hình học được cả chiều ngược lại, NCF lấy mẫu âm (\textit{negative sampling}): với mỗi lượt mua, chọn ngẫu nhiên vài sản phẩm khách chưa mua và tạm coi là nhãn âm ($y_{ui} = 0$). Mô hình sau đó được huấn luyện như một bộ phân loại nhị phân, với hàm mất mát entropy chéo nhị phân (\textit{binary cross-entropy}, BCE):
 \begin{equation}
     \mathcal{L}_{BCE} = -\sum_{(u, i) \in \mathcal{Y} \cup \mathcal{Y}^-} \left[ y_{ui} \log \hat{y}_{ui} + (1 - y_{ui}) \log (1 - \hat{y}_{ui}) \right]
     \label{eq:bce_loss}
@@ -284,66 +284,45 @@ trong đó $\mathcal{Y}$ là tập tương tác dương và $\mathcal{Y}^-$ là 
 \section{Các hướng nghiên cứu gần đây}
 \label{sec:modern_trends}
 
-Sau NCF, lĩnh vực hệ gợi ý phát triển theo nhiều hướng. Mục này chỉ trình bày những hướng liên quan trực tiếp tới thiết kế của đề tài và tới hướng phát triển ở Chương~\ref{chap:ketluan}.
+Sau NCF, lĩnh vực hệ gợi ý phát triển theo nhiều hướng. Mục này chỉ trình bày những hướng liên quan trực tiếp tới thiết kế của đề tài.
 
 \subsection{Mô hình lai dựa trên đặc trưng}
 \label{subsec:deep_ctr}
 
-Một hướng phát triển trực tiếp của ý tưởng kết hợp tuyến tính và phi tuyến là các mô hình dùng nhiều đặc trưng hơn cặp mã người dùng và sản phẩm, xuất phát từ bài toán dự đoán tỉ lệ nhấp chuột. Factorization Machines (FM) \parencite{rendle2010fm} tổng quát hóa MF cho vector đặc trưng bất kỳ: mỗi đặc trưng có một vector ẩn, và tương tác bậc hai giữa hai đặc trưng được mô hình hóa bằng tích vô hướng của hai vector ẩn đó. Khi đặc trưng chỉ gồm mã người dùng và mã sản phẩm, FM trở về MF. Wide \& Deep \parencite{cheng2016wide} chạy song song một nhánh tuyến tính để ghi nhớ các tổ hợp đặc trưng và một nhánh MLP để khái quát hóa, hai nhánh được huấn luyện chung. DeepFM \parencite{guo2017deepfm} thay nhánh tuyến tính bằng FM. Các kiến trúc này có chung cấu trúc của NeuMF: một thành phần tuyến tính kiểu nhân tử hóa, một thành phần phi tuyến kiểu MLP, hợp nhất ở lớp dự đoán. Khác biệt là đầu vào gồm cả đặc trưng chứ không chỉ mã ID. NeuMF-F đi theo hướng này: giữ hai nhánh GMF và MLP, và biểu diễn mỗi người dùng, sản phẩm bằng tổng của vector nhúng mã ID và một phép chiếu tuyến tính của đặc trưng (mục~\ref{sec:model_design}).
+Một hướng phát triển trực tiếp của ý tưởng kết hợp tuyến tính và phi tuyến là các mô hình dùng nhiều đặc trưng hơn cặp mã người dùng và sản phẩm, xuất phát từ bài toán dự đoán tỉ lệ nhấp chuột. Factorization Machines (FM) \parencite{rendle2010fm} mở rộng MF từ hai loại đối tượng là người dùng và sản phẩm sang mọi đặc trưng: đặc trưng nào cũng có vector ẩn riêng, và mức độ hai đặc trưng ``hợp nhau'' là tích vô hướng của hai vector đó. Nếu chỉ có mã người dùng và mã sản phẩm, FM trở về MF. Wide \& Deep \parencite{cheng2016wide} đặt cạnh nhau một nhánh tuyến tính ``rộng'', giỏi nhớ những tổ hợp đặc trưng hay gặp, và một nhánh MLP ``sâu'', giỏi khái quát sang tổ hợp mới; hai nhánh được huấn luyện cùng lúc. DeepFM \parencite{guo2017deepfm} giữ nhánh sâu và thay nhánh rộng bằng FM. Các kiến trúc này có chung cấu trúc của NeuMF: một thành phần tuyến tính kiểu nhân tử hóa, một thành phần phi tuyến kiểu MLP, hợp nhất ở lớp dự đoán. Khác biệt là đầu vào gồm cả đặc trưng chứ không chỉ mã ID. NeuMF-F đi theo hướng này: giữ hai nhánh GMF và MLP, và biểu diễn mỗi người dùng, sản phẩm bằng tổng của vector nhúng mã ID và một phép chiếu tuyến tính của đặc trưng.
 
-Đặc trưng cũng là cách xử lý khởi đầu lạnh của sản phẩm. Một sản phẩm mới chưa có tương tác nên không có vector mã ID có nghĩa, nhưng vẫn có thuộc tính và mô tả để đặt nó gần các sản phẩm tương tự. DropoutNet \parencite{volkovs2017dropoutnet} đề xuất một kỹ thuật huấn luyện cho mô hình nhận cả biểu diễn sở thích lẫn nội dung: khi huấn luyện, phần biểu diễn học từ tương tác bị bỏ ngẫu nhiên, buộc mô hình học cách chấm điểm từ nội dung. NeuMF-F dùng kỹ thuật này dưới dạng một siêu tham số, là xác suất bỏ ngẫu nhiên vector mã ID của sản phẩm khi huấn luyện (mục~\ref{subsec:embedding_design}). Vì sản phẩm mới không thuộc tập ứng viên của đề tài (mục~\ref{subsec:split_sampling}), kỹ thuật này ở đây chỉ đóng vai trò điều chuẩn.
+Đặc trưng cũng là cách xử lý khởi đầu lạnh của sản phẩm. Một sản phẩm mới chưa có tương tác nên không có vector mã ID có nghĩa, nhưng vẫn có thuộc tính và mô tả để đặt nó gần các sản phẩm tương tự. DropoutNet \parencite{volkovs2017dropoutnet} đề xuất một kỹ thuật huấn luyện cho mô hình nhận cả biểu diễn sở thích lẫn nội dung: khi huấn luyện, phần biểu diễn học từ tương tác bị bỏ ngẫu nhiên, buộc mô hình học cách chấm điểm từ nội dung. NeuMF-F dùng kỹ thuật này dưới dạng một siêu tham số, là xác suất bỏ ngẫu nhiên vector mã ID của sản phẩm khi huấn luyện. Vì sản phẩm mới không thuộc tập ứng viên của đề tài, kỹ thuật này ở đây chỉ đóng vai trò điều chuẩn.
 
-Văn bản của sản phẩm (tên, mô tả) được biểu diễn theo cách cổ điển của lọc nội dung. Trọng số TF-IDF \parencite{salton1988term} cho từ xuất hiện nhiều trong mô tả của một sản phẩm nhưng hiếm trong toàn danh mục trọng số cao. Ma trận TF-IDF sau đó được giảm chiều bằng phân rã giá trị kỳ dị rút gọn, tức phân tích ngữ nghĩa tiềm ẩn \parencite{deerwester1990lsa}, để các mô tả cùng chủ đề nhưng dùng từ khác nhau có vector gần nhau. Cách biểu diễn này không cần dữ liệu tương tác và không cần nhiều tài nguyên tính toán.
+Văn bản của sản phẩm (tên, mô tả) được biểu diễn theo cách cổ điển của lọc nội dung. TF-IDF \parencite{salton1988term} coi một từ là quan trọng với một sản phẩm khi từ đó lặp lại trong mô tả của sản phẩm nhưng ít gặp trong cả danh mục; một từ chỉ chất liệu hiếm gặp vì vậy nói về sản phẩm nhiều hơn những từ có mặt trong hầu hết mô tả. Ma trận TF-IDF sau đó được giảm chiều bằng phân rã giá trị kỳ dị rút gọn, tức phân tích ngữ nghĩa tiềm ẩn \parencite{deerwester1990lsa}, để các mô tả cùng chủ đề nhưng dùng từ khác nhau có vector gần nhau. Cách biểu diễn này không cần dữ liệu tương tác và không cần nhiều tài nguyên tính toán.
 
-\subsection{Gợi ý theo chuỗi hành vi}
-\label{subsec:sequential_rec}
+\subsection{Các hướng ngoài phạm vi đề tài}
+\label{subsec:other_trends}
 
-NeuMF và MF coi lịch sử của người dùng là một tập hợp không thứ tự. Gợi ý theo chuỗi mô hình hóa trình tự $(i_1, \dots, i_t)$ để dự đoán $i_{t+1}$. SASRec \parencite{kang2018self} dùng cơ chế tự chú ý một chiều trên chuỗi hành vi; BERT4Rec \parencite{sun2019bert4rec} dùng Transformer hai chiều và học bằng cách che ngẫu nhiên một số vị trí trong chuỗi rồi dự đoán lại. Hướng này hợp với dữ liệu có phiên rõ ràng. Giao dịch H\&M chỉ ghi ngày mua, không có giờ hay mã phiên, và nhiều sản phẩm được mua cùng ngày nên thứ tự trong ngày không xác định. Vì vậy đề tài dùng thời gian để chia dữ liệu và làm đặc trưng tổng hợp, như doanh số gần đây của sản phẩm và khoảng cách tới lần mua gần nhất của khách (mục~\ref{subsec:features}); mô hình chuỗi là hướng phát triển.
-
-\subsection{Học biểu diễn trên đồ thị}
-\label{subsec:graph_cf}
-
-Ma trận tương tác giữa người dùng và sản phẩm có thể xem là một đồ thị hai phía. NGCF \parencite{wang2019ngcf} lan truyền vector nhúng qua láng giềng nhiều bước để mã hóa cả tương tác bậc cao. LightGCN \parencite{he2020lightgcn} bỏ các phép biến đổi và hàm kích hoạt phi tuyến, chỉ giữ phép lan truyền tuyến tính:
-\begin{equation}
-    e_u^{(k+1)} = \sum_{i \in \mathcal{N}_u} \frac{1}{\sqrt{|\mathcal{N}_u|}\sqrt{|\mathcal{N}_i|}} e_i^{(k)}, \qquad
-    e_u^{*} = \sum_{k=0}^{K} \alpha_k \, e_u^{(k)}
-    \label{eq:lightgcn}
-\end{equation}
-trong đó $\mathcal{N}_u$ là tập sản phẩm kề với người dùng $u$ trên đồ thị và $e_u^{*}$ là biểu diễn cuối, tổng có trọng số qua $K$ tầng lan truyền. LightGCN là một hướng phát triển của đề tài (mục~\ref{sec:huongphattrien}), với điều kiện được đánh giá theo cùng quy trình.
-
-\subsection{Mô hình tự mã hóa biến phân}
-\label{subsec:vae_cf}
-
-Mult-VAE \parencite{liang2018multvae} nhận toàn bộ vector mua $x_u \in \{0, 1\}^N$ của một người dùng làm đầu vào, mã hóa thành một phân phối ẩn Gauss $q_\phi(z_u \mid x_u)$, rồi giải mã ra phân phối đa thức trên toàn bộ danh mục, $\pi(z_u) = \mathrm{softmax}(f_\theta(z_u))$. Mô hình được huấn luyện bằng cách cực đại cận dưới biến phân, với hệ số $\beta$ điều chỉnh số hạng KL:
-\begin{equation}
-    \mathcal{L}_\beta(x_u) = \mathbb{E}_{q_\phi(z_u \mid x_u)}\big[\log p_\theta(x_u \mid z_u)\big] - \beta \cdot \mathrm{KL}\big(q_\phi(z_u \mid x_u)\,\big\|\,p(z_u)\big)
-    \label{eq:multvae}
-\end{equation}
-với $\log p_\theta(x_u \mid z_u) = \sum_{i} x_{ui} \log \pi_i(z_u)$. Khác NeuMF, Mult-VAE chấm điểm cả danh mục trong một lượt và không cần lấy mẫu âm, nên hợp với cách đánh giá xếp hạng toàn bộ. Đề tài chưa cài đặt mô hình này; nó là một hướng phát triển.
+Ngoài mô hình lai dựa trên đặc trưng, hệ gợi ý còn phát triển theo các hướng như mô hình theo chuỗi hành vi, học biểu diễn trên đồ thị tương tác và mô hình tự mã hóa biến phân. Đề tài không dùng các hướng này. Mô hình chuỗi cần thứ tự mua trong từng phiên, trong khi giao dịch H\&M chỉ ghi ngày mua, không có giờ hay mã phiên, và nhiều sản phẩm được mua cùng ngày. Vì vậy đề tài dùng thời gian để chia dữ liệu và làm đặc trưng tổng hợp, như doanh số gần đây của sản phẩm và khoảng cách tới lần mua gần nhất của khách. Mô hình đồ thị và mô hình tự mã hóa biến phân là hướng phát triển, với điều kiện được đánh giá theo cùng quy trình của đề tài.
 
 \subsection{Lý do chọn kiến trúc hai nhánh}
 
-Đề tài chọn kiến trúc hai nhánh của NeuMF và bổ sung đặc trưng thành NeuMF-F, thay vì các hướng ở trên, vì ba lý do. Về dữ liệu, tệp giao dịch H\&M không có phiên để dùng mô hình chuỗi, nhưng có thuộc tính và mô tả văn bản của sản phẩm, loại thông tin mà cách biểu diễn ``vector nhúng ID cộng đặc trưng'' khai thác trực tiếp. Về mục tiêu, hai nhánh tách biệt cho phép đo riêng đóng góp của đặc trưng và của cách hợp nhất (mục~\ref{subsec:sumenh_neumf}). Về tài nguyên, thực nghiệm chạy trên máy tính cá nhân với 16 GB bộ nhớ, không đủ cho các mô hình sinh quy mô lớn như mô hình ngôn ngữ lớn hay mô hình khuếch tán.
+Đề tài chọn kiến trúc hai nhánh của NeuMF và bổ sung đặc trưng thành NeuMF-F, thay vì các hướng ở trên, vì ba lý do. Về dữ liệu, tệp giao dịch H\&M không có phiên để dùng mô hình chuỗi, nhưng có thuộc tính và mô tả văn bản của sản phẩm, loại thông tin mà cách biểu diễn ``vector nhúng ID cộng đặc trưng'' khai thác trực tiếp. Về mục tiêu, hai nhánh tách biệt cho phép đo riêng đóng góp của đặc trưng và của cách hợp nhất. Về tài nguyên, thực nghiệm chạy trên máy tính cá nhân với 16 GB bộ nhớ, không đủ cho các mô hình sinh quy mô lớn như mô hình ngôn ngữ lớn hay mô hình khuếch tán.
 
 \section{Các độ đo đánh giá Top-K}
 \label{sec:metrics}
 
 Với mỗi người dùng được đánh giá $u$, mô hình xếp hạng tập ứng viên $\mathcal{C}_u$ và trả về danh sách $\text{Rec}_K(u)$ gồm $K$ sản phẩm đầu. Gọi $T_u$ là tập sản phẩm đúng của $u$ và $\text{hits}_u = |T_u \cap \text{Rec}_K(u)|$. Khi chia dữ liệu theo một mốc thời gian chung như trong đề tài, một người dùng có thể có nhiều sản phẩm đúng. Mọi độ đo được tính cho từng người dùng rồi lấy trung bình trên tập người dùng được đánh giá $\mathcal{U}_{test}$.
 
-Hit Ratio (HR@K) tính một người dùng là ``trúng'' nếu có ít nhất một sản phẩm đúng trong top-$K$:
+Hit Ratio (HR@K) trả lời câu hỏi đơn giản nhất: trong $K$ gợi ý có món nào khách mua thật không. Mỗi người dùng được tính 1 nếu có và 0 nếu không:
 \begin{equation}
     \text{HR@K} = \frac{1}{|\mathcal{U}_{test}|} \sum_{u \in \mathcal{U}_{test}} \mathbb{I}\left( \text{hits}_u \ge 1 \right)
     \label{eq:hr_k}
 \end{equation}
 
-Precision@K là tỉ lệ gợi ý đúng trong $K$ sản phẩm; Recall@K là tỉ lệ sản phẩm đúng được tìm lại:
+Precision@K nhìn từ phía danh sách: bao nhiêu phần trong $K$ gợi ý là đúng. Recall@K nhìn từ phía khách: bao nhiêu phần trong số món khách thật sự mua đã có trong danh sách:
 \begin{equation}
     \text{Precision@K}(u) = \frac{\text{hits}_u}{K}, \qquad \text{Recall@K}(u) = \frac{\text{hits}_u}{|T_u|}
     \label{eq:precision_recall}
 \end{equation}
 Khi $|T_u| = 1$, Recall@K trùng HR@K và Precision@K bằng HR@K chia cho $K$; hai độ đo này chỉ mang thông tin riêng khi người dùng có nhiều sản phẩm đúng.
 
-NDCG@K (\textit{normalized discounted cumulative gain}) thưởng nhiều hơn khi sản phẩm đúng nằm ở vị trí cao. Với mức liên quan nhị phân, định nghĩa của \textcite{jarvelin2002} là:
+Ba độ đo trên không phân biệt món đúng nằm ở vị trí đầu hay vị trí thứ $K$, trong khi người dùng thường chỉ xem vài gợi ý đầu. NDCG@K (\textit{normalized discounted cumulative gain}) xét thêm điều này: một món đúng càng nằm xa đầu danh sách thì đóng góp càng ít. Với mức liên quan nhị phân, định nghĩa của \textcite{jarvelin2002} là:
 \begin{equation}
     \begin{aligned}
         \text{NDCG@K}(u) &= \frac{\text{DCG@K}(u)}{\text{IDCG@K}(u)}, \\
@@ -356,80 +335,45 @@ IDCG là giá trị DCG khi mọi sản phẩm đúng xếp ở đầu danh sác
 
 \subsection{Xếp hạng toàn bộ và xếp hạng trên tập lấy mẫu}
 
-Một số công trình, trong đó có NCF, đánh giá bằng cách xếp sản phẩm đúng giữa một tập nhỏ ứng viên lấy mẫu, cụ thể là sản phẩm kiểm thử cùng 100 sản phẩm người dùng chưa tương tác. \textcite{krichene2020sampled} chứng minh độ đo trên tập ứng viên lấy mẫu không nhất quán với độ đo trên toàn bộ danh mục, thậm chí có thể đảo ngược kết luận ``A tốt hơn B'', và khuyến nghị không lấy mẫu. Đề tài vì vậy chỉ dùng cách xếp hạng toàn bộ (\textit{full ranking}). Mỗi người dùng được xếp hạng trên toàn bộ tập ứng viên, trừ sản phẩm đã mua; ở tập kiểm thử của mẫu kiểm định, tập này có khoảng \VData{Btest}{cand} sản phẩm. Ở giai đoạn phát triển, một phép đối chiếu với cách lấy mẫu 99 sản phẩm cho thấy thứ hạng giữa các mô hình thay đổi giữa hai cách đánh giá (mục~\ref{sec:v1_history}).
+Một số công trình, trong đó có NCF, đánh giá bằng cách xếp sản phẩm đúng giữa một tập nhỏ ứng viên lấy mẫu, cụ thể là sản phẩm kiểm thử cùng 100 sản phẩm người dùng chưa tương tác. \textcite{krichene2020sampled} chứng minh độ đo trên tập ứng viên lấy mẫu không nhất quán với độ đo trên toàn bộ danh mục, thậm chí có thể đảo ngược kết luận ``A tốt hơn B'', và khuyến nghị không lấy mẫu. Đề tài vì vậy chỉ dùng cách xếp hạng toàn bộ (\textit{full ranking}). Mỗi người dùng được xếp hạng trên toàn bộ tập ứng viên, trừ sản phẩm đã mua; ở tập kiểm thử của mẫu kiểm định, tập này có khoảng \VData{Btest}{cand} sản phẩm. Giai đoạn phát triển của đề tài cũng gặp hiện tượng này: khi đổi sang cách lấy mẫu 99 sản phẩm, thứ hạng giữa các mô hình thay đổi.
 
 \subsection{Độ đo ngoài độ chính xác}
 \label{subsec:beyond_accuracy}
 
-Nếu chỉ tối ưu HR@K và NDCG@K, mô hình có thể thiên về gợi ý các sản phẩm phổ biến nhất, vốn dễ trúng nhưng ít giá trị cá nhân hóa \parencite{vargas2011novelty}. Để mô tả danh sách gợi ý ngoài độ chính xác, đề tài dùng độ phủ (\textit{coverage}): tỉ lệ sản phẩm của không gian ứng viên $\mathcal{I}_{cand}$ xuất hiện trong danh sách gợi ý của ít nhất một người dùng:
+Một mô hình chỉ gợi ý những món bán chạy nhất vẫn có thể đạt HR@K khá, vì món bán chạy dễ trúng, nhưng danh sách của nó gần như giống nhau với mọi khách \parencite{vargas2011novelty}. Để mô tả danh sách gợi ý ngoài độ chính xác, đề tài dùng độ phủ (\textit{coverage}): tỉ lệ sản phẩm của không gian ứng viên $\mathcal{I}_{cand}$ xuất hiện trong danh sách gợi ý của ít nhất một người dùng:
 \begin{equation}
     \text{Coverage@K} = \frac{\left| \bigcup_{u \in \mathcal{U}_{test}} \text{Rec}_K(u) \right|}{|\mathcal{I}_{cand}|}
     \label{eq:coverage}
 \end{equation}
 Độ phủ thấp cho thấy mô hình chỉ dùng một phần nhỏ danh mục. Trường hợp giới hạn là Most Popular, khi mọi người dùng nhận gần như cùng một danh sách. Độ đo này chỉ mang tính mô tả.
 
-\section{Các công trình liên quan}
+\section{Ba nghiên cứu đối chứng}
 \label{sec:related_work}
-
-Bảng~\ref{tab:related_work} tổng hợp các công trình liên quan trực tiếp đến hướng tiếp cận của đề tài. Các công trình dùng dữ liệu, cách chia dữ liệu và giao thức đánh giá khác nhau; bảng chỉ tổng hợp phương pháp và đóng góp để làm cơ sở lựa chọn cách làm, không dùng số liệu của chúng làm chuẩn so sánh.
-
-\begingroup\small
-\begin{xltabular}{\textwidth}{>{\raggedright\arraybackslash}p{2.9cm} >{\raggedright\arraybackslash}p{2.7cm} >{\raggedright\arraybackslash}p{2.5cm} X}
-    \caption{Các công trình nghiên cứu liên quan}
-    \label{tab:related_work} \\
-    \toprule
-    Tác giả, năm & Mô hình, phương pháp & Dữ liệu & Đóng góp chính và hạn chế \\
-    \midrule
-    \endfirsthead
-    \toprule
-    Tác giả, năm & Mô hình, phương pháp & Dữ liệu & Đóng góp chính và hạn chế \\
-    \midrule
-    \endhead
-    \bottomrule
-    \endfoot
-    Sarwar và cộng sự, 2001 \cite{sarwar2001item} & Lọc cộng tác theo sản phẩm (ItemKNN) & MovieLens & Gợi ý theo độ tương đồng giữa sản phẩm, tính trước được và dễ giải thích. Hạn chế: ma trận tương đồng tăng theo bình phương số sản phẩm; chất lượng giảm khi dữ liệu quá thưa. \\
-    Rendle và cộng sự, 2009 \cite{rendle2009bpr} & BPR & MovieLens, Netflix & Khung tối ưu theo cặp cho phản hồi ẩn. Hạn chế: mô hình đi kèm là tuyến tính. \\
-    He và cộng sự, 2017 \cite{he2017ncf} & NCF, NeuMF & MovieLens, Pinterest & Đề xuất khung NCF kết hợp GMF và MLP. Hạn chế: chỉ dùng mã ID, chưa dùng đặc trưng nội dung. \\
-    Cheng và cộng sự, 2016 \cite{cheng2016wide} & Wide \& Deep & Google Play & Kết hợp ghi nhớ (nhánh tuyến tính) và khái quát hóa (nhánh sâu). Hạn chế: cần xây dựng tổ hợp đặc trưng thủ công. \\
-    Guo và cộng sự, 2017 \cite{guo2017deepfm} & DeepFM & Criteo, dữ liệu doanh nghiệp & Thay nhánh tuyến tính bằng Factorization Machines. Hạn chế: chi phí tăng khi số đặc trưng lớn. \\
-    Volkovs và cộng sự, 2017 \cite{volkovs2017dropoutnet} & DropoutNet & CiteULike, RecSys Challenge 2017 & Bỏ ngẫu nhiên biểu diễn sở thích khi huấn luyện để mô hình chấm được đối tượng khởi đầu lạnh. Hạn chế: cần đặc trưng nội dung đủ giàu thông tin. \\
-    Kang và McAuley, 2018 \cite{kang2018self} & SASRec & Amazon, Steam, MovieLens & Mô hình hóa chuỗi hành vi bằng cơ chế tự chú ý. Hạn chế: cần thứ tự hoặc phiên rõ ràng, không có trên dữ liệu chỉ ghi ngày mua như H\&M. \\
-    Wang và cộng sự, 2019; He và cộng sự, 2020 \cite{wang2019ngcf, he2020lightgcn} & NGCF, LightGCN & Gowalla, Amazon-Book, Yelp2018 & Lan truyền tín hiệu tương tác bậc cao trên đồ thị hai phía. Hạn chế: chi phí tăng nhanh theo quy mô đồ thị. \\
-    Liang và cộng sự, 2018 \cite{liang2018multvae} & Mult-VAE & MovieLens-20M, Netflix, Million Song & Mô hình hóa cả vector mua của người dùng, chấm toàn bộ danh mục trong một lượt. Hạn chế: không dùng thứ tự thời gian; cần đủ lịch sử cho mỗi người dùng. \\
-    Li và cộng sự, 2024 \cite{li2024dnncf} & Khảo sát mạng nơ-ron sâu cho lọc cộng tác & Nhiều lĩnh vực & Hệ thống hóa các kiến trúc mạng nơ-ron dùng trong lọc cộng tác. Hạn chế: là bài khảo sát, không có thực nghiệm riêng. \\
-    Hồ Thị Linh, 2023 \cite{holinh2023multisource} & Tích hợp đa nguồn: hợp nhất muộn (bỏ phiếu, MLP), hợp nhất sớm ma trận tương tác và văn bản, Transformer & MovieLens, Amazon & Hệ thống hóa hợp nhất sớm và hợp nhất muộn cho hệ gợi ý đa nguồn. Khác với đề tài: bài toán dự đoán điểm đánh giá (MAE, RMSE), không xếp hạng Top-$K$ trên phản hồi ẩn. \\
-    Ferrari Dacrema và cộng sự, 2019 \cite{dacrema2019progress} & Tái lập 18 mô hình gợi ý học sâu & MovieLens, Pinterest, Netflix & Phần lớn mô hình học sâu được tái lập không vượt các mô hình đơn giản được tinh chỉnh tốt; mã nguồn NCF chọn số epoch trên tập kiểm thử. Hạn chế: chủ yếu dùng giao thức lấy mẫu của bài gốc. \\
-    Rendle và cộng sự, 2020 \cite{rendle2020ncfmf} & So sánh MF với NeuMF & MovieLens 1M, Pinterest & MF được tinh chỉnh kỹ vượt NeuMF trên chính dữ liệu và giao thức của bài NCF. Hạn chế: vẫn dùng giao thức lấy mẫu của bài gốc. \\
-    Đề tài, 2026 & NeuMF-F: hai nhánh GMF-F, MLP-F (vector nhúng ID cộng đặc trưng), hợp nhất sớm & H\&M (hai mẫu khách hàng độc lập); kiểm chứng trên Amazon Beauty & Một sản phẩm là một mẫu thiết kế; đặc trưng theo thời điểm; tinh chỉnh trên mẫu phát triển, đánh giá một lần trên mẫu khách hàng độc lập theo kế hoạch đăng ký trước; so với 13 mô hình đối chứng xếp thành ba nhóm, kèm một mô hình lai truyền thống bổ sung; kiểm định có hiệu chỉnh Holm; phân tích bóc tách; chạy lại trên bộ dữ liệu thứ hai. \\
-\end{xltabular}
-\endgroup
-
-\subsection{Ba nghiên cứu nền tảng và đối chiếu thiết lập thực nghiệm}
 \label{subsec:foundation_studies}
 
-Ba nghiên cứu là nền tảng trực tiếp của đề tài. \textcite{he2017ncf} đề xuất kiến trúc NeuMF mà NeuMF-F kế thừa. \textcite{rendle2020ncfmf} kiểm tra lại câu hỏi NeuMF có thực sự tốt hơn MF được tinh chỉnh kỹ hay không, câu hỏi mà đề tài đặt lại trên dữ liệu H\&M. Luận án của \textcite{holinh2023multisource} hệ thống hóa hai cách hợp nhất và việc bổ sung nguồn thông tin ngoài ma trận tương tác, khung phân loại mà đề tài dùng để so sánh NeuMF-F với LateFusion-F. Bảng~\ref{tab:foundation_studies} đối chiếu thiết lập thực nghiệm của ba nghiên cứu với đề tài; số liệu của mỗi nghiên cứu lấy từ chính bài gốc.
+Đề tài chọn ba nghiên cứu làm đối chứng, vì chúng là nền tảng trực tiếp của đề tài. \textcite{he2017ncf} đề xuất kiến trúc NeuMF mà NeuMF-F kế thừa. \textcite{rendle2020ncfmf} kiểm tra lại câu hỏi NeuMF có thực sự tốt hơn MF được tinh chỉnh kỹ hay không, câu hỏi mà đề tài đặt lại trên dữ liệu H\&M. Luận án của \textcite{holinh2023multisource} hệ thống hóa hai cách hợp nhất và việc bổ sung nguồn thông tin ngoài ma trận tương tác, khung phân loại mà đề tài dùng để so sánh NeuMF-F với LateFusion-F. Bảng~\ref{tab:foundation_studies} đối chiếu thiết lập thực nghiệm của ba nghiên cứu với đề tài; số liệu của mỗi nghiên cứu lấy từ chính bài gốc. Các nguồn khác trong báo cáo chỉ được trích cho phương pháp, dữ liệu hoặc công cụ mà đề tài dùng lại, không dùng số liệu của chúng để so sánh.
 
 \begingroup\small
-\begin{xltabular}{\textwidth}{>{\raggedright\arraybackslash}p{2.2cm} >{\raggedright\arraybackslash}p{4.1cm} >{\raggedright\arraybackslash}p{3.3cm} >{\raggedright\arraybackslash}X}
-    \caption{Thiết lập thực nghiệm và kết quả công bố của ba nghiên cứu nền tảng, đặt cạnh thiết lập của đề tài}
+\begin{xltabular}{\textwidth}{|>{\raggedright\arraybackslash}p{2.2cm}|>{\raggedright\arraybackslash}p{4.1cm}|>{\raggedright\arraybackslash}p{3.3cm}|>{\raggedright\arraybackslash}X|}
+    \caption{Ba nghiên cứu nền tảng và thiết lập của đề tài}
     \label{tab:foundation_studies} \\
-    \toprule
+    \hline
     Nghiên cứu & Dữ liệu; bài toán và độ đo & Cách chia; tập ứng viên & Kết quả công bố (số liệu của bài gốc) \\
-    \midrule
+    \hline
     \endfirsthead
-    \toprule
+    \hline
     Nghiên cứu & Dữ liệu; bài toán và độ đo & Cách chia; tập ứng viên & Kết quả công bố (số liệu của bài gốc) \\
-    \midrule
+    \hline
     \endhead
-    \bottomrule
+    
     \endfoot
-    He và cộng sự, 2017 \cite{he2017ncf}: NCF, NeuMF & MovieLens 1M (6.040 người dùng, 3.706 phim, 1.000.209 tương tác) và Pinterest (55.187 người dùng, 9.916 sản phẩm, 1.500.809 tương tác), phản hồi ẩn. Xếp hạng Top-$K$; HR@10, NDCG@10 & Giữ lại tương tác mới nhất của mỗi người dùng làm kiểm thử. 101 ứng viên: sản phẩm kiểm thử và 100 sản phẩm chưa tương tác lấy ngẫu nhiên & NeuMF có tiền huấn luyện: MovieLens HR@10 = 0,730, NDCG@10 = 0,447 (64 nhân tố); Pinterest HR@10 = 0,880, NDCG@10 = 0,558 (16 nhân tố). Trung bình cao hơn eALS 4,5\% và BPR 4,9\% (tương đối). \\
-    \midrule
-    Rendle và cộng sự, 2020 \cite{rendle2020ncfmf}: MF so với NeuMF & Như NCF: MovieLens 1M và Pinterest; HR@10, NDCG@10 & Như NCF: giữ lại tương tác mới nhất; 101 ứng viên & MF tinh chỉnh kỹ: MovieLens 0,7294 / 0,4523, Pinterest 0,8895 / 0,5794 (HR@10 / NDCG@10); NeuMF trong bảng so sánh của bài: 0,7093 / 0,4349 và 0,8777 / 0,5576. MF cao hơn NeuMF 2,8\% HR@10 và 4,0\% NDCG@10 (MovieLens), 1,3\% và 3,9\% (Pinterest). \\
-    \midrule
-    Hồ Thị Linh, 2023 \cite{holinh2023multisource}: tích hợp đa nguồn & MovieLens (77.764 đánh giá, 27.042 người dùng, 8.203 phim); Amazon Electronics (85.065 đánh giá, 1.042 người dùng), Toys and Games (71.780; 5.462), Video Games (98.769; 2.291). Dự đoán điểm đánh giá; RMSE, MAE, Precision & Chia ngẫu nhiên 80\% huấn luyện (20\% trong đó để xác thực), 20\% kiểm thử. Không xếp hạng trên tập ứng viên & Hợp nhất sớm vector MF và đặc trưng văn bản qua mạng nơ-ron (chương 4), Electronics: RMSE 1,01, Precision 82,86\% so với SVD 1,16 và 69,55\% (RMSE giảm 12,93\%, Precision tăng 19,14\%). Transformer hợp nhất nhiều góc nhìn (chương 5), Toys and Games: MAE 0,445, RMSE 0,743, Precision 92,07\% so với SVD 0,844 / 1,120 / 68,06\%. \\
-    \midrule
-    Đề tài, 2026 & H\&M, mẫu kiểm định (\VData{B}{nusers} khách, \VData{B}{nitems} sản phẩm, \VData{B}{nkeptpairs} cặp) và Amazon Beauty 5-core (\AData{all}{nusers} khách, \AData{all}{nitems} sản phẩm, \AData{all}{nkeptpairs} cặp), phản hồi ẩn. Xếp hạng Top-$K$; NDCG@10 (chính), Recall, HR, Precision ở $K = 5, 10, 15, 20$ & Theo mốc thời gian chung; mẫu khách hàng độc lập (H\&M). Ứng viên: mọi sản phẩm đã có dữ liệu huấn luyện, trừ sản phẩm khách đã mua; trung bình \VData{Btest}{cand} (H\&M), \AData{test}{cand} (Amazon) & NeuMF-F so với NeuMF chỉ dùng ID: NDCG@10 \VSig{1}{rel} (H\&M) và \ASig{1}{rel} (Amazon), đều có ý nghĩa thống kê. NeuMF chỉ dùng ID so với BPR-MF trên H\&M: \VSig{10}{rel}, không khác biệt có ý nghĩa (Chương~\ref{chap:thucnghiem}). \\
+    He và cộng sự, 2017 \parencite{he2017ncf} & MovieLens 1M (6.040 người dùng, 3.706 phim, 1.000.209 tương tác) và Pinterest (55.187 người dùng, 9.916 sản phẩm, 1.500.809 tương tác), phản hồi ẩn. Xếp hạng Top-$K$; HR@10, NDCG@10 & Giữ lại tương tác mới nhất của mỗi người dùng làm kiểm thử. 101 ứng viên: sản phẩm kiểm thử và 100 sản phẩm chưa tương tác lấy ngẫu nhiên & NeuMF có tiền huấn luyện: MovieLens HR@10 = 0,730, NDCG@10 = 0,447 (64 nhân tố); Pinterest HR@10 = 0,880, NDCG@10 = 0,558 (16 nhân tố). Trung bình cao hơn eALS 4,5\% và BPR 4,9\% (tương đối). \\
+    \hline
+    Rendle và cộng sự, 2020 \parencite{rendle2020ncfmf} & Như NCF: MovieLens 1M và Pinterest; HR@10, NDCG@10 & Như NCF: giữ lại tương tác mới nhất; 101 ứng viên & MF tinh chỉnh kỹ: MovieLens 0,7294 / 0,4523, Pinterest 0,8895 / 0,5794 (HR@10 / NDCG@10); NeuMF trong bảng so sánh của bài: 0,7093 / 0,4349 và 0,8777 / 0,5576. MF cao hơn NeuMF 2,8\% HR@10 và 4,0\% NDCG@10 (MovieLens), 1,3\% và 3,9\% (Pinterest). \\
+    \hline
+    Hồ Thị Linh, 2023 \parencite{holinh2023multisource} & MovieLens (77.764 đánh giá, 27.042 người dùng, 8.203 phim); Amazon Electronics (85.065 đánh giá, 1.042 người dùng), Toys and Games (71.780; 5.462), Video Games (98.769; 2.291). Dự đoán điểm đánh giá; RMSE, MAE, Precision & Chia ngẫu nhiên 80\% huấn luyện (20\% trong đó để xác thực), 20\% kiểm thử. Không xếp hạng trên tập ứng viên & Hợp nhất sớm vector MF và đặc trưng văn bản qua mạng nơ-ron (chương 4), Electronics: RMSE 1,01, Precision 82,86\% so với SVD 1,16 và 69,55\% (RMSE giảm 12,93\%, Precision tăng 19,14\%). Transformer hợp nhất nhiều góc nhìn (chương 5), Toys and Games: MAE 0,445, RMSE 0,743, Precision 92,07\% so với SVD 0,844 / 1,120 / 68,06\%. \\
+    \hline
+    Đề tài, 2026 & H\&M, mẫu kiểm định (\VData{B}{nusers} khách, \VData{B}{nitems} sản phẩm, \VData{B}{nkeptpairs} cặp) và Amazon Beauty 5-core (\AData{all}{nusers} khách, \AData{all}{nitems} sản phẩm, \AData{all}{nkeptpairs} cặp), phản hồi ẩn. Xếp hạng Top-$K$; NDCG@10 (chính), Recall, HR, Precision ở $K = 5, 10, 15, 20$ & Theo mốc thời gian chung; mẫu khách hàng độc lập (H\&M). Ứng viên: mọi sản phẩm đã có dữ liệu huấn luyện, trừ sản phẩm khách đã mua; trung bình \VData{Btest}{cand} (H\&M), \AData{test}{cand} (Amazon) & NeuMF-F so với NeuMF chỉ dùng ID: NDCG@10 \VSig{1}{rel} (H\&M) và \ASig{1}{rel} (Amazon), đều có ý nghĩa thống kê. NeuMF chỉ dùng ID so với BPR-MF trên H\&M: \VSig{10}{rel}, không khác biệt có ý nghĩa. \\ \hline
 \end{xltabular}
 \endgroup
 
@@ -438,6 +382,12 @@ Các con số trong Bảng~\ref{tab:foundation_studies} không so sánh trực t
 \section{Khoảng trống nghiên cứu}
 \label{sec:khoangtrong_nghiencuu}
 
-Các nghiên cứu nền tảng về NCF chủ yếu được đánh giá trên dữ liệu phim ảnh hoặc mạng xã hội hình ảnh, với giao thức giữ lại tương tác cuối và tập ứng viên lấy mẫu. Các nghiên cứu tái đánh giá cho thấy NeuMF chỉ dùng mã ID khó vượt các mô hình đơn giản được tinh chỉnh kỹ (mục~\ref{sec:related_work}). Các mô hình dùng đặc trưng khai thác được thông tin ngoài mã ID, nhưng thường được đánh giá cho bài toán dự đoán nhấp chuột chứ không phải xếp hạng Top-$K$ trên toàn bộ danh mục. Các hướng mới hơn như học trên đồ thị, mô hình chuỗi hay mô hình ngôn ngữ lớn cần cấu trúc dữ liệu đặc thù hoặc tài nguyên vượt phạm vi của đề tài (mục~\ref{sec:modern_trends}).
+Các nghiên cứu nền tảng về NCF chủ yếu được đánh giá trên dữ liệu phim ảnh hoặc mạng xã hội hình ảnh, với giao thức giữ lại tương tác cuối và tập ứng viên lấy mẫu. Các nghiên cứu tái đánh giá cho thấy NeuMF chỉ dùng mã ID khó vượt các mô hình đơn giản được tinh chỉnh kỹ. Các mô hình dùng đặc trưng khai thác được thông tin ngoài mã ID, nhưng thường được đánh giá cho bài toán dự đoán nhấp chuột chứ không phải xếp hạng Top-$K$ trên toàn bộ danh mục. Các hướng mới hơn như học trên đồ thị, mô hình chuỗi hay mô hình ngôn ngữ lớn cần cấu trúc dữ liệu đặc thù hoặc tài nguyên vượt phạm vi của đề tài.
 
-Đề tài tập trung vào khoảng trống sau. Thứ nhất, xây dựng một mô hình lai giữ cấu trúc MF và DNN của NeuMF nhưng khai thác được đặc trưng sản phẩm, khách hàng và thời gian (NeuMF-F). Thứ hai, đánh giá mô hình này trên dữ liệu giao dịch thời trang thực tế, theo một giao thức gần với tình huống triển khai. Giao thức chia dữ liệu theo thời gian, tính đặc trưng không dùng thông tin tương lai, và lấy kết luận trên một mẫu khách hàng chưa từng được dùng để ra quyết định. Giao thức cũng tránh ba lỗi phương pháp mà các nghiên cứu tái đánh giá đã chỉ ra: chọn mô hình trên tập kiểm thử, tinh chỉnh mô hình đối chứng sơ sài và đánh giá trên tập ứng viên lấy mẫu. Thiết kế đối chứng cho phép trả lời riêng ba câu hỏi đã nêu ở mục~\ref{subsec:sumenh_neumf}: đặc trưng có giúp mô hình lai không, hợp nhất có giúp so với từng nhánh không, và hợp nhất sớm hay hợp nhất muộn phù hợp hơn.
+Đề tài tập trung vào hai khoảng trống cụ thể. Khoảng trống thứ nhất về mô hình: xây dựng NeuMF-F, một mô hình lai giữ cấu trúc MF và DNN của NeuMF nhưng khai thác được đặc trưng sản phẩm, khách hàng và thời gian. Khoảng trống thứ hai về đánh giá: thử nghiệm mô hình này trên dữ liệu giao dịch thời trang thực tế, theo một giao thức gần với tình huống triển khai. Giao thức chia dữ liệu theo thời gian, tính đặc trưng không dùng thông tin tương lai, và lấy kết luận trên một mẫu khách hàng chưa từng được dùng để ra quyết định. Giao thức cũng tránh ba lỗi phương pháp mà các nghiên cứu tái đánh giá đã chỉ ra: chọn mô hình trên tập kiểm thử, tinh chỉnh mô hình đối chứng sơ sài và đánh giá trên tập ứng viên lấy mẫu. Thiết kế đối chứng cho phép trả lời riêng ba câu hỏi đã nêu ở mục~\ref{subsec:sumenh_neumf}: đặc trưng có giúp mô hình lai không, hợp nhất có giúp so với từng nhánh không, và hợp nhất sớm hay hợp nhất muộn phù hợp hơn.
+
+\FloatBarrier
+\section{Tóm tắt chương}
+\label{sec:tomtat_c2}
+
+Chương này đã trình bày các khái niệm và mô hình mà đề tài dựa vào. Ba điểm được mang sang các chương sau. Thứ nhất, nhân tử hóa ma trận chỉ học tương tác tuyến tính và chỉ học từ mã ID, nên gặp khó trên dữ liệu thưa như H\&M. Thứ hai, NeuMF bổ sung một nhánh phi tuyến, nhưng các nghiên cứu tái đánh giá cho thấy lợi ích của nhánh này chưa chắc chắn khi MF được tinh chỉnh kỹ. Thứ ba, các mô hình dựa trên đặc trưng và khung hợp nhất sớm, hợp nhất muộn gợi ý một hướng khác: bổ sung thông tin ngoài mã ID. Chương tiếp theo xây dựng NeuMF-F theo hướng này và thiết kế quy trình đánh giá để kiểm tra riêng từng điểm.

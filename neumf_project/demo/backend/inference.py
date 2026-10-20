@@ -13,9 +13,10 @@ SCORE_KIND = {"MostPopular": "lượt mua train", "BPR-MF": "điểm", "ItemKNN"
               "LateFusion-F": "điểm trộn", "MostPopular-Recent": "giao dịch gần đây", "Content": "cosine",
               "Hybrid-CBCF": "điểm lai"}
 METRIC_NAMES = ("HR", "NDCG", "Recall", "Precision")
-MISMATCH_NOTE = ("Hạng tính lại trên máy này khác hạng đã lưu ở đánh giá cuối. Nguyên nhân: tệp đặc trưng văn bản "
-                 "(TF-IDF + SVD trong data/processed/) được dựng lại bằng phiên bản thư viện khác máy đã chạy đánh giá "
-                 "cuối, nên vector văn bản khác. Số trong báo cáo là số đã lưu.")
+# Hạng tính lại lệch hạng đã lưu: tệp đặc trưng văn bản (TF-IDF + SVD trong data/processed/) dựng lại bằng phiên bản thư
+# viện khác máy đã chạy đánh giá cuối, nên vector văn bản khác (demo/README.md mục 4).
+MISMATCH_NOTE = ("Thứ hạng trên máy này lệch với số đã lưu do tệp đặc trưng văn bản được dựng lại trên máy khác. "
+                 "Số trong báo cáo là số đã lưu.")
 
 
 def metrics_of(ctx, ranks) -> dict:

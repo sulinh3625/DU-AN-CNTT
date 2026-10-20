@@ -1,24 +1,22 @@
 % Sinh tự động bởi neumf_project/scripts/24_report_v2.py — KHÔNG sửa tay.
 \begin{table}[htbp]
     \centering\small
-    \caption{Các cách kết hợp của Hybrid-CBCF trên tập xác thực của mẫu phát triển}
+    \caption{Các cách kết hợp của Hybrid-CBCF}
     \label{tab:v2hybrid}
     \begin{adjustbox}{max width=\textwidth}
-    \begin{tabular}{lrr}
-        \toprule
-        Mô hình & NDCG@10 & HR@10 \\
-        \midrule
-        \multicolumn{3}{l}{\textit{Thành phần đứng riêng}} \\
-        Content & 0{,}00435 & 0{,}02141 \\
-        UserKNN & 0{,}02753 & 0{,}10432 \\
-        ItemKNN & 0{,}02599 & 0{,}09537 \\
-        \midrule \multicolumn{3}{l}{\textit{Hybrid-CBCF theo cách kết hợp}} \\
-        Bỏ phiếu: trung bình & 0{,}02634 & 0{,}10004 \\
-        Bỏ phiếu: lớn nhất & 0{,}01483 & 0{,}05411 \\
-        Bỏ phiếu: nhỏ nhất & 0{,}02143 & 0{,}08447 \\
-        Tổng có trọng số học theo cặp (được chọn) & \textbf{0{,}02815} & \textbf{0{,}10588} \\
-        \bottomrule
+    \begin{tabular}{|l|r|r|}
+        \hline
+        Mô hình & NDCG@10 & HR@10 \\ \hline
+        \multicolumn{3}{|l|}{\textit{Thành phần đứng riêng}} \\ \hline
+        Content & 0{,}00435 & 0{,}02141 \\ \hline
+        UserKNN & 0{,}02753 & 0{,}10432 \\ \hline
+        ItemKNN & 0{,}02599 & 0{,}09537 \\ \hline
+        \multicolumn{3}{|l|}{\textit{Hybrid-CBCF theo cách kết hợp}} \\ \hline
+        Bỏ phiếu: trung bình & 0{,}02634 & 0{,}10004 \\ \hline
+        Bỏ phiếu: lớn nhất & 0{,}01483 & 0{,}05411 \\ \hline
+        Bỏ phiếu: nhỏ nhất & 0{,}02143 & 0{,}08447 \\ \hline
+        Tổng có trọng số học theo cặp (được chọn) & \textbf{0{,}02815} & \textbf{0{,}10588} \\ \hline
     \end{tabular}
     \end{adjustbox}
-    \par\smallskip{\footnotesize In đậm: cao nhất mỗi cột. Điểm của mỗi thành phần được chuẩn hoá min--max trên tập ứng viên của khách. Bỏ phiếu lấy trung bình, giá trị lớn nhất hoặc nhỏ nhất của ba điểm. Tổng có trọng số dùng trọng số học bằng hồi quy logistic trên các cặp (sản phẩm đúng, sản phẩm không đúng) của cùng một khách, 50 sản phẩm không đúng cho mỗi sản phẩm đúng; NDCG@10 của cách này tính bằng khớp chéo hai phần theo khách. Số trên tập xác thực chỉ dùng để chọn. Content khác \bangrefV{tab_v2_tuning.tex}{tab:v2tuning} (0{,}00459) do vector văn bản được dựng lại.}
+    \par\smallskip{\small In đậm: cao nhất mỗi cột. Cách kết hợp được mô tả ở Thuật toán~\ref{alg:hybrid}. Content khác \bangrefV{tab_v2_tuning.tex}{tab:v2tuning} (0{,}00459) do vector văn bản được dựng lại.}
 \end{table}

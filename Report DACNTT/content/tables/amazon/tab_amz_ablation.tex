@@ -1,20 +1,18 @@
 % Sinh tự động bởi neumf_project/scripts/24_report_v2.py — KHÔNG sửa tay.
 \begin{table}[htbp]
     \centering\small
-    \caption{Phân tích bóc tách NeuMF-F trên tập kiểm thử Amazon Beauty}
+    \caption{Phân tích bóc tách NeuMF-F trên Amazon Beauty}
     \label{tab:amzablation}
     \begin{adjustbox}{max width=\textwidth}
-    \begin{tabular}{lrrc}
-        \toprule
-        Biến thể & NDCG@10 & Thay đổi & CI 95\% của hiệu \\
-        \midrule
-        NeuMF-F (đầy đủ) & 0{,}03378 & --- & --- \\
-        Bỏ vector văn bản & 0{,}03047 & $-$9{,}8\% & [$-$0{,}00701; +0{,}00051] \\
-        Bỏ đặc trưng thời gian & 0{,}02310 & $-$31{,}6\% & [$-$0{,}01569; $-$0{,}00561] \\
-        Bỏ thông tin khách hàng & 0{,}03424 & +1{,}3\% & [$-$0{,}00271; +0{,}00369] \\
-        Bỏ thuộc tính sản phẩm & 0{,}02892 & $-$14{,}4\% & [$-$0{,}00844; $-$0{,}00133] \\
-        \bottomrule
+    \begin{tabular}{|l|r|r|c|}
+        \hline
+        Biến thể & NDCG@10 & Thay đổi & CI 95\% của hiệu \\ \hline
+        NeuMF-F (đầy đủ) & 0{,}03378 & --- & --- \\ \hline
+        Bỏ vector văn bản & 0{,}03047 & $-$9{,}8\% & [$-$0{,}00701; +0{,}00051] \\ \hline
+        Bỏ đặc trưng thời gian & 0{,}02310 & $-$31{,}6\% & [$-$0{,}01569; $-$0{,}00561] \\ \hline
+        Bỏ thông tin khách hàng & 0{,}03424 & +1{,}3\% & [$-$0{,}00271; +0{,}00369] \\ \hline
+        Bỏ thuộc tính sản phẩm & 0{,}02892 & $-$14{,}4\% & [$-$0{,}00844; $-$0{,}00133] \\ \hline
     \end{tabular}
     \end{adjustbox}
-    \par\smallskip{\footnotesize Seed 42; cùng siêu tham số, mỗi biến thể tắt một thành phần. Thay đổi: (biến thể $-$ đầy đủ)/đầy đủ. CI: khoảng tin cậy bootstrap theo người dùng của hiệu (biến thể $-$ đầy đủ). Chỉ mô tả, không kiểm định. Biến thể trùng NeuMF-F, ví dụ không bỏ ID ngẫu nhiên khi cấu hình chọn đã có xác suất bỏ ID bằng 0, không được chạy. Amazon không có thuộc tính khách: ``bỏ thông tin khách hàng'' là bỏ đặc trưng thời gian của khách.}
+    \par\smallskip{\small Seed 42, chỉ mô tả, không kiểm định. Thay đổi: (biến thể $-$ đầy đủ)/đầy đủ. Amazon không có thuộc tính khách nên ``bỏ thông tin khách hàng'' là bỏ đặc trưng thời gian của khách.}
 \end{table}

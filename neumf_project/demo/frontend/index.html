@@ -3,44 +3,124 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Demo Shop — Gợi ý thời trang</title>
+<meta name="description" content="Demo hệ gợi ý sản phẩm NeuMF-F: đề tài làm gì, gợi ý cho từng khách hàng và kết quả đánh giá.">
+<title>Demo gợi ý sản phẩm</title>
+<script>
+  // Đặt chế độ sáng / tối trước khi vẽ trang (tránh nháy màu): lựa chọn đã lưu, nếu chưa có thì theo hệ điều hành.
+  (function () {
+    var t = null;
+    try { t = localStorage.getItem("demo.theme"); } catch (e) { /* trình duyệt chặn lưu */ }
+    if (t !== "light" && t !== "dark") t = matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+    document.documentElement.dataset.theme = t;
+  })();
+</script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-<script src="https://cdn.jsdelivr.net/npm/chart.js@4/dist/chart.umd.min.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
+<!-- Biểu tượng dùng lại (hình sản phẩm theo nhóm hàng, kết luận, tab) -->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs>
+    <symbol id="g-top" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round" d="M8.5 3.5 4 6l1.6 4 1.9-.8V20.5h9V9.2l1.9.8L20 6l-4.5-2.5c-.6 1.4-2 2.2-3.5 2.2s-2.9-.8-3.5-2.2Z"/></symbol>
+    <symbol id="g-bottom" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round" d="M6.5 3.5h11l1 17h-4.3L12 9.5l-2.2 11H5.5l1-17Z"/></symbol>
+    <symbol id="g-short" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round" d="M5.5 5h13l1 11h-5.2L12 10.5 9.7 16H4.5l1-11Z"/></symbol>
+    <symbol id="g-under" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" d="M4 9.5c2 4.5 5 5.5 8 2.5 3 3 6 2 8-2.5M4 9.5V7M20 9.5V7M12 12v4.5"/></symbol>
+    <symbol id="g-knit" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round" d="M9 3.5 4.5 5.5 3 14l2.8.6.9-6V20.5h10.6V8.6l.9 6 2.8-.6-1.5-8.5L15 3.5h-6Z"/><path fill="none" stroke="currentColor" stroke-width="1.6" d="M9 3.5c.4 1.6 1.6 2.4 3 2.4s2.6-.8 3-2.4"/></symbol>
+    <symbol id="g-dress" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round" d="M9 3.5h6l-1 4.5 4.5 12.5h-13L10 8 9 3.5Z"/></symbol>
+    <symbol id="g-other" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"><path d="M5 8h14l-1 12.5H6L5 8Z"/><path d="M9 10V7a3 3 0 0 1 6 0v3"/></g></symbol>
+    <symbol id="g-beauty" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"><rect x="8" y="9" width="8" height="11.5" rx="2"/><path d="M10 9V5.5h4V9"/></g></symbol>
+    <symbol id="i-check" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" d="m5 12.5 4.5 4.5L19 7.5"/></symbol>
+    <symbol id="i-half" viewBox="0 0 24 24"><circle cx="12" cy="12" r="7.5" fill="none" stroke="currentColor" stroke-width="2.2"/><path fill="currentColor" d="M12 4.5a7.5 7.5 0 0 1 0 15Z"/></symbol>
+    <symbol id="i-cross" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" d="M7 7l10 10M17 7 7 17"/></symbol>
+    <symbol id="i-users" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="9" cy="8.5" r="3.2"/><path d="M3.5 19c.6-3.2 2.8-5 5.5-5s4.9 1.8 5.5 5"/><circle cx="17" cy="9.5" r="2.4"/><path d="M15.8 14.2c2.4-.2 4.2 1.4 4.7 4.3"/></g></symbol>
+    <symbol id="i-layers" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"><rect x="3.5" y="5" width="10" height="10" rx="2.5"/><rect x="10.5" y="9" width="10" height="10" rx="2.5"/></g></symbol>
+    <symbol id="i-clock" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3 2"/></g></symbol>
+    <symbol id="i-bag" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"><path d="M5 8h14l-1 12.5H6L5 8Z"/><path d="M9 10V7a3 3 0 0 1 6 0v3"/></g></symbol>
+    <symbol id="i-grid" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="1.8"><rect x="4" y="4" width="6.5" height="6.5" rx="1.5"/><rect x="13.5" y="4" width="6.5" height="6.5" rx="1.5"/><rect x="4" y="13.5" width="6.5" height="6.5" rx="1.5"/><rect x="13.5" y="13.5" width="6.5" height="6.5" rx="1.5"/></g></symbol>
+    <symbol id="i-home" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="1.9" stroke-linejoin="round" d="M4 10.5 12 4l8 6.5V20h-5.5v-5.5h-5V20H4v-9.5Z"/></symbol>
+    <symbol id="i-cursor" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="1.9" stroke-linejoin="round" d="m6 4 12 6.5-5.3 1.4-2.2 5.1L6 4Z"/></symbol>
+    <symbol id="i-chart" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"><path d="M4 20h16"/><path d="M7 16v-5M12 16V6M17 16v-8"/></g></symbol>
+    <symbol id="i-table" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="1.9" stroke-linejoin="round"><rect x="4" y="5" width="16" height="14" rx="2"/><path d="M4 10h16M10 10v9"/></g></symbol>
+  </defs>
+</svg>
+
 <header>
-  <div class="bar">
-    <a class="brand" href="#/admin">Demo Shop<small>gợi ý thời trang</small></a>
-    <nav id="main-nav">
-      <a href="#/admin" data-view="admin">Kiểm thử mô hình</a>
-      <a href="#/dashboard" data-view="dashboard">Dashboard kết quả</a>
-    </nav>
-    <nav class="ds-nav" id="ds-nav" aria-label="Bộ dữ liệu"></nav>
+  <div class="wrap top">
+    <a class="brand" href="#/shop">
+      <svg width="34" height="34" viewBox="0 0 34 34" aria-hidden="true"><rect x="2" y="6" width="18" height="18" rx="5" fill="var(--accent)"/><rect x="14" y="10" width="18" height="18" rx="5" fill="none" stroke="var(--ink)" stroke-width="2.5"/></svg>
+      <span>Demo gợi ý sản phẩm<small>Dự án CNTT · NeuMF-F</small></span>
+    </a>
+    <div class="tools">
+      <nav class="seg" id="ds-nav" aria-label="Bộ dữ liệu"></nav>
+      <button type="button" class="icon-btn" id="theme-btn" aria-label="Đổi chế độ sáng / tối" title="Đổi chế độ sáng / tối">
+        <svg class="moon" width="18" height="18" viewBox="0 0 24 24" aria-hidden="true"><path fill="none" stroke="currentColor" stroke-width="1.9" stroke-linejoin="round" d="M20 14.5A8 8 0 1 1 9.5 4a6.5 6.5 0 0 0 10.5 10.5Z"/></svg>
+        <svg class="sun" width="18" height="18" viewBox="0 0 24 24" aria-hidden="true"><g fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"><circle cx="12" cy="12" r="4"/><path d="M12 2.5v2M12 19.5v2M4.6 4.6 6 6M18 18l1.4 1.4M2.5 12h2M19.5 12h2M4.6 19.4 6 18M18 6l1.4-1.4"/></g></svg>
+      </button>
+    </div>
   </div>
-  <div class="info-strip"><div class="bar" id="info-strip">Đang nạp dữ liệu và mô hình (lần đầu mất khoảng 10 giây)...</div></div>
+  <div class="wrap">
+    <nav class="tabs" id="main-nav" aria-label="Các trang của demo">
+      <a href="#/shop" data-view="shop"><svg aria-hidden="true"><use href="#i-bag"/></svg>Cửa hàng</a>
+      <a href="#/results" data-view="results"><svg aria-hidden="true"><use href="#i-chart"/></svg>Kết quả đánh giá</a>
+      <a href="#/overview" data-view="overview"><svg aria-hidden="true"><use href="#i-home"/></svg>Giới thiệu đề tài</a>
+    </nav>
+  </div>
 </header>
 
-<main>
-  <!-- ============ ADMIN ============ -->
-  <section id="view-admin">
-    <h1>Kiểm thử mô hình trên từng khách hàng</h1>
-    <p class="lede">Chọn một khách có sản phẩm đích, xem lịch sử mua, Top-K của từng mô hình và cách chấm.</p>
+<main class="wrap">
+  <!-- ============ TỔNG QUAN ============ -->
+  <section id="view-overview" class="page">
+    <div class="hero">
+      <div class="hero-text">
+        <span class="eyebrow" id="ov-eyebrow">Hệ gợi ý</span>
+        <h1>Đoán món khách sẽ mua tiếp theo</h1>
+        <p class="lede" id="ov-lede">Đang nạp dữ liệu…</p>
+        <div class="chips" id="ov-chips"></div>
+      </div>
+      <div class="result-card" id="ov-result">
+        <div class="row"><span>Ví dụ một khách thật</span></div>
+        <div class="big">Đang chọn một khách ví dụ…</div>
+        <p class="small">Lần đầu mất vài giây.</p>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="ex-head">
+        <div><span class="eyebrow">Xem kỹ ví dụ</span><h2>Cùng một khách, hai mô hình gợi ý khác nhau</h2></div>
+        <p class="num" id="ov-profile"></p>
+      </div>
+      <div class="example" id="ov-example"><p class="muted">Đang chọn khách ví dụ…</p></div>
+      <div class="outcome hidden" id="ov-outcome"></div>
+    </div>
+
+    <div class="facts" id="ov-facts"></div>
+  </section>
+
+  <!-- ============ GỢI Ý THEO KHÁCH ============ -->
+  <section id="view-shop" class="page hidden">
+    <div class="page-head">
+      <span class="eyebrow">Cửa hàng mô phỏng</span>
+      <h1>Gợi ý dành cho từng khách hàng</h1>
+      <p class="lede" id="shop-lede">Chọn một khách để xem cửa hàng gợi ý gì cho họ. Mô hình chỉ biết những món khách đã mua trước ngày dự đoán; bấm <b>Xem khách đã mua gì</b> để so gợi ý với thực tế.</p>
+    </div>
 
     <!-- Khách đang xem: thông tin, chuyển khách trước / sau trong danh sách đang lọc, chọn ngẫu nhiên, mở bảng chọn -->
     <div class="card cust-bar">
       <div class="cust-current" id="cust-current"></div>
       <div class="cust-actions">
-        <div class="pager" title="Khách trước / sau trong danh sách đang lọc (phím ← →)">
+        <div class="pager" title="Khách trước / sau">
           <button type="button" id="cust-prev" aria-label="Khách trước" disabled>‹</button>
           <span id="cust-pos">—</span>
           <button type="button" id="cust-next" aria-label="Khách sau" disabled>›</button>
         </div>
+        <button type="button" class="btn" id="cust-showcase" title="Chọn một khách mà mô hình đang chọn gợi ý đúng còn mô hình so sánh gợi ý sai">Xem ví dụ</button>
         <button type="button" class="btn ghost" id="cust-random" title="Khách ngẫu nhiên trong bộ lọc đang chọn">Ngẫu nhiên</button>
-        <button type="button" class="btn" id="cust-open">Chọn khách <kbd>Ctrl K</kbd></button>
+        <button type="button" class="btn ghost" id="cust-open">Chọn khách</button>
+        <button type="button" class="btn ghost" id="cust-new" title="Một khách chưa từng mua gì">Khách mới</button>
       </div>
     </div>
 
@@ -53,33 +133,40 @@
       <div class="note" id="ad-unavailable"></div>
     </div>
 
-    <div id="ad-empty" class="note" style="margin-top:16px"></div>
-    <div class="admin-grid hidden" id="ad-grid">
-      <div class="card">
-        <h2 id="ad-history-title">Lịch sử mua</h2>
-        <div class="note" id="ad-history-note" style="margin:-6px 0 10px"></div>
-        <div class="scroll" id="ad-history"></div>
-      </div>
-      <div class="card">
-        <h2 id="ad-recs-title">Top-K gợi ý</h2>
-        <div class="recs-wrap" id="ad-recs"></div>
-      </div>
-      <div class="card">
-        <h2>Đáp án &amp; cách chấm</h2>
-        <div id="ad-answer"></div>
-        <div class="protocol" id="ad-protocol"></div>
-      </div>
-    </div>
-    <div class="card hidden" id="ad-neighbors-card" style="margin-top:16px">
-      <h2>10 khách hàng tương đồng nhất (UserKNN)</h2>
-      <div id="ad-neighbors"></div>
+    <div id="ad-empty" class="note"></div>
+    <div class="case-note hidden" id="ad-case"></div>
+    <div class="shop hidden" id="ad-grid">
+      <section class="card shelf">
+        <div class="shelf-head"><h2><span class="step">1</span>Khách đã mua trước đây</h2><span class="note" id="sh-hist-note"></span></div>
+        <div class="strip" id="sh-history"></div>
+      </section>
+      <section class="card shelf">
+        <div class="shelf-head">
+          <h2 id="sh-recs-title"><span class="step">2</span>Gợi ý dành cho khách này</h2>
+          <button type="button" class="btn" id="sh-reveal" aria-pressed="false">Xem khách đã mua gì</button>
+        </div>
+        <div id="sh-recs"></div>
+        <div id="sh-answer" class="answer hidden"></div>
+        <p class="note" id="sh-protocol"></p>
+      </section>
+      <section class="card shelf hidden" id="sh-nb-card">
+        <div class="shelf-head"><h2><span class="step">3</span>Khách có gu giống khách này</h2>
+          <span class="note">Lọc cộng tác (UserKNN): những khách đã mua nhiều món giống khách này nhất</span></div>
+        <div class="nb-grid" id="sh-nb"></div>
+      </section>
     </div>
 
-    <!-- Bảng chọn khách (Ctrl K hoặc /): tìm theo customer_id, lọc nhóm giao dịch / khu vực, sắp xếp, ↑ ↓ Enter -->
+    <!-- Thẻ chi tiết sản phẩm: tên, loại, màu, mô tả; sản phẩm tương tự theo ItemKNN -->
+    <dialog class="product" id="product" aria-label="Chi tiết sản phẩm">
+      <button type="button" class="icon-btn pd-close" id="pd-close" aria-label="Đóng">✕</button>
+      <div id="pd-body"></div>
+    </dialog>
+
+    <!-- Bảng chọn khách: tìm theo mã khách, lọc nhóm giao dịch / khu vực, sắp xếp -->
     <dialog class="picker" id="picker" aria-label="Chọn khách hàng">
       <div class="pk-search">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
-        <input type="text" id="pk-q" autocomplete="off" spellcheck="false" autofocus placeholder="Tìm theo customer_id (dán đầy đủ hoặc vài ký tự)…"
+        <input type="text" id="pk-q" autocomplete="off" spellcheck="false" autofocus placeholder="Tìm theo mã khách (vài ký tự đầu là đủ)…"
                role="combobox" aria-expanded="true" aria-controls="pk-list" aria-autocomplete="list">
         <kbd>Esc</kbd>
       </div>
@@ -97,20 +184,37 @@
       <div class="pk-list" id="pk-list" role="listbox" aria-label="Khách hàng"></div>
       <div class="pk-foot">
         <span id="pk-count" aria-live="polite"></span>
-        <span><kbd>↑</kbd> <kbd>↓</kbd> di chuyển · <kbd>Enter</kbd> chọn · <kbd>Esc</kbd> đóng</span>
       </div>
     </dialog>
   </section>
 
-  <!-- ============ DASHBOARD ============ -->
-  <section id="view-dashboard" class="hidden">
-    <h1>Dashboard kết quả</h1>
-    <p class="lede">Mọi số liệu đọc trực tiếp từ file kết quả đã chạy; file thiếu sẽ hiện lệnh cần chạy.</p>
+  <!-- ============ KẾT QUẢ ĐÁNH GIÁ ============ -->
+  <section id="view-results" class="page hidden">
+    <div class="page-head">
+      <span class="eyebrow" id="rs-eyebrow"></span>
+      <h1>Kết quả có đúng hướng không?</h1>
+      <p class="lede" id="rs-lede">Đang đọc file kết quả…</p>
+    </div>
+    <div id="rs-body"></div>
+  </section>
+
+  <!-- ============ BẢNG SỐ LIỆU ============ -->
+  <section id="view-dashboard" class="page hidden">
+    <div class="page-head">
+      <span class="eyebrow"><a href="#/results">← Kết quả đánh giá</a></span>
+      <h1>Bảng số liệu đầy đủ</h1>
+      <p class="lede">Cùng số liệu với báo cáo, dành cho người muốn xem từng con số.</p>
+    </div>
     <div class="dash-grid" id="dash"></div>
   </section>
 </main>
 
-<footer>Demo được thực hiện bởi Double L.</footer>
+<footer>
+  <div class="wrap">
+    <span>Lê Minh Lý · Sử Thị Yến Linh · GVHD: TS. Hồ Thị Linh · Dự án Công nghệ thông tin, Trường Đại học Tôn Đức Thắng</span>
+    <span id="info-strip">Đang nạp dữ liệu và mô hình (lần đầu mất khoảng 30 giây)…</span>
+  </div>
+</footer>
 <script src="app.js"></script>
 </body>
 </html>

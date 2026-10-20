@@ -1,30 +1,28 @@
 % Sinh tự động bởi neumf_project/scripts/24_report_v2.py — KHÔNG sửa tay.
 \begin{table}[htbp]
     \centering\small
-    \caption{Độ phủ danh sách top-10 và chi phí huấn luyện trên mẫu kiểm định H\&M}
+    \caption{Độ phủ top-10 và chi phí huấn luyện trên H\&M}
     \label{tab:v2beyond}
     \begin{adjustbox}{max width=\textwidth}
-    \begin{tabular}{lrrr}
-        \toprule
-        Mô hình & Độ phủ ứng viên & Số epoch chọn & Thời gian (phút) \\
-        \midrule
-        LateFusion-F & 5{,}3\% & --- & 0{,}0 \\
-        NeuMF-F & 13{,}3\% & 3{,}0 & 15{,}2 \\
-        GMF-F & 6{,}9\% & 4{,}4 & 13{,}7 \\
-        MLP-F & 5{,}3\% & 4{,}6 & 16{,}4 \\
-        Hybrid-CBCF\textsuperscript{\dag} & 10{,}8\% & --- & 0{,}1 \\
-        UserKNN & 5{,}7\% & --- & 0{,}0 \\
-        ItemKNN & 20{,}4\% & --- & 0{,}0 \\
-        NeuMF & 6{,}0\% & 4{,}2 & 6{,}2 \\
-        MostPopular-Recent & 0{,}3\% & --- & 0{,}0 \\
-        GMF & 7{,}3\% & 6{,}2 & 7{,}2 \\
-        BPR-MF & 5{,}1\% & --- & 4{,}3 \\
-        MLP & 3{,}3\% & 4{,}8 & 8{,}4 \\
-        Most Popular & 0{,}3\% & --- & 0{,}0 \\
-        Content & 78{,}2\% & --- & 0{,}0 \\
-        Random & 98{,}9\% & --- & 0{,}0 \\
-        \bottomrule
+    \begin{tabular}{|l|r|r|r|}
+        \hline
+        Mô hình & Độ phủ ứng viên & Số epoch chọn & Thời gian (phút) \\ \hline
+        LateFusion-F & 5{,}3\% & --- & 0{,}0 \\ \hline
+        NeuMF-F & 13{,}3\% & 3{,}0 & 15{,}2 \\ \hline
+        GMF-F & 6{,}9\% & 4{,}4 & 13{,}7 \\ \hline
+        MLP-F & 5{,}3\% & 4{,}6 & 16{,}4 \\ \hline
+        Hybrid-CBCF\textsuperscript{*} & 10{,}8\% & --- & 0{,}1 \\ \hline
+        UserKNN & 5{,}7\% & --- & 0{,}0 \\ \hline
+        ItemKNN & 20{,}4\% & --- & 0{,}0 \\ \hline
+        NeuMF & 6{,}0\% & 4{,}2 & 6{,}2 \\ \hline
+        MostPopular-Recent & 0{,}3\% & --- & 0{,}0 \\ \hline
+        GMF & 7{,}3\% & 6{,}2 & 7{,}2 \\ \hline
+        BPR-MF & 5{,}1\% & --- & 4{,}3 \\ \hline
+        MLP & 3{,}3\% & 4{,}8 & 8{,}4 \\ \hline
+        Most Popular & 0{,}3\% & --- & 0{,}0 \\ \hline
+        Content & 78{,}2\% & --- & 0{,}0 \\ \hline
+        Random & 98{,}9\% & --- & 0{,}0 \\ \hline
     \end{tabular}
     \end{adjustbox}
-    \par\smallskip{\footnotesize Độ phủ (seed 42): tỉ lệ sản phẩm của tập ứng viên xuất hiện trong top-10 của ít nhất một người dùng. Số epoch và thời gian là trung bình qua seed; số epoch chọn trên tập xác thực của mẫu kiểm định trước khi huấn luyện lại. Thời gian gồm chọn epoch và huấn luyện lại (mạng nơ-ron) hoặc khớp mô hình, không gồm thời gian chấm. \textsuperscript{\dag}Bổ sung sau đánh giá cuối; thời gian đo trên máy chỉ có CPU.}
+    \par\smallskip{\small Độ phủ: tỉ lệ ứng viên xuất hiện trong top-10 của ít nhất một người dùng (seed 42). Số epoch và thời gian là trung bình qua seed. \textsuperscript{*}Mô hình bổ sung, đo trên máy chỉ có CPU.}
 \end{table}

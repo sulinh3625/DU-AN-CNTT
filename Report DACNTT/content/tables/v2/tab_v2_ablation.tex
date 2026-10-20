@@ -1,20 +1,18 @@
 % Sinh tự động bởi neumf_project/scripts/24_report_v2.py — KHÔNG sửa tay.
 \begin{table}[htbp]
     \centering\small
-    \caption{Phân tích bóc tách NeuMF-F trên tập kiểm thử của mẫu kiểm định H\&M}
+    \caption{Phân tích bóc tách NeuMF-F trên H\&M}
     \label{tab:v2ablation}
     \begin{adjustbox}{max width=\textwidth}
-    \begin{tabular}{lrrc}
-        \toprule
-        Biến thể & NDCG@10 & Thay đổi & CI 95\% của hiệu \\
-        \midrule
-        NeuMF-F (đầy đủ) & 0{,}04137 & --- & --- \\
-        Bỏ vector văn bản & 0{,}04025 & $-$2{,}7\% & [$-$0{,}00450; +0{,}00236] \\
-        Bỏ đặc trưng thời gian & 0{,}02386 & $-$42{,}3\% & [$-$0{,}02122; $-$0{,}01380] \\
-        Bỏ thông tin khách hàng & 0{,}03712 & $-$10{,}3\% & [$-$0{,}00720; $-$0{,}00132] \\
-        Bỏ thuộc tính sản phẩm & 0{,}03983 & $-$3{,}7\% & [$-$0{,}00467; +0{,}00158] \\
-        \bottomrule
+    \begin{tabular}{|l|r|r|c|}
+        \hline
+        Biến thể & NDCG@10 & Thay đổi & CI 95\% của hiệu \\ \hline
+        NeuMF-F (đầy đủ) & 0{,}04137 & --- & --- \\ \hline
+        Bỏ vector văn bản & 0{,}04025 & $-$2{,}7\% & [$-$0{,}00450; +0{,}00236] \\ \hline
+        Bỏ đặc trưng thời gian & 0{,}02386 & $-$42{,}3\% & [$-$0{,}02122; $-$0{,}01380] \\ \hline
+        Bỏ thông tin khách hàng & 0{,}03712 & $-$10{,}3\% & [$-$0{,}00720; $-$0{,}00132] \\ \hline
+        Bỏ thuộc tính sản phẩm & 0{,}03983 & $-$3{,}7\% & [$-$0{,}00467; +0{,}00158] \\ \hline
     \end{tabular}
     \end{adjustbox}
-    \par\smallskip{\footnotesize Seed 42; cùng siêu tham số, mỗi biến thể tắt một thành phần. Thay đổi: (biến thể $-$ đầy đủ)/đầy đủ. CI: khoảng tin cậy bootstrap theo người dùng của hiệu (biến thể $-$ đầy đủ). Chỉ mô tả, không kiểm định. Biến thể trùng NeuMF-F, ví dụ không bỏ ID ngẫu nhiên khi cấu hình chọn đã có xác suất bỏ ID bằng 0, không được chạy.}
+    \par\smallskip{\small Seed 42, chỉ mô tả, không kiểm định. Thay đổi: (biến thể $-$ đầy đủ)/đầy đủ.}
 \end{table}

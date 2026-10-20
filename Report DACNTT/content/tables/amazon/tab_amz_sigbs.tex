@@ -1,17 +1,15 @@
 % Sinh tự động bởi neumf_project/scripts/24_report_v2.py — KHÔNG sửa tay.
 \begin{table}[htbp]
     \centering\small
-    \caption{Kiểm định các so sánh bổ sung với Hybrid-CBCF trên Amazon Beauty (NDCG@10)}
+    \caption{Kiểm định bổ sung với Hybrid-CBCF trên Amazon Beauty}
     \label{tab:amzsigbs}
     \begin{adjustbox}{max width=\textwidth}
-    \begin{tabular}{rllrrrcrc}
-        \toprule
-        \# & A & B & NDCG@10 A & NDCG@10 B & (A$-$B)/B & CI 95\% của A$-$B & p Holm & Kết luận \\
-        \midrule
-        B1 & NeuMF-F & Hybrid-CBCF & 0{,}03277 & 0{,}02664 & +23{,}0\% & [+0{,}00138; +0{,}01083] & $<$ 0{,}001 & A tốt hơn \\
-        B2 & Hybrid-CBCF & UserKNN & 0{,}02664 & 0{,}02506 & +6{,}3\% & [+0{,}00026; +0{,}00292] & 0{,}009 & A tốt hơn \\
-        \bottomrule
+    \begin{tabular}{|r|l|r|r|c|r|c|}
+        \hline
+        \# & \tbl{Mô hình A}{Mô hình B} & \tbc{NDCG@10}{của A, B} & (A$-$B)/B & \tbc{CI 95\%}{của A$-$B} & p Holm & Kết luận \\ \hline
+        B1 & \tbl{NeuMF-F}{Hybrid-CBCF} & \tbr{0{,}03277}{0{,}02664} & +23{,}0\% & \tbc{[+0{,}00138;}{+0{,}01083]} & $<$ 0{,}001 & A tốt hơn \\ \hline
+        B2 & \tbl{Hybrid-CBCF}{UserKNN} & \tbr{0{,}02664}{0{,}02506} & +6{,}3\% & \tbc{[+0{,}00026;}{+0{,}00292]} & 0{,}009 & A tốt hơn \\ \hline
     \end{tabular}
     \end{adjustbox}
-    \par\smallskip{\footnotesize Mỗi người dùng lấy trung bình qua 5 seed; kiểm định Wilcoxon theo người dùng, khoảng tin cậy bootstrap 95\%, hiệu chỉnh Holm trong họ bổ sung. ---: không khác biệt có ý nghĩa. Tiêu chí ``tốt hơn'' như họ 10 so sánh đăng ký trước: p Holm $<$ 0,05, CI không chứa 0 và chênh lệch tương đối $\geq$ 5\%. Họ bổ sung được đăng ký sau đánh giá cuối và không làm thay đổi họ 10 so sánh.}
+    \par\smallskip{\small Họ so sánh bổ sung, đăng ký sau đánh giá cuối; tiêu chí kết luận như họ 10 so sánh. ---: không khác biệt có ý nghĩa.}
 \end{table}

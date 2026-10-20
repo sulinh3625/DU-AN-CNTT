@@ -1,30 +1,28 @@
 % Sinh tự động bởi neumf_project/scripts/24_report_v2.py — KHÔNG sửa tay.
 \begin{table}[htbp]
     \centering\small
-    \caption{Độ phủ danh sách top-10 và chi phí huấn luyện trên Amazon Beauty}
+    \caption{Độ phủ top-10 và chi phí huấn luyện trên Amazon Beauty}
     \label{tab:amzbeyond}
     \begin{adjustbox}{max width=\textwidth}
-    \begin{tabular}{lrrr}
-        \toprule
-        Mô hình & Độ phủ ứng viên & Số epoch chọn & Thời gian (phút) \\
-        \midrule
-        LateFusion-F & 15{,}3\% & --- & 0{,}0 \\
-        GMF-F & 32{,}1\% & 14{,}0 & 6{,}1 \\
-        NeuMF-F & 20{,}5\% & 5{,}4 & 4{,}1 \\
-        MLP-F & 5{,}4\% & 8{,}0 & 4{,}9 \\
-        Hybrid-CBCF\textsuperscript{\dag} & 46{,}6\% & --- & 0{,}1 \\
-        UserKNN & 34{,}6\% & --- & 0{,}1 \\
-        ItemKNN & 63{,}2\% & --- & 0{,}0 \\
-        NeuMF & 17{,}1\% & 8{,}8 & 2{,}9 \\
-        GMF & 25{,}8\% & 11{,}4 & 3{,}4 \\
-        MostPopular-Recent & 0{,}3\% & --- & 0{,}0 \\
-        MLP & 22{,}8\% & 6{,}8 & 2{,}9 \\
-        BPR-MF & 5{,}2\% & --- & 1{,}4 \\
-        Content & 86{,}5\% & --- & 0{,}0 \\
-        Most Popular & 0{,}2\% & --- & 0{,}0 \\
-        Random & 98{,}8\% & --- & 0{,}0 \\
-        \bottomrule
+    \begin{tabular}{|l|r|r|r|}
+        \hline
+        Mô hình & Độ phủ ứng viên & Số epoch chọn & Thời gian (phút) \\ \hline
+        LateFusion-F & 15{,}3\% & --- & 0{,}0 \\ \hline
+        GMF-F & 32{,}1\% & 14{,}0 & 6{,}1 \\ \hline
+        NeuMF-F & 20{,}5\% & 5{,}4 & 4{,}1 \\ \hline
+        MLP-F & 5{,}4\% & 8{,}0 & 4{,}9 \\ \hline
+        Hybrid-CBCF\textsuperscript{*} & 46{,}6\% & --- & 0{,}1 \\ \hline
+        UserKNN & 34{,}6\% & --- & 0{,}1 \\ \hline
+        ItemKNN & 63{,}2\% & --- & 0{,}0 \\ \hline
+        NeuMF & 17{,}1\% & 8{,}8 & 2{,}9 \\ \hline
+        GMF & 25{,}8\% & 11{,}4 & 3{,}4 \\ \hline
+        MostPopular-Recent & 0{,}3\% & --- & 0{,}0 \\ \hline
+        MLP & 22{,}8\% & 6{,}8 & 2{,}9 \\ \hline
+        BPR-MF & 5{,}2\% & --- & 1{,}4 \\ \hline
+        Content & 86{,}5\% & --- & 0{,}0 \\ \hline
+        Most Popular & 0{,}2\% & --- & 0{,}0 \\ \hline
+        Random & 98{,}8\% & --- & 0{,}0 \\ \hline
     \end{tabular}
     \end{adjustbox}
-    \par\smallskip{\footnotesize Độ phủ (seed 42): tỉ lệ sản phẩm của tập ứng viên xuất hiện trong top-10 của ít nhất một người dùng. Số epoch và thời gian là trung bình qua seed; số epoch chọn trên tập xác thực Amazon Beauty trước khi huấn luyện lại. Thời gian gồm chọn epoch và huấn luyện lại (mạng nơ-ron) hoặc khớp mô hình, không gồm thời gian chấm. \textsuperscript{\dag}Bổ sung sau đánh giá cuối; thời gian đo trên máy chỉ có CPU.}
+    \par\smallskip{\small Độ phủ: tỉ lệ ứng viên xuất hiện trong top-10 của ít nhất một người dùng (seed 42). Số epoch và thời gian là trung bình qua seed. \textsuperscript{*}Mô hình bổ sung, đo trên máy chỉ có CPU.}
 \end{table}

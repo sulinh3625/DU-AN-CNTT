@@ -4,25 +4,23 @@
     \caption{Quy mô dữ liệu Amazon Beauty}
     \label{tab:amzdata}
     \begin{adjustbox}{max width=\textwidth}
-    \begin{tabular}{lr}
-        \toprule
-         & Amazon Beauty \\
-        \midrule
-        Đánh giá trong bộ 5-core gốc (mỗi đánh giá là một tương tác) & 198.502 \\
-        Sản phẩm có đánh giá trước 01/01/2014 & 11.493 \\
-        Cặp (khách, sản phẩm) trước 01/01/2014 & 140.193 \\
-        Khách sau lọc 5-core & 10.681 \\
-        Sản phẩm (asin) sau lọc 5-core & 6.069 \\
-        Cặp sau lọc 5-core & 94.009 \\
-        Xác thực: cặp huấn luyện (trước 01/10/2013) & 82.281 \\
-        Xác thực: khách được đánh giá & 3.153 \\
-        Xác thực: cặp đúng & 7.880 \\
-        Kiểm thử: cặp huấn luyện (trước 01/01/2014) & 94.009 \\
-        Kiểm thử: khách được đánh giá & 2.644 \\
-        Kiểm thử: cặp đúng & 6.107 \\
-        Kiểm thử: số ứng viên trung bình mỗi khách & 6.058 \\
-        \bottomrule
+    \begin{tabular}{|l|r|}
+        \hline
+         & Amazon Beauty \\ \hline
+        Đánh giá trong bộ 5-core gốc (mỗi đánh giá là một tương tác) & 198.502 \\ \hline
+        Sản phẩm có đánh giá trước 01/01/2014 & 11.493 \\ \hline
+        Cặp (khách, sản phẩm) trước 01/01/2014 & 140.193 \\ \hline
+        Khách sau lọc 5-core & 10.681 \\ \hline
+        Sản phẩm (\texttt{asin}) sau lọc 5-core & 6.069 \\ \hline
+        Cặp sau lọc 5-core & 94.009 \\ \hline
+        Xác thực: cặp huấn luyện (trước 01/10/2013) & 82.281 \\ \hline
+        Xác thực: khách được đánh giá & 3.153 \\ \hline
+        Xác thực: cặp đúng & 7.880 \\ \hline
+        Kiểm thử: cặp huấn luyện (trước 01/01/2014) & 94.009 \\ \hline
+        Kiểm thử: khách được đánh giá & 2.644 \\ \hline
+        Kiểm thử: cặp đúng & 6.107 \\ \hline
+        Kiểm thử: số ứng viên trung bình mỗi khách & 6.058 \\ \hline
     \end{tabular}
     \end{adjustbox}
-    \par\smallskip{\footnotesize Bản 5-core năm 2014, một bộ dữ liệu chia theo thời gian. Mỗi sản phẩm là một mã asin. Lọc 5-core chỉ dùng các cặp trước mốc kiểm thử 01/01/2014. Tập xác thực, từ 01/10/2013 đến 31/12/2013, chỉ dùng để chọn số epoch; không tinh chỉnh trên bộ này. Ứng viên và cặp đúng chỉ gồm sản phẩm đã có cặp huấn luyện trước mốc của giai đoạn.}
+    \par\smallskip{\small Mỗi sản phẩm là một mã \texttt{asin}. Mốc kiểm thử 01/01/2014; tập xác thực từ 01/10/2013 đến 31/12/2013, chỉ dùng để chọn số epoch.}
 \end{table}

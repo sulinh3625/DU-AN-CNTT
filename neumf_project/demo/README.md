@@ -35,24 +35,29 @@ python run.py v2-data        # mẫu kiểm định + đặc trưng + dữ liệ
 python run.py demo           # hoặc: python -m demo
 ```
 
-- Mở **http://localhost:8000**. Lần nạp đầu mất khoảng 30 giây (dựng lại dữ liệu, nạp checkpoint); sau đó được cache.
+- Mở **http://localhost:8000** (trang Cửa hàng; ba trang: Cửa hàng · Kết quả đánh giá · Giới thiệu đề tài; bảng số liệu đầy đủ mở từ trang Kết quả đánh giá; nút mặt trời / mặt trăng đổi sáng / tối). Lần nạp đầu mất khoảng 30 giây (dựng lại dữ liệu, nạp checkpoint); sau đó được cache.
 - Sau khi chạy lại đánh giá cuối, nạp lại không cần khởi động lại: `curl -X POST http://localhost:8000/api/reload`.
 - Mở thẳng một khách để chụp ảnh minh hoạ cho báo cáo:
   `http://localhost:8000/?user=<customer_id>&compare=1&a=NeuMF-F&b=NeuMF#admin`.
-- Dừng: `Ctrl+C`; trên Windows nếu cổng còn bận: `netstat -ano | findstr :8000` rồi `taskkill /PID <pid> /F`.
+- Dừng: `Ctrl+C`. Nếu cổng 8000 đang bận (một demo cũ chưa tắt), demo tự dùng cổng trống kế tiếp và in địa chỉ ra màn hình; muốn giải phóng cổng 8000 trên Windows: `netstat -ano | findstr :8000` rồi `taskkill /PID <pid> /F`.
 
 ## 3. Màn hình
 
 | Màn hình | Nội dung |
 |---|---|
-| **Kiểm thử mô hình** (trang mặc định) | **Chọn khách**: thanh khách hiện mã, số món đã mua / món đích, nhóm giao dịch, khu vực mua nhiều nhất, tuổi, loại sản phẩm hay mua; nút ‹ › (phím ← →) sang khách trước / sau trong danh sách đang lọc, nút Ngẫu nhiên. Bảng chọn mở bằng **Ctrl K** hoặc **/**: tìm theo một đoạn `customer_id`, lọc nhóm giao dịch và khu vực, lọc **Gợi ý trúng / Gợi ý trượt** (có / không có món đích trong top-K của mô hình và K đang chọn; lần đầu với mỗi mô hình chấm mọi khách mất vài giây, sau đó giữ lại), sắp xếp (kể cả theo hạng món đích tốt nhất), ↑ ↓ Enter để chọn, mục "Xem gần đây" (lưu trong trình duyệt). URL giữ `?user=` nên tải lại hay gửi link vẫn mở đúng khách. **Sau khi chọn**: lịch sử mua (đúng dữ liệu mô hình đã học), top-K của một mô hình hoặc so sánh hai mô hình, hạng của từng sản phẩm đích, HR@K, NDCG@K, Recall@K. Thẻ **"10 khách tương đồng nhất"** (UserKNN): độ tương đồng, số món mua chung, láng giềng đã mua sản phẩm đích nào. |
-| **Dashboard** | Chỉ đọc `outputs/v2/final/*.csv` (Amazon: `outputs/amazon/final/*.csv`): kết quả 5 seed, đánh giá theo K (5 · 10 · 15 · 20, từ `by_k.csv` — tính lại từ hạng đã lưu), kiểm định họ 10 so sánh, độ phủ top-10 và chi phí huấn luyện, ablation NeuMF-F. Khi đã chấm bổ sung mô hình lai truyền thống (`scripts/25_bosung.py`), đọc bảng trong `final/bosung/` (thêm Hybrid-CBCF, dấu †) và hiện thêm thẻ kiểm định họ bổ sung B1–B2. Thiếu file thì hiện lệnh cần chạy. |
+| **Tổng quan** (trang mặc định) | Đề tài làm gì: một câu bài toán, ba ô dữ liệu / mô hình / cách chấm, và một khách thật làm ví dụ (lịch sử mua, top-10 của NeuMF-F và của NeuMF, món khách mua sau mốc). Khách ví dụ do `/api/example` chọn theo dữ liệu: NeuMF-F trúng, NeuMF trượt, hạng tính lại trùng hạng đã lưu; tìm sẵn ở luồng nền khi nạp dữ liệu. |
+| **Cửa hàng** (trang mặc định) | Cửa hàng mô phỏng: chọn khách (khách ví dụ mở sẵn, ngẫu nhiên, tìm theo mã, khách mới); thẻ sản phẩm đã mua trước mốc; K gợi ý của một mô hình hoặc hai mô hình cạnh nhau; nút **Xem khách đã mua gì** lật đáp án (món khách mua sau mốc được đánh dấu, kèm vị trí trong xếp hạng của từng mô hình); bấm thẻ sản phẩm mở thẻ chi tiết (tên, loại, màu, mô tả gốc, số khách đã mua, sản phẩm tương tự theo ItemKNN); mục **Khách có gu giống** theo UserKNN. URL `?user=<mã>&compare=1&a=NeuMF-F&b=NeuMF&k=5&reveal=1&item=<chỉ số sản phẩm>#/shop` mở sẵn một trạng thái (dùng khi chụp ảnh minh hoạ). |
+| **Kết quả đánh giá** | Kết quả có đúng hướng không: số khách trên 100 có ít nhất một món đúng trong 10 gợi ý (HR@10) đặt cạnh LateFusion-F, NeuMF, bán chạy nhất, ngẫu nhiên; ba câu hỏi của đề tài với câu trả lời Có / Một phần / Không suy ra từ kết luận kiểm định đã lưu; xếp hạng NDCG@10; bóc tách (nhãn "chưa khẳng định" khi khoảng tin cậy chứa 0); phạm vi chưa trả lời. Đọc `/api/results`. |
+| **Bảng số liệu đầy đủ** (mở từ trang Kết quả đánh giá) | Chỉ đọc `outputs/v2/final/*.csv` (Amazon: `outputs/amazon/final/*.csv`): kết quả 5 seed, đánh giá theo K (5 · 10 · 15 · 20, từ `by_k.csv` — tính lại từ hạng đã lưu), kiểm định họ 10 so sánh, độ phủ top-10 và chi phí huấn luyện, ablation NeuMF-F. Khi đã chấm bổ sung mô hình lai truyền thống (`scripts/25_bosung.py`), đọc bảng trong `final/bosung/` (thêm Hybrid-CBCF, dấu *) và hiện thêm thẻ kiểm định họ bổ sung B1–B2. Thiếu file thì hiện lệnh cần chạy. |
 
 13 mô hình: NeuMF-F, LateFusion-F, GMF-F, MLP-F, NeuMF, GMF, MLP, BPR-MF, UserKNN, ItemKNN, MostPopular-Recent,
 Content, Most Popular — seed 42, cấu hình theo `results.json`, đã huấn luyện lại trên mọi cặp trước 29/07/2020. Mặc định
 so sánh NeuMF-F với NeuMF. Thêm mô hình lai truyền thống **Hybrid-CBCF** (Content + UserKNN + ItemKNN, trọng số trong
 `final/bosung/results.json`) khi đã chấm bổ sung bằng `python run.py bosung-final` (Amazon: `amazon-bosung-final`);
 chưa chấm thì mô hình này bị ẩn kèm lệnh cần chạy.
+
+Giao diện có hai chế độ sáng và tối (nút mặt trăng / mặt trời góc trên bên phải). Lần đầu mở, demo theo cài đặt của hệ
+điều hành; lựa chọn sau đó được lưu trong trình duyệt.
 
 ## 4. Cách chấm — khớp đánh giá cuối
 
@@ -120,12 +125,16 @@ demo/
 | `POST /api/reload` | Xoá cache, nạp lại |
 | `GET /api/users/facets` | Số khách có sản phẩm đích; ngưỡng và số khách của nhóm ít / trung bình / nhiều giao dịch; số khách theo khu vực mua nhiều nhất |
 | `GET /api/users/search?q=&bucket=&area=&hit=&model=&k=&sort=&offset=&limit=` | Danh sách khách có sản phẩm đích: `customer_id` chứa `q` (khớp ở đầu xếp trước), lọc nhóm / khu vực, `hit=hit\|miss` theo top-`k` của `model` (kèm cột `best_rank`), sắp `train_desc` · `train_asc` · `targets_desc` · `rank` · `id`; trả `total` và một trang |
+| `GET /api/users/showcase?a=&b=&k=&limit=` | Nút "Xem ví dụ": khách có món đích trong top-`k` của mô hình `a` nhưng không trong top-`k` của `b`, hạng trùng số đã lưu ở đánh giá cuối với cả hai mô hình, xếp theo chênh hạng giảm dần (cột `best_rank` của `a`, `rank_b`) |
 | `GET /api/users/random?…` | Khách ngẫu nhiên trong bộ lọc (cùng tham số, bỏ qua `q`) |
 | `GET /api/users/{customer_id}/position?…` | Vị trí của khách trong danh sách đang lọc (cùng tham số), kèm khách liền trước / liền sau |
 | `GET /api/users/{customer_id}/history` | Thông tin khách (`profile`) và lịch sử mua mô hình đã học, sắp theo thời gian; khách mới: `is_new = true`, lịch sử rỗng |
 | `GET /api/users/{customer_id}/recommend?model=&k=` | Top-K, hạng từng sản phẩm đích, số ứng viên, HR/NDCG/Recall@K; khách mới: danh sách Most Popular (`fallback = "popular"`, `evaluation = null`); khách không có sản phẩm đích: gợi ý của mô hình, `evaluation = null` |
-| `GET /api/users/{customer_id}/neighbors?k=10` | Khách tương đồng nhất theo UserKNN, số món mua chung, láng giềng đã mua sản phẩm đích nào; khách mới: danh sách rỗng kèm ghi chú |
+| `GET /api/users/{customer_id}/neighbors?k=10` | Khách tương đồng nhất theo UserKNN, số món mua chung, láng giềng đã mua sản phẩm đích nào; khách mới: danh sách rỗng kèm ghi chú | Dùng ở mục Khách có gu giống của trang Cửa hàng.
+| `GET /api/items/{item_idx}/similar?k=6` | Thẻ chi tiết sản phẩm: thông tin sản phẩm (kèm mô tả gốc `detail_desc` và các màu của mẫu với H&M), số khách đã mua trước mốc, k sản phẩm tương tự nhất theo ItemKNN đã chọn |
 | `GET /api/dashboard` | Các khối của dashboard, kèm file nguồn |
+| `GET /api/results` | Trang Kết quả đánh giá: mô hình (NDCG@10, HR@10), họ 10 so sánh, bóc tách, câu trả lời của ba câu hỏi, quy mô tập kiểm thử; đọc `summary.csv` (hoặc `bosung/summary.csv`), `significance.csv`, `ablation.csv`, `data.json`. Test `test_results_page_matches_report_macros` đối chiếu từng số với macro của báo cáo |
+| `GET /api/example` | Khách ví dụ của trang Tổng quan (hồ sơ, lịch sử, gợi ý của NeuMF-F và NeuMF) |
 | `GET /api/image/{article_id}` | Ảnh sản phẩm hoặc ô thay thế |
 
 Mọi endpoint (trừ `/api/datasets`) nhận thêm `?dataset=hm|amazon`, mặc định `hm`.

@@ -10,7 +10,7 @@
 \usepackage{fontsize}
 \changefontsize[15.6]{13} % Cỡ chữ 13pt, base leading 15.6pt
 
-% --- CANH LỀ CHUẨN A4 KHÓA LUẬN TỐT NGHIỆP TDTU ---
+% --- CANH LỀ CHUẨN A4 BÁO CÁO DACNTT TDTU ---
 % Lề trái 3.5cm (đóng gáy sách), lề phải 2.0cm, lề trên 3.0cm, lề dưới 3.0cm
 \usepackage[top=3.0cm, bottom=3.0cm, left=3.5cm, right=2.0cm, headheight=16pt, headsep=1.0cm, footskip=1.2cm]{geometry}
 
@@ -43,6 +43,19 @@
 \usepackage{tikz}
 \usetikzlibrary{calc, positioning, decorations.pathreplacing}
 \usepackage{float}
+\usepackage{placeins}  % \FloatBarrier: giữ hình của chương trước mục tóm tắt
+% Trang chỉ chứa bảng/hình: đặt từ đầu trang thay vì căn giữa theo chiều dọc (tránh khoảng trắng lớn phía trên).
+\makeatletter
+\setlength{\@fptop}{0pt}
+\setlength{\@fpbot}{0pt plus 1fil}
+% Khoảng cách cố định giữa các float trên trang chỉ có float (mặc định giãn ra cho đều trang, tạo khoảng trắng giữa các thuật toán).
+\setlength{\@fpsep}{\floatsep}
+\makeatother
+% Cho bảng, hình, thuật toán nằm chung trang với chữ nhiều hơn: ít trang chỉ có float, ít khoảng trắng cuối trang.
+\renewcommand{\topfraction}{0.9}
+\renewcommand{\bottomfraction}{0.8}
+\renewcommand{\textfraction}{0.1}
+\renewcommand{\floatpagefraction}{0.8}
 \usepackage{longtable}
 \usepackage{booktabs}
 \usepackage{adjustbox} % bảng sinh tự động: max width=\textwidth (thu nhỏ bảng rộng, không phóng to bảng hẹp)
@@ -51,26 +64,35 @@
 \usepackage{tabularx}
 \usepackage{xltabular}
 \newcolumntype{Y}{>{\centering\arraybackslash}X}
+% Bảng kẻ lưới đầy đủ (| và \hline): thêm khoảng đệm trên mỗi hàng để chữ không sát đường kẻ.
+\setlength{\extrarowheight}{2pt}
+% Ô hai dòng của bảng sinh tự động: \tbsd{trung bình}{độ lệch chuẩn} (độ lệch chuẩn dòng dưới, cùng cỡ chữ);
+% \tbl, \tbr, \tbc{dòng 1}{dòng 2}: căn trái, phải, giữa (tiêu đề cột, cặp A/B và khoảng tin cậy của bảng kiểm định).
+\newcommand{\tbsd}[2]{\begin{tabular}[c]{@{}r@{}}#1\\$\pm$\,#2\end{tabular}}
+\newcommand{\tbl}[2]{\begin{tabular}[c]{@{}l@{}}#1\\#2\end{tabular}}
+\newcommand{\tbr}[2]{\begin{tabular}[c]{@{}r@{}}#1\\#2\end{tabular}}
+\newcommand{\tbc}[2]{\begin{tabular}[c]{@{}c@{}}#1\\#2\end{tabular}}
 \usepackage{subcaption}
 % --- MÃ GIẢ (THUẬT TOÁN) ---
-% Đánh số theo chương (Thuật toán 3.1, ...); từ khóa tiếng Việt; noend: bỏ dòng "hết ..." (thụt lề thể hiện khối lệnh).
+% Đánh số theo chương (Thuật toán 3.1, ...); từ khóa tiếng Việt; noend: bỏ dòng "hết ..." (thụt lề thể hiện khối lệnh);
+% từ khóa viết chữ thường, không in đậm.
 \usepackage[chapter]{algorithm}
 \usepackage[noend]{algpseudocode}
 \floatname{algorithm}{Thuật toán}
-\algrenewcommand\algorithmicrequire{\textbf{Đầu vào:}}
-\algrenewcommand\algorithmicensure{\textbf{Đầu ra:}}
-\algrenewcommand\algorithmicfor{\textbf{với}}
-\algrenewcommand\algorithmicforall{\textbf{với mọi}}
-\algrenewcommand\algorithmicdo{\textbf{làm}}
-\algrenewcommand\algorithmicwhile{\textbf{trong khi}}
-\algrenewcommand\algorithmicrepeat{\textbf{lặp}}
-\algrenewcommand\algorithmicuntil{\textbf{đến khi}}
-\algrenewcommand\algorithmicif{\textbf{nếu}}
-\algrenewcommand\algorithmicthen{\textbf{thì}}
-\algrenewcommand\algorithmicelse{\textbf{ngược lại}}
-\algrenewcommand\algorithmicreturn{\textbf{trả về}}
-\algrenewcommand\algorithmicfunction{\textbf{hàm}}
-\algrenewcommand\algorithmicprocedure{\textbf{thủ tục}}
+\algrenewcommand\algorithmicrequire{Đầu vào:}
+\algrenewcommand\algorithmicensure{Đầu ra:}
+\algrenewcommand\algorithmicfor{với}
+\algrenewcommand\algorithmicforall{với mọi}
+\algrenewcommand\algorithmicdo{làm}
+\algrenewcommand\algorithmicwhile{trong khi}
+\algrenewcommand\algorithmicrepeat{lặp}
+\algrenewcommand\algorithmicuntil{đến khi}
+\algrenewcommand\algorithmicif{nếu}
+\algrenewcommand\algorithmicthen{thì}
+\algrenewcommand\algorithmicelse{ngược lại}
+\algrenewcommand\algorithmicreturn{trả về}
+\algrenewcommand\algorithmicfunction{hàm}
+\algrenewcommand\algorithmicprocedure{thủ tục}
 \algrenewcommand{\algorithmiccomment}[1]{\hfill\(\triangleright\) \textit{#1}}
 \graphicspath{{media/}}
 \usepackage{caption}
@@ -123,13 +145,6 @@
 \renewcommand{\cfttabpresnum}{Bảng }
 \renewcommand{\cfttabaftersnum}{: }
 \setlength{\cfttabnumwidth}{4.5em}
-
-% Danh mục thuật toán: dòng "Thuật toán 3.1: ..." như danh mục hình/bảng (gói algorithm ghi vào tệp .loa)
-\makeatletter
-\def\l@algorithm#1#2{{\let\algoldnumberline\numberline
-    \renewcommand*{\numberline}[1]{\algoldnumberline{Thuật toán ##1: }}%
-    \@dottedtocline{1}{0em}{7.2em}{#1}{#2}}}
-\makeatother
 
 % Xóa khoảng trắng thừa giữa các chương trong danh mục hình/bảng
 \usepackage{etoolbox}
@@ -188,7 +203,13 @@
 \usepackage{csquotes} 
 \DeclareQuoteAlias{english}{vietnamese}
 
-\usepackage[backend=biber, style=ieee]{biblatex}
+\usepackage[backend=biber, style=ieee, defernumbers=true]{biblatex}
+% Tài liệu tham khảo chia theo nhóm (main.tex in từng nhóm); defernumbers: đánh số liên tục theo thứ tự in.
+\DeclareBibliographyCategory{dulieu}\addtocategory{dulieu}{hm2022kaggle,mcauley2015image}
+\DeclareBibliographyCategory{doichung}\addtocategory{doichung}{he2017ncf,rendle2020ncfmf,holinh2023multisource}
+\DeclareBibliographyCategory{goiy}\addtocategory{goiy}{koren2009matrix,rendle2009bpr,resnick1994grouplens,sarwar2001item,su2009survey,lops2011content,burke2002hybrid,atrey2010multimodal,schein2002coldstart}
+\DeclareBibliographyCategory{dactrung}\addtocategory{dactrung}{rendle2010fm,cheng2016wide,guo2017deepfm,volkovs2017dropoutnet,salton1988term,deerwester1990lsa}
+\DeclareBibliographyCategory{danhgia}\addtocategory{danhgia}{jarvelin2002,krichene2020sampled,dacrema2019progress,meng2020splitting,vargas2011novelty,wilcoxon1945,holm1979,efron1993bootstrap,kingma2014adam,paszke2019pytorch}
 \addbibresource{backmatter/references.bib}
 % biblatex không có gói ngôn ngữ tiếng Việt: thiếu 2 dòng này thì danh mục tài liệu in từ khoá thô
 % (and, in, pages, andothers). Dùng chuỗi tiếng Anh, riêng "and"/"et al." đổi sang tiếng Việt.
@@ -210,16 +231,19 @@
 }
 
 \defbibheading{subbib}{
-    \noindent #1\par\vspace{6pt}
+    \noindent\textit{#1}\par\vspace{6pt}
 }
 
+% Danh mục đánh số [1], [2], ... khớp với số trích dẫn trong bài; dòng sau thụt theo độ rộng nhãn.
 \defbibenvironment{bibliography}
   {\list
-     {}
-     {\setlength{\leftmargin}{0pt}
-      \setlength{\itemindent}{1.27cm}
+     {\printtext[labelnumberwidth]{\printfield{labelprefix}\printfield{labelnumber}}}
+     {\setlength{\labelwidth}{\labelnumberwidth}
+      \setlength{\leftmargin}{\labelwidth}
+      \addtolength{\leftmargin}{\labelsep}
       \setlength{\itemsep}{0.5\baselineskip}
-      \setlength{\parsep}{0pt}}}
+      \setlength{\parsep}{0pt}}
+      \renewcommand*{\makelabel}[1]{##1\hss}}
   {\endlist}
   {\item}
 

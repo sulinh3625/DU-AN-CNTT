@@ -1,29 +1,27 @@
 % Sinh tự động bởi neumf_project/scripts/24_report_v2.py — KHÔNG sửa tay.
 \begin{table}[htbp]
     \centering\small
-    \caption{Cấu hình tốt nhất của từng mô hình trên tập xác thực của mẫu phát triển}
+    \caption{Cấu hình tốt nhất trên tập xác thực}
     \label{tab:v2tuning}
     \begin{adjustbox}{max width=\textwidth}
-    \begin{tabular}{llrr}
-        \toprule
-        Mô hình & Cấu hình chọn & NDCG@10 & HR@10 \\
-        \midrule
-        NeuMF-F & d=32; lr=0{,}001; neg=8; wd=$10^{-6}$; dropout=0; bỏ ID=0 & 0{,}03337 & 0{,}12807 \\
-        LateFusion-F & $w$=0{,}4 (GMF-F), $1-w$=0{,}6 (MLP-F) & 0{,}03556 & 0{,}14480 \\
-        GMF-F & d=32; lr=0{,}001; neg=8; wd=0; bỏ ID=0{,}25 & 0{,}03162 & 0{,}13157 \\
-        MLP-F & d=32; lr=0{,}001; neg=8; wd=$10^{-6}$; dropout=0; bỏ ID=0 & 0{,}03212 & 0{,}13429 \\
-        NeuMF & d=64; lr=0{,}0005; neg=4; wd=$10^{-6}$; dropout=0{,}2 & 0{,}02696 & 0{,}11016 \\
-        GMF & d=32; lr=0{,}001; neg=8; wd=$10^{-6}$ & 0{,}02857 & 0{,}11405 \\
-        MLP & d=32; lr=0{,}001; neg=8; wd=$10^{-6}$; dropout=0 & 0{,}02742 & 0{,}10977 \\
-        BPR-MF & d=128; lr=0{,}03; reg=0{,}001; 20 epoch & 0{,}02636 & 0{,}10666 \\
-        ItemKNN & k=100; shrink=50 & 0{,}02599 & 0{,}09537 \\
-        UserKNN & k=200; shrink=0 & 0{,}02753 & 0{,}10432 \\
-        Content & chu kỳ bán rã 30 ngày & 0{,}00459 & 0{,}02180 \\
-        MostPopular-Recent & cửa sổ 28 ngày & 0{,}02334 & 0{,}10432 \\
-        Most Popular & --- & 0{,}02174 & 0{,}09420 \\
-        Hybrid-CBCF\textsuperscript{\dag} & tổng có trọng số học theo cặp: Content 0{,}12; UserKNN 0{,}60; ItemKNN 0{,}28 & 0{,}02815 & 0{,}10588 \\
-        \bottomrule
+    \begin{tabular}{|l|>{\raggedright\arraybackslash}p{6.8cm}|r|r|}
+        \hline
+        Mô hình & Cấu hình chọn & NDCG@10 & HR@10 \\ \hline
+        NeuMF-F & d=32; lr=0{,}001; neg=8; wd=$10^{-6}$; dropout=0; bỏ~ID=0 & 0{,}03337 & 0{,}12807 \\ \hline
+        LateFusion-F & $w$=0{,}4 (GMF-F), $1-w$=0{,}6 (MLP-F) & 0{,}03556 & 0{,}14480 \\ \hline
+        GMF-F & d=32; lr=0{,}001; neg=8; wd=0; bỏ~ID=0{,}25 & 0{,}03162 & 0{,}13157 \\ \hline
+        MLP-F & d=32; lr=0{,}001; neg=8; wd=$10^{-6}$; dropout=0; bỏ~ID=0 & 0{,}03212 & 0{,}13429 \\ \hline
+        NeuMF & d=64; lr=0{,}0005; neg=4; wd=$10^{-6}$; dropout=0{,}2 & 0{,}02696 & 0{,}11016 \\ \hline
+        GMF & d=32; lr=0{,}001; neg=8; wd=$10^{-6}$ & 0{,}02857 & 0{,}11405 \\ \hline
+        MLP & d=32; lr=0{,}001; neg=8; wd=$10^{-6}$; dropout=0 & 0{,}02742 & 0{,}10977 \\ \hline
+        BPR-MF & d=128; lr=0{,}03; reg=0{,}001; 20 epoch & 0{,}02636 & 0{,}10666 \\ \hline
+        ItemKNN & k=100; shrink=50 & 0{,}02599 & 0{,}09537 \\ \hline
+        UserKNN & k=200; shrink=0 & 0{,}02753 & 0{,}10432 \\ \hline
+        Content & chu kỳ bán rã 30 ngày & 0{,}00459 & 0{,}02180 \\ \hline
+        MostPopular-Recent & cửa sổ 28 ngày & 0{,}02334 & 0{,}10432 \\ \hline
+        Most Popular & --- & 0{,}02174 & 0{,}09420 \\ \hline
+        Hybrid-CBCF\textsuperscript{*} & tổng có trọng số học theo cặp: Content 0{,}12; UserKNN 0{,}60; ItemKNN 0{,}28 & 0{,}02815 & 0{,}10588 \\ \hline
     \end{tabular}
     \end{adjustbox}
-    \par\smallskip{\footnotesize Seed 42. Mỗi mô hình có học thử 6 cấu hình; mô hình chỉ có một tham số thử đủ lưới. d: số chiều vector nhúng; lr: tốc độ học; reg: hệ số điều chuẩn; neg: số mẫu âm cho mỗi mẫu dương; wd: hệ số điều chuẩn L2; shrink: hệ số co; bỏ ID: xác suất bỏ vector nhúng ID của sản phẩm khi huấn luyện. Số trên tập xác thực dùng để chọn cấu hình, không dùng để kết luận. \textsuperscript{\dag}Mô hình lai truyền thống bổ sung sau đánh giá cuối; trọng số đã chia cho tổng; NDCG@10 tính bằng khớp chéo theo khách (\bangrefV{tab_v2_hybrid.tex}{tab:v2hybrid}).}
+    \par\smallskip{\small d: số chiều vector nhúng; lr: tốc độ học; reg, wd: hệ số điều chuẩn; neg: số mẫu âm; shrink: hệ số co; bỏ~ID: xác suất bỏ vector nhúng ID của sản phẩm. \textsuperscript{*}Mô hình bổ sung sau đánh giá cuối (\bangrefV{tab_v2_hybrid.tex}{tab:v2hybrid}).}
 \end{table}

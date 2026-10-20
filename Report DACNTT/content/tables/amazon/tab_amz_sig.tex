@@ -1,25 +1,23 @@
 % Sinh tự động bởi neumf_project/scripts/24_report_v2.py — KHÔNG sửa tay.
 \begin{table}[htbp]
     \centering\small
-    \caption{Kiểm định họ 10 so sánh đã đăng ký trước trên Amazon Beauty (NDCG@10)}
+    \caption{Kiểm định họ 10 so sánh trên Amazon Beauty}
     \label{tab:amzsig}
     \begin{adjustbox}{max width=\textwidth}
-    \begin{tabular}{rllrrrcrc}
-        \toprule
-        \# & A & B & NDCG@10 A & NDCG@10 B & (A$-$B)/B & CI 95\% của A$-$B & p Holm & Kết luận \\
-        \midrule
-        1 & NeuMF-F & NeuMF & 0{,}03277 & 0{,}01978 & +65{,}7\% & [+0{,}00936; +0{,}01681] & $<$ 0{,}001 & A tốt hơn \\
-        2 & NeuMF-F & GMF-F & 0{,}03277 & 0{,}03298 & $-$0{,}6\% & [$-$0{,}00228; +0{,}00186] & 0{,}534 & --- \\
-        3 & NeuMF-F & MLP-F & 0{,}03277 & 0{,}03065 & +6{,}9\% & [$-$0{,}00044; +0{,}00457] & 0{,}050 & --- \\
-        4 & NeuMF-F & LateFusion-F & 0{,}03277 & 0{,}03747 & $-$12{,}5\% & [$-$0{,}00668; $-$0{,}00279] & $<$ 0{,}001 & B tốt hơn \\
-        5 & NeuMF-F & BPR-MF & 0{,}03277 & 0{,}01144 & +186{,}5\% & [+0{,}01756; +0{,}02528] & $<$ 0{,}001 & A tốt hơn \\
-        6 & NeuMF-F & ItemKNN & 0{,}03277 & 0{,}02333 & +40{,}5\% & [+0{,}00477; +0{,}01417] & $<$ 0{,}001 & A tốt hơn \\
-        7 & NeuMF-F & UserKNN & 0{,}03277 & 0{,}02506 & +30{,}8\% & [+0{,}00313; +0{,}01232] & $<$ 0{,}001 & A tốt hơn \\
-        8 & NeuMF-F & MostPopular-Recent & 0{,}03277 & 0{,}01401 & +134{,}0\% & [+0{,}01553; +0{,}02201] & $<$ 0{,}001 & A tốt hơn \\
-        9 & NeuMF-F & Content & 0{,}03277 & 0{,}00945 & +246{,}7\% & [+0{,}01902; +0{,}02766] & $<$ 0{,}001 & A tốt hơn \\
-        10 & NeuMF & BPR-MF & 0{,}01978 & 0{,}01144 & +72{,}9\% & [+0{,}00630; +0{,}01038] & $<$ 0{,}001 & A tốt hơn \\
-        \bottomrule
+    \begin{tabular}{|r|l|r|r|c|r|c|}
+        \hline
+        \# & \tbl{Mô hình A}{Mô hình B} & \tbc{NDCG@10}{của A, B} & (A$-$B)/B & \tbc{CI 95\%}{của A$-$B} & p Holm & Kết luận \\ \hline
+        1 & \tbl{NeuMF-F}{NeuMF} & \tbr{0{,}03277}{0{,}01978} & +65{,}7\% & \tbc{[+0{,}00936;}{+0{,}01681]} & $<$ 0{,}001 & A tốt hơn \\ \hline
+        2 & \tbl{NeuMF-F}{GMF-F} & \tbr{0{,}03277}{0{,}03298} & $-$0{,}6\% & \tbc{[$-$0{,}00228;}{+0{,}00186]} & 0{,}534 & --- \\ \hline
+        3 & \tbl{NeuMF-F}{MLP-F} & \tbr{0{,}03277}{0{,}03065} & +6{,}9\% & \tbc{[$-$0{,}00044;}{+0{,}00457]} & 0{,}050 & --- \\ \hline
+        4 & \tbl{NeuMF-F}{LateFusion-F} & \tbr{0{,}03277}{0{,}03747} & $-$12{,}5\% & \tbc{[$-$0{,}00668;}{$-$0{,}00279]} & $<$ 0{,}001 & B tốt hơn \\ \hline
+        5 & \tbl{NeuMF-F}{BPR-MF} & \tbr{0{,}03277}{0{,}01144} & +186{,}5\% & \tbc{[+0{,}01756;}{+0{,}02528]} & $<$ 0{,}001 & A tốt hơn \\ \hline
+        6 & \tbl{NeuMF-F}{ItemKNN} & \tbr{0{,}03277}{0{,}02333} & +40{,}5\% & \tbc{[+0{,}00477;}{+0{,}01417]} & $<$ 0{,}001 & A tốt hơn \\ \hline
+        7 & \tbl{NeuMF-F}{UserKNN} & \tbr{0{,}03277}{0{,}02506} & +30{,}8\% & \tbc{[+0{,}00313;}{+0{,}01232]} & $<$ 0{,}001 & A tốt hơn \\ \hline
+        8 & \tbl{NeuMF-F}{MostPopular-Recent} & \tbr{0{,}03277}{0{,}01401} & +134{,}0\% & \tbc{[+0{,}01553;}{+0{,}02201]} & $<$ 0{,}001 & A tốt hơn \\ \hline
+        9 & \tbl{NeuMF-F}{Content} & \tbr{0{,}03277}{0{,}00945} & +246{,}7\% & \tbc{[+0{,}01902;}{+0{,}02766]} & $<$ 0{,}001 & A tốt hơn \\ \hline
+        10 & \tbl{NeuMF}{BPR-MF} & \tbr{0{,}01978}{0{,}01144} & +72{,}9\% & \tbc{[+0{,}00630;}{+0{,}01038]} & $<$ 0{,}001 & A tốt hơn \\ \hline
     \end{tabular}
     \end{adjustbox}
-    \par\smallskip{\footnotesize Mỗi người dùng lấy trung bình qua 5 seed; kiểm định Wilcoxon theo người dùng, khoảng tin cậy bootstrap 95\%, hiệu chỉnh Holm. ---: không khác biệt có ý nghĩa. ``A tốt hơn'' (hoặc ``B tốt hơn'') chỉ khi đồng thời p Holm $<$ 0,05, CI không chứa 0 và chênh lệch tương đối $\geq$ 5\%.}
+    \par\smallskip{\small ``A tốt hơn'' khi p Holm $<$ 0,05, CI không chứa 0 và chênh lệch $\geq$ 5\%. ---: không khác biệt có ý nghĩa.}
 \end{table}

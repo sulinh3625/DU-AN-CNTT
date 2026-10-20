@@ -1,10 +1,23 @@
-% =====================================================================
-%  references.bib
-%  Tài liệu tham khảo cho Dự án Công nghệ thông tin:
-%  "Xây dựng mô hình lai Matrix Factorization và Deep Neural Network (NeuMF)
-%   để gợi ý sản phẩm"
-% =====================================================================
+% ===== Dữ liệu =====
+@misc{hm2022kaggle,
+  author       = {{H\&M Group}},
+  title        = {H\&M Personalized Fashion Recommendations},
+  year         = {2022},
+  howpublished = {\url{https://www.kaggle.com/competitions/h-and-m-personalized-fashion-recommendations}},
+  note         = {Cuộc thi trên Kaggle}
+}
 
+@inproceedings{mcauley2015image,
+  author    = {McAuley, Julian and Targett, Christopher and Shi, Qinfeng and van den Hengel, Anton},
+  title     = {Image-Based Recommendations on Styles and Substitutes},
+  booktitle = {Proceedings of the 38th International ACM SIGIR Conference on Research and Development in Information Retrieval (SIGIR '15)},
+  pages     = {43--52},
+  year      = {2015},
+  address   = {Santiago, Chile},
+  doi       = {10.1145/2766462.2767755}
+}
+
+% ===== Nghiên cứu đối chứng =====
 @inproceedings{he2017ncf,
   author    = {He, Xiangnan and Liao, Lizi and Zhang, Hanwang and Nie, Liqiang and Hu, Xia and Chua, Tat-Seng},
   title     = {Neural Collaborative Filtering},
@@ -13,6 +26,36 @@
   year      = {2017},
   address   = {Perth, Australia},
   doi       = {10.1145/3038912.3052569}
+}
+
+@inproceedings{rendle2020ncfmf,
+  author    = {Rendle, Steffen and Krichene, Walid and Zhang, Li and Anderson, John},
+  title     = {Neural Collaborative Filtering vs. Matrix Factorization Revisited},
+  booktitle = {Proceedings of the 14th ACM Conference on Recommender Systems (RecSys '20)},
+  pages     = {240--248},
+  year      = {2020},
+  doi       = {10.1145/3383313.3412488}
+}
+
+@phdthesis{holinh2023multisource,
+  author    = {{Hồ Thị Linh}},
+  title     = {Multi-Source Integration for Recommendation Systems},
+  school    = {Ton Duc Thang University},
+  address   = {Ho Chi Minh City},
+  type      = {Doctoral dissertation},
+  year      = {2023}
+}
+
+% ===== Hệ gợi ý và lọc cộng tác =====
+@article{koren2009matrix,
+  author  = {Koren, Yehuda and Bell, Robert and Volinsky, Chris},
+  title   = {Matrix Factorization Techniques for Recommender Systems},
+  journal = {Computer},
+  volume  = {42},
+  number  = {8},
+  pages   = {30--37},
+  year    = {2009},
+  doi     = {10.1109/MC.2009.263}
 }
 
 @inproceedings{rendle2009bpr,
@@ -24,15 +67,80 @@
   address   = {Montreal, QC, Canada}
 }
 
-@article{koren2009matrix,
-  author  = {Koren, Yehuda and Bell, Robert and Volinsky, Chris},
-  title   = {Matrix Factorization Techniques for Recommender Systems},
-  journal = {Computer},
-  volume  = {42},
-  number  = {8},
-  pages   = {30--37},
+@inproceedings{resnick1994grouplens,
+  author    = {Resnick, Paul and Iacovou, Neophytos and Suchak, Mitesh and Bergstrom, Peter and Riedl, John},
+  title     = {{GroupLens}: An Open Architecture for Collaborative Filtering of Netnews},
+  booktitle = {Proceedings of the 1994 ACM Conference on Computer Supported Cooperative Work (CSCW)},
+  pages     = {175--186},
+  year      = {1994},
+  doi       = {10.1145/192844.192905}
+}
+
+@inproceedings{sarwar2001item,
+  author    = {Sarwar, Badrul and Karypis, George and Konstan, Joseph and Riedl, John},
+  title     = {Item-based Collaborative Filtering Recommendation Algorithms},
+  booktitle = {Proceedings of the 10th International Conference on World Wide Web (WWW)},
+  pages     = {285--295},
+  year      = {2001},
+  doi       = {10.1145/371920.372071}
+}
+
+@article{su2009survey,
+  author  = {Su, Xiaoyuan and Khoshgoftaar, Taghi M.},
+  title   = {A Survey of Collaborative Filtering Techniques},
+  journal = {Advances in Artificial Intelligence},
+  volume  = {2009},
+  pages   = {1--19},
   year    = {2009},
-  doi     = {10.1109/MC.2009.263}
+  doi     = {10.1155/2009/421425}
+}
+
+@incollection{lops2011content,
+  author    = {Lops, Pasquale and de Gemmis, Marco and Semeraro, Giovanni},
+  title     = {Content-based Recommender Systems: State of the Art and Trends},
+  booktitle = {Recommender Systems Handbook},
+  editor    = {Ricci, Francesco and Rokach, Lior and Shapira, Bracha and Kantor, Paul B.},
+  publisher = {Springer},
+  pages     = {73--105},
+  year      = {2011}
+}
+
+@article{burke2002hybrid,
+  author    = {Burke, Robin},
+  title     = {Hybrid Recommender Systems: Survey and Experiments},
+  journal   = {User Modeling and User-Adapted Interaction},
+  volume    = {12},
+  number    = {4},
+  pages     = {331--370},
+  year      = {2002}
+}
+
+@article{atrey2010multimodal,
+  author    = {Atrey, Pradeep K. and Hossain, M. Anwar and El Saddik, Abdulmotaleb and Kankanhalli, Mohan S.},
+  title     = {Multimodal Fusion for Multimedia Analysis: A Survey},
+  journal   = {Multimedia Systems},
+  volume    = {16},
+  number    = {6},
+  pages     = {345--379},
+  year      = {2010}
+}
+
+@inproceedings{schein2002coldstart,
+  author    = {Schein, Andrew I. and Popescul, Alexandrin and Ungar, Lyle H. and Pennock, David M.},
+  title     = {Methods and Metrics for Cold-Start Recommendations},
+  booktitle = {Proceedings of the 25th Annual International ACM SIGIR Conference on Research and Development in Information Retrieval (SIGIR '02)},
+  pages     = {253--260},
+  year      = {2002}
+}
+
+% ===== Mô hình dựa trên đặc trưng và biểu diễn văn bản =====
+@inproceedings{rendle2010fm,
+  author    = {Rendle, Steffen},
+  title     = {Factorization Machines},
+  booktitle = {Proceedings of the IEEE International Conference on Data Mining (ICDM)},
+  pages     = {995--1000},
+  year      = {2010},
+  doi       = {10.1109/ICDM.2010.127}
 }
 
 @inproceedings{cheng2016wide,
@@ -53,374 +161,6 @@
   year      = {2017},
   address   = {Melbourne, Australia},
   doi       = {10.24963/ijcai.2017/239}
-}
-
-@article{jarvelin2002,
-  author  = {J{\"a}rvelin, Kalervo and Kek{\"a}l{\"a}inen, Jaana},
-  title   = {Cumulated gain-based evaluation of {IR} techniques},
-  journal = {ACM Transactions on Information Systems},
-  volume  = {20},
-  number  = {4},
-  pages   = {422--446},
-  year    = {2002},
-  doi     = {10.1145/582415.582418}
-}
-
-@misc{hm2022kaggle,
-  author       = {{H\&M Group}},
-  title        = {H\&M Personalized Fashion Recommendations},
-  year         = {2022},
-  howpublished = {\url{https://www.kaggle.com/competitions/h-and-m-personalized-fashion-recommendations}},
-  note         = {Cuộc thi trên Kaggle}
-}
-
-@inproceedings{sarwar2001item,
-  author    = {Sarwar, Badrul and Karypis, George and Konstan, Joseph and Riedl, John},
-  title     = {Item-based Collaborative Filtering Recommendation Algorithms},
-  booktitle = {Proceedings of the 10th International Conference on World Wide Web (WWW)},
-  pages     = {285--295},
-  year      = {2001},
-  doi       = {10.1145/371920.372071}
-}
-
-@inproceedings{resnick1994grouplens,
-  author    = {Resnick, Paul and Iacovou, Neophytos and Suchak, Mitesh and Bergstrom, Peter and Riedl, John},
-  title     = {{GroupLens}: An Open Architecture for Collaborative Filtering of Netnews},
-  booktitle = {Proceedings of the 1994 ACM Conference on Computer Supported Cooperative Work (CSCW)},
-  pages     = {175--186},
-  year      = {1994},
-  doi       = {10.1145/192844.192905}
-}
-
-@inproceedings{kingma2014adam,
-  author    = {Kingma, Diederik P. and Ba, Jimmy},
-  title     = {Adam: A Method for Stochastic Optimization},
-  booktitle = {Proceedings of the 3rd International Conference on Learning Representations (ICLR)},
-  year      = {2015}
-}
-
-@inproceedings{paszke2019pytorch,
-  author    = {Paszke, Adam and Gross, Sam and Massa, Francisco and Lerer, Adam and Bradbury, James and Chanan, Gregory and Killeen, Trevor and Lin, Zeming and Gimelshein, Natalia and Antiga, Luca and others},
-  title     = {{PyTorch}: An Imperative Style, High-Performance Deep Learning Library},
-  booktitle = {Advances in Neural Information Processing Systems (NeurIPS)},
-  volume    = {32},
-  pages     = {8024--8035},
-  year      = {2019}
-}
-
-@inproceedings{cremonesi2010performance,
-  author    = {Cremonesi, Paolo and Koren, Yehuda and Turrin, Roberto},
-  title     = {Performance of Recommender Algorithms on {Top-N} Recommendation Tasks},
-  booktitle = {Proceedings of the 4th ACM Conference on Recommender Systems (RecSys)},
-  pages     = {39--46},
-  year      = {2010},
-  doi       = {10.1145/1864708.1864721}
-}
-
-@article{schafer2001commerce,
-  author  = {Schafer, J. Ben and Konstan, Joseph A. and Riedl, John},
-  title   = {E-Commerce Recommendation Applications},
-  journal = {Data Mining and Knowledge Discovery},
-  volume  = {5},
-  number  = {1-2},
-  pages   = {115--153},
-  year    = {2001},
-  doi     = {10.1023/A:1009804230409}
-}
-
-@article{su2009survey,
-  author  = {Su, Xiaoyuan and Khoshgoftaar, Taghi M.},
-  title   = {A Survey of Collaborative Filtering Techniques},
-  journal = {Advances in Artificial Intelligence},
-  volume  = {2009},
-  pages   = {1--19},
-  year    = {2009},
-  doi     = {10.1155/2009/421425}
-}
-
-@article{linden2003amazon,
-  author  = {Linden, Greg and Smith, Brent and York, Jeremy},
-  title   = {Amazon.com Recommendations: Item-to-Item Collaborative Filtering},
-  journal = {IEEE Internet Computing},
-  volume  = {7},
-  number  = {1},
-  pages   = {76--80},
-  year    = {2003},
-  doi     = {10.1109/MIC.2003.1167344}
-}
-
-@inproceedings{krichene2020sampled,
-  author    = {Krichene, Walid and Rendle, Steffen},
-  title     = {On Sampled Metrics for Item Recommendation},
-  booktitle = {Proceedings of the 26th ACM SIGKDD International Conference on Knowledge Discovery \& Data Mining (KDD '20)},
-  pages     = {1748--1757},
-  year      = {2020},
-  doi       = {10.1145/3394486.3403226}
-}
-
-% =====================================================================
-%  Bổ sung: Các công trình nền tảng và nghiên cứu hiện đại (2010--2024)
-%  về hệ thống gợi ý dựa trên đồ thị, chuỗi hành vi, hai tháp và LLM
-% =====================================================================
-
-@inproceedings{rendle2010fm,
-  author    = {Rendle, Steffen},
-  title     = {Factorization Machines},
-  booktitle = {Proceedings of the IEEE International Conference on Data Mining (ICDM)},
-  pages     = {995--1000},
-  year      = {2010},
-  doi       = {10.1109/ICDM.2010.127}
-}
-
-@inproceedings{covington2016youtube,
-  author    = {Covington, Paul and Adams, Jay and Sargin, Emre},
-  title     = {Deep Neural Networks for {YouTube} Recommendations},
-  booktitle = {Proceedings of the 10th ACM Conference on Recommender Systems (RecSys '16)},
-  pages     = {191--198},
-  year      = {2016},
-  doi       = {10.1145/2959100.2959190}
-}
-
-@inproceedings{hidasi2016gru4rec,
-  author    = {Hidasi, Bal{\'a}zs and Karatzoglou, Alexandros and Baltrunas, Linas and Tikk, Domonkos},
-  title     = {Session-based Recommendations with Recurrent Neural Networks},
-  booktitle = {Proceedings of the 4th International Conference on Learning Representations (ICLR)},
-  year      = {2016}
-}
-
-@inproceedings{zhou2018din,
-  author    = {Zhou, Guorui and Zhu, Xiaoqiang and Song, Chenru and Fan, Ying and Zhu, Han and Ma, Xiao and Yan, Yanghui and Jin, Junqi and Li, Han and Gai, Kun},
-  title     = {Deep Interest Network for Click-Through Rate Prediction},
-  booktitle = {Proceedings of the 24th ACM SIGKDD International Conference on Knowledge Discovery \& Data Mining (KDD '18)},
-  pages     = {1059--1068},
-  year      = {2018},
-  doi       = {10.1145/3219819.3219823}
-}
-
-@inproceedings{kang2018self,
-  author    = {Kang, Wang-Cheng and McAuley, Julian},
-  title     = {Self-Attentive Sequential Recommendation},
-  booktitle = {Proceedings of the IEEE International Conference on Data Mining (ICDM)},
-  pages     = {197--206},
-  year      = {2018},
-  doi       = {10.1109/ICDM.2018.00035}
-}
-
-@inproceedings{sun2019bert4rec,
-  author    = {Sun, Fei and Liu, Jun and Wu, Jian and Pei, Changhua and Lin, Xiao and Ou, Wenwu and Jiang, Peng},
-  title     = {{BERT4Rec}: Sequential Recommendation with Bidirectional Encoder Representations from Transformer},
-  booktitle = {Proceedings of the 28th ACM International Conference on Information and Knowledge Management (CIKM '19)},
-  pages     = {1441--1450},
-  year      = {2019},
-  doi       = {10.1145/3357384.3357895}
-}
-
-@inproceedings{wang2019ngcf,
-  author    = {Wang, Xiang and He, Xiangnan and Wang, Meng and Feng, Fuli and Chua, Tat-Seng},
-  title     = {Neural Graph Collaborative Filtering},
-  booktitle = {Proceedings of the 42nd International ACM SIGIR Conference on Research and Development in Information Retrieval (SIGIR '19)},
-  pages     = {165--174},
-  year      = {2019},
-  doi       = {10.1145/3331184.3331267}
-}
-
-@inproceedings{he2020lightgcn,
-  author    = {He, Xiangnan and Deng, Kuan and Wang, Xiang and Li, Yan and Zhang, Yongdong and Wang, Meng},
-  title     = {{LightGCN}: Simplifying and Powering Graph Convolution Network for Recommendation},
-  booktitle = {Proceedings of the 43rd International ACM SIGIR Conference on Research and Development in Information Retrieval (SIGIR '20)},
-  pages     = {639--648},
-  year      = {2020},
-  doi       = {10.1145/3397271.3401063}
-}
-
-@inproceedings{liang2018multvae,
-  author    = {Liang, Dawen and Krishnan, Rahul G. and Hoffman, Matthew D. and Jebara, Tony},
-  title     = {Variational Autoencoders for Collaborative Filtering},
-  booktitle = {Proceedings of the 2018 World Wide Web Conference (WWW '18)},
-  pages     = {689--698},
-  year      = {2018},
-  doi       = {10.1145/3178876.3186150}
-}
-
-@inproceedings{wu2021sgl,
-  author    = {Wu, Jiancan and Wang, Xiang and Feng, Fuli and He, Xiangnan and Chen, Liang and Lian, Jianxun and Xie, Xing},
-  title     = {Self-supervised Graph Learning for Recommendation},
-  booktitle = {Proceedings of the 44th International ACM SIGIR Conference on Research and Development in Information Retrieval (SIGIR '21)},
-  pages     = {726--735},
-  year      = {2021},
-  doi       = {10.1145/3404835.3462862}
-}
-
-@inproceedings{rajput2023tiger,
-  author    = {Rajput, Shashank and Mehta, Nikhil and Singh, Anima and Hulikal Keshavan, Raghunandan and Vu, Trung and Heldt, Lukasz and Hong, Lichan and Tay, Yi and Tran, Vinh Q. and Samost, Jonah and Kula, Maciej and Chi, Ed H. and Sathiamoorthy, Maheswaran},
-  title     = {Recommender Systems with Generative Retrieval},
-  booktitle = {Advances in Neural Information Processing Systems (NeurIPS)},
-  volume    = {36},
-  year      = {2023}
-}
-
-@article{wu2023survey_llm4rec,
-  author  = {Wu, Likang and Zheng, Zhi and Qiu, Zhaopeng and Wang, Hao and Gu, Hongchao and Shen, Tingjia and Qin, Chuan and Zhu, Chen and Zhu, Hengshu and Liu, Qi and Xiong, Hui and Chen, Enhong},
-  title   = {A Survey on Large Language Models for Recommendation},
-  journal = {World Wide Web},
-  volume  = {27},
-  number  = {60},
-  year    = {2024},
-  doi     = {10.1007/s11280-024-01291-2}
-}
-
-@article{zhang2019deeplearningsurvey,
-  author  = {Zhang, Shuai and Yao, Lina and Sun, Aixin and Tay, Yi},
-  title   = {Deep Learning Based Recommender System: A Survey and New Perspectives},
-  journal = {ACM Computing Surveys},
-  volume  = {52},
-  number  = {1},
-  pages   = {1--38},
-  year    = {2019},
-  doi     = {10.1145/3285029}
-}
-
-@article{li2024dnncf,
-  author  = {Li, Pang and Mohd Noah, Shahrul Azman and Mohd Sarim, Hafiz},
-  title   = {A Survey on Deep Neural Networks in Collaborative Filtering Recommendation Systems},
-  journal = {arXiv preprint arXiv:2412.01378},
-  year    = {2024}
-}
-
-@article{wei2025diffusion,
-  author  = {Wei, Ting-Ruen and Fang, Yi},
-  title   = {Diffusion Models in Recommendation Systems: A Survey},
-  journal = {arXiv preprint arXiv:2501.10548},
-  year    = {2025}
-}
-
-@inproceedings{vargas2011novelty,
-  author    = {Vargas, Sa{\'u}l and Castells, Pablo},
-  title     = {Rank and Relevance in Novelty and Diversity Metrics for Recommender Systems},
-  booktitle = {Proceedings of the 5th ACM Conference on Recommender Systems (RecSys '11)},
-  pages     = {109--116},
-  year      = {2011},
-  doi       = {10.1145/2043932.2043955}
-}
-% =====================================================================
-%  Bổ sung: đánh giá công bằng, cách chia dữ liệu, kiểm định thống kê
-% =====================================================================
-
-@inproceedings{mcauley2015image,
-  author    = {McAuley, Julian and Targett, Christopher and Shi, Qinfeng and van den Hengel, Anton},
-  title     = {Image-Based Recommendations on Styles and Substitutes},
-  booktitle = {Proceedings of the 38th International ACM SIGIR Conference on Research and Development in Information Retrieval (SIGIR '15)},
-  pages     = {43--52},
-  year      = {2015},
-  address   = {Santiago, Chile},
-  doi       = {10.1145/2766462.2767755}
-}
-
-@inproceedings{rendle2020ncfmf,
-  author    = {Rendle, Steffen and Krichene, Walid and Zhang, Li and Anderson, John},
-  title     = {Neural Collaborative Filtering vs. Matrix Factorization Revisited},
-  booktitle = {Proceedings of the 14th ACM Conference on Recommender Systems (RecSys '20)},
-  pages     = {240--248},
-  year      = {2020},
-  doi       = {10.1145/3383313.3412488}
-}
-
-@inproceedings{dacrema2019progress,
-  author    = {Ferrari Dacrema, Maurizio and Cremonesi, Paolo and Jannach, Dietmar},
-  title     = {Are We Really Making Much Progress? {A} Worrying Analysis of Recent Neural Recommendation Approaches},
-  booktitle = {Proceedings of the 13th ACM Conference on Recommender Systems (RecSys '19)},
-  pages     = {101--109},
-  year      = {2019},
-  doi       = {10.1145/3298689.3347058}
-}
-
-@inproceedings{meng2020splitting,
-  author    = {Meng, Zaiqiao and McCreadie, Richard and Macdonald, Craig and Ounis, Iadh},
-  title     = {Exploring Data Splitting Strategies for the Evaluation of Recommendation Models},
-  booktitle = {Proceedings of the 14th ACM Conference on Recommender Systems (RecSys '20)},
-  year      = {2020},
-  doi       = {10.1145/3383313.3418479}
-}
-
-@inproceedings{rendle2022ials,
-  author    = {Rendle, Steffen and Krichene, Walid and Zhang, Li and Koren, Yehuda},
-  title     = {Revisiting the Performance of {iALS} on Item Recommendation Benchmarks},
-  booktitle = {Proceedings of the 16th ACM Conference on Recommender Systems (RecSys '22)},
-  year      = {2022},
-  doi       = {10.1145/3523227.3548486}
-}
-
-@article{wilcoxon1945,
-  author    = {Wilcoxon, Frank},
-  title     = {Individual Comparisons by Ranking Methods},
-  journal   = {Biometrics Bulletin},
-  volume    = {1},
-  number    = {6},
-  pages     = {80--83},
-  year      = {1945}
-}
-
-@article{holm1979,
-  author    = {Holm, Sture},
-  title     = {A Simple Sequentially Rejective Multiple Test Procedure},
-  journal   = {Scandinavian Journal of Statistics},
-  volume    = {6},
-  number    = {2},
-  pages     = {65--70},
-  year      = {1979}
-}
-
-@book{efron1993bootstrap,
-  author    = {Efron, Bradley and Tibshirani, Robert J.},
-  title     = {An Introduction to the Bootstrap},
-  publisher = {Chapman \& Hall},
-  address   = {New York},
-  year      = {1993}
-}
-
-@phdthesis{holinh2023multisource,
-  author    = {{Hồ Thị Linh}},
-  title     = {Multi-Source Integration for Recommendation Systems},
-  school    = {Ton Duc Thang University},
-  address   = {Ho Chi Minh City},
-  type      = {Doctoral dissertation},
-  year      = {2023}
-}
-
-@article{atrey2010multimodal,
-  author    = {Atrey, Pradeep K. and Hossain, M. Anwar and El Saddik, Abdulmotaleb and Kankanhalli, Mohan S.},
-  title     = {Multimodal Fusion for Multimedia Analysis: A Survey},
-  journal   = {Multimedia Systems},
-  volume    = {16},
-  number    = {6},
-  pages     = {345--379},
-  year      = {2010}
-}
-
-@article{liu2018combine,
-  author    = {Liu, Kuan and Li, Yanen and Xu, Ning and Natarajan, Prem},
-  title     = {Learn to Combine Modalities in Multimodal Deep Learning},
-  journal   = {arXiv preprint arXiv:1805.11730},
-  year      = {2018}
-}
-
-@article{burke2002hybrid,
-  author    = {Burke, Robin},
-  title     = {Hybrid Recommender Systems: Survey and Experiments},
-  journal   = {User Modeling and User-Adapted Interaction},
-  volume    = {12},
-  number    = {4},
-  pages     = {331--370},
-  year      = {2002}
-}
-
-@inproceedings{hu2008implicit,
-  author    = {Hu, Yifan and Koren, Yehuda and Volinsky, Chris},
-  title     = {Collaborative Filtering for Implicit Feedback Datasets},
-  booktitle = {Proceedings of the 8th IEEE International Conference on Data Mining (ICDM)},
-  pages     = {263--272},
-  year      = {2008},
-  doi       = {10.1109/ICDM.2008.22}
 }
 
 @inproceedings{volkovs2017dropoutnet,
@@ -451,20 +191,94 @@
   year    = {1990}
 }
 
-@inproceedings{schein2002coldstart,
-  author    = {Schein, Andrew I. and Popescul, Alexandrin and Ungar, Lyle H. and Pennock, David M.},
-  title     = {Methods and Metrics for Cold-Start Recommendations},
-  booktitle = {Proceedings of the 25th Annual International ACM SIGIR Conference on Research and Development in Information Retrieval (SIGIR '02)},
-  pages     = {253--260},
-  year      = {2002}
+% ===== Đánh giá, kiểm định và công cụ =====
+@article{jarvelin2002,
+  author  = {J{\"a}rvelin, Kalervo and Kek{\"a}l{\"a}inen, Jaana},
+  title   = {Cumulated gain-based evaluation of {IR} techniques},
+  journal = {ACM Transactions on Information Systems},
+  volume  = {20},
+  number  = {4},
+  pages   = {422--446},
+  year    = {2002},
+  doi     = {10.1145/582415.582418}
 }
 
-@incollection{lops2011content,
-  author    = {Lops, Pasquale and de Gemmis, Marco and Semeraro, Giovanni},
-  title     = {Content-based Recommender Systems: State of the Art and Trends},
-  booktitle = {Recommender Systems Handbook},
-  editor    = {Ricci, Francesco and Rokach, Lior and Shapira, Bracha and Kantor, Paul B.},
-  publisher = {Springer},
-  pages     = {73--105},
-  year      = {2011}
+@inproceedings{krichene2020sampled,
+  author    = {Krichene, Walid and Rendle, Steffen},
+  title     = {On Sampled Metrics for Item Recommendation},
+  booktitle = {Proceedings of the 26th ACM SIGKDD International Conference on Knowledge Discovery \& Data Mining (KDD '20)},
+  pages     = {1748--1757},
+  year      = {2020},
+  doi       = {10.1145/3394486.3403226}
+}
+
+@inproceedings{dacrema2019progress,
+  author    = {Ferrari Dacrema, Maurizio and Cremonesi, Paolo and Jannach, Dietmar},
+  title     = {Are We Really Making Much Progress? {A} Worrying Analysis of Recent Neural Recommendation Approaches},
+  booktitle = {Proceedings of the 13th ACM Conference on Recommender Systems (RecSys '19)},
+  pages     = {101--109},
+  year      = {2019},
+  doi       = {10.1145/3298689.3347058}
+}
+
+@inproceedings{meng2020splitting,
+  author    = {Meng, Zaiqiao and McCreadie, Richard and Macdonald, Craig and Ounis, Iadh},
+  title     = {Exploring Data Splitting Strategies for the Evaluation of Recommendation Models},
+  booktitle = {Proceedings of the 14th ACM Conference on Recommender Systems (RecSys '20)},
+  pages     = {681--686},
+  year      = {2020},
+  doi       = {10.1145/3383313.3418479}
+}
+
+@inproceedings{vargas2011novelty,
+  author    = {Vargas, Sa{\'u}l and Castells, Pablo},
+  title     = {Rank and Relevance in Novelty and Diversity Metrics for Recommender Systems},
+  booktitle = {Proceedings of the 5th ACM Conference on Recommender Systems (RecSys '11)},
+  pages     = {109--116},
+  year      = {2011},
+  doi       = {10.1145/2043932.2043955}
+}
+
+@article{wilcoxon1945,
+  author    = {Wilcoxon, Frank},
+  title     = {Individual Comparisons by Ranking Methods},
+  journal   = {Biometrics Bulletin},
+  volume    = {1},
+  number    = {6},
+  pages     = {80--83},
+  year      = {1945}
+}
+
+@article{holm1979,
+  author    = {Holm, Sture},
+  title     = {A Simple Sequentially Rejective Multiple Test Procedure},
+  journal   = {Scandinavian Journal of Statistics},
+  volume    = {6},
+  number    = {2},
+  pages     = {65--70},
+  year      = {1979}
+}
+
+@book{efron1993bootstrap,
+  author    = {Efron, Bradley and Tibshirani, Robert J.},
+  title     = {An Introduction to the Bootstrap},
+  publisher = {Chapman \& Hall},
+  address   = {New York},
+  year      = {1993}
+}
+
+@inproceedings{kingma2014adam,
+  author    = {Kingma, Diederik P. and Ba, Jimmy},
+  title     = {Adam: A Method for Stochastic Optimization},
+  booktitle = {Proceedings of the 3rd International Conference on Learning Representations (ICLR)},
+  year      = {2015}
+}
+
+@inproceedings{paszke2019pytorch,
+  author    = {Paszke, Adam and Gross, Sam and Massa, Francisco and Lerer, Adam and Bradbury, James and Chanan, Gregory and Killeen, Trevor and Lin, Zeming and Gimelshein, Natalia and Antiga, Luca and others},
+  title     = {{PyTorch}: An Imperative Style, High-Performance Deep Learning Library},
+  booktitle = {Advances in Neural Information Processing Systems (NeurIPS)},
+  volume    = {32},
+  pages     = {8024--8035},
+  year      = {2019}
 }

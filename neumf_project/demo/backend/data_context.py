@@ -20,6 +20,7 @@ Chỉ import hàm từ src/ và scripts/, không sửa code huấn luyện.
 """
 from __future__ import annotations
 
+import html
 import json
 import os
 import sys
@@ -81,7 +82,7 @@ CUSTOMERS_PATH = PROJECT_ROOT / "data" / "raw" / "hm" / "customers.csv"
 # vẫn khớp file kết quả; không sửa configs/ (cấu hình huấn luyện, đánh giá và mã băm v2).
 DEMO_EXTRA_K = (15, 20)
 ARTICLE_COLUMNS = ["article_id", "product_code", "prod_name", "product_type_name", "product_group_name",
-                   "index_group_name"]
+                   "index_group_name", "colour_group_name", "detail_desc"]
 
 
 def v2_data_mismatch(v2_dir: Path = V2_DIR, seed: int = SEED, cfg: dict | None = None) -> str | None:
@@ -141,6 +142,9 @@ def product_table(articles: pd.DataFrame, item_product: np.ndarray) -> pd.DataFr
     a = articles.sort_values("article_id")
     out = a.drop_duplicates("product_code").set_index("product_code").reindex(item_product)
     out["n_colours"] = a.groupby("product_code").size().reindex(item_product, fill_value=0).to_numpy()
+    if "colour_group_name" in a:  # các màu của mẫu, theo thứ tự article_id (hiện ở thẻ chi tiết sản phẩm)
+        colours = a.groupby("product_code")["colour_group_name"].agg(lambda s: ", ".join(dict.fromkeys(s.dropna())))
+        out["colours"] = colours.reindex(item_product).to_numpy()
     out = out.reset_index(drop=True).fillna("Unknown")
     out.index.name = "item"
     return out
@@ -155,9 +159,9 @@ def amazon_table(items: pd.DataFrame, item_product: np.ndarray) -> pd.DataFrame:
     leaf = (cat["category_3"].where(cat["category_3"] != "", cat["category_2"]).where(lambda s: s != "", cat["category_1"])
             .replace("", "Beauty"))
     asin = it["asin"].fillna("").astype(str)
-    title = it["title"].fillna("").astype(str)
+    title = it["title"].fillna("").astype(str).map(html.unescape)  # tên gốc của Amazon còn thực thể HTML (&amp;)
     price = it["price"].map(lambda p: f"${p:.2f}" if pd.notna(p) else "")
-    brand = it["brand"].fillna("").astype(str)
+    brand = it["brand"].fillna("").astype(str).map(html.unescape)
     out = pd.DataFrame({
         "article_id": asin.to_numpy(), "prod_name": title.where(title != "", asin).to_numpy(),
         "product_type_name": leaf.to_numpy(), "product_group_name": cat["category_2"].to_numpy(),
@@ -349,7 +353,10 @@ class DataContext:
 
     def item_info(self, item: int) -> dict:
         a = self.articles.iloc[int(item)]
+        text = lambda col: "" if str(a.get(col, "")) in ("", "Unknown", "nan") else str(a[col])  # noqa: E731
         return {
+            "description": text("detail_desc"),  # mô tả gốc của H&M (tiếng Anh); Amazon không có
+            "colours": text("colours"),
             "item_idx": int(item),
             "product_code": int(self.item_product[int(item)]),
             "article_id": a["article_id"],
@@ -367,6 +374,22 @@ class DataContext:
         """Sản phẩm mô hình đã học của khách (mọi cặp trước mốc), sắp theo ngày mua đầu."""
         rows = self.train_df[self.train_df["user"] == u].sort_values(["day", "item"])
         return [{**self.item_info(r.item), "t_dat": str(r.date.date())} for r in rows.itertuples(index=False)]
+
+    @cached_property
+    def _item_sim(self):
+        """Ma trận top-k sản phẩm tương tự của ItemKNN đã chọn (hàng i: các sản phẩm giống i nhất); None nếu thiếu ItemKNN."""
+        knn = self.scorers.get("ItemKNN")
+        return None if knn is None else knn.fn.ST.T.tocsr()  # ST = S^T của ItemKNNBaseline
+
+    def similar_items(self, item: int, top: int = 6) -> list[dict] | None:
+        """Sản phẩm giống `item` nhất theo ItemKNN (cosine trên tập khách đã mua), kèm độ tương đồng."""
+        S = self._item_sim
+        if S is None:
+            return None
+        row = S[int(item)]
+        order = np.lexsort((row.indices, -row.data))[:top]  # tương đồng giảm dần, hoà thì theo chỉ số
+        return [{**self.item_info(int(i)), "similarity": round(float(s), 4)}
+                for i, s in zip(row.indices[order], row.data[order])]
 
     def neighbors(self, u: int, top: int = 10) -> list[dict] | None:
         """Top-K khách tương đồng nhất theo UserKNN (cosine trên lịch sử mua) — None nếu không có UserKNN."""
