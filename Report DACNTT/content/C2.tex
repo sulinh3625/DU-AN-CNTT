@@ -234,33 +234,33 @@ trong đó điểm $s_{ui}$ của mỗi mô hình được chuẩn hoá min--max
     \centering
     \resizebox{\textwidth}{!}{%
     \begin{tikzpicture}[
-        box/.style={rectangle, draw=blue!70, fill=blue!5, thick, rounded corners=2pt, minimum width=3.0cm, minimum height=0.8cm, font=\small, align=center},
-        norm/.style={rectangle, draw=gray!70, fill=gray!8, thick, rounded corners=2pt, minimum width=2.6cm, minimum height=0.8cm, font=\small, align=center},
-        fuse/.style={rectangle, draw=green!60!black, fill=green!10, thick, rounded corners=2pt, minimum width=3.6cm, minimum height=0.8cm, font=\small, align=center},
-        outn/.style={rectangle, draw=orange!80!black, fill=orange!15, thick, rounded corners=2pt, minimum width=1.8cm, minimum height=0.7cm, font=\small},
+        box/.style={rectangle, draw=blue!70, fill=blue!5, thick, rounded corners=2pt, minimum width=3.2cm, minimum height=0.85cm, font=\small, align=center, inner sep=4pt},
+        norm/.style={rectangle, draw=gray!70, fill=gray!8, thick, rounded corners=2pt, minimum width=2.8cm, minimum height=0.85cm, font=\small, align=center, inner sep=4pt},
+        fuse/.style={rectangle, draw=green!60!black, fill=green!10, thick, rounded corners=2pt, minimum width=3.8cm, minimum height=0.85cm, font=\small, align=center, inner sep=4pt},
+        outn/.style={rectangle, draw=orange!80!black, fill=orange!15, thick, rounded corners=2pt, minimum width=1.8cm, minimum height=0.75cm, font=\small},
         title/.style={font=\small, align=center},
         arrow/.style={->, >=stealth, thick, color=blue!80!black}
     ]
         \node[title] at (0, 5.9) {(a) Hợp nhất sớm: NeuMF, NeuMF-F\\[1pt]một mô hình, huấn luyện chung};
-        \node[box] (ga) at (-1.8, 0) {Nhánh GMF (GMF-F)\\$\phi^{GMF} = p_u^G \odot q_i^G$};
-        \node[box] (ma) at (1.8, 0) {Nhánh MLP (MLP-F)\\$\phi_L^{MLP}$};
+        \node[box] (ga) at (-2.3, 0) {Nhánh GMF (GMF-F)\\$\phi^{GMF} = p_u^G \odot q_i^G$};
+        \node[box] (ma) at (2.3, 0) {Nhánh MLP (MLP-F)\\$\phi_L^{MLP}$};
         \node[fuse] (ca) at (0, 1.8) {Nối biểu diễn\\$[\phi^{GMF};\ \phi_L^{MLP}]$};
-        \node[box, minimum width=3.6cm] (ha) at (0, 3.3) {Một lớp dự đoán chung\\$\sigma(h^T [\phi^{GMF};\ \phi_L^{MLP}])$};
+        \node[box, minimum width=3.8cm] (ha) at (0, 3.3) {Một lớp dự đoán chung\\$\sigma(h^T [\phi^{GMF};\ \phi_L^{MLP}])$};
         \node[outn] (ya) at (0, 4.75) {$\hat{y}_{ui}$};
         \draw[arrow] (ga) -- (ca);
         \draw[arrow] (ma) -- (ca);
         \draw[arrow] (ca) -- (ha);
         \draw[arrow] (ha) -- (ya);
 
-        \draw[dashed, gray] (4.1, -0.7) -- (4.1, 6.4);
+        \draw[dashed, gray] (4.9, -0.7) -- (4.9, 6.4);
 
-        \node[title] at (8.2, 5.9) {(b) Hợp nhất muộn: LateFusion-F\\[1pt]hai mô hình huấn luyện riêng};
-        \node[box] (gb) at (6.4, 0) {Mô hình GMF-F\\điểm $s^{GMF}_{ui}$};
-        \node[box] (mb) at (10.0, 0) {Mô hình MLP-F\\điểm $s^{MLP}_{ui}$};
-        \node[norm] (ngb) at (6.4, 1.8) {min--max trên $\mathcal{C}_u$\\$\tilde{s}^{GMF}_{ui}$};
-        \node[norm] (nmb) at (10.0, 1.8) {min--max trên $\mathcal{C}_u$\\$\tilde{s}^{MLP}_{ui}$};
-        \node[fuse] (fb) at (8.2, 3.3) {Trộn điểm ($w$ chọn trên tập xác thực)\\$w\,\tilde{s}^{GMF}_{ui} + (1-w)\,\tilde{s}^{MLP}_{ui}$};
-        \node[outn] (yb) at (8.2, 4.75) {$\hat{y}_{ui}$};
+        \node[title] at (9.8, 5.9) {(b) Hợp nhất muộn: LateFusion-F\\[1pt]hai mô hình huấn luyện riêng};
+        \node[box] (gb) at (7.5, 0) {Mô hình GMF-F\\điểm $s^{GMF}_{ui}$};
+        \node[box] (mb) at (12.1, 0) {Mô hình MLP-F\\điểm $s^{MLP}_{ui}$};
+        \node[norm] (ngb) at (7.5, 1.8) {min--max trên $\mathcal{C}_u$\\$\tilde{s}^{GMF}_{ui}$};
+        \node[norm] (nmb) at (12.1, 1.8) {min--max trên $\mathcal{C}_u$\\$\tilde{s}^{MLP}_{ui}$};
+        \node[fuse] (fb) at (9.8, 3.3) {Trộn điểm ($w$ chọn trên tập xác thực)\\$w\,\tilde{s}^{GMF}_{ui} + (1-w)\,\tilde{s}^{MLP}_{ui}$};
+        \node[outn] (yb) at (9.8, 4.75) {$\hat{y}_{ui}$};
         \draw[arrow] (gb) -- (ngb);
         \draw[arrow] (mb) -- (nmb);
         \draw[arrow] (ngb) -- (fb);
