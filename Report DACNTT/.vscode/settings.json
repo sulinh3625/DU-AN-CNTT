@@ -5,7 +5,7 @@
   "latex-workshop.latex.tools": [
     {
       "name": "xelatex",
-      "command": "C:\\Users\\HP\\AppData\\Local\\Programs\\MiKTeX\\miktex\\bin\\x64\\xelatex.exe",
+      "command": "xelatex",
       "args": [
         "-synctex=1",
         "-interaction=nonstopmode",
@@ -16,7 +16,7 @@
     },
     {
       "name": "biber",
-      "command": "C:\\Users\\HP\\AppData\\Local\\Programs\\MiKTeX\\miktex\\bin\\x64\\biber.exe",
+      "command": "biber",
       "args": [
         "%DOCFILE%"
       ],

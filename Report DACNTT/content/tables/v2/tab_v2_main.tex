@@ -1,9 +1,9 @@
 % Sinh tự động bởi neumf_project/scripts/24_report_v2.py — KHÔNG sửa tay.
-\begin{table}[htbp]
+\begin{table}[H]
     \centering\footnotesize\setlength{\tabcolsep}{5pt}
     \caption{Kết quả trên tập kiểm thử H\&M}
     \label{tab:v2main}
-    \begin{adjustbox}{max width=\textwidth}
+    \begin{adjustbox}{max width=\textwidth, max totalheight=0.85\textheight}
     \begin{tabular}{|l|r|r|r|r|r|r|}
         \hline
         Mô hình & \tbc{NDCG}{@10} & \tbc{Recall}{@10} & \tbc{HR}{@10} & \tbc{Precision}{@10} & \tbc{NDCG}{@5} & \tbc{NDCG}{@20} \\ \hline
@@ -29,5 +29,4 @@
         Random & \tbsd{0{,}00098}{0{,}00040} & \tbsd{0{,}00176}{0{,}00082} & \tbsd{0{,}00480}{0{,}00169} & \tbsd{0{,}00049}{0{,}00018} & \tbsd{0{,}00059}{0{,}00035} & \tbsd{0{,}00150}{0{,}00039} \\ \hline
     \end{tabular}
     \end{adjustbox}
-    \par\smallskip{\small Trung bình (dòng trên) và độ lệch chuẩn (dòng dưới) qua 5 seed, 3.165 người dùng. In đậm: cao nhất mỗi cột. \textsuperscript{*}Mô hình bổ sung sau đánh giá cuối, không thuộc họ 10 so sánh.}
 \end{table}

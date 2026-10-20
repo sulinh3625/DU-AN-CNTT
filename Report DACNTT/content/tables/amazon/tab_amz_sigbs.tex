@@ -1,9 +1,9 @@
 % Sinh tự động bởi neumf_project/scripts/24_report_v2.py — KHÔNG sửa tay.
-\begin{table}[htbp]
+\begin{table}[H]
     \centering\small
     \caption{Kiểm định bổ sung với Hybrid-CBCF trên Amazon Beauty}
     \label{tab:amzsigbs}
-    \begin{adjustbox}{max width=\textwidth}
+    \begin{adjustbox}{max width=\textwidth, max totalheight=0.85\textheight}
     \begin{tabular}{|r|l|r|r|c|r|c|}
         \hline
         \# & \tbl{Mô hình A}{Mô hình B} & \tbc{NDCG@10}{của A, B} & (A$-$B)/B & \tbc{CI 95\%}{của A$-$B} & p Holm & Kết luận \\ \hline
@@ -11,5 +11,4 @@
         B2 & \tbl{Hybrid-CBCF}{UserKNN} & \tbr{0{,}02664}{0{,}02506} & +6{,}3\% & \tbc{[+0{,}00026;}{+0{,}00292]} & 0{,}009 & A tốt hơn \\ \hline
     \end{tabular}
     \end{adjustbox}
-    \par\smallskip{\small Họ so sánh bổ sung, đăng ký sau đánh giá cuối; tiêu chí kết luận như họ 10 so sánh. ---: không khác biệt có ý nghĩa.}
 \end{table}

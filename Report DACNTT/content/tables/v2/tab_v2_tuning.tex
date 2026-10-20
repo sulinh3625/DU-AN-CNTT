@@ -1,9 +1,9 @@
 % Sinh tự động bởi neumf_project/scripts/24_report_v2.py — KHÔNG sửa tay.
-\begin{table}[htbp]
+\begin{table}[H]
     \centering\small
     \caption{Cấu hình tốt nhất trên tập xác thực}
     \label{tab:v2tuning}
-    \begin{adjustbox}{max width=\textwidth}
+    \begin{adjustbox}{max width=\textwidth, max totalheight=0.85\textheight}
     \begin{tabular}{|l|>{\raggedright\arraybackslash}p{6.8cm}|r|r|}
         \hline
         Mô hình & Cấu hình chọn & NDCG@10 & HR@10 \\ \hline
@@ -23,5 +23,4 @@
         Hybrid-CBCF\textsuperscript{*} & tổng có trọng số học theo cặp: Content 0{,}12; UserKNN 0{,}60; ItemKNN 0{,}28 & 0{,}02815 & 0{,}10588 \\ \hline
     \end{tabular}
     \end{adjustbox}
-    \par\smallskip{\small d: số chiều vector nhúng; lr: tốc độ học; reg, wd: hệ số điều chuẩn; neg: số mẫu âm; shrink: hệ số co; bỏ~ID: xác suất bỏ vector nhúng ID của sản phẩm. \textsuperscript{*}Mô hình bổ sung sau đánh giá cuối (\bangrefV{tab_v2_hybrid.tex}{tab:v2hybrid}).}
 \end{table}

@@ -2,7 +2,10 @@
 chcp 65001 >nul
 setlocal
 
-set MIKTEX=C:\Users\HP\AppData\Local\Programs\MiKTeX\miktex\bin\x64
+:: MiKTeX: ban cai cho mot user, cai cho moi user, hoac xelatex tren PATH
+set MIKTEX=%LOCALAPPDATA%\Programs\MiKTeX\miktex\bin\x64
+if not exist "%MIKTEX%\xelatex.exe" set MIKTEX=%ProgramFiles%\MiKTeX\miktex\bin\x64
+if not exist "%MIKTEX%\xelatex.exe" for %%I in (xelatex.exe) do set MIKTEX=%%~dp$PATH:I
 cd /d "%~dp0"
 
 if "%1"=="clean" goto clean

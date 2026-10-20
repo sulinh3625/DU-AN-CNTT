@@ -123,7 +123,7 @@
 \renewcommand{\cftsecfont}{\normalfont}
 \renewcommand{\cftsecleader}{\normalfont\cftdotfill{\cftdotsep}}
 \renewcommand{\cftsecpagefont}{\normalfont}
-\setlength{\cftsecnumwidth}{2.2em}
+\setlength{\cftsecnumwidth}{2.8em} % đủ cho "3.10"
 
 % 3. Cấp Tiểu mục (Subsection - 1.1.1): In nghiêng
 \renewcommand{\cftsubsecfont}{\itshape}
@@ -139,12 +139,12 @@
 % Danh mục hình vẽ
 \renewcommand{\cftfigpresnum}{Hình } 
 \renewcommand{\cftfigaftersnum}{: }  
-\setlength{\cftfignumwidth}{4.5em}   
+\setlength{\cftfignumwidth}{5.3em}   % đủ cho "Hình 4.10: "
 
 % Danh mục bảng biểu
 \renewcommand{\cfttabpresnum}{Bảng }
 \renewcommand{\cfttabaftersnum}{: }
-\setlength{\cfttabnumwidth}{4.5em}
+\setlength{\cfttabnumwidth}{5.3em} % đủ cho "Bảng 4.10: "
 
 % Xóa khoảng trắng thừa giữa các chương trong danh mục hình/bảng
 \usepackage{etoolbox}
@@ -206,6 +206,7 @@
 \usepackage[backend=biber, style=ieee, defernumbers=true]{biblatex}
 % Tài liệu tham khảo chia theo nhóm (main.tex in từng nhóm); defernumbers: đánh số liên tục theo thứ tự in.
 \DeclareBibliographyCategory{dulieu}\addtocategory{dulieu}{hm2022kaggle,mcauley2015image}
+\DeclareBibliographyCategory{detai}\addtocategory{detai}{duan2026preregcu,duan2026prereg,duan2026preregamazon,duan2026preregbosung,duan2026testlog,duan2026source}
 \DeclareBibliographyCategory{doichung}\addtocategory{doichung}{he2017ncf,rendle2020ncfmf,holinh2023multisource}
 \DeclareBibliographyCategory{goiy}\addtocategory{goiy}{koren2009matrix,rendle2009bpr,resnick1994grouplens,sarwar2001item,su2009survey,lops2011content,burke2002hybrid,atrey2010multimodal,schein2002coldstart}
 \DeclareBibliographyCategory{dactrung}\addtocategory{dactrung}{rendle2010fm,cheng2016wide,guo2017deepfm,volkovs2017dropoutnet,salton1988term,deerwester1990lsa}
@@ -313,4 +314,4 @@
 % \hinhref{đường dẫn hình}{nhãn}: ``Hình~X'' nếu hình đã được sinh, nếu chưa thì chữ thay thế.
 \newcommand{\hinhref}[2]{\IfFileExists{#1}{Hình~\ref{#2}}{hình kết quả (chưa có số liệu)}}
 % \hinhketqua{đường dẫn}{độ rộng}{chú thích}{nhãn}{lệnh sinh ra hình}
-\newcommand{\hinhketqua}[5]{\IfFileExists{#1}{\begin{figure}[htbp]\centering\includegraphics[width=#2]{#1}\caption{#3}\label{#4}\end{figure}}{\chuaco{hình ``#3'' --- #5.}}}
+\newcommand{\hinhketqua}[5]{\IfFileExists{#1}{\begin{figure}[H]\centering\includegraphics[width=#2]{#1}\caption{#3}\label{#4}\end{figure}}{\chuaco{hình ``#3'' --- #5.}}}

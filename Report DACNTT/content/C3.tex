@@ -1,14 +1,16 @@
 \chapter{PHƯƠNG PHÁP NGHIÊN CỨU VÀ THIẾT KẾ MÔ HÌNH LAI NEUMF-F}
 \label{chap:thietke_trienkhai}
 
-Chương này trình bày phương pháp của đề tài theo đúng thứ tự thực hiện: dữ liệu, mô hình đề xuất và các mô hình đối chứng, huấn luyện, đánh giá, rồi suy diễn và hệ thống demo. Điểm xuất phát là bộ dữ liệu H\&M với đặc điểm thưa và biến động theo thời gian, từ đó quyết định cách chia dữ liệu, cách tính đặc trưng và cách thiết lập tập ứng viên. Mô hình đề xuất NeuMF-F được xây trên nền kiến trúc NeuMF, giữ nguyên hai nhánh GMF và MLP, và bổ sung đặc trưng vào biểu diễn của cả hai nhánh. Để kết luận có thể tin cậy, quy trình đánh giá được thiết kế riêng với tập kiểm định độc lập, đăng ký trước và kiểm định thống kê. Các bước xử lý chính được viết thành mã giả.
+Chương này trình bày phương pháp của đề tài theo đúng thứ tự thực hiện: dữ liệu, mô hình đề xuất và các mô hình đối chứng, huấn luyện, đánh giá, rồi suy luận và hệ thống demo. Điểm xuất phát là bộ dữ liệu H\&M với đặc điểm thưa và biến động theo thời gian, từ đó quyết định cách chia dữ liệu, cách tính đặc trưng và cách thiết lập tập ứng viên. Mô hình đề xuất NeuMF-F được xây trên nền kiến trúc NeuMF, giữ nguyên hai nhánh GMF và MLP, và bổ sung đặc trưng vào biểu diễn của cả hai nhánh. Để kết luận có thể tin cậy, quy trình đánh giá được thiết kế riêng với tập kiểm định độc lập, đăng ký trước và kiểm định thống kê. Các bước xử lý chính được viết thành mã giả.
 
 \section{Quy trình tổng thể của hệ thống}
 \label{sec:system_architecture}
 
-Hệ thống được tổ chức theo trình tự một mô hình gợi ý đi qua khi đưa vào sử dụng: xây dựng đặc trưng, huấn luyện, lưu mô hình và suy diễn (Hình~\ref{fig:system_architecture}). Mỗi lần chạy, đường ống nhận một mốc thời gian $\tau$. Mọi bước chỉ dùng dữ liệu trước $\tau$, và bước suy diễn trả về danh sách gợi ý cho giai đoạn sau $\tau$. Đây đúng là tình huống doanh nghiệp huấn luyện mô hình trên lịch sử đến hôm nay rồi gợi ý cho những tuần tới. Việc đánh giá không nằm trong đường ống này mà là một quy trình riêng. Quy trình đó gọi lại đường ống với các mốc khác nhau, rồi so danh sách gợi ý với những gì khách đã mua thật.
+Hệ thống được tổ chức theo trình tự một mô hình gợi ý đi qua khi đưa vào sử dụng: xây dựng đặc trưng, huấn luyện, lưu mô hình và suy luận (Hình~\ref{fig:system_architecture}). Chuỗi bước này được gọi là đường ống xử lý (\textit{pipeline}). Mỗi lần chạy, đường ống nhận một mốc thời gian $\tau$. Mọi bước chỉ dùng dữ liệu trước $\tau$, và bước suy luận trả về danh sách gợi ý cho giai đoạn sau $\tau$. Cách tổ chức này mô phỏng tình huống một doanh nghiệp huấn luyện mô hình trên lịch sử tính đến hôm nay rồi gợi ý cho những tuần tới. Việc đánh giá không nằm trong đường ống này mà là một quy trình riêng. Quy trình đó gọi lại đường ống với các mốc khác nhau, rồi so danh sách gợi ý với những gì khách đã mua thật.
 
-\begin{figure}[htbp]
+Mọi mô hình, kể cả mô hình đối chứng, đi qua cùng đường ống: cùng tệp dữ liệu, cùng tập ứng viên và cùng quy tắc loại sản phẩm đã mua, nên chênh lệch giữa hai mô hình chỉ đến từ chính mô hình. Các mục sau trình bày lần lượt từng bước theo thứ tự trong hình.
+
+\begin{figure}[H]
     \centering
     \resizebox{\textwidth}{!}{%
     \begin{tikzpicture}[
@@ -44,7 +46,7 @@ Hệ thống được tổ chức theo trình tự một mô hình gợi ý đi 
         \node[side, right=0.9cm of train] (base)
             {Mô hình đối chứng\\[2pt]
              Random, Most Popular,\\ MostPopular-Recent,\\ Content, ItemKNN,\\ UserKNN, BPR-MF,\\ Hybrid-CBCF;\\ GMF-F, MLP-F,\\ LateFusion-F, GMF,\\ MLP, NeuMF.\\[2pt]
-             Cùng tệp dữ liệu,\\ cùng tập ứng viên,\\ cùng cách suy diễn.};
+             Cùng tệp dữ liệu,\\ cùng tập ứng viên,\\ cùng cách suy luận.};
 
         \draw[arrow] (data) -- (prep);
         \draw[arrow] (prep) -- (feat);
@@ -56,8 +58,6 @@ Hệ thống được tổ chức theo trình tự một mô hình gợi ý đi 
     \caption{Đường ống của hệ thống gợi ý}
     \label{fig:system_architecture}
 \end{figure}
-
-Mọi mô hình, kể cả mô hình đối chứng, đi qua cùng đường ống: cùng tệp dữ liệu, cùng tập ứng viên và cùng quy tắc loại sản phẩm đã mua, nên chênh lệch giữa hai mô hình chỉ đến từ chính mô hình. Các mục sau trình bày lần lượt từng bước theo thứ tự trong hình.
 
 \section{Dữ liệu và tiền xử lý}
 \label{sec:hm_pipeline}
@@ -73,9 +73,9 @@ Bộ dữ liệu H\&M Personalized Fashion Recommendations \parencite{hm2022kagg
 \end{itemize}
 Ảnh sản phẩm có trong bộ dữ liệu nhưng không được dùng làm đầu vào của mô hình; ảnh chỉ được hiển thị trong hệ thống demo.
 
-Cách đánh giá xếp hạng toàn bộ phải chấm điểm mọi sản phẩm ứng viên cho mỗi người dùng được đánh giá, nên chi phí tỉ lệ với tích số người dùng và số sản phẩm. Theo Bảng~\ref{tab:kcore_hm_full}, ở quy mô đầy đủ, ngay cả với $k = 10$ vẫn còn 633.130 người dùng và 80.265 sản phẩm, tức hàng chục tỷ cặp cần chấm điểm cho mỗi mô hình. Con số này vượt khả năng của máy tính cá nhân 16 GB bộ nhớ, nên đề tài thực nghiệm trên các mẫu theo khách hàng.
+Cách đánh giá xếp hạng toàn bộ phải chấm điểm mọi sản phẩm ứng viên cho mỗi người dùng được đánh giá, nên chi phí tăng theo tích của số người dùng và số sản phẩm. Để ước lượng quy mô bài toán, đề tài lọc $k$-core trên toàn bộ 31.788.324 dòng giao dịch với ba ngưỡng $k = 3, 5, 10$ (Bảng~\ref{tab:kcore_hm_full}); mật độ trong bảng là số tương tác chia cho tích số người dùng và số sản phẩm. Ngay cả với $k = 10$ vẫn còn 633.130 người dùng và 80.265 sản phẩm, tương ứng hàng chục tỷ cặp phải chấm điểm cho mỗi mô hình. Khối lượng này vượt khả năng của một máy tính cá nhân có 16 GB bộ nhớ, nên đề tài thực nghiệm trên các mẫu lấy theo khách hàng.
 
-\begin{table}[htbp]
+\begin{table}[H]
     \centering\small
     \caption{Lọc $k$-core trên toàn bộ dữ liệu H\&M}
     \label{tab:kcore_hm_full}
@@ -88,7 +88,6 @@ Cách đánh giá xếp hạng toàn bộ phải chấm điểm mọi sản ph�
         10 & 633.130 & 80.265 & 24.426.258 & 0,0481 \\
         \hline
     \end{tabular}
-    \par\smallskip{\small Toàn bộ 31.788.324 dòng giao dịch.}
 \end{table}
 
 \subsection{Lấy mẫu theo khách hàng: mẫu phát triển và mẫu kiểm định}
@@ -96,52 +95,51 @@ Cách đánh giá xếp hạng toàn bộ phải chấm điểm mọi sản ph�
 
 Đề tài lấy mẫu theo khách hàng thay vì theo dòng. Lấy mẫu theo dòng, hoặc cắt $n$ dòng đầu, sẽ cắt vụn lịch sử của từng khách; vì tệp gốc sắp theo ngày, cách đó còn chỉ phủ vài ngày giao dịch. Cả bước lọc $k$-core lẫn việc chia dữ liệu theo thời gian đều hỏng nếu làm vậy. Quy trình lấy mẫu gồm hai lượt đọc tệp theo lô, với bộ nhớ đỉnh khoảng 0,5 GB:
 \begin{enumerate}
-    \item Lượt 1 chọn khách: băm \texttt{customer\_id} bằng một khoá cố định vào 100.000 nhóm và đếm số giao dịch của từng nhóm. Hàm băm phân khách vào nhóm một cách giả ngẫu nhiên, độc lập với hành vi mua.
+    \item Lượt 1 chọn khách: băm \texttt{customer\_id} bằng một khóa cố định vào 100.000 nhóm và đếm số giao dịch của từng nhóm. Hàm băm phân khách vào nhóm một cách giả ngẫu nhiên, độc lập với hành vi mua.
     \item Lượt 2 ghi mẫu: giữ toàn bộ giao dịch của các khách được chọn, trải đủ từ 20/09/2018 đến 22/09/2020.
 \end{enumerate}
 Các mẫu được lấy từ những đoạn nhóm băm liền nhau, không chồng lên nhau, gọi là các khối. Mỗi khối gồm số nhóm ít nhất đủ khoảng 500.000 giao dịch.
 \begin{itemize}
     \item Mẫu phát triển là khối 0, các nhóm $[0, 1597)$: 500.269 giao dịch của 21.599 khách hàng. Mẫu này được dùng trong giai đoạn phát triển ban đầu; ở bản cuối của quy trình, nó chỉ dùng để tinh chỉnh trên tập xác thực.
-    \item Khối 1 gồm các nhóm $[1597, 3160)$: 500.125 giao dịch của 21.030 khách hàng. Đây là mẫu kiểm định của bản đầu kế hoạch đánh giá. Tập kiểm thử của khối này đã được mở ngày 04/10/2026, nên khối 1 không còn dùng để kết luận và kết quả của nó chỉ là lịch sử phát triển.
+    \item Khối 1 gồm các nhóm $[1597, 3160)$: 500.125 giao dịch của 21.030 khách hàng. Đây là mẫu kiểm định của bản đầu kế hoạch đánh giá \parencite{duan2026preregcu}. Tập kiểm thử của khối này đã được mở ngày 04/10/2026 \parencite{duan2026testlog}, nên khối 1 không được dùng để kết luận.
     \item Mẫu kiểm định là khối 2, các nhóm $[3160, 4734)$: 500.164 giao dịch của 21.351 khách hàng. Vì các đoạn nhóm không chồng nhau, không khách hàng nào thuộc cả mẫu phát triển lẫn mẫu kiểm định; điều này đã được kiểm tra trực tiếp. Mẫu kiểm định chỉ dùng cho đánh giá cuối.
 \end{itemize}
-Vì dùng hàm băm với khoá cố định, chạy lại luôn cho đúng cùng hai mẫu. Cần một mẫu kiểm định riêng vì tập kiểm thử của mẫu phát triển đã được xem trong giai đoạn phát triển. Mẫu kiểm định gồm những khách hàng khác hẳn, nên kết quả trên mẫu này ước lượng hiệu năng của mô hình với khách hàng khác của cùng cửa hàng, trong cùng giai đoạn thời gian.
+Vì dùng hàm băm với khóa cố định, chạy lại luôn cho đúng cùng hai mẫu. Cần một mẫu kiểm định riêng vì tập kiểm thử của mẫu phát triển đã được xem trong giai đoạn phát triển. Mẫu kiểm định gồm những khách hàng khác hẳn, nên kết quả trên mẫu này ước lượng hiệu năng của mô hình với khách hàng khác của cùng cửa hàng, trong cùng giai đoạn thời gian.
 
 \subsection{Ma trận tương tác và lọc \texorpdfstring{$k$}{k}-core trước mốc kiểm thử}
 \label{subsec:interaction_matrix}
 
 Mỗi sản phẩm là một mẫu thiết kế. Mã \texttt{article\_id} 10 chữ số của H\&M gồm mã mẫu thiết kế \texttt{product\_code} và ba chữ số cuối chỉ biến thể màu, nên một mẫu áo có thể mang nhiều \texttt{article\_id}. Bản cuối của giao thức coi một sản phẩm là một \texttt{product\_code}, tức mọi màu của cùng một mẫu được gộp làm một sản phẩm. Khách mua nhiều màu của cùng một mẫu chỉ được tính một cặp (khách, sản phẩm). Trước mốc kiểm thử, việc gộp này giảm số sản phẩm của mẫu phát triển từ 55.971 xuống 27.370 và số cặp từ 401.293 xuống 359.181. Với mẫu kiểm định, số sản phẩm giảm từ 55.683 xuống 27.291 và số cặp từ 398.653 xuống 356.740.
 
-Một khách có thể mua cùng một sản phẩm nhiều lần. Các giao dịch lặp được gộp thành một cặp (khách, sản phẩm) duy nhất, giữ ngày mua đầu tiên $t_{ui}$, trước khi lọc $k$-core. Nếu lọc trực tiếp trên dòng giao dịch, số lượt mua lặp sẽ làm tăng giả bậc của khách và sản phẩm: trên mẫu phát triển, 500.269 giao dịch gộp lại chỉ còn 429.964 cặp duy nhất.
+Một khách có thể mua cùng một sản phẩm nhiều lần. Các giao dịch lặp được gộp thành một cặp (khách, sản phẩm) duy nhất, giữ ngày mua đầu tiên $t_{ui}$, trước khi lọc $k$-core. Nếu lọc trực tiếp trên dòng giao dịch, số lượt mua lặp sẽ làm bậc của khách và sản phẩm cao hơn thực tế. Trên mẫu phát triển, 500.269 giao dịch sau khi gộp chỉ còn 429.964 cặp duy nhất.
 
 Lọc $k$-core được lặp đến khi hội tụ, vì loại một sản phẩm có thể làm một khách rơi xuống dưới ngưỡng và ngược lại. Kết quả là mỗi khách và mỗi sản phẩm còn lại có ít nhất $k$ đối tác khác nhau. Khác với giai đoạn phát triển ban đầu, phép lọc chỉ dùng các cặp có ngày mua đầu trước mốc kiểm thử (29/07/2020), nên việc chọn khách và sản phẩm không dùng thông tin nào của giai đoạn kiểm thử. Thuật toán~\ref{alg:kcore} tóm tắt bước chuẩn bị dữ liệu. Sau khi lọc với $k = 10$, mẫu phát triển còn \VData{A}{nusers} khách, \VData{A}{nitems} sản phẩm và \VData{A}{nkeptpairs} cặp; mẫu kiểm định còn \VData{B}{nusers} khách, \VData{B}{nitems} sản phẩm và \VData{B}{nkeptpairs} cặp. Mã khách và mã sản phẩm được đánh lại chỉ số liên tục, và $y_{ui} = 1$ khi khách $u$ đã mua sản phẩm $i$ (Công thức~\eqref{eq:implicit_binary}). Dữ liệu đã lọc của mỗi mẫu được ghi ra một tệp, và mọi mô hình đọc đúng tệp này.
 
-\begin{algorithm}[htbp]
+Khi nạp dữ liệu cho một giai đoạn, chỉ các khách và sản phẩm thuộc $k$-core được giữ, rồi dữ liệu huấn luyện và sản phẩm đúng được lấy theo các tập ở mục~\ref{subsec:split_sampling}. Tệp chứa mọi cặp, kể cả sau mốc kiểm thử, nhưng tập kiểm thử chỉ được dựng khi chạy đánh giá cuối.
+
+\begin{algorithm}[H]
 \caption{Chuẩn bị dữ liệu và lọc $k$-core}
 \label{alg:kcore}
 \begin{algorithmic}[1]
-\Require giao dịch $(c, a, t)$ của một mẫu (khách $c$, mã \texttt{article\_id} $a$, ngày mua $t$); mốc kiểm thử $\tau_{test}$; ngưỡng $k$
-\Ensure tệp cặp $(c, i, t_{ci}, \textit{thuộc\_kcore})$
-\For{mỗi giao dịch $(c, a, t)$}
-    \State $i \gets \lfloor a / 1000 \rfloor$ \Comment{\texttt{product\_code}: bỏ 3 chữ số chỉ màu}
-\EndFor
-\State gộp các giao dịch theo cặp $(c, i)$, giữ $t_{ci} \gets$ ngày mua sớm nhất \Comment{mỗi cặp một dòng}
-\State $E \gets \{(c, i) : t_{ci} < \tau_{test}\}$ \Comment{chỉ dữ liệu trước mốc kiểm thử}
+\Require giao dịch $(c, a, t)$ của một mẫu; mốc kiểm thử $\tau_{test}$; ngưỡng $k$
+\Ensure tệp các cặp $(c, i, t_{ci})$ kèm cờ thuộc $k$-core
+\State $i \gets \lfloor a / 1000 \rfloor$ với mọi giao dịch \Comment{gộp màu theo \texttt{product\_code}}
+\State gộp theo cặp $(c, i)$, giữ $t_{ci}$ là ngày mua sớm nhất
+\State $E \gets \{(c, i) : t_{ci} < \tau_{test}\}$ \Comment{chỉ dữ liệu trước mốc}
 \Repeat
-    \State $U \gets \{c : |\{i : (c, i) \in E\}| \ge k\}$; \quad $I \gets \{i : |\{c : (c, i) \in E\}| \ge k\}$
-    \State $E' \gets \{(c, i) \in E : c \in U,\ i \in I\}$; \quad $\textit{hội\_tụ} \gets (|E'| = |E|)$; \quad $E \gets E'$
-\Until{\textit{hội\_tụ}}
-\State ghi mọi cặp $(c, i, t_{ci})$ kèm cờ $(c, i) \in E$ ra tệp, theo thứ tự cố định \Comment{mọi mô hình đọc tệp này}
-\State \Return tệp
+    \State $E' \gets E$
+    \State $U \gets$ các khách có ít nhất $k$ sản phẩm trong $E$
+    \State $I \gets$ các sản phẩm có ít nhất $k$ khách trong $E$
+    \State $E \gets \{(c, i) \in E : c \in U,\ i \in I\}$
+\Until{$E = E'$}
+\State ghi mọi cặp kèm cờ $(c, i) \in E$ ra tệp \Comment{mọi mô hình đọc tệp này}
 \end{algorithmic}
 \end{algorithm}
 
-Khi nạp dữ liệu cho một giai đoạn, chỉ các khách và sản phẩm thuộc $k$-core được giữ, rồi dữ liệu huấn luyện và sản phẩm đúng được lấy theo các tập ở mục~\ref{subsec:split_sampling}. Tệp chứa mọi cặp, kể cả sau mốc kiểm thử, nhưng tập kiểm thử chỉ được dựng khi chạy đánh giá cuối.
-
 \label{subsec:hm_apply}
-Ngưỡng $k$ được chọn từ khảo sát ở giai đoạn phát triển (Bảng~\ref{tab:kcore_hm}) và được giữ ở bản cuối. Ngưỡng thường gặp là $k = 5$, nhưng khi đó danh mục còn 23.067 sản phẩm và đánh giá xếp hạng toàn bộ ước tính cần khoảng 10,7 GB bộ nhớ, vượt giới hạn của máy thực nghiệm. Đề tài vì vậy chọn $k = 10$. Cái giá của lựa chọn này là dữ liệu thiên về khách mua nhiều.
+Ngưỡng $k$ được chọn từ một khảo sát ở giai đoạn phát triển và giữ nguyên ở bản cuối. Khảo sát này chạy trên 429.964 cặp của mẫu phát triển trước khi lọc, khi mỗi sản phẩm vẫn còn là một \texttt{article\_id}, nên số liệu ở Bảng~\ref{tab:kcore_hm} lớn hơn số liệu sau khi gộp màu ở mục~\ref{subsec:interaction_matrix}. Các nghiên cứu thường dùng $k = 5$. Với ngưỡng này danh mục còn 23.067 sản phẩm, và đánh giá xếp hạng toàn bộ cần ước tính khoảng 10,7 GB bộ nhớ, vượt giới hạn của máy thực nghiệm. Đề tài vì vậy chọn $k = 10$, chấp nhận việc dữ liệu nghiêng về những khách mua nhiều.
 
-\begin{table}[htbp]
+\begin{table}[H]
     \centering\small
     \caption{Lọc $k$-core trên mẫu phát triển}
     \label{tab:kcore_hm}
@@ -155,7 +153,6 @@ Ngưỡng $k$ được chọn từ khảo sát ở giai đoạn phát triển (B
         15 & 3.017 & 3.186 & 83.088 & 0,864 \\
         \hline
     \end{tabular}
-    \par\smallskip{\small Khảo sát ở giai đoạn phát triển, theo \texttt{article\_id}, trên 429.964 cặp trước khi lọc. Đề tài chọn $k = 10$.}
 \end{table}
 
 \subsection{Giai đoạn đánh giá và tập ứng viên}
@@ -176,31 +173,16 @@ trong đó $\mathcal{I}_u(\tau)$ là các sản phẩm $u$ đã mua trước $\t
 
 Đề tài không chia theo cách giữ lại tương tác cuối của từng người dùng (\textit{leave-one-out}), cách mà NCF dùng. Cách này để lọt thông tin tương lai, vì tập huấn luyện chứa tương tác của những người dùng khác xảy ra sau thời điểm cần dự đoán \parencite{meng2020splitting}. Đo trên mẫu phát triển ở giai đoạn phát triển, tính trung bình theo người dùng, 11,2\% tương tác trong tập huấn luyện xảy ra sau ngày mua sản phẩm kiểm thử của người dùng đó. Ngoài ra, 60,9\% người dùng có sản phẩm xác thực và sản phẩm kiểm thử mua cùng một ngày. Vì vậy đề tài chia theo một mốc thời gian chung cho mọi người dùng.
 
-Theo định nghĩa, mỗi cặp (khách, sản phẩm) chỉ có một ngày mua đầu. Do đó một cặp không thể vừa là dữ liệu huấn luyện vừa là sản phẩm đúng của cùng giai đoạn. Sản phẩm khách đã mua trước mốc cũng không bao giờ là sản phẩm đúng: mô hình dự đoán những món mới đối với khách. \bangrefV{tab_v2_data.tex}{tab:v2data} tổng hợp quy mô dữ liệu của hai mẫu.
+Theo định nghĩa, mỗi cặp (khách, sản phẩm) chỉ có một ngày mua đầu, nên một cặp không thể vừa thuộc dữ liệu huấn luyện vừa là sản phẩm đúng trong cùng một giai đoạn. Sản phẩm khách đã mua trước mốc cũng không bao giờ được tính là sản phẩm đúng, vì mục tiêu là dự đoán những món khách chưa từng mua.
+
+\bangrefV{tab_v2_data.tex}{tab:v2data} tổng hợp quy mô dữ liệu của hai mẫu sau khi lọc. Hai cột có số người dùng và số sản phẩm gần như bằng nhau, cho thấy cách lấy mẫu theo hàm băm tạo ra hai mẫu tương đương nhau dù không có khách hàng chung. Số người dùng được đánh giá chỉ chiếm từ 32\% (giai đoạn xác thực) đến 40\% (giai đoạn kiểm thử) số người dùng sau lọc, vì chỉ những khách có mua sản phẩm mới trong cửa sổ đánh giá mới được tính. Mẫu phát triển chỉ được dùng ở giai đoạn xác thực, nên các dòng của giai đoạn kiểm thử ở cột này được để trống. Ở giai đoạn kiểm thử, mỗi người dùng được xếp hạng trên trung bình khoảng \VData{Btest}{cand} ứng viên, trong khi trung bình chỉ có hơn ba sản phẩm đúng; tỉ lệ này giải thích vì sao các độ đo ở Chương~\ref{chap:thucnghiem} có giá trị tuyệt đối thấp.
 
 \bangketquaV{tab_v2_data.tex}{\texttt{scripts/22\_tune\_v2.py} (mẫu phát triển) và \texttt{scripts/23\_final\_v2.py} (mẫu kiểm định)}
 
 \subsection{Xây dựng đặc trưng theo thời điểm}
 \label{subsec:features}
 
-Bảng~\ref{tab:features} liệt kê các đặc trưng của mô hình có đặc trưng. Nguyên tắc bắt buộc là không dùng thông tin tương lai: đặc trưng của một cặp (khách $u$, sản phẩm $i$) tại ngày $t$ chỉ được tính từ dữ liệu trước ngày $t$. Khi huấn luyện, mỗi cặp dương mang chính ngày mua đầu $t_{ui}$ của nó; khi đánh giá, $t$ là mốc $\tau$ của giai đoạn.
-
-\begin{table}[htbp]
-    \centering\small
-    \caption{Đặc trưng đầu vào trên H\&M}
-    \label{tab:features}
-    \begin{tabularx}{\textwidth}{|>{\raggedright\arraybackslash}p{2.4cm}|>{\raggedright\arraybackslash}X|>{\raggedright\arraybackslash}p{3.2cm}|>{\raggedright\arraybackslash}p{2.8cm}|}
-        \hline
-        Nhóm & Đặc trưng & Mã hóa & Nguồn \\
-        \hline
-        Sản phẩm: thuộc tính & 11 thuộc tính danh mục (loại, nhóm sản phẩm, họa tiết, nhóm màu, độ đậm màu, màu chủ đạo, bộ phận, chỉ mục, nhóm chỉ mục, khu, nhóm may mặc); sau khi gộp theo mẫu, ba thuộc tính màu là hằng số & Vector nhúng 8 chiều mỗi thuộc tính (88 chiều), học cùng mô hình & \texttt{articles.csv} \\ \hline
-        Sản phẩm: văn bản & Tên và mô tả chi tiết & TF-IDF (từ đơn và cặp từ), SVD 64 chiều, chuẩn hóa L2 & \texttt{articles.csv} \\ \hline
-        Sản phẩm: thời gian tại $t$ & Doanh số trong 7, 28, 91 ngày trước $t$; tuổi sản phẩm; cờ ``chưa từng bán trước $t$'' & $\log(1+x)/10$; cờ 0/1 (5 chiều) & Giao dịch toàn H\&M \\ \hline
-        Khách hàng: tĩnh & Nhóm tuổi (9 mức, gồm ``không rõ''), trạng thái hội viên, tần suất nhận tin, FN, Active & Vector nhúng 8 chiều mỗi thuộc tính (40 chiều) & \texttt{customers.csv} \\ \hline
-        Khách hàng: thời gian tại $t$ & Số ngày từ lần mua gần nhất (tối đa 730); số cặp đã mua & $\log(1+x)/10$ (2 chiều) & Dữ liệu huấn luyện \\
-        \hline
-    \end{tabularx}
-\end{table}
+Bảng~\ref{tab:features} liệt kê các đặc trưng của mô hình có đặc trưng. Nguyên tắc bắt buộc là không dùng thông tin tương lai, nghĩa là đặc trưng của một cặp (khách $u$, sản phẩm $i$) tại ngày $t$ chỉ được tính từ dữ liệu trước ngày $t$. Khi huấn luyện, mỗi cặp dương mang chính ngày mua đầu $t_{ui}$ của nó; khi đánh giá, $t$ là mốc $\tau$ của giai đoạn.
 
 Đặc trưng thời gian của sản phẩm được tính như sau. Gọi $n_{i,d}$ là số giao dịch của sản phẩm $i$ trong ngày $d$ trên toàn bộ H\&M và $d^0_i$ là ngày bán đầu tiên. Tại ngày $t$:
 \begin{equation}
@@ -218,12 +200,29 @@ Văn bản của sản phẩm được biểu diễn bằng TF-IDF trên từ đ
 
 Thuộc tính tĩnh của khách hàng lấy từ \texttt{customers.csv}. Tệp này không có mốc thời gian, nên thuộc tính được coi là ít thay đổi. Đặc trưng thời gian của khách tại ngày $t$ chỉ dùng các cặp có ngày mua đầu trước $t$: khoảng cách tới lần mua gần nhất và số cặp đã mua.
 
+\begin{table}[H]
+    \centering\small
+    \caption{Đặc trưng đầu vào trên H\&M}
+    \label{tab:features}
+    \begin{tabularx}{\textwidth}{|>{\raggedright\arraybackslash}p{2.4cm}|>{\raggedright\arraybackslash}X|>{\raggedright\arraybackslash}p{3.2cm}|>{\raggedright\arraybackslash}p{2.8cm}|}
+        \hline
+        Nhóm & Đặc trưng & Mã hóa & Nguồn \\
+        \hline
+        Sản phẩm: thuộc tính & 11 thuộc tính danh mục (loại, nhóm sản phẩm, họa tiết, nhóm màu, độ đậm màu, màu chủ đạo, bộ phận, chỉ mục, nhóm chỉ mục, khu, nhóm may mặc); sau khi gộp theo mẫu, ba thuộc tính màu là hằng số & Vector nhúng 8 chiều mỗi thuộc tính (88 chiều), học cùng mô hình & \texttt{articles.csv} \\ \hline
+        Sản phẩm: văn bản & Tên và mô tả chi tiết & TF-IDF (từ đơn và cặp từ), SVD 64 chiều, chuẩn hóa L2 & \texttt{articles.csv} \\ \hline
+        Sản phẩm: thời gian tại $t$ & Doanh số trong 7, 28, 91 ngày trước $t$; tuổi sản phẩm; cờ ``chưa từng bán trước $t$'' & $\log(1+x)/10$; cờ 0/1 (5 chiều) & Giao dịch toàn H\&M \\ \hline
+        Khách hàng: tĩnh & Nhóm tuổi (9 mức, gồm ``không rõ''), trạng thái hội viên, tần suất nhận tin, FN, Active & Vector nhúng 8 chiều mỗi thuộc tính (40 chiều) & \texttt{customers.csv} \\ \hline
+        Khách hàng: thời gian tại $t$ & Số ngày từ lần mua gần nhất (tối đa 730); số cặp đã mua & $\log(1+x)/10$ (2 chiều) & Dữ liệu huấn luyện \\
+        \hline
+    \end{tabularx}
+\end{table}
+
 \section{Thiết kế mô hình lai NeuMF-F}
 \label{sec:model_design}
 
-NeuMF-F giữ nguyên cấu trúc hai nhánh của NeuMF: nhánh GMF mô hình hóa tương tác tuyến tính, nhánh MLP mô hình hóa tương tác phi tuyến, và hai nhánh hợp nhất ở lớp dự đoán chung. Mô hình chỉ thay đổi một điểm: vector của khách hàng và sản phẩm trong mỗi nhánh không còn chỉ là vector nhúng của mã ID mà là tổng của vector nhúng ID và một phép chiếu tuyến tính của đặc trưng. Chữ ``F'' (\textit{features}) chỉ phần đặc trưng này. Hình~\ref{fig:neumff_architecture} trình bày kiến trúc kèm kích thước của từng ma trận và từng tầng. Mỗi nhánh có bảng vector nhúng ID và ma trận chiếu đặc trưng riêng. Hệ số $m_i \in \{0, 1\}$ cho biết vector nhúng ID của sản phẩm có được dùng hay không. Ví dụ, với $d = 32$, tháp MLP là $64 \to 32 \to 16 \to 8$ và $\phi \in \mathbb{R}^{40}$. Trên mẫu kiểm định H\&M, $|\mathcal{U}| = $ \VData{B}{nusers}, $|\mathcal{I}| = $ \VData{B}{nitems}, $d_U = 42$ và $d_I = 157$. Điểm $\hat{y}_{ui}$ được tính cho mọi sản phẩm ứng viên của khách, rồi các sản phẩm được sắp theo điểm giảm dần và $K$ sản phẩm đầu là danh sách gợi ý.
+NeuMF-F giữ nguyên cấu trúc hai nhánh của NeuMF: nhánh GMF mô hình hóa tương tác tuyến tính, nhánh MLP mô hình hóa tương tác phi tuyến, và hai nhánh hợp nhất ở lớp dự đoán chung. Thay đổi duy nhất nằm ở biểu diễn đầu vào. Trong mỗi nhánh, vector của khách hàng và sản phẩm không còn chỉ là vector nhúng của mã ID mà là tổng của vector nhúng ID với một phép chiếu tuyến tính của đặc trưng. Chữ ``F'' (\textit{features}) chỉ phần đặc trưng này. Hình~\ref{fig:neumff_architecture} trình bày kiến trúc kèm kích thước của từng ma trận và từng lớp. Mỗi nhánh có bảng vector nhúng ID và ma trận chiếu đặc trưng riêng. Hệ số $m_i \in \{0, 1\}$ cho biết vector nhúng ID của sản phẩm có được dùng hay không. Ví dụ, với $d = 32$, tháp MLP là $64 \to 32 \to 16 \to 8$ và $\phi \in \mathbb{R}^{40}$. Trên mẫu kiểm định H\&M, $|\mathcal{U}| = $ \VData{B}{nusers}, $|\mathcal{I}| = $ \VData{B}{nitems}, $d_U = 42$ và $d_I = 157$. Điểm $\hat{y}_{ui}$ được tính cho mọi sản phẩm ứng viên của khách, rồi các sản phẩm được sắp theo điểm giảm dần và $K$ sản phẩm đầu là danh sách gợi ý.
 
-\begin{figure}[htbp]
+\begin{figure}[H]
     \centering
     \begin{adjustbox}{max width=\textwidth}
     \begin{tikzpicture}[
@@ -251,14 +250,14 @@ NeuMF-F giữ nguyên cấu trúc hai nhánh của NeuMF: nhánh GMF mô hình h
         \node[op] (had) at (-4.5, 4.4) {$\odot$};
         \node[lay] (gout) at (-4.5, 6.1) {Nhánh GMF-F: $\phi^G = p^G_u \odot q^G_i \in \mathbb{R}^{d}$};
         \node[lay] (cat) at (4.5, 4.4) {Nối $z_1 = [p^M_u;\ q^M_i] \in \mathbb{R}^{2d}$};
-        \node[lay] (l1) at (4.5, 5.25) {Tầng ẩn 1: $\mathbb{R}^{2d} \to \mathbb{R}^{d}$};
-        \node[lay] (l2) at (4.5, 6.1) {Tầng ẩn 2: $\mathbb{R}^{d} \to \mathbb{R}^{d/2}$};
-        \node[lay] (l3) at (4.5, 6.95) {Tầng ẩn 3: $\mathbb{R}^{d/2} \to \mathbb{R}^{d/4}$ ($= \phi^M$)};
-        \node[font=\scriptsize, align=left, anchor=west] at (7.25, 6.1) {mỗi tầng:\\ tuyến tính,\\ ReLU, dropout};
+        \node[lay] (l1) at (4.5, 5.25) {Lớp ẩn 1: $\mathbb{R}^{2d} \to \mathbb{R}^{d}$};
+        \node[lay] (l2) at (4.5, 6.1) {Lớp ẩn 2: $\mathbb{R}^{d} \to \mathbb{R}^{d/2}$};
+        \node[lay] (l3) at (4.5, 6.95) {Lớp ẩn 3: $\mathbb{R}^{d/2} \to \mathbb{R}^{d/4}$ ($= \phi^M$)};
+        \node[font=\scriptsize, align=left, anchor=west] at (7.25, 6.1) {mỗi lớp:\\ tuyến tính,\\ ReLU, dropout};
         \node[fuse] (fuse) at (0, 8.15) {Hợp nhất sớm (NeuMF-F): $\phi = [\phi^G;\ \phi^M] \in \mathbb{R}^{d + d/4}$};
         \node[outn] (out) at (0, 9.3) {Điểm của cặp $(u, i)$: $\hat{y}_{ui} = \sigma(h^\top \phi)$, \ $h \in \mathbb{R}^{d + d/4}$\\ (khi xếp hạng dùng thẳng logit $h^\top \phi$: $\sigma$ đơn điệu nên không đổi thứ tự)};
         \node[rank] (score) at (-5.3, 11.0) {Lặp cho mọi ứng viên $i \in \mathcal{C}_u$\\ (sản phẩm khách chưa mua)};
-        \node[rank] (sort) at (0.2, 11.0) {Sắp xếp $\hat{y}_{ui}$ giảm dần\\ (hoà điểm: khoá cố định)};
+        \node[rank] (sort) at (0.2, 11.0) {Sắp xếp $\hat{y}_{ui}$ giảm dần\\ (hòa điểm: khóa cố định)};
         \node[rank] (topk) at (5.6, 11.0) {Danh sách Top-$K$\\ $K \in \{5, 10, 15, 20\}$};
         \draw[arrow] (uin.north -| pg) -- (pg);
         \draw[arrow] ([xshift=-0.5cm]uin.north east) -- ([xshift=-1.0cm]pm.south);
@@ -287,7 +286,7 @@ NeuMF-F giữ nguyên cấu trúc hai nhánh của NeuMF: nhánh GMF mô hình h
 \subsection{Biểu diễn lai: vector nhúng ID kết hợp đặc trưng}
 \label{subsec:embedding_design}
 
-Với mỗi nhánh $b \in \{G, M\}$ (GMF và MLP), mô hình có bảng vector nhúng ID của khách hàng $P^b \in \mathbb{R}^{|\mathcal{U}| \times d}$, của sản phẩm $Q^b \in \mathbb{R}^{|\mathcal{I}^{ID}| \times d}$, và hai ma trận chiếu đặc trưng $W^b_U \in \mathbb{R}^{d \times d_U}$, $W^b_I \in \mathbb{R}^{d \times d_I}$, không có hệ số chệch. Vector của khách $u$ và sản phẩm $i$ tại ngày $t$ trong nhánh $b$ là:
+Với mỗi nhánh $b \in \{G, M\}$ (GMF và MLP), mô hình có bảng vector nhúng ID của khách hàng $P^b \in \mathbb{R}^{|\mathcal{U}| \times d}$, của sản phẩm $Q^b \in \mathbb{R}^{|\mathcal{I}^{ID}| \times d}$, và hai ma trận chiếu đặc trưng $W^b_U \in \mathbb{R}^{d \times d_U}$, $W^b_I \in \mathbb{R}^{d \times d_I}$, không có độ lệch (\textit{bias}). Vector của khách $u$ và sản phẩm $i$ tại ngày $t$ trong nhánh $b$ là:
 \begin{equation}
     p^b_u(t) = P^b_u + W^b_U\, x_u(t), \qquad
     q^b_i(t) = m_i\, Q^b_i + W^b_I\, x_i(t)
@@ -297,7 +296,7 @@ Vector đặc trưng của sản phẩm $x_i(t) = [e(a_{i,1}); \dots; e(a_{i,11}
 
 Hệ số $m_i$ quyết định vector nhúng ID của sản phẩm có được dùng hay không. $m_i = 1$ với sản phẩm có dữ liệu huấn luyện ở giai đoạn đang xét. Với tập ứng viên của đề tài, đó là mọi sản phẩm được chấm. Khi $m_i = 0$, vector của sản phẩm chỉ còn phần đặc trưng. Khi huấn luyện, $m_i$ của từng mẫu được đặt về 0 ngẫu nhiên với xác suất $\rho \in \{0;\, 0{,}25;\, 0{,}5\}$, gọi là bỏ ID ngẫu nhiên. Cơ chế này, lấy ý tưởng từ DropoutNet, buộc mô hình học cách chấm điểm một phần từ đặc trưng thay vì dựa hoàn toàn vào vector nhúng ID. Trong đề tài, $\rho$ là một siêu tham số được chọn trên tập xác thực.
 
-Như NeuMF, hai nhánh dùng hai không gian nhúng độc lập, vì nhánh GMF tối ưu vector cho phép nhân Hadamard còn nhánh MLP tối ưu vector làm đầu vào của mạng phi tuyến. Hai nhánh dùng cùng số chiều $d \in \{32, 64\}$. Các bảng vector nhúng được khởi tạo theo phân phối chuẩn $\mathcal{N}(0;\, 0{,}01^2)$; hàng ``không có ID'' là vector 0 cố định. Các tầng tuyến tính được khởi tạo theo Xavier, và lớp đầu ra $h$ không có hệ số chệch.
+Như NeuMF, hai nhánh dùng hai không gian nhúng độc lập, vì nhánh GMF tối ưu vector cho phép nhân Hadamard còn nhánh MLP tối ưu vector làm đầu vào của mạng phi tuyến. Hai nhánh dùng cùng số chiều $d \in \{32, 64\}$. Các bảng vector nhúng được khởi tạo theo phân phối chuẩn $\mathcal{N}(0;\, 0{,}01^2)$; hàng ``không có ID'' là vector 0 cố định. Các lớp tuyến tính được khởi tạo theo Xavier, và lớp đầu ra $h$ không có độ lệch.
 
 \subsection{Nhánh GMF-F}
 \label{subsec:gmf_design}
@@ -307,23 +306,23 @@ Nhánh GMF-F là dạng tổng quát của nhân tử hóa ma trận (Công th�
     \phi^{G} = p^G_u(t) \odot q^G_i(t)
     \label{eq:gmff}
 \end{equation}
-Phép cộng các chiều được chuyển sang vector trọng số $h$ ở tầng đầu ra, nên mô hình học được trọng số riêng cho từng chiều. Đây là phần ``tổng quát'' trong tên gọi GMF: khi $h = \mathbf{1}$ và không có đặc trưng, GMF-F trở về MF. Vì $p^G_u$ và $q^G_i$ đều chứa phần chiếu của đặc trưng, tích $p^{G}_u \odot q^{G}_i$ còn mô hình hóa tương tác tuyến tính giữa thuộc tính của khách và thuộc tính của sản phẩm, tương tự Factorization Machines.
+Phép cộng các chiều được chuyển sang vector trọng số $h$ ở lớp đầu ra, nên mô hình học được trọng số riêng cho từng chiều. Đây là phần ``tổng quát'' trong tên gọi GMF: khi $h = \mathbf{1}$ và không có đặc trưng, GMF-F trở về MF. Vì $p^G_u$ và $q^G_i$ đều chứa phần chiếu của đặc trưng, tích $p^{G}_u \odot q^{G}_i$ còn mô hình hóa tương tác tuyến tính giữa thuộc tính của khách và thuộc tính của sản phẩm, tương tự Factorization Machines.
 
 \subsection{Nhánh MLP-F}
 \label{subsec:mlp_design}
 
-Nhánh MLP-F nối hai vector lai thành đầu vào của một mạng nhiều tầng, không áp đặt trước cách hai vector tương tác:
+Nhánh MLP-F nối hai vector lai thành đầu vào của một mạng nhiều lớp, không áp đặt trước cách hai vector tương tác:
 \begin{equation}
     z_1 = \begin{bmatrix} p^M_u(t) \\ q^M_i(t) \end{bmatrix} \in \mathbb{R}^{2d}, \qquad
     \phi^M_L = a_L\big(W_L^T \cdots a_2(W_2^T z_1 + b_2) \cdots + b_L\big)
     \label{eq:mlpf}
 \end{equation}
-Như NCF, tháp giảm một nửa số chiều qua mỗi tầng ẩn: $[2d \to d \to d/2 \to d/4]$; với $d = 32$ là $[64 \to 32 \to 16 \to 8]$. Mỗi tầng ẩn gồm một phép biến đổi tuyến tính, hàm kích hoạt ReLU và dropout với tỉ lệ được tinh chỉnh trong $\{0;\, 0{,}2\}$. Cùng với dropout, mô hình được chống quá khớp bằng điều chuẩn $L_2$ và dừng sớm theo NDCG@10 trên tập xác thực.
+Như NCF, tháp giảm một nửa số chiều qua mỗi lớp ẩn: $[2d \to d \to d/2 \to d/4]$; với $d = 32$ là $[64 \to 32 \to 16 \to 8]$. Mỗi lớp ẩn gồm một phép biến đổi tuyến tính, hàm kích hoạt ReLU và dropout với tỉ lệ được tinh chỉnh trong $\{0;\, 0{,}2\}$. Cùng với dropout, mô hình được chống quá khớp (\textit{overfitting}) bằng điều chuẩn $L_2$ và dừng sớm (\textit{early stopping}) theo NDCG@10 trên tập xác thực.
 
-\subsection{Tầng hợp nhất và lớp dự đoán}
+\subsection{Lớp hợp nhất và lớp dự đoán}
 \label{subsec:neumf_output}
 
-Vector của nhánh GMF-F và của nhánh MLP-F được nối thành một vector hợp nhất, rồi qua một tầng tuyến tính cuối và hàm sigmoid:
+Vector của nhánh GMF-F và của nhánh MLP-F được nối thành một vector hợp nhất, rồi qua một lớp tuyến tính cuối và hàm sigmoid:
 \begin{equation}
     \hat{y}_{ui} = \sigma\big(h^T [\phi^{G};\ \phi^M_L]\big) = \sigma\big(h_G^T\, (p^G_u \odot q^G_i) + h_M^T\, \phi^M_L\big)
     \label{eq:neumff_predict}
@@ -335,9 +334,9 @@ Khi xếp hạng, hệ thống dùng trực tiếp giá trị trước sigmoid (
 \section{Mô hình đối chứng}
 \label{sec:baselines}
 
-Các mô hình đối chứng được xếp thành ba nhóm (Bảng~\ref{tab:baseline_groups}). Mỗi nhóm trả lời một câu hỏi khác nhau về mô hình đề xuất. Mọi mô hình được đánh giá với cùng dữ liệu, tập ứng viên và quy tắc đánh giá; Random (điểm ngẫu nhiên) là cận dưới.
+Các mô hình đối chứng được xếp thành ba nhóm (Bảng~\ref{tab:baseline_groups}), mỗi nhóm ứng với một câu hỏi riêng về mô hình đề xuất. Mọi mô hình được đánh giá trên cùng dữ liệu, cùng tập ứng viên và cùng quy tắc chấm. Mô hình Random cho điểm ngẫu nhiên và chỉ dùng làm mốc dưới. Hybrid-CBCF, đánh dấu \textsuperscript{*} trong bảng, được bổ sung sau khi đánh giá cuối của các mô hình còn lại đã hoàn tất, theo một kế hoạch riêng (mục~\ref{subsec:bosung_results}).
 
-\begin{table}[htbp]
+\begin{table}[H]
     \centering\small
     \caption{Ba nhóm mô hình đối chứng}
     \label{tab:baseline_groups}
@@ -350,7 +349,6 @@ Các mô hình đối chứng được xếp thành ba nhóm (Bảng~\ref{tab:ba
         Chuyên biệt cho gợi ý & Most Popular, MostPopular-Recent; NeuMF (NCF chỉ dùng ID); LateFusion-F (hợp nhất muộn) & Mô hình đề xuất có hơn xu hướng phổ biến, kiến trúc NCF gốc và cách hợp nhất muộn của cùng hai nhánh không \\
         \hline
     \end{tabularx}
-    \par\smallskip{\small \textsuperscript{*}Bổ sung sau đánh giá cuối của các mô hình còn lại.}
 \end{table}
 
 \subsection{Các mô hình cài đặt trên cùng khung với NeuMF-F}
@@ -371,7 +369,7 @@ Các mô hình còn lại được cài đặt riêng, nhưng dùng cùng tệp 
 \begin{enumerate}
     \item Most Popular: điểm của sản phẩm là số khách trong dữ liệu huấn luyện của mẫu đã mua sản phẩm đó. Mọi khách nhận cùng một danh sách, trừ sản phẩm đã mua.
     \item MostPopular-Recent: độ phổ biến gần đây trên toàn bộ H\&M. Điểm của sản phẩm $i$ là số giao dịch của nó trong $W$ ngày trước mốc dự đoán, $\sum_{d=\tau-W}^{\tau-1} n_{i,d}$, với $W$ chọn trên tập xác thực. Đây là mô hình đối chứng mạnh với dữ liệu thời trang có xu hướng thay đổi nhanh. Nó dùng cùng nguồn doanh số với đặc trưng thời gian của NeuMF-F, nên so sánh với nó cho biết NeuMF-F có học được gì vượt trên xu hướng chung hay không.
-    \item Content: gợi ý theo nội dung thuần. Mỗi sản phẩm được biểu diễn bằng vector văn bản nối với mã hóa one-hot của ba thuộc tính: nhóm sản phẩm, nhóm chỉ mục và nhóm may mặc. Thuộc tính màu không được dùng vì sau khi gộp các màu của một mẫu thiết kế, nó không còn phân biệt sản phẩm. Vector được chuẩn hóa về độ dài 1. Hồ sơ của khách là trung bình có trọng số các vector sản phẩm đã mua, với trọng số giảm theo thời gian theo chu kỳ bán rã $h$ ngày, $\omega = 2^{-(\tau - t_{uj})/h}$, hoặc bằng 1 nếu không dùng trọng số. Điểm là độ tương đồng cosine giữa hồ sơ và sản phẩm.
+    \item Content: gợi ý theo nội dung thuần. Mỗi sản phẩm được biểu diễn bằng vector văn bản nối với mã hóa one-hot của ba thuộc tính: nhóm sản phẩm, nhóm chỉ mục và nhóm may mặc. Thuộc tính màu không được dùng vì sau khi gộp các màu của một mẫu thiết kế, nó không còn phân biệt sản phẩm. Vector được chuẩn hóa về độ dài 1. Hồ sơ của khách là trung bình có trọng số các vector sản phẩm đã mua, với trọng số giảm theo thời gian theo chu kỳ bán rã (\textit{half-life}) $h$ ngày, $\omega = 2^{-(\tau - t_{uj})/h}$, hoặc bằng 1 nếu không dùng trọng số. Điểm là độ tương đồng cosine giữa hồ sơ và sản phẩm.
     \item ItemKNN và UserKNN: lọc cộng tác dựa trên láng giềng, với số láng giềng $k$ và hệ số co chọn trên tập xác thực.
     \item BPR-MF: nhân tử hóa ma trận tối ưu thứ hạng theo cặp, đại diện cho MF tuyến tính được tinh chỉnh cùng ngân sách.
     \item Hybrid-CBCF: mô hình lai truyền thống theo cấu trúc bảy cách lai của \textcite{burke2002hybrid} mở rộng cho phản hồi ẩn. Mô hình kết hợp ba mô hình đơn lẻ truyền thống, Content, UserKNN và ItemKNN, ở mức điểm dự đoán; cấu hình của ba thành phần giữ nguyên như khi tinh chỉnh. Điểm của mỗi thành phần được chuẩn hóa min--max trên tập ứng viên của khách như LateFusion-F (Công thức~\eqref{eq:late_fusion_mfdnn}), tạo thành vector $x_{ui} = (x^{CB}_{ui}, x^{U}_{ui}, x^{I}_{ui})$. Có hai cách kết hợp: cách bỏ phiếu lấy trung bình, giá trị lớn nhất hoặc nhỏ nhất của ba điểm; cách trọng số tính $\hat{y}_{ui} = w \cdot x_{ui}$. Phản hồi ẩn không có điểm đánh giá, nên đề tài học $w$ theo cặp: với mỗi sản phẩm đúng $p$ và sản phẩm không đúng $j$ trong tập ứng viên của cùng một khách, $P(p \text{ xếp trên } j) = \sigma\big(w \cdot (x_{up} - x_{uj})\big)$. Đây là hồi quy logistic trên hiệu đặc trưng, cùng tiêu chí với BPR (Công thức~\eqref{eq:bpr_loss}) nhưng với hàm điểm tuyến tính. Mô hình không có tham số khởi tạo ngẫu nhiên nên cho cùng kết quả ở mọi seed.
@@ -388,21 +386,20 @@ Phản hồi ẩn chỉ ghi nhận các tương tác đã xảy ra, không có n
 
 Ràng buộc ``đã ra mắt'' là cần thiết. Một sản phẩm chưa ra mắt ở ngày $t_{ui}$ thì khách không thể mua, nên không phải là mẫu âm có ý nghĩa. Nếu vẫn lấy, mô hình có thể học quy luật sai ``sản phẩm có cờ chưa ra mắt là âm'', một tín hiệu chỉ có trong cách tạo dữ liệu huấn luyện. Với mô hình chỉ dùng ID, mẫu âm được lấy đều trong các sản phẩm có ID, trừ sản phẩm khách đã mua, như NCF gốc. $N_{ratio}$ được tinh chỉnh trong $\{4, 8\}$. Mẫu âm được lấy lại ở mỗi epoch, nên mô hình thấy nhiều tổ hợp cặp âm khác nhau. Thuật toán~\ref{alg:negative} mô tả bước này cho mô hình có đặc trưng.
 
-\begin{algorithm}[htbp]
+\begin{algorithm}[H]
 \caption{Lấy mẫu âm theo thời điểm}
 \label{alg:negative}
 \begin{algorithmic}[1]
-\Require tập cặp dương huấn luyện $\mathcal{D} = \{(u, i, t_{ui})\}$; ngày bán đầu tiên $d^0_j$ của mỗi sản phẩm; số mẫu âm $N_{ratio}$
-\Ensure tập huấn luyện của epoch: các bộ $(u, j, t, y)$
-\State $\mathcal{P} \gets$ các sản phẩm xuất hiện trong $\mathcal{D}$, sắp tăng dần theo $d^0_j$
-\State $\mathcal{I}_u \gets \{i : (u, i, \cdot) \in \mathcal{D}\}$ với mọi khách $u$ \Comment{sản phẩm khách đã mua}
+\Require cặp dương $\mathcal{D} = \{(u, i, t)\}$; ngày bán đầu tiên $d^0_j$; số mẫu âm $N_{ratio}$
+\Ensure các bộ huấn luyện $(u, j, t, y)$ của một epoch
+\State $\mathcal{P} \gets$ các sản phẩm có trong $\mathcal{D}$; \ $\mathcal{I}_u \gets$ các sản phẩm $u$ đã mua trong $\mathcal{D}$
 \State $\mathcal{B} \gets \emptyset$
 \For{mỗi $(u, i, t) \in \mathcal{D}$}
-    \State thêm $(u, i, t, 1)$ vào $\mathcal{B}$ \Comment{mẫu dương, đặc trưng tính tại ngày $t$}
-    \State $\mathcal{A}_t \gets \{j \in \mathcal{P} : d^0_j \le t\}$ \Comment{sản phẩm đã ra mắt tính đến ngày $t$}
+    \State thêm $(u, i, t, 1)$ vào $\mathcal{B}$
+    \State $\mathcal{A}_t \gets \{j \in \mathcal{P} : d^0_j \le t\}$ \Comment{đã ra mắt tại ngày $t$}
     \For{$n = 1, \dots, N_{ratio}$}
-        \State lấy $j$ ngẫu nhiên đều trong $\mathcal{A}_t$; nếu $j \in \mathcal{I}_u$ thì lấy lại (tối đa 20 lần)
-        \State thêm $(u, j, t, 0)$ vào $\mathcal{B}$ \Comment{mẫu âm dùng cùng ngày $t$}
+        \State rút đều $j \in \mathcal{A}_t$, rút lại nếu $j \in \mathcal{I}_u$ (tối đa 20 lần)
+        \State thêm $(u, j, t, 0)$ vào $\mathcal{B}$ \Comment{cùng ngày $t$ với mẫu dương}
     \EndFor
 \EndFor
 \State \Return $\mathcal{B}$
@@ -417,7 +414,7 @@ Với cả nhãn dương và nhãn âm, huấn luyện trở thành bài toán p
     \mathcal{L} = -\sum_{(u, i) \in \mathcal{Y} \cup \mathcal{Y}^-} \left[ y_{ui} \log \hat{y}_{ui} + (1 - y_{ui}) \log (1 - \hat{y}_{ui}) \right] + \lambda_\Theta \|\Theta\|_2^2
     \label{eq:bce_loss_full}
 \end{equation}
-trong đó $\Theta$ là toàn bộ tham số học được (vector nhúng ID, vector nhúng thuộc tính, ma trận chiếu, tháp MLP, lớp đầu ra) và $\lambda_\Theta \in \{0;\, 10^{-6}\}$ được tinh chỉnh. Hàm mất mát được tính trên logit để ổn định số học. Các mô hình được cài đặt bằng PyTorch \parencite{paszke2019pytorch} và tối ưu bằng Adam \parencite{kingma2014adam} với kích thước lô 512.
+trong đó $\Theta$ là toàn bộ tham số học được (vector nhúng ID, vector nhúng thuộc tính, ma trận chiếu, tháp MLP, lớp đầu ra) và $\lambda_\Theta \in \{0;\, 10^{-6}\}$ được tinh chỉnh. Hàm mất mát được tính trên logit để ổn định số học. Các mô hình được cài đặt bằng PyTorch \parencite{paszke2019pytorch} và tối ưu bằng Adam \parencite{kingma2014adam} với kích thước lô (\textit{batch size}) 512.
 
 \section{Quy trình huấn luyện và tinh chỉnh}
 \label{sec:training_pipeline}
@@ -427,7 +424,7 @@ trong đó $\Theta$ là toàn bộ tham số học được (vector nhúng ID, v
 
 Bảng~\ref{tab:hyperparams} liệt kê không gian tinh chỉnh của mọi mô hình có siêu tham số. Mỗi mô hình có học được thử đúng 6 cấu hình: cấu hình mặc định và 5 cấu hình rút ngẫu nhiên không lặp từ lưới của mô hình đó, bằng một bộ sinh số ngẫu nhiên cố định. Mô hình chỉ có một tham số (MostPopular-Recent, Content, LateFusion-F) được thử đủ lưới. Mọi cấu hình được huấn luyện với seed 42 và chấm trên tập xác thực của mẫu phát triển.
 
-\begin{table}[htbp]
+\begin{table}[H]
     \centering\small
     \caption{Không gian tinh chỉnh}
     \label{tab:hyperparams}
@@ -448,38 +445,30 @@ Bảng~\ref{tab:hyperparams} liệt kê không gian tinh chỉnh của mọi mô
     \end{tabularx}
 \end{table}
 
-Sau mỗi epoch, mạng được chấm NDCG@10 trên tập xác thực bằng cách xếp hạng toàn bộ. Trạng thái tốt nhất được giữ lại, và huấn luyện dừng khi độ đo không cải thiện sau 5 epoch liên tiếp. Số epoch tốt nhất $e^*$ được ghi lại để dùng khi huấn luyện lại. Trước khi dự đoán cho giai đoạn kiểm thử, mô hình được huấn luyện lại từ đầu trên mọi cặp trước mốc kiểm thử đúng $e^*$ epoch. Lúc này không còn tập xác thực để dừng, và tập kiểm thử không bao giờ được dùng để dừng (Thuật toán~\ref{alg:train}).
+Sau mỗi epoch, mạng được chấm NDCG@10 trên tập xác thực bằng cách xếp hạng toàn bộ. Trạng thái tốt nhất được giữ lại, và huấn luyện dừng khi độ đo không cải thiện sau 5 epoch liên tiếp (\textit{patience} $P = 5$). Số epoch tốt nhất $e^*$ được ghi lại để dùng khi huấn luyện lại. Trước khi dự đoán cho giai đoạn kiểm thử, mô hình được huấn luyện lại từ đầu trên mọi cặp trước mốc kiểm thử đúng $e^*$ epoch. Lúc này không còn tập xác thực để dừng, và tập kiểm thử không bao giờ được dùng để dừng (Thuật toán~\ref{alg:train}).
 
-\begin{algorithm}[htbp]
+\begin{algorithm}[H]
 \caption{Huấn luyện có dừng sớm và huấn luyện lại đúng số epoch}
 \label{alg:train}
 \begin{algorithmic}[1]
-\Require cấu hình $\theta$; seed $s$; dữ liệu trước mốc xác thực $\mathcal{D}_{\tau_{val}}$ và tập xác thực $V$; dữ liệu trước mốc kiểm thử $\mathcal{D}_{\tau_{test}}$; $E_{max} = 20$, kiên nhẫn $P = 5$
-\Ensure mô hình $f^*$ để suy diễn sau mốc $\tau_{test}$ và số epoch $e^*$
+\Require cấu hình $\theta$, seed $s$; $\mathcal{D}_{\tau_{val}}$ và tập xác thực $V$; $\mathcal{D}_{\tau_{test}}$; $E_{max} = 20$; $P = 5$
+\Ensure mô hình $f^*$ và số epoch $e^*$
 \Function{HuấnLuyện}{$\mathcal{D}, E, V$}
-    \State khởi tạo $f$ theo $\theta$ và seed $s$; $\textit{tốt\_nhất} \gets -\infty$; $e^* \gets 0$; $\textit{chờ} \gets 0$
+    \State khởi tạo $f$ theo $\theta$ và $s$; \ $b \gets -\infty$; \ $e^* \gets 0$; \ $c \gets 0$
     \For{$e = 1, \dots, E$}
-        \State lấy lại mẫu âm (Thuật toán~\ref{alg:negative}); xáo trộn
-        \For{mỗi lô 512 mẫu}
-            \State cập nhật $f$ bằng Adam theo BCE trên logit (Công thức~\eqref{eq:bce_loss_full})
-        \EndFor
-        \If{$V \neq \emptyset$}
-            \State $n \gets$ NDCG@10 của $f$ trên $V$ (xếp hạng toàn bộ)
-            \If{$n > \textit{tốt\_nhất}$}
-                \State $\textit{tốt\_nhất} \gets n$; $e^* \gets e$; lưu trọng số của $f$; $\textit{chờ} \gets 0$
-            \Else
-                \State $\textit{chờ} \gets \textit{chờ} + 1$; nếu $\textit{chờ} \ge P$ thì dừng vòng lặp
-            \EndIf
+        \State lấy lại mẫu âm (Thuật toán~\ref{alg:negative}); một lượt Adam theo BCE, lô 512
+        \If{$V = \emptyset$} \Comment{huấn luyện lại: chạy đủ $E$ epoch}
+            \State $e^* \gets e$
+        \ElsIf{NDCG@10 của $f$ trên $V$ lớn hơn $b$}
+            \State $b \gets$ NDCG@10 đó; \ $e^* \gets e$; \ lưu trọng số; \ $c \gets 0$
         \Else
-            \State $e^* \gets e$ \Comment{huấn luyện lại: chạy đủ $E$ epoch}
+            \State $c \gets c + 1$; dừng nếu $c = P$
         \EndIf
     \EndFor
-    \State nếu $V \neq \emptyset$ thì nạp lại trọng số tốt nhất
-    \State \Return $f, e^*$
+    \State \Return $f$ (trọng số đã lưu nếu $V \neq \emptyset$), $e^*$
 \EndFunction
 \State $(\cdot, e^*) \gets$ \Call{HuấnLuyện}{$\mathcal{D}_{\tau_{val}}, E_{max}, V$} \Comment{chọn số epoch}
 \State $(f^*, \cdot) \gets$ \Call{HuấnLuyện}{$\mathcal{D}_{\tau_{test}}, e^*, \emptyset$} \Comment{huấn luyện lại từ đầu}
-\State lưu trọng số $f^*$ \Comment{bước ``lưu mô hình'' của Hình~\ref{fig:system_architecture}}
 \State \Return $f^*, e^*$
 \end{algorithmic}
 \end{algorithm}
@@ -490,16 +479,25 @@ Sau mỗi epoch, mạng được chấm NDCG@10 trên tập xác thực bằng c
 \subsection{Bài học từ giai đoạn phát triển ban đầu}
 \label{sec:v1_history}
 
-Trước khi có quy trình đánh giá trình bày trong mục này, đề tài đã thử nghiệm một giai đoạn chỉ dùng mã khách hàng và mã sản phẩm, đánh giá trên tập kiểm thử của chính mẫu phát triển. Ở giai đoạn này, NeuMF chỉ dùng mã định danh không vượt BPR-MF đã tinh chỉnh, và khi xếp mỗi sản phẩm đúng cùng 99 sản phẩm âm lấy mẫu thì thứ hạng giữa các mô hình thay đổi so với cách xếp hạng toàn bộ. Giai đoạn này để lại ba bài học cho quy trình cuối: cần bổ sung thông tin chứ không chỉ bổ sung tham số; lọc $k$-core chỉ được dùng dữ liệu trước mốc kiểm thử để tránh rò rỉ; và tập kiểm thử dùng để kết luận phải được khoá cho đến khi kế hoạch được cố định.
+Trước khi có quy trình đánh giá trình bày trong mục này, đề tài đã thử nghiệm một giai đoạn chỉ dùng mã khách hàng và mã sản phẩm, đánh giá trên tập kiểm thử của chính mẫu phát triển. Ở giai đoạn này, NeuMF chỉ dùng mã định danh không vượt BPR-MF đã tinh chỉnh, và khi xếp mỗi sản phẩm đúng cùng 99 sản phẩm âm lấy mẫu thì thứ hạng giữa các mô hình thay đổi so với cách xếp hạng toàn bộ. Giai đoạn này để lại ba bài học cho quy trình cuối: cần bổ sung thông tin chứ không chỉ bổ sung tham số; lọc $k$-core chỉ được dùng dữ liệu trước mốc kiểm thử để tránh rò rỉ dữ liệu (\textit{data leakage}); và tập kiểm thử dùng để kết luận phải được khóa cho đến khi kế hoạch được cố định.
 
-Bản đầu của kế hoạch đánh giá coi mỗi màu là một sản phẩm, đưa cả sản phẩm chưa từng bán vào tập ứng viên và kiểm định trên khối 1. Kế hoạch được sửa thành bản cuối sau khi xem kết quả trên khối 1, vì khả năng gợi ý sản phẩm mới hầu như không đo được ở quy mô này; khối 1 vì vậy không dùng để kết luận, và đánh giá cuối dùng một mẫu khách hàng chưa từng được dùng. Số liệu của giai đoạn này chỉ là lịch sử phát triển, không đặt cạnh kết quả trên mẫu kiểm định.
+Bản đầu của kế hoạch đánh giá \parencite{duan2026preregcu} coi mỗi màu là một sản phẩm, đưa cả sản phẩm chưa từng bán vào tập ứng viên và kiểm định trên khối 1. Kết quả trên khối 1 cho thấy ở quy mô mẫu này, khả năng gợi ý sản phẩm mới hầu như không đo được. Kế hoạch vì vậy được sửa thành bản cuối \parencite{duan2026prereg}: gộp các màu theo mẫu thiết kế, chỉ giữ trong tập ứng viên những sản phẩm đã có dữ liệu huấn luyện, và đánh giá cuối trên một mẫu khách hàng chưa từng được dùng. Vì kế hoạch được sửa sau khi đã xem kết quả trên khối 1, khối này không được dùng để kết luận, và số liệu của các giai đoạn trước chỉ là lịch sử phát triển, không được đặt cạnh kết quả trên mẫu kiểm định.
 
 \subsection{Các nguyên tắc đánh giá}
 \label{subsec:protocol_rules}
 
-\textcite{dacrema2019progress} chỉ ra hai lỗi phương pháp thường gặp khi đánh giá mô hình gợi ý học sâu: chọn số epoch hay cấu hình dựa trên chính tập kiểm thử, và tinh chỉnh mô hình đối chứng sơ sài. \textcite{rendle2020ncfmf} cũng cho thấy kết luận so sánh phụ thuộc mạnh vào việc mô hình đối chứng có được tinh chỉnh đầy đủ hay không. Giai đoạn phát triển của đề tài còn cho thấy một rủi ro thứ ba: khi tập kiểm thử đã được xem, các quyết định sau đó có thể bị ảnh hưởng bởi kết quả đã thấy. Quy trình đánh giá của đề tài (Hình~\ref{fig:eval_protocol}) xử lý cả ba rủi ro bằng sáu nguyên tắc dưới đây. Quy trình này tách khỏi đường ống ở Hình~\ref{fig:system_architecture}: nó chỉ gọi lại các bước huấn luyện và suy diễn với những mốc thời gian khác nhau, rồi so danh sách gợi ý với những gì khách đã mua thật.
+\textcite{dacrema2019progress} chỉ ra hai lỗi phương pháp thường gặp khi đánh giá mô hình gợi ý học sâu: chọn số epoch hay cấu hình dựa trên chính tập kiểm thử, và tinh chỉnh mô hình đối chứng sơ sài. \textcite{rendle2020ncfmf} cũng cho thấy kết luận so sánh phụ thuộc mạnh vào việc mô hình đối chứng có được tinh chỉnh đầy đủ hay không. Giai đoạn phát triển của đề tài còn cho thấy một rủi ro thứ ba. Khi tập kiểm thử đã được xem, những quyết định đưa ra sau đó dễ bị ảnh hưởng bởi kết quả đã thấy, dù người làm không chủ ý. Quy trình đánh giá của đề tài (Hình~\ref{fig:eval_protocol}) xử lý cả ba rủi ro bằng sáu nguyên tắc dưới đây. Quy trình này tách khỏi đường ống ở Hình~\ref{fig:system_architecture}: nó chỉ gọi lại các bước huấn luyện và suy luận với những mốc thời gian khác nhau, rồi so danh sách gợi ý với những gì khách đã mua thật.
 
-\begin{figure}[htbp]
+\begin{enumerate}
+    \item Tách mẫu phát triển và mẫu kiểm định. Mọi lựa chọn mô hình, siêu tham số và số epoch dựa trên tập xác thực: tinh chỉnh trên mẫu phát triển, chọn số epoch khi đánh giá cuối trên tập xác thực của mẫu kiểm định. Tập kiểm thử của mẫu kiểm định chỉ được mở một lần, ở đánh giá cuối.
+    \item Đăng ký trước. Danh sách mô hình, lưới tinh chỉnh, số seed, độ đo chính, họ so sánh, tiêu chí kết luận và các hạn chế đã biết được ghi vào kế hoạch thực nghiệm trước khi có kết quả tinh chỉnh của mô hình có đặc trưng nào. Bản cuối của kế hoạch được cố định trước khi dựng tập kiểm thử của mẫu kiểm định; những điểm thay đổi so với bản đầu và lý do đã nêu ở mục~\ref{sec:v1_history} và được ghi đầy đủ trong kế hoạch bản cuối \parencite{duan2026prereg}. Mô hình đề xuất NeuMF-F, độ đo chính, họ so sánh và tiêu chí kết luận được cố định từ bản đầu, và mọi thay đổi sau đó được ghi nhận như lệch kế hoạch. Kiểm chứng trên Amazon Beauty \parencite{duan2026preregamazon} và phân tích bổ sung với Hybrid-CBCF \parencite{duan2026preregbosung} có kế hoạch riêng theo cùng cách.
+    \item Khóa tập kiểm thử. Tập kiểm thử của mẫu kiểm định chỉ được mở khi kế hoạch đã được cố định và mã nguồn trùng với mã nguồn đã dùng khi tinh chỉnh. Mỗi lần mở được ghi vào nhật ký \parencite{duan2026testlog}, nên số lần tập kiểm thử được xem có thể kiểm chứng.
+    \item Cùng ngân sách tinh chỉnh. Mọi mô hình có học được thử 6 cấu hình.
+    \item Huấn luyện lại trước khi chấm. Với mỗi seed (42, 2024, 2025, 2026, 3407) và mỗi mạng nơ-ron, mô hình được huấn luyện trên dữ liệu trước 01/07/2020 của mẫu kiểm định và dừng sớm theo NDCG@10 trên tập xác thực của chính mẫu này để chọn số epoch $e^*$. Sau đó mô hình được huấn luyện lại từ đầu trên mọi cặp trước 29/07/2020 đúng $e^*$ epoch rồi mới chấm tập kiểm thử (Thuật toán~\ref{alg:train}). BPR-MF và các mô hình không phải mạng nơ-ron được khớp trên mọi cặp trước 29/07/2020. LateFusion-F trộn đúng GMF-F và MLP-F đã huấn luyện lại ở cùng seed.
+    \item Kiểm định thống kê và tiêu chí kết luận cố định. Với mỗi khách được đánh giá, NDCG@10 được lấy trung bình qua 5 seed; mô hình tất định cho cùng giá trị ở mọi seed. Từng cặp mô hình được so sánh bằng kiểm định dấu hạng Wilcoxon ghép cặp theo người dùng \parencite{wilcoxon1945} và khoảng tin cậy 95\% của hiệu trung bình bằng bootstrap ghép cặp với 10.000 lần lấy mẫu lại \parencite{efron1993bootstrap}. Giá trị $p$ được hiệu chỉnh Holm \parencite{holm1979} trên một họ 10 so sánh đăng ký trước. Chín so sánh đặt NeuMF-F cạnh: NeuMF (đặc trưng có giúp mô hình lai không); GMF-F và MLP-F (hợp nhất so với từng nhánh); LateFusion-F (hợp nhất sớm so với muộn); BPR-MF, ItemKNN, UserKNN, MostPopular-Recent và Content. So sánh thứ mười là NeuMF với BPR-MF (mô hình lai chỉ dùng ID so với MF). Kết luận ``A tốt hơn B'' chỉ được viết khi đồng thời $p_{Holm} < 0{,}05$, khoảng tin cậy không chứa 0 và chênh lệch tương đối NDCG@10 không dưới 5\%; ngược lại, kết luận là ``không khác biệt có ý nghĩa''. Ngưỡng 5\% được đặt trước như mức cải thiện tối thiểu đáng kể về mặt thực tiễn; đây là một lựa chọn quy ước, nên đề tài kiểm tra lại và thấy không kết luận nào ở Chương~\ref{chap:thucnghiem} thay đổi nếu bỏ ngưỡng này. Vì NDCG@10 của mỗi khách đã được lấy trung bình qua 5 seed trước khi kiểm định, kiểm định đo khác biệt giữa hai mô hình trên cùng tập khách; dao động giữa các seed không nằm trong kiểm định mà được báo cáo riêng bằng độ lệch chuẩn trong bảng kết quả.
+\end{enumerate}
+
+\begin{figure}[H]
     \centering
     \begin{adjustbox}{max width=\textwidth}
     \begin{tikzpicture}[
@@ -517,15 +515,15 @@ Bản đầu của kế hoạch đánh giá coi mỗi màu là một sản phẩ
         \node[stp, fill=blue!6, below=of d2] (d3)
             {Chọn cấu hình có NDCG@10 xác thực cao nhất cho từng mô hình, và trọng số $w$ của LateFusion-F (Thuật toán~\ref{alg:latefusion}).};
         \node[gate, below=of d3] (g)
-            {Đăng ký trước và khoá tập kiểm thử: kế hoạch (mô hình đề xuất, họ 10 so sánh, tiêu chí kết luận) được cố định trước khi dựng tập kiểm thử; tập kiểm thử chỉ được mở một lần cho mỗi seed.};
+            {Đăng ký trước và khóa tập kiểm thử: kế hoạch (mô hình đề xuất, họ 10 so sánh, tiêu chí kết luận) được cố định trước khi dựng tập kiểm thử; tập kiểm thử chỉ được mở một lần cho mỗi seed.};
         \node[stp, fill=green!7, below=of g] (k1)
             {Với mỗi seed $\in \{42, 2024, 2025, 2026, 3407\}$: chọn số epoch $e^*$ trên tập xác thực của mẫu kiểm định, rồi huấn luyện lại từ đầu trên mọi cặp trước 29/07/2020 đúng $e^*$ epoch (Thuật toán~\ref{alg:train}).};
         \node[stp, fill=green!7, below=of k1] (k2)
-            {Suy diễn và chấm bằng cách xếp hạng toàn bộ trên tập kiểm thử từ 29/07 đến 22/09/2020 (Thuật toán~\ref{alg:fullranking}); lưu hạng của từng sản phẩm đúng.};
+            {Suy luận và chấm bằng cách xếp hạng toàn bộ trên tập kiểm thử từ 29/07 đến 22/09/2020 (Thuật toán~\ref{alg:fullranking}); lưu hạng của từng sản phẩm đúng.};
         \node[stp, fill=green!7, below=of k2] (k3)
             {Độ đo: NDCG@$K$ (chính: $K = 10$), Recall@$K$, HR@$K$, Precision@$K$ với $K = 5, 10, 15, 20$; trung bình $\pm$ độ lệch chuẩn qua 5 seed.};
         \node[stp, fill=green!7, below=of k3] (k4)
-            {Kiểm định họ 10 so sánh đăng ký trước: Wilcoxon theo khách, khoảng tin cậy bootstrap 95\%, hiệu chỉnh Holm; ``A tốt hơn B'' chỉ khi đủ ba điều kiện cố định từ trước.};
+            {Kiểm định họ 10 so sánh đăng ký trước: kiểm định dấu hạng Wilcoxon theo khách, khoảng tin cậy bootstrap 95\%, hiệu chỉnh Holm; ``A tốt hơn B'' chỉ khi đủ ba điều kiện cố định từ trước.};
         \draw[arrow] (d1) -- (d2);
         \draw[arrow] (d2) -- (d3);
         \draw[arrow] (d3) -- (g);
@@ -545,120 +543,105 @@ Bản đầu của kế hoạch đánh giá coi mỗi màu là một sản phẩ
     \label{fig:eval_protocol}
 \end{figure}
 
-\begin{enumerate}
-    \item Tách mẫu phát triển và mẫu kiểm định. Mọi lựa chọn mô hình, siêu tham số và số epoch dựa trên tập xác thực: tinh chỉnh trên mẫu phát triển, chọn số epoch khi đánh giá cuối trên tập xác thực của mẫu kiểm định. Tập kiểm thử của mẫu kiểm định chỉ được mở một lần, ở đánh giá cuối.
-    \item Đăng ký trước. Danh sách mô hình, lưới tinh chỉnh, số seed, độ đo chính, họ so sánh, tiêu chí kết luận và các hạn chế đã biết được ghi vào kế hoạch thực nghiệm trước khi có kết quả tinh chỉnh của mô hình có đặc trưng nào. Bản cuối của kế hoạch được cố định trước khi dựng tập kiểm thử của mẫu kiểm định; những điểm thay đổi so với bản đầu và lý do đã nêu ở mục~\ref{sec:v1_history}. Mô hình đề xuất NeuMF-F, độ đo chính, họ so sánh và tiêu chí kết luận được cố định từ bản đầu, và mọi thay đổi sau đó được ghi nhận như lệch kế hoạch. Kiểm chứng trên Amazon Beauty và phân tích bổ sung với Hybrid-CBCF có kế hoạch riêng theo cùng cách.
-    \item Khoá tập kiểm thử. Tập kiểm thử của mẫu kiểm định chỉ được mở khi kế hoạch đã được cố định và mã nguồn trùng với mã nguồn đã dùng khi tinh chỉnh. Mỗi lần mở được ghi lại, nên số lần tập kiểm thử được xem có thể kiểm chứng.
-    \item Cùng ngân sách tinh chỉnh. Mọi mô hình có học được thử 6 cấu hình.
-    \item Huấn luyện lại trước khi chấm. Với mỗi seed (42, 2024, 2025, 2026, 3407) và mỗi mạng nơ-ron, mô hình được huấn luyện trên dữ liệu trước 01/07/2020 của mẫu kiểm định và dừng sớm theo NDCG@10 trên tập xác thực của chính mẫu này để chọn số epoch $e^*$. Sau đó mô hình được huấn luyện lại từ đầu trên mọi cặp trước 29/07/2020 đúng $e^*$ epoch rồi mới chấm tập kiểm thử (Thuật toán~\ref{alg:train}). BPR-MF và các mô hình không phải mạng nơ-ron được khớp trên mọi cặp trước 29/07/2020. LateFusion-F trộn đúng GMF-F và MLP-F đã huấn luyện lại ở cùng seed.
-    \item Kiểm định thống kê và tiêu chí kết luận cố định. Với mỗi khách được đánh giá, NDCG@10 được lấy trung bình qua 5 seed; mô hình tất định cho cùng giá trị ở mọi seed. Từng cặp mô hình được so sánh bằng kiểm định Wilcoxon theo người dùng \parencite{wilcoxon1945} và khoảng tin cậy 95\% của hiệu trung bình bằng bootstrap ghép cặp với 10.000 lần lấy mẫu lại \parencite{efron1993bootstrap}. Giá trị $p$ được hiệu chỉnh Holm \parencite{holm1979} trên một họ 10 so sánh đăng ký trước. Chín so sánh đặt NeuMF-F cạnh: NeuMF (đặc trưng có giúp mô hình lai không); GMF-F và MLP-F (hợp nhất so với từng nhánh); LateFusion-F (hợp nhất sớm so với muộn); BPR-MF, ItemKNN, UserKNN, MostPopular-Recent và Content. So sánh thứ mười là NeuMF với BPR-MF (mô hình lai chỉ dùng ID so với MF). Kết luận ``A tốt hơn B'' chỉ được viết khi đồng thời $p_{Holm} < 0{,}05$, khoảng tin cậy không chứa 0 và chênh lệch tương đối NDCG@10 không dưới 5\%; ngược lại, kết luận là ``không khác biệt có ý nghĩa''.
-\end{enumerate}
+Ngoài họ so sánh trên, phân tích bóc tách chỉ chạy một seed, được báo cáo kèm khoảng tin cậy nhưng không kiểm định và không dùng để kết luận chính. Độ phủ, số epoch và thời gian huấn luyện cũng chỉ mang tính mô tả.
 
-Thuật toán~\ref{alg:fullranking} là cách mọi mô hình được chấm trên một giai đoạn. Mọi mô hình dùng cùng tập ứng viên và cùng quy tắc phá hoà, nên chênh lệch giữa hai mô hình chỉ đến từ điểm số của chúng. Hạng của từng sản phẩm đúng được lưu theo từng khách, nên độ đo ở một $K$ bất kỳ tính lại được mà không phải chấm lại tập kiểm thử. Các độ đo ở $K = 15$ được tính theo cách này; cách tính lại cho đúng các số ở $K = 5, 10, 20$ của lần đánh giá cuối. Thuật toán~\ref{alg:latefusion} chọn trọng số trộn của LateFusion-F chỉ trên tập xác thực của mẫu phát triển; trọng số này (\VCfg{LateF}{params}) được giữ nguyên ở đánh giá cuối.
+Thuật toán~\ref{alg:fullranking} là cách mọi mô hình được chấm trên một giai đoạn, với tập ứng viên $\mathcal{C}_u$ và tập sản phẩm đúng $T_u$ theo Công thức~\eqref{eq:v2_cand} và~\eqref{eq:v2_target}, và các độ đo theo Công thức~\eqref{eq:hr_k}--\eqref{eq:ndcg_k}. Mọi mô hình dùng cùng tập ứng viên và cùng quy tắc phá hòa (\textit{tie-breaking}) khi hai sản phẩm bằng điểm. Khóa phá hòa $h(u, i)$ là một giá trị băm của cặp $(u, i)$, sinh từ seed cố định 2026. Nhờ vậy chênh lệch giữa hai mô hình chỉ đến từ điểm số của chúng. Hạng của từng sản phẩm đúng được lưu theo từng khách, nên độ đo ở một $K$ bất kỳ tính lại được mà không phải chấm lại tập kiểm thử. Các độ đo ở $K = 15$ được tính theo cách này; cách tính lại cho đúng các số ở $K = 5, 10, 20$ của lần đánh giá cuối. Thuật toán~\ref{alg:latefusion} chọn trọng số trộn của LateFusion-F (Công thức~\eqref{eq:late_fusion_mfdnn}) chỉ trên tập xác thực của mẫu phát triển; trọng số này (\VCfg{LateF}{params}) được giữ nguyên ở đánh giá cuối.
 
-\begin{algorithm}[htbp]
+\begin{algorithm}[H]
 \caption{Đánh giá bằng xếp hạng toàn bộ tập ứng viên}
 \label{alg:fullranking}
 \begin{algorithmic}[1]
-\Require hàm điểm $s(u, i)$ của mô hình; tập khách được đánh giá $\mathcal{U}_{eval}$; với mỗi khách $u$: tập ứng viên $\mathcal{C}_u$ và tập sản phẩm đúng $T_u$ (Công thức~\eqref{eq:v2_cand}, \eqref{eq:v2_target}); seed phá hoà $s_0 = 2026$; các giá trị $K$
-\Ensure chỉ số trung bình theo khách; hạng của từng sản phẩm đúng
-\For{mỗi khách $u \in \mathcal{U}_{eval}$}
-    \State tính $s(u, i)$ cho mọi $i \in \mathcal{C}_u$ theo lô \Comment{mạng nơ-ron: logit}
-    \State sắp $\mathcal{C}_u$ theo $s(u, i)$ giảm dần; bằng điểm thì theo khoá $h(u, i, s_0)$ \Comment{cùng khoá cho mọi mô hình}
-    \State $R_u \gets$ hạng (tính từ 1) của từng $i \in T_u$ trong danh sách đã sắp; lưu $R_u$
-    \For{mỗi $K$}
-        \State tính HR@$K(u)$, Precision@$K(u)$, Recall@$K(u)$, NDCG@$K(u)$ từ $R_u$ (Công thức~\eqref{eq:hr_k}--\eqref{eq:ndcg_k})
-    \EndFor
+\Require hàm điểm $s(u, i)$; tập khách $\mathcal{U}_{eval}$, mỗi khách có $\mathcal{C}_u$ và $T_u$; các giá trị $K$
+\Ensure độ đo trung bình theo khách; hạng $R_u$ của các sản phẩm đúng
+\For{mỗi $u \in \mathcal{U}_{eval}$}
+    \State tính $s(u, i)$ với mọi $i \in \mathcal{C}_u$ \Comment{mạng nơ-ron: dùng logit}
+    \State sắp $\mathcal{C}_u$ giảm dần theo $s(u, i)$; bằng điểm thì theo khóa cố định $h(u, i)$
+    \State $R_u \gets$ hạng của các $i \in T_u$ trong danh sách đã sắp; lưu $R_u$
+    \State tính HR@$K$, Precision@$K$, Recall@$K$, NDCG@$K$ của $u$ từ $R_u$ với mỗi $K$
 \EndFor
-\State \Return trung bình từng chỉ số trên $\mathcal{U}_{eval}$ và các $R_u$
+\State \Return trung bình các độ đo trên $\mathcal{U}_{eval}$; các $R_u$
 \end{algorithmic}
 \end{algorithm}
 
-\begin{algorithm}[htbp]
+\begin{algorithm}[H]
 \caption{Chọn trọng số của LateFusion-F}
 \label{alg:latefusion}
 \begin{algorithmic}[1]
-\Require GMF-F và MLP-F tốt nhất (cấu hình đã chọn khi tinh chỉnh); tập xác thực $V$ của mẫu phát triển; lưới $W = \{0;\ 0{,}1;\ \dots;\ 1\}$
+\Require GMF-F, MLP-F đã chọn khi tinh chỉnh; tập xác thực $V$; lưới $W = \{0;\ 0{,}1;\ \dots;\ 1\}$
 \Ensure trọng số $w^*$
-\For{mỗi $w \in W$}
-    \For{mỗi khách $u$ của $V$}
-        \State $a \gets \mathrm{minmax}\big(s^{\text{GMF-F}}(u, \mathcal{C}_u)\big)$; \quad $b \gets \mathrm{minmax}\big(s^{\text{MLP-F}}(u, \mathcal{C}_u)\big)$ \Comment{Công thức~\eqref{eq:late_fusion_mfdnn}}
-        \State điểm trộn của $u$: $w\,a + (1 - w)\,b$
-    \EndFor
-    \State $N(w) \gets$ NDCG@10 của điểm trộn trên $V$ (Thuật toán~\ref{alg:fullranking})
+\For{mỗi khách $u$ của $V$}
+    \State $a_u \gets \mathrm{minmax}\big(s^{\text{GMF-F}}(u, \mathcal{C}_u)\big)$; \ $b_u \gets \mathrm{minmax}\big(s^{\text{MLP-F}}(u, \mathcal{C}_u)\big)$
 \EndFor
-\State \Return $w^* = \arg\max_{w \in W} N(w)$ \Comment{cố định từ đây, không chọn lại trên tập kiểm thử}
+\For{mỗi $w \in W$}
+    \State $N(w) \gets$ NDCG@10 trên $V$ của điểm $w\,a_u + (1 - w)\,b_u$ \Comment{Thuật toán~\ref{alg:fullranking}}
+\EndFor
+\State \Return $w^* = \arg\max_{w \in W} N(w)$
 \end{algorithmic}
 \end{algorithm}
 
-Thuật toán~\ref{alg:hybrid} chọn cách kết hợp của mô hình lai truyền thống Hybrid-CBCF, cũng chỉ trên tập xác thực của mẫu phát triển. Trọng số của cách kết hợp có trọng số được học chứ không chọn trên lưới. Vì vậy NDCG@10 dùng để so với các cách bỏ phiếu được tính bằng khớp chéo theo khách: trọng số dùng để chấm một khách luôn được học trên những khách khác. Cách kết hợp và trọng số được chọn giữ nguyên khi đánh giá trên mẫu kiểm định và trên Amazon Beauty.
+Thuật toán~\ref{alg:hybrid} chọn cách kết hợp của mô hình lai truyền thống Hybrid-CBCF, cũng chỉ trên tập xác thực của mẫu phát triển. Trọng số của cách kết hợp có trọng số được học chứ không chọn trên lưới. Vì vậy NDCG@10 dùng để so với các cách bỏ phiếu được tính bằng khớp chéo (\textit{cross-fitting}) theo khách: trọng số dùng để chấm một khách luôn được học trên những khách khác. Hàm \textsc{HọcTrọngSố} rút $m = 50$ sản phẩm không đúng cho mỗi sản phẩm đúng bằng một seed cố định, rồi khớp hồi quy logistic có điều chuẩn $L_2$, không hệ số chặn, tức tối đa hóa $\sum \ln \sigma\big(w \cdot (x_{up} - x_{uj})\big)$ như ở mục~\ref{subsec:other_baselines}. Ba mô hình thành phần được khớp trên dữ liệu trước mốc xác thực. Cách kết hợp và trọng số được chọn giữ nguyên khi đánh giá trên mẫu kiểm định và trên Amazon Beauty.
 
-\begin{algorithm}[htbp]
+\begin{algorithm}[H]
 \caption{Chọn cách kết hợp của Hybrid-CBCF}
 \label{alg:hybrid}
 \begin{algorithmic}[1]
-\Require Content, UserKNN, ItemKNN với cấu hình đã chọn khi tinh chỉnh, khớp trên dữ liệu trước mốc xác thực; tập xác thực $V$; $m = 50$ sản phẩm không đúng mỗi sản phẩm đúng (rút bằng seed cố định)
+\Require Content, UserKNN, ItemKNN đã tinh chỉnh; tập xác thực $V$; $m = 50$
 \Ensure cách kết hợp $F^*$; trọng số $w^*$ nếu $F^*$ là tổng có trọng số
-\For{mỗi khách $u$ của $V$ và mỗi $i \in \mathcal{C}_u$}
-    \State $x_{ui} \gets \big(\mathrm{minmax}(s^{CB}(u, \mathcal{C}_u))_i,\ \mathrm{minmax}(s^{UserKNN}(u, \mathcal{C}_u))_i,$
-    \Statex \hspace{\algorithmicindent}$\phantom{x_{ui} \gets \big(}\mathrm{minmax}(s^{ItemKNN}(u, \mathcal{C}_u))_i\big)$
-\EndFor
+\State $x_{ui} \gets$ ba điểm đã chuẩn hóa min--max trên $\mathcal{C}_u$, với mọi $u \in V$, $i \in \mathcal{C}_u$
 \For{$F \in \{\text{trung bình}, \max, \min\}$} \Comment{bỏ phiếu}
-    \State $N(F) \gets$ NDCG@10 trên $V$ của điểm $F(x_{ui})$ (Thuật toán~\ref{alg:fullranking})
+    \State $N(F) \gets$ NDCG@10 trên $V$ của điểm $F(x_{ui})$
 \EndFor
-\State chia khách của $V$ thành hai phần $P_0, P_1$ theo chỉ số chẵn, lẻ \Comment{khớp chéo}
+\State chia khách của $V$ thành $P_0, P_1$ theo chỉ số chẵn, lẻ \Comment{\textit{cross-fitting}}
 \For{$k \in \{0, 1\}$}
-    \State $D \gets \emptyset$
-    \For{mỗi khách $u \notin P_k$ và mỗi sản phẩm đúng $p$ của $u$}
-        \State rút $m$ sản phẩm không đúng $j \in \mathcal{C}_u$; thêm $(x_{up} - x_{uj},\ 1)$ và $(x_{uj} - x_{up},\ 0)$ vào $D$
-    \EndFor
-    \State $w_k \gets$ hồi quy logistic không hệ số chặn trên $D$ \Comment{$\max \sum \ln \sigma(w \cdot (x_{up} - x_{uj}))$}
-    \State điểm của mỗi khách $u \in P_k$: $w_k \cdot x_{ui}$
+    \State $w_k \gets$ \Call{HọcTrọngSố}{$V \setminus P_k$}; \ chấm khách $u \in P_k$ bằng $w_k \cdot x_{ui}$
 \EndFor
-\State $N(\text{trọng số}) \gets$ NDCG@10 trên $V$ của điểm khớp chéo
-\State $F^* \gets \arg\max_F N(F)$; nếu $F^*$ là tổng có trọng số thì $w^* \gets$ hồi quy logistic trên các cặp của mọi khách của $V$
-\State \Return $F^*, w^*$ \Comment{cố định từ đây, không chọn lại trên tập kiểm thử}
+\State $N(\text{trọng số}) \gets$ NDCG@10 trên $V$ của điểm vừa chấm
+\State $F^* \gets \arg\max_F N(F)$
+\If{$F^*$ là tổng có trọng số}
+    \State $w^* \gets$ \Call{HọcTrọngSố}{$V$}
+\EndIf
+\State \Return $F^*, w^*$
+\Statex
+\Function{HọcTrọngSố}{tập khách $S$}
+    \State với mỗi sản phẩm đúng $p$ của $u \in S$: rút $m$ sản phẩm không đúng $j \in \mathcal{C}_u$
+    \State \Return hồi quy logistic ($L_2$, không hệ số chặn) trên các hiệu $\pm(x_{up} - x_{uj})$
+\EndFunction
 \end{algorithmic}
 \end{algorithm}
 
-Phân tích bóc tách chạy một seed, được báo cáo kèm khoảng tin cậy nhưng không kiểm định và không dùng để kết luận chính. Độ phủ, số epoch và thời gian huấn luyện chỉ mang tính mô tả.
-
-\section{Suy diễn Top-\texorpdfstring{$K$}{K} và xử lý khách hàng mới}
+\section{Suy luận Top-\texorpdfstring{$K$}{K} và xử lý khách hàng mới}
 \label{sec:inference}
 
-Bước cuối của đường ống là suy diễn: với một khách hàng và một số $K$, hệ thống trả về $K$ sản phẩm nên gợi ý. Thuật toán~\ref{alg:inference} mô tả bước này; hệ thống demo gợi ý theo đúng các bước đó. Với khách đã có trong dữ liệu đã học, đây chính là các bước chấm điểm và sắp xếp của Thuật toán~\ref{alg:fullranking}, chỉ khác là không có sản phẩm đúng để so sánh. Vector của mọi khách và mọi sản phẩm tại mốc $\tau$ được tính một lần khi nạp mô hình, nên mỗi yêu cầu gợi ý chỉ còn một lượt suy diễn thuận trên các sản phẩm ứng viên của khách.
+Bước cuối của đường ống là suy luận. Với một khách hàng và một số $K$ cho trước, hệ thống trả về $K$ sản phẩm nên gợi ý. Thuật toán~\ref{alg:inference} mô tả bước này; hệ thống demo gợi ý theo đúng các bước đó. Với khách đã có trong dữ liệu đã học, đây chính là các bước chấm điểm và sắp xếp của Thuật toán~\ref{alg:fullranking}, chỉ khác là không có sản phẩm đúng để so sánh. Vector của mọi khách và mọi sản phẩm tại mốc $\tau$ được tính một lần khi nạp mô hình, nên mỗi yêu cầu gợi ý chỉ còn một lượt lan truyền thuận trên các sản phẩm ứng viên của khách.
 
-\begin{algorithm}[htbp]
-\caption{Suy diễn Top-$K$ cho một khách hàng}
+Khách hàng mới là tình huống \textit{cold start} của người dùng. Mô hình chỉ có vector nhúng ID và đặc trưng thời gian cho những khách đã có trong dữ liệu đã học. Với một khách chưa mua gì, hoặc mua quá ít để qua bước lọc 10-core, mô hình đề xuất không có thông tin về sở thích. Trong trường hợp đó, hệ thống trả về danh sách các sản phẩm được nhiều khách mua nhất trước mốc, tức chính mô hình đối chứng Most Popular. Khi khách đã có lịch sử mua trong dữ liệu đã học, hệ thống dùng NeuMF-F. Với quy tắc này, mọi yêu cầu đều nhận được một danh sách gợi ý. Đánh giá định lượng của đề tài chỉ đo nhóm khách đã có lịch sử, nên chất lượng gợi ý cho khách mới không được đo riêng.
+
+\begin{algorithm}[H]
+\caption{Suy luận Top-$K$ cho một khách hàng}
 \label{alg:inference}
 \begin{algorithmic}[1]
-\Require mã khách $c$; số gợi ý $K$; mô hình đã lưu $f^*$ (NeuMF-F) cùng dữ liệu đã học trước mốc $\tau$; danh sách phổ biến $L_{pop}$ (sản phẩm xếp theo số khách đã mua trước $\tau$)
+\Require mã khách $c$; số gợi ý $K$; NeuMF-F đã lưu; danh sách phổ biến $L_{pop}$
 \Ensure $K$ sản phẩm gợi ý
-\If{$c$ không có trong dữ liệu đã học} \Comment{khách mới, hoặc quá ít lần mua để qua lọc $k$-core}
-    \State \Return $K$ sản phẩm đầu của $L_{pop}$, gắn nhãn ``gợi ý phổ biến''
+\If{$c$ không có trong dữ liệu đã học} \Comment{khách mới}
+    \State \Return $K$ sản phẩm đầu của $L_{pop}$
 \EndIf
-\State $u \gets$ mã nội bộ của $c$
-\State $\mathcal{C}_u \gets \{i : i$ có dữ liệu huấn luyện trước $\tau\} \setminus \mathcal{I}_u(\tau)$ \Comment{bỏ sản phẩm khách đã mua}
-\State lấy $p^G_u, p^M_u$ và $q^G_i, q^M_i$ với mọi $i \in \mathcal{C}_u$ \Comment{đã tính sẵn tại $\tau$ khi nạp mô hình}
-\For{mỗi lô sản phẩm $i \in \mathcal{C}_u$}
-    \State $s_{ui} \gets h^\top \big[\,p^G_u \odot q^G_i;\ \mathrm{MLP}([p^M_u;\ q^M_i])\,\big]$ \Comment{logit; $\sigma$ không đổi thứ tự}
-\EndFor
-\State sắp $\mathcal{C}_u$ theo $s_{ui}$ giảm dần (bằng điểm: khoá cố định)
-\State \Return $K$ sản phẩm đầu, kèm tên, loại và ảnh
+\State $u \gets$ mã nội bộ của $c$; \ $\mathcal{C}_u \gets \mathcal{I}_\tau \setminus \mathcal{I}_u(\tau)$ \Comment{bỏ sản phẩm đã mua}
+\State $s_{ui} \gets h^\top \big[\,p^G_u \odot q^G_i;\ \mathrm{MLP}([p^M_u;\ q^M_i])\,\big]$ với mọi $i \in \mathcal{C}_u$
+\State \Return $K$ sản phẩm có $s_{ui}$ lớn nhất (bằng điểm: theo khóa cố định)
 \end{algorithmic}
 \end{algorithm}
-
-Khách hàng mới là tình huống khởi đầu lạnh của người dùng. Mô hình chỉ có vector nhúng ID và đặc trưng thời gian cho những khách đã có trong dữ liệu đã học. Với một khách chưa mua gì, hoặc mua quá ít để qua bước lọc 10-core, mô hình đề xuất không có thông tin về sở thích. Hệ thống vì vậy dùng một quy tắc đơn giản. Khách mới nhận danh sách các sản phẩm phổ biến nhất, tính trên dữ liệu trước mốc; đây cũng là mô hình đối chứng Most Popular. Khi khách đã có lịch sử mua trong dữ liệu đã học, hệ thống dùng mô hình đề xuất NeuMF-F. Nhờ vậy hệ thống luôn trả về một danh sách gợi ý. Đánh giá định lượng của đề tài chỉ đo nhóm khách đã có lịch sử, nên chất lượng gợi ý cho khách mới không được đo riêng.
 
 \section{Thiết kế hệ thống demo}
 \label{sec:demo_design}
 
-Hệ thống demo minh họa các mô hình đã huấn luyện trong một kịch bản cửa hàng thời trang. Demo tách biệt với phần huấn luyện: nó chỉ nạp trọng số mô hình đã lưu và gọi lại đúng các hàm xử lý dữ liệu, xếp hạng của quy trình đánh giá, không huấn luyện lại.
+Hệ thống demo minh họa các mô hình đã huấn luyện trong một kịch bản cửa hàng thời trang. Demo tách biệt với phần huấn luyện. Nó chỉ nạp trọng số mô hình đã lưu và gọi lại đúng các hàm xử lý dữ liệu, xếp hạng của quy trình đánh giá, không huấn luyện lại.
 
 \subsection{Kiến trúc ba tầng}
 \label{subsec:demo_architecture}
 
-\begin{figure}[htbp]
+Demo được xây dựng theo hai nguyên tắc: suy luận tách khỏi huấn luyện để thời gian phản hồi không phụ thuộc chi phí huấn luyện; và demo kiểm tra rằng dữ liệu dựng lại khớp với lần chạy đã huấn luyện, để tránh tình huống ánh xạ mã sai nhưng mô hình vẫn chạy. Tập ứng viên và sản phẩm đích của mỗi khách được lấy từ dữ liệu của đánh giá cuối, và với khách đã được đánh giá, demo hiện kèm kết quả đã lưu để người xem đối chiếu.
+
+\begin{figure}[H]
     \centering
     \resizebox{0.92\textwidth}{!}{%
     \begin{tikzpicture}[
@@ -672,7 +655,7 @@ Hệ thống demo minh họa các mô hình đã huấn luyện trong một kị
 
         \node[stage, fill=blue!8, below=of client] (api)
             {TẦNG 2: API SUY DIỄN (FastAPI)\\[2pt]
-             Các điểm cuối ở Bảng~\ref{tab:demo_api}: kiểm tra đầu vào, tra cứu mã khách, gọi tầng mô hình, định dạng kết quả. Chỉ suy diễn, không lan truyền ngược.};
+             Các điểm cuối (\textit{endpoint}) ở Bảng~\ref{tab:demo_api}: kiểm tra đầu vào, tra cứu mã khách, gọi tầng mô hình, định dạng kết quả. Chỉ suy luận, không lan truyền ngược.};
 
         \node[stage, fill=green!8, below=of api] (model)
             {TẦNG 3: MÔ HÌNH VÀ DỮ LIỆU TRA CỨU\\[2pt]
@@ -685,14 +668,14 @@ Hệ thống demo minh họa các mô hình đã huấn luyện trong một kị
     \label{fig:demo_architecture}
 \end{figure}
 
-Demo được xây dựng theo hai nguyên tắc: suy diễn tách khỏi huấn luyện để thời gian phản hồi không phụ thuộc chi phí huấn luyện; và demo kiểm tra rằng dữ liệu dựng lại khớp với lần chạy đã huấn luyện, để tránh tình huống ánh xạ mã sai nhưng mô hình vẫn chạy. Tập ứng viên và sản phẩm đích của mỗi khách được lấy từ dữ liệu của đánh giá cuối, và với khách đã được đánh giá, demo hiện kèm kết quả đã lưu để người xem đối chiếu.
-
-\subsection{Thiết kế API suy diễn}
+\subsection{Thiết kế API suy luận}
 \label{subsec:demo_api}
 
-\begin{table}[htbp]
+Bảng~\ref{tab:demo_api} liệt kê các điểm cuối của API suy luận và chức năng của từng điểm cuối. Chức năng gợi ý Top-$K$ chạy đúng các bước của Thuật toán~\ref{alg:inference} và dùng lại các hàm của quy trình đánh giá. Kết quả được ánh xạ về mẫu thiết kế (\texttt{product\_code}) kèm tên, loại sản phẩm, số màu và ảnh của biến thể đại diện trước khi trả về giao diện.
+
+\begin{table}[H]
     \centering\small
-    \caption{Các điểm cuối của API suy diễn}
+    \caption{Các điểm cuối của API suy luận}
     \label{tab:demo_api}
     \begin{tabularx}{\textwidth}{|>{\raggedright\arraybackslash}p{4.6cm}|X|}
         \hline
@@ -711,21 +694,21 @@ Demo được xây dựng theo hai nguyên tắc: suy diễn tách khỏi huấn
     \end{tabularx}
 \end{table}
 
-Chức năng gợi ý Top-$K$ chạy đúng các bước của Thuật toán~\ref{alg:inference} và dùng lại các hàm của quy trình đánh giá. Kết quả được ánh xạ về mẫu thiết kế (\texttt{product\_code}) kèm tên, loại sản phẩm, số màu và ảnh của biến thể đại diện trước khi trả về giao diện.
-
 \subsection{Lựa chọn mô hình triển khai và yêu cầu phi chức năng}
 \label{subsec:demo_model_choice}
 
-Demo cho phép chọn và so sánh song song hai mô hình bất kỳ trong số 13 mô hình của đánh giá cuối và mô hình lai truyền thống bổ sung; mặc định là NeuMF-F và NeuMF chỉ dùng ID. Người xem có thể tự đối chiếu với kết luận của đánh giá cuối, ví dụ đặt danh sách của NeuMF-F cạnh danh sách của NeuMF trên cùng một khách. Demo không khẳng định mô hình nào tốt nhất ngoài những gì kiểm định thống kê cho phép. Demo nạp các trọng số của đánh giá cuối (seed 42) trên mẫu kiểm định H\&M hoặc trên Amazon Beauty. Lịch sử hiển thị đúng là dữ liệu mô hình đã học, và sản phẩm đích là các món khách mua lần đầu trong giai đoạn kiểm thử. Demo vì vậy minh họa lại kết quả của đánh giá cuối trên từng khách, không phải một lần đánh giá mới. Về yêu cầu phi chức năng, vector của mọi khách và sản phẩm tại mốc dự đoán được tính một lần khi nạp. Mỗi yêu cầu gợi ý vì vậy chỉ là một lượt suy diễn thuận trên khoảng \VData{Btest}{cand} ứng viên, đủ nhanh để phục vụ trực tuyến trên CPU.
+Demo cho phép chọn và so sánh song song hai mô hình bất kỳ trong số 13 mô hình của đánh giá cuối và mô hình lai truyền thống bổ sung; mặc định là NeuMF-F và NeuMF chỉ dùng ID. Người xem có thể tự đối chiếu với kết luận của đánh giá cuối, ví dụ đặt danh sách của NeuMF-F cạnh danh sách của NeuMF trên cùng một khách. Demo không khẳng định mô hình nào tốt nhất ngoài những gì kiểm định thống kê cho phép. Demo nạp các trọng số của đánh giá cuối ứng với seed 42 trên mẫu kiểm định H\&M hoặc trên Amazon Beauty. Vì vậy hạng và độ đo của từng khách trong demo là kết quả của riêng seed này và có thể khác đôi chút so với giá trị trung bình 5 seed ở Chương~\ref{chap:thucnghiem}. Lịch sử hiển thị đúng là dữ liệu mô hình đã học, và sản phẩm đích là các món khách mua lần đầu trong giai đoạn kiểm thử. Demo vì vậy minh họa lại kết quả của đánh giá cuối trên từng khách, không phải một lần đánh giá mới. Về yêu cầu phi chức năng, vector của mọi khách và sản phẩm tại mốc dự đoán được tính một lần khi nạp. Mỗi yêu cầu gợi ý vì vậy chỉ là một lượt lan truyền thuận trên khoảng \VData{Btest}{cand} ứng viên. Đo trên máy thực nghiệm chỉ dùng CPU (AMD Ryzen 7 6800H), với 100 khách chọn ngẫu nhiên, một yêu cầu gợi ý Top-10 của NeuMF-F mất trung vị 10 ms và 12 ms ở phân vị 95, tính cả thời gian xử lý của API. Lần nạp dữ liệu và mô hình đầu tiên mất khoảng 20 giây với H\&M và 6 giây với Amazon Beauty, sau đó được giữ trong bộ nhớ.
 
 \subsection{Minh họa hệ thống demo}
 \label{subsec:demo_screenshots}
 
-Demo được thiết kế như một cửa hàng trực tuyến, để người xem thấy hệ gợi ý hoạt động trong tình huống sử dụng thật, rồi mới xem số liệu tổng hợp. Màn hình chính là cửa hàng mô phỏng (\hinhref{media/figures/demo/demo_v2.png}{fig:demo_screenshot_hm}). Người xem chọn một khách bằng mã, ngẫu nhiên, hoặc bằng nút khách ví dụ. Cửa hàng hiện những món khách đã mua trước mốc, đúng dữ liệu mô hình đã học, và $K$ sản phẩm gợi ý dành cho khách dưới dạng thẻ sản phẩm. Khi bật chế độ so sánh, danh sách của hai mô hình được đặt cạnh nhau. Nút ``Xem khách đã mua gì'' lật đáp án: những món khách thật sự mua sau mốc được đánh dấu trong danh sách, kèm vị trí của từng món trong xếp hạng của mỗi mô hình. Với khách ví dụ, NeuMF-F đưa hai món khách mua sau mốc lên vị trí 3 và 6, còn NeuMF chỉ dùng ID xếp món gần đầu nhất ở vị trí 164.
+Demo được thiết kế như một cửa hàng trực tuyến, để người xem thấy hệ gợi ý hoạt động trong tình huống sử dụng thật, rồi mới xem số liệu tổng hợp. Màn hình chính là cửa hàng mô phỏng (\hinhref{media/figures/demo/demo_v2.png}{fig:demo_screenshot_hm}). Người xem chọn một khách bằng mã, ngẫu nhiên, hoặc bằng nút khách ví dụ. Cửa hàng hiện những món khách đã mua trước mốc, đúng dữ liệu mô hình đã học, và $K$ sản phẩm gợi ý dành cho khách dưới dạng thẻ sản phẩm. Khi bật chế độ so sánh, danh sách của hai mô hình được đặt cạnh nhau. Khi bấm nút ``Xem khách đã mua gì'', những món khách thật sự mua sau mốc được đánh dấu trong danh sách, kèm vị trí của từng món trong xếp hạng của mỗi mô hình. Với khách ví dụ, NeuMF-F đưa hai món khách mua sau mốc lên vị trí 3 và 6, còn NeuMF chỉ dùng ID xếp món gần đầu nhất ở vị trí 164.
 
-\hinhketqua{media/figures/demo/demo_v2.png}{\textwidth}{Giao diện demo: cửa hàng mô phỏng sau khi lật đáp án}{fig:demo_screenshot_hm}{chụp màn hình demo (\texttt{python run.py demo}) và lưu thành \texttt{media/figures/demo/demo\_v2.png}}
+\hinhketqua{media/figures/demo/demo_v2.png}{\textwidth}{Giao diện demo: cửa hàng mô phỏng, đã hiện các món khách mua sau mốc}{fig:demo_screenshot_hm}{chụp màn hình demo (\texttt{python run.py demo}) và lưu thành \texttt{media/figures/demo/demo\_v2.png}}
 
-Bấm vào một sản phẩm bất kỳ sẽ mở thẻ chi tiết (\hinhref{media/figures/demo/demo_v2_product.png}{fig:demo_product}) với tên, loại, màu, mô tả gốc của H\&M và số khách đã mua. Thẻ này cũng cho biết sản phẩm đứng ở vị trí nào trong gợi ý của khách đang xem, và liệt kê các sản phẩm tương tự nhất theo ItemKNN, tức những món thường được cùng nhóm khách mua. Phía dưới cửa hàng là danh sách khách có gu giống khách đang xem theo UserKNN (\hinhref{media/figures/demo/demo_v2_neighbors.png}{fig:demo_neighbors}), kèm những món họ mua chung. Sau khi lật đáp án, những láng giềng đã mua món mà khách đang xem mua sau mốc được đánh dấu. Đây là cách lọc cộng tác dựa trên láng giềng chọn ra gợi ý.
+Bấm vào một sản phẩm bất kỳ sẽ mở thẻ chi tiết (\hinhref{media/figures/demo/demo_v2_product.png}{fig:demo_product}) với tên, loại, màu, mô tả gốc của H\&M và số khách đã mua. Thẻ này cũng cho biết sản phẩm đứng ở vị trí nào trong gợi ý của khách đang xem, và liệt kê các sản phẩm tương tự nhất theo ItemKNN, tức những món thường được cùng nhóm khách mua. Phía dưới cửa hàng là danh sách khách có gu giống khách đang xem theo UserKNN (\hinhref{media/figures/demo/demo_v2_neighbors.png}{fig:demo_neighbors}), kèm những món họ mua chung. Sau khi hiện các món khách mua sau mốc, những láng giềng cũng đã mua các món đó được đánh dấu, qua đó minh họa cách lọc cộng tác dựa trên láng giềng chọn ra gợi ý.
+
+
 
 \hinhketqua{media/figures/demo/demo_v2_product.png}{0.8\textwidth}{Giao diện demo: thẻ chi tiết sản phẩm và sản phẩm tương tự}{fig:demo_product}{chụp màn hình demo và lưu thành \texttt{media/figures/demo/demo\_v2\_product.png}}
 
@@ -735,14 +718,15 @@ Khách mới chưa có trong dữ liệu đã học nhận danh sách sản ph�
 
 \hinhketqua{media/figures/demo/demo_v2_new.png}{\textwidth}{Giao diện demo: gợi ý cho khách hàng mới}{fig:demo_new_customer}{chụp màn hình demo với một mã khách không có trong dữ liệu và lưu thành \texttt{media/figures/demo/demo\_v2\_new.png}}
 
-Một khách chỉ là một ví dụ, nên màn hình kết quả đánh giá (\hinhref{media/figures/demo/demo_v2_results.png}{fig:demo_results}) tổng hợp trên toàn bộ khách của mẫu kiểm định. Màn hình xếp các mô hình thành một bậc thang, từ gợi ý ngẫu nhiên, gợi ý món bán chạy, NeuMF chỉ dùng mã, tới NeuMF-F và LateFusion-F. Mỗi bậc ghi số khách trên 100 có ít nhất một món đúng trong 10 gợi ý, và giữa hai bậc ghi rõ thứ được thêm vào mô hình. Người xem vì vậy thấy ngay phần cải thiện đến từ đâu: bước thêm đặc trưng tạo khác biệt có ý nghĩa thống kê, còn trên H\&M bước đổi cách ghép hai nhánh thì không. Bảng số liệu đầy đủ, cùng số liệu với Chương~\ref{chap:thucnghiem}, được mở từ màn hình này. Màn hình giới thiệu đề tài (\hinhref{media/figures/demo/demo_v2_overview.png}{fig:demo_overview}) tóm tắt bài toán, dữ liệu, mô hình và cách chấm.
+Một khách chỉ là một ví dụ, nên màn hình kết quả đánh giá (\hinhref{media/figures/demo/demo_v2_results.png}{fig:demo_results}) tổng hợp trên toàn bộ khách của mẫu kiểm định. Màn hình xếp các mô hình thành một bậc thang, từ gợi ý ngẫu nhiên, gợi ý món bán chạy, NeuMF chỉ dùng mã, tới NeuMF-F và LateFusion-F. Mỗi bậc ghi số khách trên 100 có ít nhất một món đúng trong 10 gợi ý, và giữa hai bậc ghi rõ thứ được thêm vào mô hình. Cách trình bày này cho thấy phần cải thiện đến từ bước nào. Trên H\&M, bước thêm đặc trưng tạo khác biệt có ý nghĩa thống kê, còn bước đổi cách ghép hai nhánh thì không. Bảng số liệu đầy đủ, cùng số liệu với Chương~\ref{chap:thucnghiem}, được mở từ màn hình này. Màn hình giới thiệu đề tài (\hinhref{media/figures/demo/demo_v2_overview.png}{fig:demo_overview}) tóm tắt bài toán, dữ liệu, mô hình và cách chấm.
 
 \hinhketqua{media/figures/demo/demo_v2_results.png}{\textwidth}{Giao diện demo: màn hình kết quả đánh giá}{fig:demo_results}{chụp màn hình demo và lưu thành \texttt{media/figures/demo/demo\_v2\_results.png}}
 
 \hinhketqua{media/figures/demo/demo_v2_overview.png}{\textwidth}{Giao diện demo: màn hình giới thiệu đề tài}{fig:demo_overview}{chụp màn hình demo và lưu thành \texttt{media/figures/demo/demo\_v2\_overview.png}}
 
+
 \FloatBarrier
 \section{Tóm tắt chương}
 \label{sec:tomtat_c3}
 
-Chương này đã trình bày dữ liệu, mô hình đề xuất NeuMF-F, các mô hình đối chứng, cách huấn luyện, quy trình đánh giá và hệ thống demo. Thiết kế đối chứng biến ba câu hỏi của đề tài thành ba phép so sánh trực tiếp. So NeuMF-F với NeuMF chỉ dùng ID cho biết đặc trưng có giúp hay không. So với GMF-F và MLP-F cho biết ghép hai nhánh có hơn từng nhánh hay không. So với LateFusion-F cho biết ghép sớm hay ghép muộn phù hợp hơn. Quy trình đánh giá bảo đảm các phép so sánh này công bằng: cùng dữ liệu, cùng ngân sách tinh chỉnh, và kết luận lấy một lần trên những khách hàng chưa từng được dùng để chọn mô hình. Chương tiếp theo trình bày kết quả của từng phép so sánh.
+Chương này đã trình bày dữ liệu, mô hình đề xuất NeuMF-F, các mô hình đối chứng, cách huấn luyện, quy trình đánh giá và hệ thống demo. Thiết kế đối chứng biến ba câu hỏi của đề tài thành ba phép so sánh trực tiếp. So NeuMF-F với NeuMF chỉ dùng ID cho biết đặc trưng có giúp hay không. So với GMF-F và MLP-F cho biết ghép hai nhánh có hơn từng nhánh hay không. So với LateFusion-F cho biết hợp nhất sớm hay hợp nhất muộn phù hợp hơn. Quy trình đánh giá bảo đảm các phép so sánh này công bằng: cùng dữ liệu, cùng ngân sách tinh chỉnh, và kết luận lấy một lần trên những khách hàng chưa từng được dùng để chọn mô hình. Chương tiếp theo trình bày kết quả của từng phép so sánh.

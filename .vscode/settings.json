@@ -1,0 +1,20 @@
+{
+  // PATH máy có C:\msys64\ucrt64\bin (Python không có numpy) đứng trước Python 3.12 -> ép VS Code dùng Python 3.12.
+  "python.defaultInterpreterPath": "${env:LOCALAPPDATA}\\Programs\\Python\\Python312\\python.exe",
+  "terminal.integrated.env.windows": {
+    "PATH": "${env:LOCALAPPDATA}\\Programs\\Python\\Python312;${env:LOCALAPPDATA}\\Programs\\Python\\Python312\\Scripts;${env:PATH}",
+    "PYTHONIOENCODING": "utf-8"
+  },
+  // Báo cáo: như Report DACNTT/.vscode/settings.json, để build được khi mở thư mục gốc (mặc định latexmk cần Perl).
+  "latex-workshop.latex.tools": [
+    { "name": "xelatex", "command": "xelatex", "args": ["-synctex=1", "-interaction=nonstopmode", "-file-line-error", "%DOC%"] },
+    { "name": "biber", "command": "biber", "args": ["%DOCFILE%"] }
+  ],
+  "latex-workshop.latex.recipes": [
+    { "name": "XeLaTeX (Nhanh)", "tools": ["xelatex"] },
+    { "name": "XeLaTeX -> Biber -> XeLaTeX*2 (Day du)", "tools": ["xelatex", "biber", "xelatex", "xelatex"] }
+  ],
+  "latex-workshop.latex.recipe.default": "XeLaTeX (Nhanh)",
+  "latex-workshop.latex.autoBuild.run": "never",
+  "latex-workshop.view.pdf.viewer": "tab"
+}

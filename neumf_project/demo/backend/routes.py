@@ -32,16 +32,22 @@ Dataset = Literal["hm", "amazon"]  # mọi API nhận ?dataset=, mặc định H
 router = APIRouter(prefix="/api")
 _cache: dict[str, DataContext] = {}  # bộ dữ liệu -> dữ liệu và mô hình đã nạp (nạp lần đầu khi cần)
 _ranks: dict[tuple[str, str], pd.Series] = {}  # (bộ dữ liệu, mô hình) -> hạng tốt nhất theo customer_id
+_ctx_lock = Lock()
 _ranks_lock = Lock()  # ponytail: một khoá chung, hai mô hình không chấm song song — đủ cho demo một người xem
 
 
 def ctx(dataset: str = "hm") -> DataContext:
-    if dataset not in _cache:
-        why = unavailable_reason(dataset)
-        if why:  # chưa có kết quả đánh giá cuối: báo lệnh cần chạy, không huấn luyện gì
-            raise HTTPException(503, why)
-        _cache[dataset] = DataContext(dataset=dataset)
-        warm_example(dataset)
+    with _ctx_lock:  # các request đầu đến cùng lúc: chỉ nạp một lần
+        if dataset not in _cache:
+            why = unavailable_reason(dataset)
+            if why:  # chưa có kết quả đánh giá cuối: báo lệnh cần chạy, không huấn luyện gì
+                raise HTTPException(503, why)
+            c = DataContext(dataset=dataset)
+            # Dựng bảng khách trước khi có luồng nền: cached_property không có khoá, hai luồng cùng dựng thì pandas
+            # đôi khi báo "cannot reindex on an axis with duplicate labels" (500 ở lần mở trang đầu).
+            c.users
+            _cache[dataset] = c
+            warm_example(dataset)
     return _cache[dataset]
 
 

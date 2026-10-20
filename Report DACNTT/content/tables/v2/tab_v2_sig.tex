@@ -1,9 +1,9 @@
 % Sinh tự động bởi neumf_project/scripts/24_report_v2.py — KHÔNG sửa tay.
-\begin{table}[htbp]
+\begin{table}[H]
     \centering\small
     \caption{Kiểm định họ 10 so sánh trên H\&M}
     \label{tab:v2sig}
-    \begin{adjustbox}{max width=\textwidth}
+    \begin{adjustbox}{max width=\textwidth, max totalheight=0.85\textheight}
     \begin{tabular}{|r|l|r|r|c|r|c|}
         \hline
         \# & \tbl{Mô hình A}{Mô hình B} & \tbc{NDCG@10}{của A, B} & (A$-$B)/B & \tbc{CI 95\%}{của A$-$B} & p Holm & Kết luận \\ \hline
@@ -19,5 +19,4 @@
         10 & \tbl{NeuMF}{BPR-MF} & \tbr{0{,}02783}{0{,}02661} & +4{,}6\% & \tbc{[$-$0{,}00036;}{+0{,}00281]} & 0{,}059 & --- \\ \hline
     \end{tabular}
     \end{adjustbox}
-    \par\smallskip{\small ``A tốt hơn'' khi p Holm $<$ 0,05, CI không chứa 0 và chênh lệch $\geq$ 5\%. ---: không khác biệt có ý nghĩa.}
 \end{table}

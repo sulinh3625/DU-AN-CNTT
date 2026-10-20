@@ -366,7 +366,7 @@ def grid(colspec: str) -> str:
     return "|" + "|".join(cols) + "|"
 
 
-def table(label: str, caption: str, colspec: str, header: list[str] | str, rows: list[list[str]], note: str = "",
+def table(label: str, caption: str, colspec: str, header: list[str] | str, rows: list[list[str]],
           colsep: str = "", size: str = "\\small") -> str:
     """Bảng kẻ lưới đầy đủ: | giữa mọi cột, \\hline sau mọi hàng. header: danh sách ô của một hàng tiêu đề, hoặc chuỗi
     LaTeX của nhiều hàng tiêu đề (tự kết thúc bằng \\hline). colsep: \\tabcolsep riêng cho bảng rộng (vd. "4pt");
@@ -374,13 +374,13 @@ def table(label: str, caption: str, colspec: str, header: list[str] | str, rows:
     body = "\n".join("        " + " & ".join(r) + r" \\ \hline" for r in rows)
     head = header if isinstance(header, str) else f"        {' & '.join(header)} \\\\ \\hline"
     sep = f"\\setlength{{\\tabcolsep}}{{{colsep}}}" if colsep else ""
-    note_tex = f"\n    \\par\\smallskip{{\\small {note}}}" if note else ""
-    return (f"{HEADER}\n\\begin{{table}}[htbp]\n    \\centering{size}{sep}\n"
+    return (f"{HEADER}\n\\begin{{table}}[H]\n    \\centering{size}{sep}\n"
             f"    \\caption{{{caption}}}\n    \\label{{{label}}}\n"
-            "    \\begin{adjustbox}{max width=\\textwidth}\n"
+            # [H] đặt bảng đúng chỗ trong văn bản, nên bảng cao hơn trang (kết quả chính) phải tự thu nhỏ cho vừa
+            "    \\begin{adjustbox}{max width=\\textwidth, max totalheight=0.85\\textheight}\n"
             f"    \\begin{{tabular}}{{{grid(colspec)}}}\n        \\hline\n"
             f"{head}\n{body}\n"
-            f"    \\end{{tabular}}\n    \\end{{adjustbox}}{note_tex}\n\\end{{table}}\n")
+            f"    \\end{{tabular}}\n    \\end{{adjustbox}}\n\\end{{table}}\n")
 
 
 class Macros:
@@ -497,9 +497,7 @@ def export_data_amazon(m: Macros, tables: Path, info: dict, entry: dict) -> None
         if st in info:
             m.add("data", st, "cand", thousands(round(info[st]["candidates_mean"])))
     (tables / f"{TEXT['tab']}data.tex").write_text(table(
-        f"{TEXT['label']}data", "Quy mô dữ liệu Amazon Beauty", "lr", ["", "Amazon Beauty"], rows,
-        f"Mỗi sản phẩm là một mã \\texttt{{asin}}. Mốc kiểm thử {ts}; tập xác thực từ {vs} đến "
-        f"{vn_date(str(np.datetime64(V.CFG['test_start'], 'D') - 1))}, chỉ dùng để chọn số epoch."),
+        f"{TEXT['label']}data", "Quy mô dữ liệu Amazon Beauty", "lr", ["", "Amazon Beauty"], rows),
         encoding="utf-8")
 
 
@@ -532,13 +530,9 @@ def export_data(m: Macros, tables: Path, info_a: dict, info_b: dict | None) -> N
         for k in ("users", "targets", "scoreable", "train_pairs"):
             m.add("data", "Btest", k.replace("_", ""), thousands(tb["test"][k]))
         m.add("data", "Btest", "cand", thousands(round(tb["test"]["candidates_mean"])))
-    note = ("Mỗi sản phẩm là một mẫu thiết kế (\\texttt{product\\_code}), gộp mọi màu. Hai mẫu không chung khách hàng; "
-            "mẫu phát triển chỉ dùng tập xác thực.")
-    if not tb:
-        note += " Mẫu kiểm định chỉ được dựng ở lần đánh giá cuối."
     (tables / "tab_v2_data.tex").write_text(table(
         "tab:v2data", "Quy mô dữ liệu H\\&M", "lrr",
-        ["", "Mẫu phát triển", "Mẫu kiểm định"], rows, note),
+        ["", "Mẫu phát triển", "Mẫu kiểm định"], rows),
         encoding="utf-8")
 
 
@@ -572,14 +566,10 @@ def export_tuning(m: Macros, tables: Path, best: dict, bs: dict | None = None) -
             m.add("cfg", "all", "nneural", str(len(neural)))
             m.add("cfg", "all", "epochmax", str(int(neural["best_epoch"].max())))
             m.add("cfg", "all", "epochmedian", vn(float(neural["best_epoch"].median()), 0))
-    note = ("d: số chiều vector nhúng; lr: tốc độ học; reg, wd: hệ số điều chuẩn; neg: số mẫu âm; shrink: hệ số co; "
-            "bỏ~ID: xác suất bỏ vector nhúng ID của sản phẩm.")
-    if "hybrid" in bs:
-        note += f" {DAGGER}Mô hình bổ sung sau đánh giá cuối (\\bangrefV{{tab_v2_hybrid.tex}}{{tab:v2hybrid}})."
     (tables / "tab_v2_tuning.tex").write_text(table(
         "tab:v2tuning", "Cấu hình tốt nhất trên tập xác thực",
         "l>{\\raggedright\\arraybackslash}p{6.8cm}rr",
-        ["Mô hình", "Cấu hình chọn", "NDCG@10", "HR@10"], rows, note),
+        ["Mô hình", "Cấu hình chọn", "NDCG@10", "HR@10"], rows),
         encoding="utf-8")
 
 
@@ -597,7 +587,6 @@ def export_hybrid_tuning(m: Macros, tables: Path, best: dict, hb: dict) -> None:
     comp = [(NAME[k], parts[k]["NDCG@10"], parts[k]["HR@10"]) for k in ("content", "userknn", "itemknn")]
     for k in ("content", "userknn", "itemknn"):
         m.add("val", "Hyb" + KEY[k], "NDCG10", vn(parts[k]["NDCG@10"]))
-    differ = [k for k in parts if vn(parts[k]["NDCG@10"]) != vn(best[k]["val"]["NDCG@10"])]
     fus = []
     for _, r in t.iterrows():
         p = json.loads(r["params"])
@@ -620,11 +609,7 @@ def export_hybrid_tuning(m: Macros, tables: Path, best: dict, hb: dict) -> None:
     m.add("cfg", "Hyb", "nneg", str(hb.get("pairwise", {}).get("n_neg", "")))
     (tables / "tab_v2_hybrid.tex").write_text(table(
         "tab:v2hybrid", "Các cách kết hợp của Hybrid-CBCF", "lrr",
-        ["Mô hình", "NDCG@10", "HR@10"], rows,
-        "In đậm: cao nhất mỗi cột. Cách kết hợp được mô tả ở Thuật toán~\\ref{alg:hybrid}."
-        + ("" if not differ else " " + ", ".join(f"{NAME[k]} khác \\bangrefV{{tab_v2_tuning.tex}}{{tab:v2tuning}} "
-                                                f"({vn(best[k]['val']['NDCG@10'])})" for k in differ)
-           + " do vector văn bản được dựng lại.")), encoding="utf-8")
+        ["Mô hình", "NDCG@10", "HR@10"], rows), encoding="utf-8")
 
 
 def tex_escape(text: str) -> str:
@@ -680,9 +665,7 @@ def export_supplement(m: Macros, tables: Path, sig_bs: pd.DataFrame, sup: dict, 
         m.add("sig", "bs", "nsig", str(int((sig_bs["verdict"] != NOT_SIG).sum())))
         (tables / f"{tab}sigbs.tex").write_text(table(
             f"{lab}sigbs", f"Kiểm định bổ sung với Hybrid-CBCF trên {TEXT['short']}",
-            SIG_COLS, SIG_HEADER, rows,
-            "Họ so sánh bổ sung, đăng ký sau đánh giá cuối; tiêu chí kết luận như họ 10 so sánh. ---: không khác biệt "
-            "có ý nghĩa."), encoding="utf-8")
+            SIG_COLS, SIG_HEADER, rows), encoding="utf-8")
     prov, mach = sup.get("provenance", {}), sup.get("machine", {})
     m.add("data", "bs", "commit", str(prov.get("git_commit") or "")[:7])
     m.add("data", "bs", "cpu", tex_escape(str(mach.get("cpu", ""))))
@@ -696,7 +679,7 @@ def export_supplement(m: Macros, tables: Path, sig_bs: pd.DataFrame, sup: dict, 
             m.add("data", f"bs{key}", "same", f"{thousands(c['users_same_ranks'])}/{thousands(c['users'])}")
 
 
-def export_results(m: Macros, tables: Path, seeds, summary, sig, abl, bey, info_b, display=None,
+def export_results(m: Macros, tables: Path, seeds, summary, sig, abl, bey, display=None,
                    bey_display=None) -> None:
     """summary, sig, abl, bey: 14 mô hình đăng ký trước (thứ hạng \\<P>Rank tính trên đây). display, bey_display: thêm mô
     hình bổ sung (SUP, đánh dấu †) — dùng cho bảng kết quả theo ba nhóm và bảng độ phủ."""
@@ -736,17 +719,10 @@ def export_results(m: Macros, tables: Path, seeds, summary, sig, abl, bey, info_
             k = shown.index(mm) + 1
             m.add("rank", KEY[mm], "all", ORDINAL.get(k, str(k)))
     m.add("rank", "all", "n", str(len(shown)))
-    n_users = info_b.get("test", info_b["val"])["users"]
-    note = (f"Trung bình (dòng trên) và độ lệch chuẩn (dòng dưới) qua {n_seed} seed, {thousands(n_users)} người dùng. "
-            "In đậm: cao nhất mỗi cột.")
-    if any(mm in SUP for mm in shown):
-        note += f" {DAGGER}Mô hình bổ sung sau đánh giá cuối, không thuộc họ 10 so sánh."
-    if not V.TUNED_HERE:
-        note += " Cấu hình lấy từ H\\&M."
     (tables / f"{tab}main.tex").write_text(table(
         f"{lab}main", f"Kết quả trên tập kiểm thử {TEXT['short']}",
         "l" + "r" * len(TABLE_METRICS),
-        ["Mô hình", *[rf"\tbc{{{c.split('@')[0]}}}{{@{c.split('@')[1]}}}" for c in TABLE_METRICS]], rows, note,
+        ["Mô hình", *[rf"\tbc{{{c.split('@')[0]}}}{{@{c.split('@')[1]}}}" for c in TABLE_METRICS]], rows,
         colsep="5pt", size="\\footnotesize"), encoding="utf-8")  # 7 cột hai dòng: vừa khổ trang không cần thu nhỏ
     m.add("data", "run", "seeds", str(n_seed))
     models = shown  # bảng độ phủ: mọi mô hình của bảng chính
@@ -761,9 +737,7 @@ def export_results(m: Macros, tables: Path, seeds, summary, sig, abl, bey, info_
         m.add("sig", "all", "n", str(len(sig)))
         (tables / f"{tab}sig.tex").write_text(table(
             f"{lab}sig", f"Kiểm định họ {len(sig)} so sánh trên {TEXT['short']}",
-            SIG_COLS, SIG_HEADER, rows,
-            "``A tốt hơn'' khi p Holm $<$ 0,05, CI không chứa 0 và chênh lệch $\\geq$ 5\\%. ---: không khác biệt có ý "
-            "nghĩa."), encoding="utf-8")
+            SIG_COLS, SIG_HEADER, rows), encoding="utf-8")
 
     # Ablation
     if not abl.empty:
@@ -780,12 +754,9 @@ def export_results(m: Macros, tables: Path, seeds, summary, sig, abl, bey, info_
                 m.add("abl", key, "lo", vn(r["ci_low"], sign=True))
                 m.add("abl", key, "hi", vn(r["ci_high"], sign=True))
         m.add("abl", "Full", "NDCG10", vn(abl.iloc[0]["NDCG@10"]))
-        note = (f"Seed {int(abl.iloc[0]['seed'])}, chỉ mô tả, không kiểm định. Thay đổi: (biến thể $-$ đầy đủ)/đầy đủ.")
-        if V.DATASET == "amazon":
-            note += " Amazon không có thuộc tính khách nên ``bỏ thông tin khách hàng'' là bỏ đặc trưng thời gian của khách."
         (tables / f"{tab}ablation.tex").write_text(table(
             f"{lab}ablation", f"Phân tích bóc tách NeuMF-F trên {TEXT['short']}", "lrrc",
-            ["Biến thể", "NDCG@10", "Thay đổi", "CI 95\\% của hiệu"], rows, note), encoding="utf-8")
+            ["Biến thể", "NDCG@10", "Thay đổi", "CI 95\\% của hiệu"], rows), encoding="utf-8")
 
     # Mô tả top-10 và thời gian
     b = bey.set_index("model")
@@ -800,14 +771,10 @@ def export_results(m: Macros, tables: Path, seeds, summary, sig, abl, bey, info_
             m.add("bey", KEY[mm], "epoch", vn(ep, 1))
     (tables / f"{tab}beyond.tex").write_text(table(
         f"{lab}beyond", f"Độ phủ top-10 và chi phí huấn luyện trên {TEXT['short']}", "lrrr",
-        ["Mô hình", "Độ phủ ứng viên", "Số epoch chọn", "Thời gian (phút)"], rows,
-        "Độ phủ: tỉ lệ ứng viên xuất hiện trong top-10 của ít nhất một người dùng (seed 42). Số epoch và thời gian "
-        "là trung bình qua seed."
-        + (f" {DAGGER}Mô hình bổ sung, đo trên máy chỉ có CPU." if any(mm in SUP for mm in models)
-           else "")), encoding="utf-8")
+        ["Mô hình", "Độ phủ ứng viên", "Số epoch chọn", "Thời gian (phút)"], rows), encoding="utf-8")
 
 
-def export_by_k(m: Macros, tables: Path, bk: pd.DataFrame, n_seed: int) -> None:
+def export_by_k(m: Macros, tables: Path, bk: pd.DataFrame) -> None:
     """Hai bảng theo K = 5, 10, 15, 20 (NDCG và Recall; HR và Precision) + macro \\<P>Res{mô hình}{NDCG15}, ...
     Thứ tự dòng như bảng kết quả chính (NDCG@10 giảm dần)."""
     if bk.empty:
@@ -833,10 +800,7 @@ def export_by_k(m: Macros, tables: Path, bk: pd.DataFrame, n_seed: int) -> None:
         header = (rf"        \multirow{{2}}{{*}}{{Mô hình}} & \multicolumn{{{nk}}}{{c|}}{{{pair[0]}@K}} & "
                   rf"\multicolumn{{{nk}}}{{c|}}{{{pair[1]}@K}} \\ \cline{{2-{1 + 2 * nk}}}" + "\n"
                   + "         & " + " & ".join(f"@{k}" for _ in pair for k in K_ALL) + r" \\ \hline")
-        note = f"Trung bình qua {n_seed} seed. In đậm: cao nhất mỗi cột."
-        if any(mm in SUP for mm in by.index):
-            note += f" {DAGGER}Mô hình bổ sung sau đánh giá cuối."
-        text = table(f"{lab}k{part}", f"{pair[0]}@K và {pair[1]}@K trên {TEXT['short']}", "l" + "r" * len(cols), header, rows, note, colsep="4pt")
+        text = table(f"{lab}k{part}", f"{pair[0]}@K và {pair[1]}@K trên {TEXT['short']}", "l" + "r" * len(cols), header, rows, colsep="4pt")
         (tables / f"{tab}k{part}.tex").write_text(text, encoding="utf-8")
 
 
@@ -1193,8 +1157,8 @@ def main():
         else:  # Amazon: một bộ dữ liệu, không tinh chỉnh
             manifest = json.loads(V.MANIFEST.read_text(encoding="utf-8")) if V.MANIFEST.exists() else {}
             export_data_amazon(m, tables, info_b, manifest.get(V.data_name("holdout"), {}))
-        export_results(m, tables, seeds, summary, sig, abl, bey, info_b, display, bey_all)
-        export_by_k(m, tables, bk_all, len(seeds))
+        export_results(m, tables, seeds, summary, sig, abl, bey, display, bey_all)
+        export_by_k(m, tables, bk_all)
         export_run(m, seeds, res)
         if sup is not None:
             export_supplement(m, tables, sig_bs, sup, len(seeds))

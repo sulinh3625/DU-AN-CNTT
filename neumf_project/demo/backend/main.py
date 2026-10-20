@@ -5,12 +5,18 @@ Chạy từ thư mục neumf_project/:
 """
 from __future__ import annotations
 
+import sys
 from pathlib import Path
 
 from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
 
 from .routes import router
+
+# Như run.py: khi output bị chuyển hướng (file log, dịch vụ), Windows dùng codepage cp1258 -> print tiếng Việt lúc nạp
+# dữ liệu (data_context.py) làm hỏng request đầu tiên.
+sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+sys.stderr.reconfigure(encoding="utf-8", errors="replace")
 
 app = FastAPI(title="H&M Recommendation Demo API")
 app.include_router(router)
