@@ -1,13 +1,13 @@
 \newpage
 \begin{center}
 {\fontsize{15pt}{18pt}\selectfont \textbf{XÂY DỰNG MÔ HÌNH KHUYẾN NGHỊ LAI KẾT HỢP NHÂN TỬ HOÁ MA TRẬN VÀ MẠNG LƯỚI THẦN KINH SÂU}\par}
-\vspace{0.5cm}
+\vspace{0.3cm}
 {\fontsize{16pt}{19.2pt}\selectfont \textbf{TÓM TẮT}\par}
 \end{center}
-\vspace{0.2cm}
+\vspace{0.15cm}
 
-Khuyến nghị sản phẩm thời trang trên dữ liệu giao dịch thực tế gặp hai khó khăn. Ma trận tương tác giữa khách hàng và sản phẩm rất thưa, trong khi nhân tử hoá ma trận (MF) chỉ học từ mã khách hàng và mã sản phẩm qua một tích vô hướng tuyến tính. Đề tài xây dựng NeuMF-F, một mô hình lai giữ cấu trúc hai nhánh của Neural Matrix Factorization (NeuMF): nhánh nhân tử hoá ma trận tổng quát (GMF) và nhánh perceptron đa tầng (MLP). Mỗi khách hàng và sản phẩm được biểu diễn bằng vector nhúng mã định danh cộng với một phép chiếu của đặc trưng, gồm thuộc tính và mô tả văn bản của sản phẩm, thông tin khách hàng, doanh số gần đây và nhịp mua của khách.
+Hệ thống khuyến nghị giúp cửa hàng trực tuyến chọn ra cho mỗi khách những sản phẩm phù hợp trong một danh mục rất lớn. Với dữ liệu thời trang, bài toán này khó vì mỗi khách chỉ mua một phần rất nhỏ của danh mục, làm cho ma trận tương tác giữa khách hàng và sản phẩm rất thưa. Nhân tử hoá ma trận (MF) là phương pháp phổ biến, nhưng chỉ học từ mã khách hàng, mã sản phẩm và chỉ kết hợp chúng bằng một tích vô hướng tuyến tính. Đề tài xây dựng mô hình lai NeuMF-F dựa trên kiến trúc Neural Matrix Factorization (NeuMF), gồm nhánh nhân tử hoá ma trận tổng quát (GMF) và nhánh perceptron đa tầng (MLP). Trong NeuMF-F, mỗi khách hàng và sản phẩm được biểu diễn bằng vector nhúng mã định danh cộng với phần chiếu của đặc trưng. Các đặc trưng gồm thuộc tính và mô tả của sản phẩm, thông tin khách hàng, doanh số gần đây của sản phẩm và lịch sử mua gần đây của khách.
 
-Mô hình được đánh giá trên bộ dữ liệu giao dịch thời trang H\&M. Dữ liệu được chia theo thời gian, đặc trưng chỉ dùng thông tin trước thời điểm dự đoán, và cấu hình được chọn trên một mẫu khách hàng riêng. Kết quả cuối được đánh giá trên một mẫu khách hàng độc lập, theo kế hoạch đăng ký trước và có kiểm định thống kê. NeuMF-F được so sánh với các mô hình đối chứng thuộc ba nhóm, tất cả được tinh chỉnh với cùng ngân sách.
+Nhóm đánh giá mô hình trên dữ liệu giao dịch thời trang của H\&M. Dữ liệu được chia theo thời gian, và đặc trưng chỉ dùng thông tin có trước thời điểm dự đoán. Cấu hình của các mô hình được chọn trên một mẫu khách hàng, còn kết quả cuối được đo trên một mẫu khách hàng khác theo kế hoạch đã đăng ký trước, có kiểm định thống kê. NeuMF-F được so sánh với các mô hình đối chứng thuộc ba nhóm, và mọi mô hình được tinh chỉnh với cùng ngân sách. Kết quả sau đó được kiểm chứng lại trên bộ dữ liệu Amazon Beauty.
 
-NeuMF-F vượt có ý nghĩa thống kê các mô hình đối chứng được tinh chỉnh đầy đủ, và kết quả này lặp lại trên bộ dữ liệu Amazon Beauty. Kết luận chính là bổ sung đặc trưng giúp mô hình khuyến nghị tốt hơn rõ rệt so với khi chỉ dùng mã định danh, trong đó đặc trưng thời gian đóng góp nhiều nhất. Các mô hình có đặc trưng dẫn đầu trên cả hai bộ dữ liệu với cả hai cách hợp nhất sớm và muộn. Đề tài cũng xây dựng một hệ thống demo minh hoạ khuyến nghị cho từng khách hàng.
+Báo cáo trình bày cơ sở lý thuyết, quy trình xử lý dữ liệu, kiến trúc NeuMF-F, quy trình huấn luyện và đánh giá, rồi đến kết quả thực nghiệm trên hai bộ dữ liệu. Đề tài cũng xây dựng một hệ thống demo minh hoạ khuyến nghị cho từng khách hàng. Đề tài góp phần làm rõ vai trò của đặc trưng sản phẩm, khách hàng, thời gian và vai trò của cách hợp nhất hai nhánh trong mô hình khuyến nghị lai.

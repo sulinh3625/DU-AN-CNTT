@@ -123,7 +123,7 @@ def recommend(ctx, model_name: str, u: int, k: int) -> dict:
                          key=lambda t: t["rank"])
     final = final_result(ctx, model_name, u, res["ranks"]) if res["ranks"] else None
     if not res["ranks"]:
-        note = ("Khách không mua sản phẩm mới nào trong giai đoạn đánh giá: chỉ hiển thị gợi ý trên "
+        note = ("Khách không mua sản phẩm mới nào trong giai đoạn đánh giá: chỉ hiển thị khuyến nghị trên "
                 f"{res['n_candidates']:,} ứng viên".replace(",", ".") + ", không có sản phẩm đích để đối chiếu.")
     else:
         note = MISMATCH_NOTE if final is not None and not final["match"] else None
@@ -148,7 +148,7 @@ def popular(ctx, k: int) -> dict:
         "k": k,
         "fallback": "popular",
         "label": "Gợi ý phổ biến",
-        "note": "Khách chưa có trong dữ liệu đã học (khách mới, hoặc chưa đủ lần mua để qua lọc k-core): hệ thống gợi ý "
+        "note": "Khách chưa có trong dữ liệu đã học (khách mới, hoặc chưa đủ lần mua để qua lọc k-core): hệ thống khuyến nghị "
                 "các sản phẩm được nhiều khách mua nhất trước mốc. Khi khách đã có lịch sử mua, hệ thống dùng mô hình đề "
                 "xuất.",
         "score_kind": SCORE_KIND["MostPopular"],

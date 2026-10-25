@@ -10,6 +10,7 @@
   đối >= 5%;
 - NDCG/Recall/HR/Precision@K với K = 5, 10, 15, 20, tính lại từ hạng của từng sản phẩm đúng đã lưu (cột ranks của
   per_user.csv.gz) — không chấm lại tập kiểm thử; @5/@10/@20 trùng khớp số của lần đánh giá cuối (kiểm tra khi chạy);
+  bảng và ket_qua.txt chỉ trình bày K = 10, 15, 20 (K_BAOCAO);
 - ablation NeuMF-F (seed 42), mô tả top-10 (độ phủ), số epoch và thời gian huấn luyện.
 Không còn sản phẩm mới (một sản phẩm = product_code, ứng viên chỉ gồm sản phẩm đã có cặp huấn luyện) nên không còn phân
 tích theo nhóm sản phẩm cũ/mới.
@@ -80,9 +81,11 @@ COMPARISONS = [("neumf_f", "neumf"), ("neumf_f", "gmf_f"), ("neumf_f", "mlp_f"),
                ("neumf_f", "bpr"), ("neumf_f", "itemknn"), ("neumf_f", "userknn"), ("neumf_f", "recent_pop"),
                ("neumf_f", "content"), ("neumf", "bpr")]
 METRICS = ["NDCG@10", "Recall@10", "HR@10", "Precision@10", "NDCG@5", "NDCG@20"]
-TABLE_METRICS = ["NDCG@10", "Recall@10", "HR@10", "Precision@10", "NDCG@5", "NDCG@20"]
-# Bảng theo K: tính lại từ hạng đã lưu của đánh giá cuối (by_k), không chấm lại tập kiểm thử.
+TABLE_METRICS = ["NDCG@10", "Recall@10", "HR@10", "Precision@10"]
+# Bảng theo K: tính lại từ hạng đã lưu của đánh giá cuối (by_k), không chấm lại tập kiểm thử. by_k.csv vẫn tính đủ
+# K_ALL (để đối chiếu tái lập); báo cáo chỉ trình bày K_BAOCAO (nhóm bỏ K = 5 ngày 24/10/2026: quá ít để khuyến nghị trúng).
 K_ALL = (5, 10, 15, 20)
+K_BAOCAO = (10, 15, 20)
 K_METRICS = ("NDCG", "Recall", "HR", "Precision")
 NOT_SIG = "không khác biệt có ý nghĩa"
 N_BOOT, BOOT_SEED, ALPHA, MIN_REL = 10_000, 0, 0.05, 0.05
@@ -596,7 +599,7 @@ def export_hybrid_tuning(m: Macros, tables: Path, best: dict, hb: dict) -> None:
         fus.append((label, r["val_NDCG@10"], r["val_HR@10"]))
         m.add("val", "Hyb" + p["fusion"].capitalize(), "NDCG10", vn(r["val_NDCG@10"]))
     top = [max(x[i] for x in comp + fus) for i in (1, 2)]
-    bold = lambda v, i: rf"\textbf{{{vn(v)}}}" if v == top[i] else vn(v)  # noqa: E731
+    bold = lambda v, i: vn(v)  # Không in đậm số lớn nhất theo yêu cầu
     rows = [[r"\multicolumn{3}{|l|}{\textit{Thành phần đứng riêng}}"]]
     rows += [[lab, bold(a, 0), bold(b, 1)] for lab, a, b in comp]
     rows += [[r"\multicolumn{3}{|l|}{\textit{Hybrid-CBCF theo cách kết hợp}}"]]
@@ -705,8 +708,6 @@ def export_results(m: Macros, tables: Path, seeds, summary, sig, abl, bey, displ
             for c in TABLE_METRICS:
                 mean, sd = by.loc[mm, f"{c}_mean"], by.loc[mm, f"{c}_std"]
                 cell = vn(mean)
-                if mean == best_val[c]:
-                    cell = rf"\textbf{{{cell}}}"
                 r.append(rf"\tbsd{{{cell}}}{{{vn(sd)}}}")  # độ lệch chuẩn ở dòng dưới, cùng cỡ chữ
             rows.append(r)
     for mm in shown:
@@ -775,7 +776,7 @@ def export_results(m: Macros, tables: Path, seeds, summary, sig, abl, bey, displ
 
 
 def export_by_k(m: Macros, tables: Path, bk: pd.DataFrame) -> None:
-    """Hai bảng theo K = 5, 10, 15, 20 (NDCG và Recall; HR và Precision) + macro \\<P>Res{mô hình}{NDCG15}, ...
+    """Hai bảng theo K = 10, 15, 20 (NDCG và Recall; HR và Precision) + macro \\<P>Res{mô hình}{NDCG15}, ...
     Thứ tự dòng như bảng kết quả chính (NDCG@10 giảm dần)."""
     if bk.empty:
         return
@@ -787,19 +788,19 @@ def export_by_k(m: Macros, tables: Path, bk: pd.DataFrame) -> None:
                 m.add("sd", KEY[mm], f"{n}{k}", vn(by.loc[mm, f"{n}@{k}_std"]))
     tab, lab = TEXT["tab"], TEXT["label"]
     for part, pair in ((1, ("NDCG", "Recall")), (2, ("HR", "Precision"))):
-        cols = [f"{n}@{k}" for n in pair for k in K_ALL]
+        cols = [f"{n}@{k}" for n in pair for k in K_BAOCAO]
         best = {c: by[f"{c}_mean"].max() for c in cols}
         rows = []
         for mm in by.index:
             r = [NAME[mm] + (DAGGER if mm in SUP else "")]
             for c in cols:
                 v = by.loc[mm, f"{c}_mean"]
-                r.append(rf"\textbf{{{vn(v, 4)}}}" if v == best[c] else vn(v, 4))
+                r.append(vn(v, 4))
             rows.append(r)
-        nk = len(K_ALL)
+        nk = len(K_BAOCAO)
         header = (rf"        \multirow{{2}}{{*}}{{Mô hình}} & \multicolumn{{{nk}}}{{c|}}{{{pair[0]}@K}} & "
                   rf"\multicolumn{{{nk}}}{{c|}}{{{pair[1]}@K}} \\ \cline{{2-{1 + 2 * nk}}}" + "\n"
-                  + "         & " + " & ".join(f"@{k}" for _ in pair for k in K_ALL) + r" \\ \hline")
+                  + "         & " + " & ".join(f"@{k}" for _ in pair for k in K_BAOCAO) + r" \\ \hline")
         text = table(f"{lab}k{part}", f"{pair[0]}@K và {pair[1]}@K trên {TEXT['short']}", "l" + "r" * len(cols), header, rows, colsep="4pt")
         (tables / f"{tab}k{part}.tex").write_text(text, encoding="utf-8")
 
@@ -1004,14 +1005,15 @@ def text_report(seeds, summary, sig, abl, bey, info_b, bk: pd.DataFrame | None =
            f"Không tinh chỉnh trên {V.NAME}: cấu hình lấy từ {V.CFG.get('best_configs')} (chọn trên H&M); số epoch "
            "chọn trên tập xác thực của bộ này."])
     if bk is None or bk.empty:
-        block("2. NDCG theo K", ["Mô hình", "NDCG@5", "NDCG@10", "NDCG@20"],
-              [[NAME[m], *(ms(m, c) for c in ("NDCG@5", "NDCG@10", "NDCG@20"))] for m in s.index])
+        block("2. NDCG theo K", ["Mô hình", "NDCG@10", "NDCG@20"],
+              [[NAME[m], *(ms(m, c) for c in ("NDCG@10", "NDCG@20"))] for m in s.index])
     else:
         b = bk.set_index("model")
         mk_ = lambda m, c: f"{f(b.loc[m, f'{c}_mean'])} ± {f(b.loc[m, f'{c}_std'])}"  # noqa: E731
         for i, n in enumerate(K_METRICS):
-            block(f"2{'abcd'[i]}. {n}@K với K = {', '.join(map(str, K_ALL))}", ["Mô hình", *(f"{n}@{k}" for k in K_ALL)],
-                  [[NAME[m], *(mk_(m, f"{n}@{k}") for k in K_ALL)] for m in b.index],
+            block(f"2{'abcd'[i]}. {n}@K với K = {', '.join(map(str, K_BAOCAO))}",
+                  ["Mô hình", *(f"{n}@{k}" for k in K_BAOCAO)],
+                  [[NAME[m], *(mk_(m, f"{n}@{k}") for k in K_BAOCAO)] for m in b.index],
                   ["Tính lại từ hạng đã lưu của lần đánh giá cuối (by_k.csv), không chấm lại tập kiểm thử."]
                   if i == len(K_METRICS) - 1 else ())
     if not sig.empty:
@@ -1047,8 +1049,8 @@ def text_report(seeds, summary, sig, abl, bey, info_b, bk: pd.DataFrame | None =
                        "đăng ký trước."])
         if bk_all is not None and not bk_all.empty and "hybrid" in set(bk_all["model"]):
             b = bk_all.set_index("model")
-            block("6a. Hybrid-CBCF theo K", ["Độ đo", *(f"@{k}" for k in K_ALL)],
-                  [[n, *(f(b.loc["hybrid", f"{n}@{k}_mean"]) for k in K_ALL)] for n in K_METRICS])
+            block("6a. Hybrid-CBCF theo K", ["Độ đo", *(f"@{k}" for k in K_BAOCAO)],
+                  [[n, *(f(b.loc["hybrid", f"{n}@{k}_mean"]) for k in K_BAOCAO)] for n in K_METRICS])
         if sig_bs is not None and not sig_bs.empty:
             block("6b. Kiểm định họ bổ sung (NDCG@10; Wilcoxon, hiệu chỉnh Holm trong họ, CI bootstrap 95%)",
                   ["#", "A", "B", "Chênh (A−B)/B", "CI 95% của A−B", "p Holm", "Kết luận"],

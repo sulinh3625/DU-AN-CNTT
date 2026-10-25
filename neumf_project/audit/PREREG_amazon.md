@@ -169,4 +169,7 @@ hình đề tài hay tiêu chí sau khi xem kết quả. Kết quả Amazon ngư
 
 ## 10. Lệch kế hoạch
 
-(chưa có)
+1. **Thêm K = 15 và bảng đủ bốn độ đo ở K = 5, 10, 15, 20 (sau đánh giá cuối).** Như `PREREG_v2.md` mục 10.2: theo
+   góp ý của GVHD (họp 04/10/2026), các số này tính lại từ hạng đã lưu ở lần đánh giá cuối (`by_k.csv`), không chấm lại
+   tập kiểm thử, không đổi độ đo chính, họ so sánh hay tiêu chí kết luận; chỉ để mô tả, không kiểm định.
+2. **Báo cáo bỏ K = 5 (24/10/2026).** Như `PREREG_v2.md` mục 10.3: chỉ trình bày K = 10, 15, 20; số @5 vẫn được lưu.

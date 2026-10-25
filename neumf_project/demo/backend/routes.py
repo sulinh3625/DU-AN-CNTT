@@ -61,7 +61,7 @@ def _user(c: DataContext, customer_id: str) -> int | None:
 
 
 NEW_CUSTOMER_NOTE = ("Khách chưa có trong dữ liệu đã học (khách mới, hoặc chưa đủ lần mua để qua lọc k-core): chưa có "
-                     "lịch sử để cá nhân hoá, hệ thống gợi ý sản phẩm phổ biến.")
+                     "lịch sử để cá nhân hoá, hệ thống khuyến nghị sản phẩm phổ biến.")
 
 
 def user_profile(c: DataContext, u: int | None, customer_id: str) -> dict:
@@ -167,9 +167,20 @@ def datasets():
     return [{"key": k, "label": d["label"], "reason": unavailable_reason(k)} for k, d in DATASETS.items()]
 
 
+def amazon_image_path(asin: str) -> str:
+    """Ảnh Amazon đã tải về máy (demo/scripts/download_amazon_images.py): <DEMO_IMAGES_DIR>/amazon/<asin>.jpg."""
+    return os.path.join(IMAGES_DIR, "amazon", f"{asin}.jpg")
+
+
 def has_images(dataset: str) -> bool:
-    """Có ảnh sản phẩm thật không: Amazon lấy ảnh theo imUrl gốc; H&M cần thư mục ảnh đã chép (copy_images.py)."""
-    return dataset == "amazon" or (os.path.isdir(IMAGES_DIR) and any(os.scandir(IMAGES_DIR)))
+    """Có ảnh sản phẩm thật trên máy không: H&M cần ảnh đã chép (copy_images.py), Amazon cần ảnh đã tải
+    (download_amazon_images.py). Demo không kéo ảnh trực tiếp từ nguồn ngoài."""
+    if not os.path.isdir(IMAGES_DIR):
+        return False
+    if dataset == "amazon":
+        sub = os.path.join(IMAGES_DIR, "amazon")
+        return os.path.isdir(sub) and any(os.scandir(sub))
+    return any(e.name != "amazon" for e in os.scandir(IMAGES_DIR))
 
 
 @router.get("/context")
@@ -340,7 +351,7 @@ def recommend(customer_id: str, model: str = "", k: int = 10, dataset: Dataset =
     biến" — không bao giờ để trống."""
     c = ctx(dataset)
     if k not in c.k_values:
-        raise HTTPException(400, f"K phải thuộc {c.k_values} (evaluation.k_values trong config + DEMO_EXTRA_K).")
+        raise HTTPException(400, f"K phải thuộc {c.k_values} (DEMO_K trong data_context.py).")
     model = model or c.available_models[0]
     if model not in c.available_models:
         reason = c.unavailable.get(model, "Model không hỗ trợ.")
@@ -382,13 +393,13 @@ def dashboard(dataset: Dataset = "hm"):
 
 @router.get("/image/{article_id}")
 def image(article_id: str, dataset: Dataset = "hm"):
-    """Ảnh H&M trong DEMO_IMAGES_DIR; không có ảnh (hoặc Amazon thiếu imUrl / ảnh lỗi) thì vẽ ô thay thế ghi loại sản
-    phẩm."""
+    """Ảnh sản phẩm đã lưu trên máy (H&M: DEMO_IMAGES_DIR/<3 số đầu>/; Amazon: DEMO_IMAGES_DIR/amazon/); không có ảnh
+    thì vẽ ô thay thế ghi loại sản phẩm."""
     aid = article_id.zfill(10) if dataset == "hm" else article_id
     if not aid.isalnum():
         raise HTTPException(400, "article_id không hợp lệ.")
-    path = os.path.join(IMAGES_DIR, aid[:3], f"{aid}.jpg")
-    if dataset == "hm" and os.path.exists(path):
+    path = os.path.join(IMAGES_DIR, aid[:3], f"{aid}.jpg") if dataset == "hm" else amazon_image_path(aid)
+    if os.path.exists(path):
         return FileResponse(path, headers={"Cache-Control": "max-age=86400"})
     arts = ctx(dataset).articles
     match = arts.loc[arts["article_id"] == aid, "product_type_name"]

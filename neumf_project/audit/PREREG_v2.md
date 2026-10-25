@@ -232,3 +232,10 @@ chạy** và ablation còn 4 biến thể.
    MostPopular-Recent, Content, ItemKNN, UserKNN) ở seed 42. Seed 42 được chạy lại với `--allow-rerun` (dòng nhật ký
    `v2_kiemdinh_seed42_rerun`), cùng mã nguồn, cấu hình và dữ liệu; các seed khác chưa mở. Không quyết định nào được
    đưa ra sau khi xem các số trên: cấu hình đã cố định ở mục 4, và năm mô hình tất định cho cùng kết quả ở lần chạy lại.
+2. **Thêm K = 15 và bảng đủ bốn độ đo ở K = 5, 10, 15, 20 (sau đánh giá cuối).** Mục 6 chỉ đăng ký độ đo @10 và
+   NDCG@5, NDCG@20. Theo góp ý của GVHD (họp 04/10/2026), báo cáo thêm bảng NDCG, Recall, HR, Precision ở K = 5, 10, 15,
+   20. Các số này tính lại từ hạng của từng sản phẩm đúng đã lưu ở lần đánh giá cuối (`by_k.csv`), không chấm lại tập
+   kiểm thử, không đổi độ đo chính (NDCG@10), họ so sánh hay tiêu chí kết luận ở mục 7–8; chỉ để mô tả, không kiểm định.
+3. **Báo cáo bỏ K = 5 (24/10/2026).** Nhóm chỉ trình bày K = 10, 15, 20: với hàng nghìn ứng viên và vài sản phẩm đúng
+   mỗi khách, danh sách 5 sản phẩm quá ngắn để khuyến nghị trúng. NDCG@5 (độ đo phụ ở mục 6) vẫn được tính và lưu trong
+   `summary.csv`, `by_k.csv`, chỉ không đưa vào bảng của báo cáo; độ đo chính và kết luận không đổi.

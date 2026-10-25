@@ -49,11 +49,11 @@ if not V2_DIR.is_absolute():
     V2_DIR = PROJECT_ROOT / V2_DIR
 # Bộ dữ liệu của demo: cấu hình, thư mục kết quả đánh giá cuối, chữ hiển thị.
 DATASETS = {
-    "hm": dict(config="configs/v2.yaml", label="H&M", tagline="gợi ý thời trang", final_cmd="v2-final",
+    "hm": dict(config="configs/v2.yaml", label="H&M", tagline="khuyến nghị thời trang", final_cmd="v2-final",
                history_note="Dataset H&M chỉ có lịch sử mua, không có lịch sử xem.",
                item_note="Một sản phẩm = một mẫu (<code>product_code</code>), mọi màu gộp lại; ảnh và tên lấy theo màu "
                          "đầu tiên của mẫu."),
-    "amazon": dict(config="configs/amazon.yaml", label="Amazon Beauty", tagline="gợi ý mỹ phẩm (dữ liệu đối chứng)",
+    "amazon": dict(config="configs/amazon.yaml", label="Amazon Beauty", tagline="khuyến nghị mỹ phẩm (dữ liệu đối chứng)",
                    final_cmd="amazon-final",
                    history_note="Amazon chỉ có đánh giá sản phẩm: mỗi đánh giá coi là một lần mua (phản hồi ẩn).",
                    item_note="Một sản phẩm = một <code>asin</code>; tên, thương hiệu, danh mục, giá và ảnh lấy từ "
@@ -78,9 +78,9 @@ HYBRID = "Hybrid-CBCF"
 BPR_CHECKPOINT = "bpr.npz"  # mảng P (users x d), Q (items x d)
 ARTICLES_PATH = PROJECT_ROOT / "data" / "raw" / "hm" / "articles.csv"
 CUSTOMERS_PATH = PROJECT_ROOT / "data" / "raw" / "hm" / "customers.csv"
-# K của demo = K của cấu hình ∪ DEMO_EXTRA_K (báo cáo dùng K = 5, 10, 15, 20): tính trên cùng thứ hạng nên số @5/@10/@20
-# vẫn khớp file kết quả; không sửa configs/ (cấu hình huấn luyện, đánh giá và mã băm v2).
-DEMO_EXTRA_K = (15, 20)
+# K của demo = K báo cáo trình bày (10, 15, 20; nhóm bỏ K = 5 ngày 24/10/2026). Tính trên cùng thứ hạng nên số @10/@20
+# vẫn khớp file kết quả; không sửa configs/ (cấu hình huấn luyện, đánh giá và mã băm v2 vẫn có K = 5).
+DEMO_K = (10, 15, 20)
 ARTICLE_COLUMNS = ["article_id", "product_code", "prod_name", "product_type_name", "product_group_name",
                    "index_group_name", "colour_group_name", "detail_desc"]
 
@@ -153,7 +153,8 @@ def product_table(articles: pd.DataFrame, item_product: np.ndarray) -> pd.DataFr
 def amazon_table(items: pd.DataFrame, item_product: np.ndarray) -> pd.DataFrame:
     """Như product_table cho Amazon (items.csv.gz của 21_build_features.py, index = mã asin): article_id = asin, tên =
     title, loại = danh mục sâu nhất, nhóm = danh mục cấp 2, khu vực (index_group_name) = danh mục cấp 1; thêm subtitle
-    (thương hiệu · loại · giá) và image_url (imUrl của Amazon)."""
+    (thương hiệu · loại · giá), image_src (imUrl gốc, chỉ để demo/scripts/download_amazon_images.py tải về) và
+    image_url (ảnh do máy chủ demo phục vụ từ bản đã tải, không kéo trực tiếp từ Amazon khi demo)."""
     it = items.reindex(item_product)
     cat = it[["category_1", "category_2", "category_3"]].fillna("").astype(str)
     leaf = (cat["category_3"].where(cat["category_3"] != "", cat["category_2"]).where(lambda s: s != "", cat["category_1"])
@@ -167,7 +168,8 @@ def amazon_table(items: pd.DataFrame, item_product: np.ndarray) -> pd.DataFrame:
         "product_type_name": leaf.to_numpy(), "product_group_name": cat["category_2"].to_numpy(),
         "index_group_name": cat["category_1"].replace("", "Khác").to_numpy(), "n_colours": 1,
         "subtitle": [" · ".join(x for x in row if x) for row in zip(brand, leaf, price)],
-        "image_url": it["imUrl"].fillna("").astype(str).to_numpy()})
+        "image_src": it["imUrl"].fillna("").astype(str).to_numpy(),
+        "image_url": [f"/api/image/{a}?dataset=amazon" if a else "" for a in asin]})
     out.index.name = "item"
     return out
 
@@ -214,7 +216,7 @@ class DataContext:
         info = json.loads((root / "data.json").read_text(encoding="utf-8"))
         dry = str(results.get("evaluated_on", "")).startswith("dry-run")
         self.run_tag = f"{'v2' if dataset == 'hm' else dataset}_seed{SEED}"
-        self.k_values = sorted({*(int(k) for k in cfg["evaluation"]["k_values"]), *DEMO_EXTRA_K})
+        self.k_values = list(DEMO_K)
         self.tie_seed = cfg["evaluation"]["tie_break_seed"]
         print(f"[demo] checkpoint {seed_dir.relative_to(PROJECT_ROOT).as_posix()} "
               f"({'chạy thử trên mẫu phát triển' if dry else 'mẫu kiểm định'}, commit "
@@ -366,7 +368,6 @@ class DataContext:
             "index_group_name": a["index_group_name"],
             "n_colours": int(a["n_colours"]),
             "subtitle": a["subtitle"],
-            # Amazon thiếu imUrl -> ô thay thế của máy chủ
             "image_url": a["image_url"] or f"/api/image/{a['article_id']}?dataset={self.dataset}",
         }
 

@@ -96,6 +96,9 @@ select, input[type=text] { border: 1px solid var(--line); background: var(--surf
 select:focus, input[type=text]:focus { border-color: var(--accent); outline: none; box-shadow: 0 0 0 3px var(--accent-soft); }
 .toolbar { display: flex; flex-wrap: wrap; gap: 14px; align-items: end; }
 .toolbar .field { display: flex; flex-direction: column; }
+.fixed-model { display: inline-flex; align-items: center; height: 36px; padding: 0 14px; border-radius: 10px; background: var(--accent);
+  color: var(--accent-ink); font-weight: 800; }
+.vs-word { align-self: end; padding-bottom: 9px; font-size: 13px; font-weight: 700; color: var(--muted); }
 .pill { display: inline-block; font-size: 12px; font-weight: 700; padding: 1px 9px; border-radius: 999px; background: var(--surface-2); color: var(--muted); }
 .pill b { color: var(--ink); font-variant-numeric: tabular-nums; }
 .pill.good { background: var(--good-soft); color: var(--good); }
@@ -158,47 +161,30 @@ select:focus, input[type=text]:focus { border-color: var(--accent); outline: non
 .outcome .ico { width: 40px; height: 40px; border-radius: 12px; display: grid; place-items: center; background: var(--good-soft); color: var(--good); }
 .outcome p { font-size: 14px; }
 .outcome .note { margin-top: 2px; }
-.facts { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
-@media (max-width: 780px) { .facts { grid-template-columns: 1fr; } }
-.fact { display: grid; gap: 10px; align-content: start; }
-.fact .ico { width: 42px; height: 42px; border-radius: 12px; display: grid; place-items: center; background: var(--accent-soft); color: var(--accent); }
-.fact p { font-size: 14px; color: var(--muted); }
 
 /* ---------- Kết quả đánh giá ---------- */
 #rs-body { display: grid; gap: 24px; }
-/* Bậc thang: mỗi bậc là một mô hình, giữa hai bậc là thứ được thêm vào */
-.ladder-card h2 { margin: 0 0 4px; }
-.ladder-card > .muted { margin: 0; max-width: 760px; }
-.ladder { list-style: none; margin: 18px 0 0; padding: 0; display: grid; gap: 6px; }
-.rung { display: grid; grid-template-columns: 190px minmax(0, 1fr) 56px; gap: 12px; align-items: center; font-size: 15px; }
-.rung .track, .rank .track, .abl .track { display: block; border-radius: 999px; background: var(--surface-2); overflow: hidden; }
-.rung .track { height: 14px; }
-.rung .fill, .rank .fill, .abl .fill { display: block; height: 100%; border-radius: 999px; background: var(--bar); }
-.rung.me { font-weight: 700; }
-.rung.me .fill { background: var(--accent); }
-.rung .v { text-align: right; font-weight: 700; }
-.step-add { margin-left: 14px; padding: 3px 0 3px 16px; border-left: 2px dashed var(--line); color: var(--muted); font-size: 13px;
-  display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
-.step-add .plus { font-weight: 800; }
-.step-add.key { border-left: 2px solid var(--accent); color: var(--ink); font-weight: 600; }
-.step-add.key .plus { color: var(--accent); }
-.ladder-sum { margin: 18px 0 0; padding: 12px 16px; border-radius: 12px; background: var(--accent-soft); color: var(--ink); font-size: 14px; }
-@media (max-width: 640px) { .rung { grid-template-columns: 120px minmax(0, 1fr) 44px; font-size: 13px; } }
-.qs { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
-@media (max-width: 940px) { .qs { grid-template-columns: 1fr; } }
-.q { display: grid; gap: 14px; align-content: start; border-top: 4px solid var(--q); }
-.q.yes { --q: var(--good); --qs: var(--good-soft); }
-.q.part { --q: var(--warn); --qs: var(--warn-soft); }
-.q.no { --q: var(--bad); --qs: var(--bad-soft); }
-.q .head { display: flex; gap: 12px; align-items: center; }
-.q .ans-ico { width: 44px; height: 44px; border-radius: 50%; display: grid; place-items: center; background: var(--qs); color: var(--q); flex: none; }
-.q .ans { font-size: 13px; font-weight: 800; color: var(--q); letter-spacing: .02em; text-transform: uppercase; }
-.q p { font-size: 14px; color: var(--muted); }
-.cmp { display: grid; gap: 12px; border-top: 1px dashed var(--line); }
-.cmp .row { display: grid; gap: 6px; padding-top: 10px; }
-.cmp .lab { display: flex; justify-content: space-between; gap: 8px; font-size: 13px; font-weight: 600; flex-wrap: wrap; }
-.cmp .bar { height: 8px; border-radius: 999px; background: var(--bar); }
-.cmp .bar.me { background: var(--accent); }
+/* NeuMF-F so với từng mô hình: tên, hai thanh NDCG@10, giá trị, chênh lệch, kết luận kiểm định */
+.cmp-head { display: flex; justify-content: space-between; align-items: baseline; gap: 8px 16px; flex-wrap: wrap; margin-bottom: 10px; }
+.cmp-head h2 { margin: 0; }
+.me-score { font-size: 14px; color: var(--muted); }
+.me-score b { color: var(--accent); font-size: 18px; margin-left: 4px; }
+.pr { display: grid; grid-template-columns: 170px minmax(0, 1fr) 70px 80px 130px; gap: 14px; align-items: center; padding: 9px 0;
+  border-top: 1px solid var(--line); font-size: 14px; }
+.pr-head { border-top: 0; padding-top: 0; font-size: 12px; font-weight: 700; color: var(--muted); }
+.pr-head span:nth-child(3), .pr-head span:nth-child(4) { text-align: right; }
+.pr .nm { font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.pr .bars { display: grid; gap: 4px; }
+.pr .bar { display: block; height: 7px; border-radius: 999px; background: var(--bar); }
+.pr .bar.me { background: var(--accent); }
+.pr .v, .pr .d { text-align: right; font-weight: 600; }
+.pr .pill { justify-self: start; }
+@media (max-width: 780px) {
+  .pr { grid-template-columns: 110px minmax(0, 1fr) 60px; }
+  .pr .d, .pr .pill, .pr-head span:nth-child(n+4) { display: none; }
+}
+.rank .track, .abl .track { display: block; border-radius: 999px; background: var(--surface-2); overflow: hidden; }
+.rank .fill, .abl .fill { display: block; height: 100%; border-radius: 999px; background: var(--bar); }
 .legend { display: flex; gap: 16px; flex-wrap: wrap; font-size: 12px; color: var(--muted); margin-top: 12px; }
 .legend i { display: inline-block; width: 10px; height: 10px; border-radius: 50%; margin-right: 6px; vertical-align: -1px; }
 .two { display: grid; grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr); gap: 16px; }
@@ -220,12 +206,6 @@ select:focus, input[type=text]:focus { border-color: var(--accent); outline: non
 .abl .track { height: 12px; }
 .abl .fill { background: var(--bad); }
 .abl .a.unsure .fill { background: var(--bar); }
-.abl-note { margin-top: 16px; padding: 12px 14px; border-radius: 12px; background: var(--surface-2); font-size: 13px; color: var(--muted); }
-.scope { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; margin-top: 14px; }
-@media (max-width: 780px) { .scope { grid-template-columns: 1fr; } }
-.scope div { display: grid; gap: 4px; padding: 14px; border-radius: 12px; background: var(--surface-2); }
-.scope b { font-size: 14px; }
-.scope span { font-size: 13px; color: var(--muted); }
 
 /* ---------- Gợi ý theo khách: thanh khách ---------- */
 .cust-bar { display: flex; align-items: center; gap: 16px 24px; flex-wrap: wrap; }
@@ -360,7 +340,25 @@ canvas { max-height: 320px; }
 .recs-row + .recs-row { margin-top: 20px; padding-top: 18px; border-top: 1px dashed var(--line); }
 .recs-head { display: flex; align-items: center; gap: 8px 10px; flex-wrap: wrap; margin-bottom: 12px; font-size: 16px; }
 #sh-reveal[aria-pressed="true"] { background: var(--surface-2); color: var(--ink); }
-#sh-protocol { margin: 14px 0 0; }
+/* Hai cột so sánh: NeuMF-F bên trái, mô hình so sánh bên phải, cùng thứ hạng nằm cùng hàng */
+.recs-cols { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
+@media (max-width: 760px) { .recs-cols { grid-template-columns: 1fr; } }
+.recs-col { border: 1px solid var(--line); border-top: 4px solid var(--bar); border-radius: 14px; padding: 14px; background: var(--surface); }
+.recs-col.me { border-top-color: var(--accent); }
+.plist { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; }
+.prow { width: 100%; display: grid; grid-template-columns: 28px 52px minmax(0, 1fr) auto; gap: 10px; align-items: center; padding: 6px 8px;
+  border: 1px solid transparent; border-radius: 10px; background: var(--surface-2); color: inherit; font: inherit; text-align: left; cursor: pointer; }
+.prow:hover, .prow:focus-visible { border-color: var(--accent); outline: none; }
+.prow .r { font-weight: 800; color: var(--muted); text-align: center; }
+.recs-col.me .prow .r { color: var(--accent); }
+.prow .pth { width: 52px; height: 52px; border-radius: 8px; overflow: hidden; background: var(--surface); display: block; }
+.prow .pth .tile { width: 100%; height: 100%; border-radius: 0; }
+.prow .pth .tile svg { width: 26px; height: 26px; }
+.prow .pth img { width: 100%; height: 100%; object-fit: contain; background: #fff; }
+.prow .t { display: grid; min-width: 0; }
+.prow .pname { -webkit-line-clamp: 1; }
+.prow .ok { font-size: 12px; font-weight: 700; color: var(--good); white-space: nowrap; }
+.prow.hit { border-color: var(--good); background: var(--good-soft); }
 .answer { margin-top: 20px; padding: 16px; border-radius: 14px; background: var(--good-soft); }
 .answer h3 { margin: 0 0 12px; }
 .answer .note { margin: 10px 0 0; }

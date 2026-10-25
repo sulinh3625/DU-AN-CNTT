@@ -6,8 +6,9 @@ Chọn bộ dữ liệu trên thanh đầu trang (`?ds=hm` / `?ds=amazon`):
   `outputs/amazon/final/`. Chưa có thư mục này thì demo hiện lệnh cần chạy (`python run.py amazon-final --reason "..."`);
   demo không tự huấn luyện.
 - **Sản phẩm Amazon:** một sản phẩm là một `asin`. Tên, thương hiệu, danh mục và giá lấy từ
-  `data/processed/amazon/items.csv.gz` (do `python run.py amazon-data` tạo); ảnh lấy theo `imUrl` gốc của Amazon (trình
-  duyệt tải thẳng từ máy chủ ảnh của Amazon); ảnh lỗi thì hiện ô thay thế.
+  `data/processed/amazon/items.csv.gz` (do `python run.py amazon-data` tạo). Ảnh được tải một lần về máy
+  (mục 6) và máy chủ demo phục vụ từ đó; demo không kéo ảnh trực tiếp từ Amazon. Chưa tải hoặc ảnh lỗi thì hiện ô thay
+  thế.
 - **Khách Amazon:** không có tuổi. "Khu vực mua nhiều nhất" là danh mục cấp 1, ví dụ Makeup hay Skin Care.
 
 Web mô phỏng shop thời trang trên dữ liệu H&M. Demo chỉ **suy diễn** trên checkpoint của đánh giá cuối: không huấn luyện
@@ -38,17 +39,17 @@ python run.py demo           # hoặc: python -m demo
 - Mở **http://localhost:8000** (trang Cửa hàng; ba trang: Cửa hàng · Kết quả đánh giá · Giới thiệu đề tài; bảng số liệu đầy đủ mở từ trang Kết quả đánh giá; nút mặt trời / mặt trăng đổi sáng / tối). Lần nạp đầu mất khoảng 30 giây (dựng lại dữ liệu, nạp checkpoint); sau đó được cache.
 - Sau khi chạy lại đánh giá cuối, nạp lại không cần khởi động lại: `curl -X POST http://localhost:8000/api/reload`.
 - Mở thẳng một khách để chụp ảnh minh hoạ cho báo cáo:
-  `http://localhost:8000/?user=<customer_id>&compare=1&a=NeuMF-F&b=NeuMF#admin`.
+  `http://localhost:8000/?user=<customer_id>&b=NeuMF&k=10#/shop`.
 - Dừng: `Ctrl+C`. Nếu cổng 8000 đang bận (một demo cũ chưa tắt), demo tự dùng cổng trống kế tiếp và in địa chỉ ra màn hình; muốn giải phóng cổng 8000 trên Windows: `netstat -ano | findstr :8000` rồi `taskkill /PID <pid> /F`.
 
 ## 3. Màn hình
 
 | Màn hình | Nội dung |
 |---|---|
-| **Tổng quan** (trang mặc định) | Đề tài làm gì: một câu bài toán, ba ô dữ liệu / mô hình / cách chấm, và một khách thật làm ví dụ (lịch sử mua, top-10 của NeuMF-F và của NeuMF, món khách mua sau mốc). Khách ví dụ do `/api/example` chọn theo dữ liệu: NeuMF-F trúng, NeuMF trượt, hạng tính lại trùng hạng đã lưu; tìm sẵn ở luồng nền khi nạp dữ liệu. |
-| **Cửa hàng** (trang mặc định) | Cửa hàng mô phỏng: chọn khách (khách ví dụ mở sẵn, ngẫu nhiên, tìm theo mã, khách mới); thẻ sản phẩm đã mua trước mốc; K gợi ý của một mô hình hoặc hai mô hình cạnh nhau; nút **Xem khách đã mua gì** lật đáp án (món khách mua sau mốc được đánh dấu, kèm vị trí trong xếp hạng của từng mô hình); bấm thẻ sản phẩm mở thẻ chi tiết (tên, loại, màu, mô tả gốc, số khách đã mua, sản phẩm tương tự theo ItemKNN); mục **Khách có gu giống** theo UserKNN. URL `?user=<mã>&compare=1&a=NeuMF-F&b=NeuMF&k=5&reveal=1&item=<chỉ số sản phẩm>#/shop` mở sẵn một trạng thái (dùng khi chụp ảnh minh hoạ). |
-| **Kết quả đánh giá** | Kết quả có đúng hướng không: số khách trên 100 có ít nhất một món đúng trong 10 gợi ý (HR@10) đặt cạnh LateFusion-F, NeuMF, bán chạy nhất, ngẫu nhiên; ba câu hỏi của đề tài với câu trả lời Có / Một phần / Không suy ra từ kết luận kiểm định đã lưu; xếp hạng NDCG@10; bóc tách (nhãn "chưa khẳng định" khi khoảng tin cậy chứa 0); phạm vi chưa trả lời. Đọc `/api/results`. |
-| **Bảng số liệu đầy đủ** (mở từ trang Kết quả đánh giá) | Chỉ đọc `outputs/v2/final/*.csv` (Amazon: `outputs/amazon/final/*.csv`): kết quả 5 seed, đánh giá theo K (5 · 10 · 15 · 20, từ `by_k.csv` — tính lại từ hạng đã lưu), kiểm định họ 10 so sánh, độ phủ top-10 và chi phí huấn luyện, ablation NeuMF-F. Khi đã chấm bổ sung mô hình lai truyền thống (`scripts/25_bosung.py`), đọc bảng trong `final/bosung/` (thêm Hybrid-CBCF, dấu *) và hiện thêm thẻ kiểm định họ bổ sung B1–B2. Thiếu file thì hiện lệnh cần chạy. |
+| **Giới thiệu đề tài** | Một câu bài toán, ba con số (số khách, số mô hình, số lần chạy) và một khách thật làm ví dụ (lịch sử mua, top-10 của NeuMF-F và của NeuMF, món khách mua sau mốc). Khách ví dụ do `/api/example` chọn theo dữ liệu: NeuMF-F trúng, NeuMF trượt, hạng tính lại trùng hạng đã lưu; tìm sẵn ở luồng nền khi nạp dữ liệu. |
+| **Cửa hàng** (trang mặc định) | Cửa hàng mô phỏng: chọn khách (khách ví dụ mở sẵn, ngẫu nhiên, tìm theo mã, khách mới); thẻ sản phẩm đã mua trước mốc; NeuMF-F luôn là mô hình chính, người xem chọn một mô hình đối chứng (hoặc "Không so sánh"), hai danh sách K khuyến nghị đặt cạnh nhau, cùng thứ hạng cùng hàng; nút **Xem khách đã mua gì** lật đáp án (món khách mua sau mốc được tô xanh, kèm vị trí trong xếp hạng của từng mô hình); bấm sản phẩm mở thẻ chi tiết (tên, loại, màu, mô tả gốc, số khách đã mua, sản phẩm tương tự theo ItemKNN); mục **Khách có gu giống** theo UserKNN. URL `?user=<mã>&b=NeuMF&k=10&reveal=1&item=<chỉ số sản phẩm>#/shop` mở sẵn một trạng thái (dùng khi chụp ảnh minh hoạ; `b=` để trống là không so sánh). |
+| **Kết quả đánh giá** | NeuMF-F so với từng mô hình đối chứng trong họ kiểm định: NDCG@10 hai bên, chênh lệch tương đối, kết luận kiểm định đã lưu (NeuMF-F tốt hơn / kém hơn / ngang nhau); xếp hạng mọi mô hình theo NDCG@10; bỏ từng nhóm đặc trưng (nhãn "chưa khẳng định" khi khoảng tin cậy chứa 0). Đọc `/api/results`. |
+| **Bảng số liệu đầy đủ** (mở từ trang Kết quả đánh giá) | Chỉ đọc `outputs/v2/final/*.csv` (Amazon: `outputs/amazon/final/*.csv`): kết quả 5 seed, đánh giá theo K (10 · 15 · 20, từ `by_k.csv` — tính lại từ hạng đã lưu), kiểm định họ 10 so sánh, độ phủ top-10 và chi phí huấn luyện, ablation NeuMF-F. Khi đã chấm bổ sung mô hình lai truyền thống (`scripts/25_bosung.py`), đọc bảng trong `final/bosung/` (thêm Hybrid-CBCF, dấu *) và hiện thêm thẻ kiểm định họ bổ sung B1–B2. Thiếu file thì hiện lệnh cần chạy. |
 
 13 mô hình: NeuMF-F, LateFusion-F, GMF-F, MLP-F, NeuMF, GMF, MLP, BPR-MF, UserKNN, ItemKNN, MostPopular-Recent,
 Content, Most Popular — seed 42, cấu hình theo `results.json`, đã huấn luyện lại trên mọi cặp trước 29/07/2020. Mặc định
@@ -72,9 +73,8 @@ Giao diện có hai chế độ sáng và tối (nút mặt trăng / mặt trờ
   khách đã mua.
 - Xếp theo điểm giảm dần; hoà điểm phá bằng cùng khoá tất định với lúc đánh giá. Mạng nơ-ron xếp bằng logit (không qua
   sigmoid). LateFusion-F chuẩn hoá min–max điểm trên tập ứng viên của khách.
-- HR@K, NDCG@K, Recall@K, Precision@K tính với nhiều sản phẩm đích mỗi khách; K chọn trong các giá trị của cấu hình,
-  thêm K = 15, 20 (`DEMO_EXTRA_K` trong `data_context.py`) như bảng theo K của báo cáo — cùng thứ hạng nên số @5/@10
-  không đổi.
+- HR@K, NDCG@K, Recall@K, Precision@K tính với nhiều sản phẩm đích mỗi khách; K chọn trong 10, 15, 20 (`DEMO_K` trong
+  `data_context.py`) như bảng theo K của báo cáo — cùng thứ hạng nên số @10/@20 khớp file kết quả.
 - **Luôn có gợi ý.** Khách không có trong dữ liệu đã học (khách mới, hoặc quá ít lần mua để qua lọc k-core) nhận danh
   sách Most Popular gắn nhãn "Gợi ý phổ biến" thay cho lỗi 404 (`inference.popular`); khách có lịch sử nhưng không mua
   món mới nào trong giai đoạn đánh giá vẫn nhận gợi ý của mô hình đang chọn, chỉ không có chỉ số (không có sản phẩm
@@ -103,6 +103,14 @@ sản phẩm không có ảnh hiển thị ô thay thế ghi loại sản phẩm
 HM_IMAGES_DIR=/duong/dan/h-and-m/images python demo/scripts/copy_images.py
 ```
 
+Ảnh Amazon Beauty được tải một lần (cần mạng, khoảng 6.000 ảnh, chừng 50 MB) vào `demo/static/images/amazon/<asin>.jpg`.
+Chạy lại chỉ tải phần còn thiếu. Sau đó demo chạy được khi không có mạng: Chart.js cũng nằm sẵn trong
+`frontend/vendor/`.
+
+```bash
+python demo/scripts/download_amazon_images.py
+```
+
 ## 7. Cấu trúc mã và API
 
 ```text
@@ -113,8 +121,8 @@ demo/
 │   ├── data_context.py      dựng dữ liệu, nạp checkpoint, bảng sản phẩm và bảng khách, láng giềng UserKNN
 │   ├── inference.py         xếp hạng toàn bộ ứng viên cho một khách
 │   └── metrics_io.py        đọc file kết quả cho dashboard
-├── frontend/                index.html, app.js, style.css (HTML tĩnh + Chart.js qua CDN)
-├── scripts/copy_images.py
+├── frontend/                index.html, app.js, style.css (HTML tĩnh), vendor/chart.umd.min.js
+├── scripts/                 copy_images.py (ảnh H&M), download_amazon_images.py (ảnh Amazon)
 └── tests/test_demo.py       python -m pytest demo/tests -q
 ```
 

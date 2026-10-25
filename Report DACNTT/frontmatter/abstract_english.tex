@@ -1,13 +1,13 @@
 \newpage
 \begin{center}
 {\fontsize{15pt}{18pt}\selectfont \textbf{BUILDING A HYBRID RECOMMENDATION MODEL COMBINING MATRIX FACTORIZATION AND DEEP NEURAL NETWORKS}\par}
-\vspace{0.5cm}
+\vspace{0.3cm}
 {\fontsize{16pt}{19.2pt}\selectfont \textbf{ABSTRACT}\par}
 \end{center}
-\vspace{0.2cm}
+\vspace{0.1cm}
 
-Recommending fashion products from real transaction data faces two difficulties. The interaction matrix between customers and items is very sparse, while matrix factorization (MF) learns only from customer and item identifiers through a linear inner product. This project builds NeuMF-F, a hybrid model that keeps the two-branch structure of Neural Matrix Factorization (NeuMF): a generalized matrix factorization (GMF) branch and a multi-layer perceptron (MLP) branch. Every customer and item is represented by an identifier embedding plus a projection of features, namely item attributes and text descriptions, customer information, recent sales and the customer's purchase rhythm.
+Recommender systems help online shops select suitable products for each customer from a very large catalogue. With fashion data this task is hard, because each customer buys only a tiny part of the catalogue, which makes the customer-item interaction matrix very sparse. Matrix factorization (MF) is a common method, but it learns only from customer and item identifiers and combines them with a linear inner product. This project builds the hybrid model NeuMF-F on the Neural Matrix Factorization (NeuMF) architecture, which has a generalized matrix factorization (GMF) branch and a multi-layer perceptron (MLP) branch. In NeuMF-F, every customer and item is represented by an identifier embedding plus a projection of features. The features are item attributes and descriptions, customer information, recent item sales and the customer's recent purchase history.
 
-The model is evaluated on the H\&M fashion transaction dataset. Data are split by time, features use only information available before the prediction time, and configurations are selected on a separate customer sample. Final results are measured on an independent customer sample under a pre-registered plan with statistical testing. NeuMF-F is compared with baselines from three groups, all tuned with the same budget.
+We evaluate the model on fashion transaction data from H\&M. The data are split by time, and features use only information available before the prediction time. Model configurations are selected on one customer sample, while the final results are measured on a different customer sample under a pre-registered plan, with statistical testing. NeuMF-F is compared with baselines from three groups, and every model is tuned with the same budget. The results are then checked again on the Amazon Beauty dataset.
 
-NeuMF-F significantly outperforms the fully tuned baselines, and this result holds again on the Amazon Beauty dataset. The main conclusion is that adding features clearly improves recommendation quality over using identifiers alone, with temporal features contributing the most. The feature-augmented models lead on both datasets under both early and late fusion. The project also builds a demo system that illustrates the recommendations for each customer.
+The report presents the theoretical background, the data processing pipeline, the NeuMF-F architecture, the training and evaluation procedure, the experimental results on two datasets, and a demo system that illustrates the recommendations for each customer. The project helps clarify the role of item, customer and temporal features, and the role of the fusion strategy, in hybrid recommendation models.

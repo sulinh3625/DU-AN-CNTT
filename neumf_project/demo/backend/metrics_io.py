@@ -7,7 +7,7 @@ import json
 import pandas as pd
 
 from .data_context import DATASETS, PROJECT_ROOT, V
-BY_K_COLS = [f"{m}@{k}_mean" for m in ("NDCG", "Recall", "HR", "Precision") for k in (5, 10, 15, 20)]
+BY_K_COLS = [f"{m}@{k}_mean" for m in ("NDCG", "Recall", "HR", "Precision") for k in (10, 15, 20)]
 
 
 def _block(ctx, name: str, transform) -> dict:
@@ -30,7 +30,7 @@ def _named(df: pd.DataFrame) -> pd.DataFrame:
 
 
 def _by_k(df: pd.DataFrame) -> pd.DataFrame:
-    """Bảng "đánh giá theo K": các cột trung bình @5 / @10 / @15 / @20 có trong file, sắp theo NDCG@10."""
+    """Bảng "đánh giá theo K": các cột trung bình @10 / @15 / @20 có trong file, sắp theo NDCG@10."""
     return df[["model", *[c for c in BY_K_COLS if c in df.columns]]].sort_values("NDCG@10_mean", ascending=False)
 
 
@@ -39,7 +39,7 @@ def dashboard(ctx) -> dict:
     # Phân tích bổ sung (scripts/24_report_v2.py ghi bosung/*.csv): bảng gồm 14 mô hình + mô hình lai truyền thống (cột
     # supplementary) — có thì dùng thay bảng của 14 mô hình; kiểm định họ bổ sung B1–B2 là một khối riêng.
     bs = "bosung/" if (ctx.results_dir / "bosung" / "summary.csv").exists() else ""
-    # by_k.csv (24_report_v2.py, tính từ hạng đã lưu) có đủ K = 5, 10, 15, 20; kết quả cũ chưa có thì dùng summary.csv
+    # by_k.csv (24_report_v2.py, tính từ hạng đã lưu) có đủ K; demo hiện K = 10, 15, 20; kết quả cũ chưa có thì dùng summary.csv
     by_k_file = "by_k.csv" if (ctx.results_dir / "by_k.csv").exists() else "summary.csv"
     if bs and (ctx.results_dir / bs / by_k_file).exists():
         by_k_file = bs + by_k_file

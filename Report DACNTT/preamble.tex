@@ -41,7 +41,7 @@
 \usepackage{amsmath, amsfonts, amssymb}
 \usepackage{graphicx}
 \usepackage{tikz}
-\usetikzlibrary{calc, positioning, decorations.pathreplacing}
+\usetikzlibrary{calc, positioning, fit, decorations.pathreplacing}
 \usepackage{float}
 \usepackage{placeins}  % \FloatBarrier: giữ hình của chương trước mục tóm tắt
 % Trang chỉ chứa bảng/hình: đặt từ đầu trang thay vì căn giữa theo chiều dọc (tránh khoảng trắng lớn phía trên).
@@ -112,7 +112,12 @@
 % Thêm chữ "CHƯƠNG " vào Mục lục
 \renewcommand{\cftchappresnum}{CHƯƠNG } 
 \renewcommand{\cftchapaftersnum}{. }    
-\setlength{\cftchapnumwidth}{6.0em}     
+\setlength{\cftchapnumwidth}{6.6em}     % vừa "CHƯƠNG 3. " in đậm: dòng tên chương xuống dòng thẳng với chữ đầu
+\setlength{\cftchapindent}{0pt}
+\makeatletter
+\renewcommand{\@pnumwidth}{2.2em}       % cột số trang cùng độ rộng ở mọi cấp
+\renewcommand{\@tocrmarg}{3.2em plus 1fil}  % dòng dài xuống hàng, không giãn chữ
+\makeatother
 
 % 1. Cấp Chương (Chapter): In đậm toàn hàng
 \renewcommand{\cftchapfont}{\bfseries}
@@ -123,13 +128,17 @@
 \renewcommand{\cftsecfont}{\normalfont}
 \renewcommand{\cftsecleader}{\normalfont\cftdotfill{\cftdotsep}}
 \renewcommand{\cftsecpagefont}{\normalfont}
+\setlength{\cftsecindent}{0pt}
 \setlength{\cftsecnumwidth}{2.8em} % đủ cho "3.10"
 
-% 3. Cấp Tiểu mục (Subsection - 1.1.1): In nghiêng
+% 3. Cấp Tiểu mục (Subsection - 1.1.1): In nghiêng, thụt vào một bậc so với cấp Mục
 \renewcommand{\cftsubsecfont}{\itshape}
-\renewcommand{\cftsubsecleader}{\itshape\cftdotfill{\cftdotsep}}
-\renewcommand{\cftsubsecpagefont}{\itshape}
-\setlength{\cftsubsecnumwidth}{2.8em}
+\renewcommand{\cftsubsecleader}{\normalfont\cftdotfill{\cftdotsep}}
+\renewcommand{\cftsubsecpagefont}{\normalfont}  % số trang chữ đứng để thẳng cột với các cấp khác
+% Thụt bằng khoảng trống trước số mục (thụt lề đầu đoạn của tocloft bị mẫu triệt tiêu); ô số rộng = 2.8em + 3.4em
+\setlength{\cftsubsecindent}{0pt}
+\renewcommand{\cftsubsecpresnum}{\hspace*{2.8em}}
+\setlength{\cftsubsecnumwidth}{6.2em}
 
 % Khoảng cách giữa các dòng trong Mục lục
 \setlength{\cftbeforechapskip}{8pt} 
@@ -264,8 +273,9 @@
     align=left,
     labelsep=0.4cm
 }
-\renewcommand{\labelitemi}{--}
-\renewcommand{\labelitemii}{$-$}
+\renewcommand{\labelitemi}{-}            % gạch đầu dòng: dấu gạch ngang ngắn "-"
+\renewcommand{\labelitemii}{+}           % ý con của một gạch đầu dòng: dấu "+"
+\setlist[itemize,2]{labelindent=0.6cm, leftmargin=*, topsep=1pt}
 % --- SỐ LIỆU THỰC NGHIỆM SINH TỰ ĐỘNG ---
 % Macro hiện "[chưa có]" nếu số liệu chưa được sinh; bảng/hình chưa có thì hiện khung "Chưa có số liệu".
 \providecommand{\resultmacro}[3]{\ifcsname #1-#2-#3\endcsname\csname #1-#2-#3\endcsname\else\textbf{[chưa có]}\fi}

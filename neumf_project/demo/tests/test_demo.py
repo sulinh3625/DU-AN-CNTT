@@ -80,7 +80,7 @@ def test_new_customer_gets_popular_list_instead_of_error(vctx, monkeypatch):
     hist = routes.history(cid, dataset="hm")
     assert hist["is_new"] and hist["items"] == [] and hist["profile"]["customer_id"] == cid
     assert routes.neighbors(cid, dataset="hm")["neighbors"] == []
-    assert 15 in vctx.k_values  # báo cáo dùng K = 5, 10, 15, 20
+    assert vctx.k_values == [10, 15, 20]  # như báo cáo: K = 10, 15, 20
 
 
 def test_customer_without_targets_gets_model_recommendations(vctx, monkeypatch):
@@ -246,7 +246,9 @@ def test_amazon_table_maps_metadata_to_item_columns():
     assert df["product_type_name"].tolist() == ["Beauty", "Lip Balm", "Face"]  # danh mục sâu nhất có giá trị
     assert df["index_group_name"].tolist() == ["Khác", "Makeup", "Skin Care"]  # khu vực = danh mục cấp 1
     assert df["subtitle"].tolist() == ["Beauty · $20.00", "Acme · Lip Balm · $3.50", "Face"]
-    assert df["image_url"].tolist() == ["", "http://x/1.jpg", ""]
+    assert df["image_src"].tolist() == ["", "http://x/1.jpg", ""]  # link gốc chỉ để tải về
+    assert df["image_url"].tolist() == ["/api/image/B03?dataset=amazon", "/api/image/B01?dataset=amazon",
+                                        "/api/image/B02?dataset=amazon"]  # demo luôn lấy ảnh từ máy chủ
 
 
 def test_dataset_without_final_results_reports_command_not_training(tmp_path, monkeypatch):
