@@ -512,7 +512,7 @@
     </mxGraphModel>
   </diagram>
   <diagram id="p4" name="Mô hình đề tài NeuMF-F và các mô hình đối chứng">
-    <mxGraphModel dx="2047" dy="906" grid="0" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1600" pageHeight="900" background="#FFFFFF" math="0" shadow="0">
+    <mxGraphModel dx="1164" dy="516" grid="0" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1600" pageHeight="900" background="#FFFFFF" math="0" shadow="0">
       <root>
         <mxCell id="0" />
         <mxCell id="1" parent="0" />
@@ -598,10 +598,21 @@
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
         <mxCell id="p4_28" edge="1" parent="1" source="p4_20" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=classic;endFill=1;strokeColor=#000000;strokeWidth=1.5;fontSize=11;fontFamily=Helvetica;exitX=1;exitY=0.3;exitDx=0;exitDy=0;entryX=0;entryY=0.8;entryDx=0;entryDy=0;" target="p4_23" value="">
-          <mxGeometry relative="1" as="geometry" />
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="490" y="236.8" />
+              <mxPoint x="525" y="236.8" />
+              <mxPoint x="525" y="192" />
+            </Array>
+          </mxGeometry>
         </mxCell>
         <mxCell id="p4_29" edge="1" parent="1" source="p4_19" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=classic;endFill=1;strokeColor=#000000;strokeWidth=1.5;fontSize=11;fontFamily=Helvetica;exitX=1;exitY=0.8;exitDx=0;exitDy=0;entryX=0;entryY=0.2;entryDx=0;entryDy=0;" target="p4_24" value="">
-          <mxGeometry relative="1" as="geometry" />
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="507.2" y="192" />
+              <mxPoint x="507.2" y="280" />
+            </Array>
+          </mxGeometry>
         </mxCell>
         <mxCell id="p4_30" edge="1" parent="1" source="p4_20" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=classic;endFill=1;strokeColor=#000000;strokeWidth=1.5;fontSize=11;fontFamily=Helvetica;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.8;entryDx=0;entryDy=0;" target="p4_24" value="">
           <mxGeometry relative="1" as="geometry" />
@@ -626,39 +637,6 @@
         </mxCell>
         <mxCell id="p4_37" edge="1" parent="1" source="p4_34" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=classic;endFill=1;strokeColor=#000000;strokeWidth=1.5;fontSize=11;fontFamily=Helvetica;" target="p4_35" value="">
           <mxGeometry relative="1" as="geometry" />
-        </mxCell>
-        <mxCell id="p4_38" parent="1" style="fontFamily=Helvetica;html=1;whiteSpace=wrap;rounded=1;arcSize=6;fillColor=#FCE7D9;strokeColor=#E6A15C;align=center;verticalAlign=middle;spacing=4;fontSize=11;" value="&lt;b&gt;Khách mới&lt;/b&gt; (chưa có lịch sử) → gợi ý Most Popular" vertex="1">
-          <mxGeometry height="50" width="360" x="1180" y="360" as="geometry" />
-        </mxCell>
-        <mxCell id="p4_39" edge="1" parent="1" source="p4_38" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=classic;endFill=1;strokeColor=#C00000;strokeWidth=1.5;fontSize=11;fontFamily=Helvetica;dashed=1;exitX=0.5;exitY=0;exitDx=0;exitDy=0;entryX=0.5;entryY=1;entryDx=0;entryDy=0;" target="p4_35" value="">
-          <mxGeometry relative="1" as="geometry" />
-        </mxCell>
-        <mxCell id="p4_40" parent="1" style="fontFamily=Helvetica;html=1;whiteSpace=wrap;rounded=0;fillColor=#FFFFFF;strokeColor=#C00000;dashed=1;fillColor=none;fontColor=#C00000;align=center;verticalAlign=middle;spacing=4;fontSize=11;" value="Bản cuối: d = 32, lr = 0,001, 8 mẫu âm, ρ = 0 (không ẩn ID khi huấn luyện)" vertex="1">
-          <mxGeometry height="80" width="250" x="900" y="340" as="geometry" />
-        </mxCell>
-        <mxCell id="p4_41" parent="1" style="fontFamily=Helvetica;html=1;whiteSpace=wrap;rounded=1;arcSize=2;fillColor=#F5F5F5;strokeColor=#D6D6D6;fontStyle=1;fontColor=#2F5597;align=left;verticalAlign=top;spacingLeft=14;spacingTop=8;fontSize=13;" value="Mô hình đối chứng — mỗi nhóm trả lời một câu hỏi" vertex="1">
-          <mxGeometry height="310" width="1540" x="30" y="530" as="geometry" />
-        </mxCell>
-        <mxCell id="p4_42" parent="1" style="fontFamily=Helvetica;html=1;whiteSpace=wrap;rounded=1;arcSize=6;fillColor=#DAE8FC;strokeColor=#6C8EBF;align=center;verticalAlign=middle;spacing=4;fontSize=12;" value="&lt;b&gt;Nhóm 1 — mô hình đơn lẻ&lt;/b&gt;&lt;br&gt;GMF, MLP (chỉ ID) · GMF-F, MLP-F (có đặc trưng)&lt;br&gt;&lt;i&gt;Hợp nhất hai nhánh có hơn từng nhánh không?&lt;/i&gt;" vertex="1">
-          <mxGeometry height="80" width="480" x="55" y="575" as="geometry" />
-        </mxCell>
-        <mxCell id="p4_43" parent="1" style="fontFamily=Helvetica;html=1;whiteSpace=wrap;rounded=1;arcSize=6;fillColor=#DAE8FC;strokeColor=#6C8EBF;align=center;verticalAlign=middle;spacing=4;fontSize=12;" value="&lt;b&gt;Nhóm 2 — học máy truyền thống&lt;/b&gt;&lt;br&gt;Content · ItemKNN · UserKNN · BPR-MF · Hybrid-CBCF&lt;br&gt;&lt;i&gt;Có hơn phương pháp truyền thống, kể cả mô hình lai?&lt;/i&gt;" vertex="1">
-          <mxGeometry height="80" width="480" x="555" y="575" as="geometry" />
-        </mxCell>
-        <mxCell id="p4_44" parent="1" style="fontFamily=Helvetica;html=1;whiteSpace=wrap;rounded=1;arcSize=6;fillColor=#DAE8FC;strokeColor=#6C8EBF;align=center;verticalAlign=middle;spacing=4;fontSize=12;" value="&lt;b&gt;Nhóm 3 — chuyên biệt cho gợi ý&lt;/b&gt;&lt;br&gt;Most Popular · MostPopular-Recent · NeuMF · LateFusion-F&lt;br&gt;&lt;i&gt;Có hơn xu hướng phổ biến, NCF gốc, hợp nhất muộn?&lt;/i&gt;" vertex="1">
-          <mxGeometry height="80" width="490" x="1055" y="575" as="geometry" />
-        </mxCell>
-        <mxCell id="p4_45" parent="1" style="fontFamily=Helvetica;html=1;whiteSpace=wrap;rounded=1;arcSize=6;fillColor=#FCE7D9;strokeColor=#E6A15C;align=center;verticalAlign=middle;spacing=4;fontSize=11;" value="&lt;b&gt;LateFusion-F&lt;/b&gt; = 0,4·GMF-F + 0,6·MLP-F&lt;br&gt;hai nhánh huấn luyện riêng, gộp điểm sau" vertex="1">
-          <mxGeometry height="60" width="480" x="55" y="685" as="geometry" />
-        </mxCell>
-        <mxCell id="p4_46" parent="1" style="fontFamily=Helvetica;html=1;whiteSpace=wrap;rounded=1;arcSize=6;fillColor=#FCE7D9;strokeColor=#E6A15C;align=center;verticalAlign=middle;spacing=4;fontSize=11;" value="&lt;b&gt;Hybrid-CBCF&lt;/b&gt; = Content + UserKNN + ItemKNN&lt;br&gt;trọng số học bằng hồi quy logistic theo cặp" vertex="1">
-          <mxGeometry height="60" width="480" x="555" y="685" as="geometry" />
-        </mxCell>
-        <mxCell id="p4_47" parent="1" style="fontFamily=Helvetica;html=1;whiteSpace=wrap;rounded=1;arcSize=6;fillColor=#FCE7D9;strokeColor=#E6A15C;align=center;verticalAlign=middle;spacing=4;fontSize=11;" value="&lt;b&gt;Ablation NeuMF-F&lt;/b&gt;&lt;br&gt;bỏ lần lượt: thời gian · khách · thuộc tính SP · văn bản" vertex="1">
-          <mxGeometry height="60" width="490" x="1055" y="685" as="geometry" />
-        </mxCell>
-        <mxCell id="p4_48" parent="1" style="fontFamily=Helvetica;html=1;whiteSpace=wrap;rounded=0;fillColor=#FFFFFF;strokeColor=#C00000;dashed=1;fillColor=none;fontColor=#C00000;align=center;verticalAlign=middle;spacing=4;fontSize=11;" value="Tổng cộng 14 mô hình đăng ký trước (kể cả NeuMF-F, Random làm cận dưới) cùng ngân sách tinh chỉnh; Hybrid-CBCF thêm sau, có kế hoạch đăng ký riêng" vertex="1">
-          <mxGeometry height="50" width="1490" x="55" y="770" as="geometry" />
         </mxCell>
       </root>
     </mxGraphModel>
