@@ -1,7 +1,7 @@
 # Sơ đồ của đề tài
 
-Mọi sơ đồ vẽ bằng draw.io từ script `src/so_do_bao_cao.py` (bản Drive `pipeline_neumf_5trang.drawio` của nhóm giữ
-nguyên, bản sao để đối chiếu ở `src/pipeline_goc.drawio`). Màu chỉ để phân loại khối: xám là dữ liệu và đầu vào, xanh
+Mọi sơ đồ vẽ bằng draw.io từ script `src/so_do_bao_cao.py` (kể cả `pipeline_neumf_5trang.drawio` ở gốc repo:
+5 trang tổng quan, dữ liệu, chia thời gian, NeuMF-F, tinh chỉnh và đánh giá; bản vẽ tay cũ ở `src/pipeline_goc.drawio`). Màu chỉ để phân loại khối: xám là dữ liệu và đầu vào, xanh
 dương là bước xử lý và nhánh GMF, tím nhạt là nhánh MLP, cam là bước chính hoặc phép hợp nhất, xanh lá là kết quả. Các
 hình minh hoạ theo quy ước của bài báo NCF: vector vẽ thành dãy ô, vector one-hot có một ô tô đậm, phép toán (⊙, σ)
 là vòng tròn nhỏ, kho dữ liệu là hình trụ, màn hình giao diện là khung cửa sổ.
