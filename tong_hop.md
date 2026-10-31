@@ -2,9 +2,9 @@
 
 **Đề tài:** Xây dựng mô hình khuyến nghị lai kết hợp nhân tử hoá ma trận và mạng lưới thần kinh sâu.
 **Sinh viên:** Lê Minh Lý (52300220), Sử Thị Yến Linh (52300218). **GVHD:** TS. Hồ Thị Linh.
-**Cập nhật:** 14/10/2026 (sau commit `fcf33f3`), sau khi sửa báo cáo, demo và tài liệu theo góp ý buổi họp ngày 04/10/2026,
-thêm mô hình lai truyền thống Hybrid-CBCF cho nhóm baseline "học máy truyền thống" (mục 8.5; đã chấm tập kiểm thử, kết
-quả ở mục 3.7 và 4.6), và viết lại văn phong báo cáo (mục 10.4).
+**Cập nhật:** 29/10/2026, sau khi sửa báo cáo, sơ đồ và demo theo góp ý buổi họp ngày 23/10/2026 (mục 2.1). Trước đó
+(14/10, commit `fcf33f3`): sửa theo góp ý buổi họp 04/10, thêm mô hình lai truyền thống Hybrid-CBCF cho nhóm baseline
+"học máy truyền thống" (mục 8.5; kết quả ở mục 3.7 và 4.6), và viết lại văn phong báo cáo (mục 10.4).
 
 File này thay cho hai file cũ `neumf_project/pham_vi_du_an.md` (phạm vi, phương pháp) và `tong_hop_thay_doi_v2.md`
 (kết quả, tiến độ). Tài liệu khác:
@@ -58,7 +58,7 @@ Quy ước đọc:
 
 ---
 
-## 2. Tiến độ (13/10/2026)
+## 2. Tiến độ (29/10/2026)
 
 ### 2.1 Tình hình
 
@@ -68,9 +68,25 @@ Quy ước đọc:
 | Kiểm chứng Amazon Beauty | Xong ngày 10–11/10/2026; đã đưa vào báo cáo (báo cáo mục 3.2.6, 4.5, Chương 5, tóm tắt) |
 | 21 yêu cầu của buổi họp 04/10 | **20 hoàn thành** (#8 chờ cô xác nhận cách xếp nhóm), 1 chưa làm (mục 2.2) |
 | Mô hình lai truyền thống (bổ sung) | Xong 13/10: mã, kế hoạch `PREREG_bosung.md`, tinh chỉnh trên tập xác thực, chấm tập kiểm thử một lần trên H&M và một lần trên Amazon (commit `fcf33f3`); kết quả ở mục 3.7 và 4.6 |
-| Báo cáo | `main.pdf` 99 trang, biên dịch không lỗi; baseline trình bày theo ba nhóm; có kết quả Hybrid-CBCF; đã viết lại văn phong (mục 10.4); `check-report`: 73/73 câu nhận xét khớp số liệu, đủ mọi macro, bảng, hình |
-| Demo | Luôn có gợi ý (khách mới nhận danh sách phổ biến); chọn được K = 10, 15, 20; 3 ảnh chụp trong báo cáo |
-| Kiểm thử | `tests/` 108/108 qua; `demo/tests` 14/14 qua; demo đối chiếu từng kết quả với số đã lưu (mục 10.3) |
+| Báo cáo | `main.pdf` 102 trang, biên dịch không lỗi; baseline trình bày theo ba nhóm; có kết quả Hybrid-CBCF; tóm tắt Việt, Anh có đoạn kết quả (nêu rõ LateFusion-F cao nhất), mỗi bản một trang; `check-report`: 75/75 câu nhận xét khớp số liệu, đủ mọi macro, bảng, hình |
+| Demo | Luôn có gợi ý (khách mới nhận danh sách phổ biến); chọn được K = 10, 15, 20; ảnh Amazon lưu trên máy (`demo/static/images/amazon/`); ảnh H&M cần chép lại (mục 2.3) |
+| Kiểm thử | `tests/` 108/108 qua; `demo/tests` 20/20 qua (29/10); demo đối chiếu từng kết quả với số đã lưu (mục 10.3) |
+| Góp ý buổi họp 23/10 | Xong 8/9 việc của báo cáo và demo (bảng dưới); còn việc nộp báo cáo giữa kỳ (mục 2.3) |
+
+Đối chiếu góp ý buổi họp 23/10/2026:
+
+| Góp ý của cô | Trạng thái |
+|---|---|
+| Nói thẳng có mô hình cao hơn NeuMF-F | Xong: báo cáo mục 4.3, 4.5, 4.8, Chương 5 và tóm tắt Việt, Anh nêu LateFusion-F cao nhất trên cả hai bộ |
+| Bỏ K = 5, dùng K = 10, 15, 20 | Xong (báo cáo mục 4.1 có lý do) |
+| Trình bày quá trình xử lý dữ liệu | Xong (báo cáo mục 3.2, Hình 3.2) |
+| Hình mô hình chỉ giữ NeuMF-F, vẽ lớn, bỏ mô hình đối chứng | Xong (Hình 3.4) |
+| Hình ghi Top-K, không ghi Top-10 | Xong |
+| Giải thích đầu ra: ŷ, hàm kích hoạt cuối, BCE và mẫu âm | Xong: hình ghi "ŷ: điểm dự đoán trong khoảng (0, 1)", σ ở lớp dự đoán, "BCE với nhãn y: 1 = đã mua, 0 = mẫu âm" |
+| Mũi tên không chồng, không cắt nhau | Xong |
+| Cold start không vẽ trong hình nhưng có viết | Xong (báo cáo mục 2.1.4 và 3.8) |
+| Mục thiết lập thực nghiệm: so sánh cùng điều kiện | Xong (báo cáo mục 4.1, bảng điều kiện chung) |
+| Ảnh demo lưu trên máy, không kéo từ nguồn ngoài | Amazon xong; H&M cần chép lại ảnh (mục 2.3) |
 
 ### 2.2 Đối chiếu 21 yêu cầu của buổi họp 04/10/2026
 
@@ -111,10 +127,13 @@ chấm được khách này.
 ### 2.3 Việc còn lại
 
 Đã xong ngày 13/10: chấm tập kiểm thử cho Hybrid-CBCF (H&M và Amazon) và viết nhận xét theo kết quả; viết lại văn phong
-báo cáo (mục 10.4).
+báo cáo (mục 10.4). Đã xong ngày 23–29/10: sửa theo góp ý buổi họp 23/10 (mục 2.1); `pipeline_neumf_5trang.drawio` vẽ
+lại gọn, sinh từ `image/src/so_do_bao_cao.py` cùng các hình của báo cáo.
 
-1. **Commit và push** các thay đổi ngày 13/10: kết quả bổ sung `outputs/*/final/bosung/`, nhật ký
-   `audit/test_access_log.csv`, `PREREG_bosung.md` mục 8, báo cáo, tài liệu.
+1. **Hỏi khoa về báo cáo giữa kỳ**: hạn nghe được khoảng 25/10, không nộp bị trừ 1 điểm; nộp ở mục nộp bài (không phải
+   mục báo cáo tiến độ hàng tuần), hệ thống đang đổi giao diện. Báo cáo cuối nộp tháng 11.
+   **Chép lại ảnh H&M cho demo** trước buổi demo: `$env:HM_IMAGES_DIR = "<thư mục images H&M>"; python
+   demo/scripts/copy_images.py` (từ `neumf_project/`).
 2. **Xin bạn nhóm tệp đặc trưng của máy GPU** (máy đã chạy đánh giá cuối): `data/processed/hm/catalog_v2.npz` và
    `data/processed/amazon/catalog.npz`. Chép vào cùng chỗ trên máy này thì bốn mô hình có đặc trưng và Content trên demo
    khớp tuyệt đối với Chương 4 (mục 10.3). Nên gửi kèm tệp này khi gửi cô checkpoint. Lưu ý: Hybrid-CBCF được chấm bằng
@@ -146,7 +165,7 @@ báo cáo (mục 10.4).
 | Mô hình lai truyền thống (bổ sung) | 100% | Mã, kế hoạch, tinh chỉnh, chấm tập kiểm thử H&M và Amazon, nhận xét trong báo cáo |
 | Code và kiểm thử | 100% | 108/108 test; demo 14/14 (mục 10.3) |
 | Demo | 100% | Luôn có gợi ý; 3 ảnh trong báo cáo |
-| Báo cáo | 98% | Đủ kết quả, kể cả Hybrid-CBCF; đã viết lại văn phong và rà câu dài (14/10); tóm tắt Việt, Anh mỗi bản một trang; còn chỉnh theo ý cô cho 5 câu hỏi |
+| Báo cáo | 98% | Đủ kết quả, kể cả Hybrid-CBCF; đã sửa theo góp ý 23/10; tóm tắt Việt, Anh có đoạn kết quả, mỗi bản một trang; còn chỉnh theo ý cô cho 5 câu hỏi |
 | Chuẩn bị bảo vệ | Một phần | `van_dap.md` viết lại cho hội đồng (20/10); chưa làm slide, chưa gửi cô checkpoint |
 
 ---

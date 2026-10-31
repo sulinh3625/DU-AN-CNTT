@@ -84,11 +84,14 @@ def kien_truc(t: Trang, dac_trung: bool) -> None:
     sg = t.o("phep", 296, 462, 28, 28, "σ", co=15)
     t.o("chu", 330, 466, 230, 20, "Lớp dự đoán: ŷ<sub>ui</sub> = σ(h<sup>T</sup>φ)", co=12, them="align=left;")
     t.mt(hn, sg, "duoi", "tren")
-    y = t.o("ketqua", 265, 512, 90, 34, "ŷ<sub>ui</sub>", co=14)
+    if dac_trung:
+        y = t.o("ketqua", 220, 506, 180, 46, "ŷ<sub>ui</sub>: điểm dự đoán<br>trong khoảng (0, 1)", co=12)
+    else:
+        y = t.o("ketqua", 265, 512, 90, 34, "ŷ<sub>ui</sub>", co=14)
     t.mt(sg, y, "duoi", "tren")
     if dac_trung:
-        hl = t.o("xuly", 50, 580, 240, 46, k("Khi huấn luyện", "BCE với nhãn thật y<sub>ui</sub>"))
-        kn = t.o("ketqua_hop", 330, 580, 240, 46, k("Khi khuyến nghị", "xếp hạng ứng viên, lấy Top-K"))
+        hl = t.o("xuly", 10, 580, 280, 46, k("Khi huấn luyện", "BCE với nhãn y<sub>ui</sub>: 1 = đã mua, 0 = mẫu âm"))
+        kn = t.o("ketqua_hop", 330, 580, 280, 46, k("Khi khuyến nghị", "xếp hạng ứng viên, lấy Top-K"))
         t.mt(y, hl, "trai", "tren")
         t.mt(y, kn, "phai", "tren")
 
@@ -277,8 +280,16 @@ BAO_CAO_HINH = [("01_duong_ong", duong_ong), ("02_xu_ly_du_lieu", du_lieu), ("03
 SLIDE = [("01_tong_quan", tong_quan), ("02_du_lieu", du_lieu), ("03_chia_thoi_gian", thoi_gian),
          ("04_neumf_f", mo_hinh), ("05_doi_chung", doi_chung), ("06_tinh_chinh_danh_gia", danh_gia),
          ("07_neumf", neumf), ("08_hop_nhat", hop_nhat)]
+# Bản pipeline 5 trang của nhóm (gốc repo): dùng lại đúng các hình của báo cáo/slide, không thêm số liệu riêng.
+PIPELINE = [tong_quan, du_lieu, thoi_gian, mo_hinh, danh_gia]
+
+
+def ghi_pipeline() -> None:
+    ghi([fn() for fn in PIPELINE], HERE.parents[1] / "pipeline_neumf_5trang.drawio")
+
 
 if __name__ == "__main__":
+    ghi_pipeline()
     f = OUT / "so_do_bao_cao.drawio"
     ghi([fn() for _, fn in BAO_CAO_HINH], f)
     BAO_CAO.mkdir(parents=True, exist_ok=True)
