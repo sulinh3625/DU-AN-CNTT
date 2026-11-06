@@ -149,7 +149,9 @@ lại gọn, sinh từ `image/src/so_do_bao_cao.py` cùng các hình của báo 
       không?
 4. **Gửi cô checkpoint** (`outputs/v2/final/seed42/`, `outputs/amazon/final/seed42/`) kèm hướng dẫn chạy demo
    (`neumf_project/demo/README.md`).
-5. **Làm slide** theo kết quả cuối (báo cáo Chương 4–5, hai file `ket_qua.txt`, kể cả Hybrid-CBCF).
+5. ~~**Làm slide**~~ — xong 06/11: slide 16 trang (Artifact "Slide NeuMF-F" trên claude.ai, gồm cả Hybrid-CBCF) và
+   poster theo khung Khoa CNTT (`Report DACNTT/poster/`: `build_poster.py` sinh `Poster_DACNTT.pptx`, `.png`, `.pdf`).
+   Số trên slide và poster chép từ mục 3–4; kết quả đổi thì sửa tay theo.
 6. **Cập nhật Google Doc tiến độ** theo mục 2.2.
 
 ### 2.4 Mức độ hoàn thành theo hạng mục
@@ -166,7 +168,7 @@ lại gọn, sinh từ `image/src/so_do_bao_cao.py` cùng các hình của báo 
 | Code và kiểm thử | 100% | 108/108 test; demo 14/14 (mục 10.3) |
 | Demo | 100% | Luôn có gợi ý; 3 ảnh trong báo cáo |
 | Báo cáo | 98% | Đủ kết quả, kể cả Hybrid-CBCF; đã sửa theo góp ý 23/10; tóm tắt Việt, Anh có đoạn kết quả, mỗi bản một trang; còn chỉnh theo ý cô cho 5 câu hỏi |
-| Chuẩn bị bảo vệ | Một phần | `van_dap.md` viết lại cho hội đồng (20/10); chưa làm slide, chưa gửi cô checkpoint |
+| Chuẩn bị bảo vệ | Một phần | `van_dap.md` viết lại cho hội đồng (20/10); slide và poster xong (06/11); chưa gửi cô checkpoint |
 
 ---
 

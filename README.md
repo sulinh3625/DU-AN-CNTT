@@ -8,7 +8,7 @@ sớm — và bổ sung đặc trưng sản phẩm, khách hàng, thời gian. C
 trên mẫu kiểm định độc lập, mở tập kiểm thử đúng một lần theo kế hoạch đăng ký trước. Kết luận được kiểm chứng lại trên
 bộ dữ liệu thứ hai, Amazon Beauty.
 
-**Trạng thái (29/10/2026):**
+**Trạng thái (06/11/2026):**
 
 - Thực nghiệm đã xong trên H&M (10/10) và kiểm chứng trên Amazon Beauty (10–11/10); tập kiểm thử đã mở đúng một lần,
   không chạy lại. Báo cáo, sơ đồ và demo đã sửa theo góp ý buổi họp 23/10 (hình NeuMF-F chỉ còn mô hình đề xuất, ghi
@@ -20,8 +20,11 @@ bộ dữ liệu thứ hai, Amazon Beauty.
 - Baseline xếp theo ba nhóm (mô hình đơn lẻ, học máy truyền thống, chuyên biệt cho gợi ý). Nhóm học máy truyền thống
   có thêm mô hình lai truyền thống Hybrid-CBCF (Content + UserKNN + ItemKNN, theo luận án của cô) — phân tích bổ sung
   có kế hoạch đăng ký riêng; NeuMF-F tốt hơn nó có ý nghĩa trên cả hai bộ.
+- 06/11: kiểm tra lại số liệu (`check-report`: tái lập khớp tuyệt đối, 75/75 khẳng định đúng, đủ macro, bảng, hình;
+  không còn tham chiếu hỏng). Đã có slide bảo vệ (16 trang, Artifact trên claude.ai) và poster theo khung Khoa CNTT
+  (`Report DACNTT/poster/`).
 - Còn lại: xác nhận với khoa việc nộp báo cáo giữa kỳ (hạn nghe được khoảng 25/10), chép lại ảnh H&M cho demo
-  (`demo/scripts/copy_images.py`), làm slide, nộp báo cáo cuối (tháng 11).
+  (`demo/scripts/copy_images.py`), nộp báo cáo cuối (tháng 11).
 
 Số liệu, tiến độ chi tiết và đối chiếu góp ý: [`tong_hop.md`](tong_hop.md).
 
@@ -30,7 +33,7 @@ Số liệu, tiến độ chi tiết và đối chiếu góp ý: [`tong_hop.md`]
 | Thư mục / file | Nội dung |
 |---|---|
 | `neumf_project/` | Mã nguồn, dữ liệu, kết quả, demo web |
-| `Report DACNTT/` | Báo cáo LaTeX (`main.tex`, biên dịch bằng `compile.bat`) |
+| `Report DACNTT/` | Báo cáo LaTeX (`main.tex`, biên dịch bằng `compile.bat`); poster ở `poster/` (`python build_poster.py`) |
 | `tai_lieu/` | Tài liệu tham khảo (luận án của GVHD) |
 | `tong_hop.md` | Tổng hợp đồ án: phương pháp, kết quả H&M và Amazon, tiến độ, đối chiếu góp ý |
 | `van_dap.md` | Chuẩn bị vấn đáp: trả lời góp ý của GVHD và các câu hỏi khó |
