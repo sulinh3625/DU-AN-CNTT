@@ -72,9 +72,9 @@
     "semantic_hash": ""
   },
   "neumf_project/demo/frontend/app.js": {
-    "mtime": 1793101792.3007567,
-    "seen": 1793959630.1747859,
-    "ast_hash": "2d0b0fa0e638d0abdf2f0e1e91d014eb",
+    "mtime": 1793984964.638735,
+    "seen": 1793985646.282186,
+    "ast_hash": "ff1b121019b4f85a9aa6ee48cded8126",
     "semantic_hash": ""
   },
   "neumf_project/demo/scripts/copy_images.py": {
@@ -228,9 +228,9 @@
     "semantic_hash": ""
   },
   "neumf_project/scripts/24_report_v2.py": {
-    "mtime": 1793101792.3082757,
-    "seen": 1793959630.1747859,
-    "ast_hash": "772819195963ad28addb14b37c90132d",
+    "mtime": 1793983477.8461502,
+    "seen": 1793985646.282186,
+    "ast_hash": "d6dbb1b133421f740b463033d7e77357",
     "semantic_hash": ""
   },
   "neumf_project/scripts/25_bosung.py": {
@@ -510,21 +510,21 @@
     "semantic_hash": ""
   },
   "CLAUDE.md": {
-    "mtime": 1793290913.592779,
-    "seen": 1793959630.1747859,
-    "ast_hash": "a33dc18de1473a928ea78f606dbbc9fa",
+    "mtime": 1793985591.6411698,
+    "seen": 1793985646.282186,
+    "ast_hash": "5f48f312f881aec02b99f21baafd6993",
     "semantic_hash": ""
   },
   "README.md": {
-    "mtime": 1793959600.7041593,
-    "seen": 1793959630.1747859,
-    "ast_hash": "dca985453364ab06777fc2691d15d1d5",
+    "mtime": 1793985585.0563087,
+    "seen": 1793985646.282186,
+    "ast_hash": "5f31f5e1bded70c2dd00fe69378fd535",
     "semantic_hash": ""
   },
   "neumf_project/README.md": {
-    "mtime": 1791974026.3798642,
-    "seen": 1793959630.1747859,
-    "ast_hash": "5d193cd0ac7c4c79ce35ec899ac84fb9",
+    "mtime": 1793983758.9369607,
+    "seen": 1793985646.282186,
+    "ast_hash": "ac72e77ca7edc37ca6eb4b4a5c985857",
     "semantic_hash": ""
   },
   "neumf_project/audit/PREREG.md": {
@@ -570,9 +570,9 @@
     "semantic_hash": ""
   },
   "neumf_project/demo/README.md": {
-    "mtime": 1793101792.2958126,
-    "seen": 1793959630.1747859,
-    "ast_hash": "e83abb16fa4ade61b530fccddd9425cd",
+    "mtime": 1793984307.0936828,
+    "seen": 1793985646.282186,
+    "ast_hash": "d6fb7def43433e8ff66ab9b7b0b752fd",
     "semantic_hash": ""
   },
   "neumf_project/demo/frontend/index.html": {
@@ -582,15 +582,15 @@
     "semantic_hash": ""
   },
   "neumf_project/outputs/amazon/final/ket_qua.txt": {
-    "mtime": 1793958887.5972295,
-    "seen": 1793959630.1747859,
-    "ast_hash": "f30782db2270f4cd18503240b9247c27",
+    "mtime": 1793983520.9432075,
+    "seen": 1793985646.282186,
+    "ast_hash": "e39821fa2d243eaaebedd112cdde3ab4",
     "semantic_hash": ""
   },
   "neumf_project/outputs/v2/final/ket_qua.txt": {
-    "mtime": 1793958865.927917,
-    "seen": 1793959630.1747859,
-    "ast_hash": "6c0d691b09205cad2b96bd726b44df9b",
+    "mtime": 1793983501.4324539,
+    "seen": 1793985646.282186,
+    "ast_hash": "9d42d4b75784440cbc515cc59fa3afab",
     "semantic_hash": ""
   },
   "neumf_project/requirements.txt": {
@@ -600,9 +600,9 @@
     "semantic_hash": ""
   },
   "tong_hop.md": {
-    "mtime": 1793959608.2454476,
-    "seen": 1793959630.1747859,
-    "ast_hash": "39c23d4f31e57626c91869fa9ed5a8d3",
+    "mtime": 1793985584.9985232,
+    "seen": 1793985646.282186,
+    "ast_hash": "3c499d13ab32142d672f8ba9e68c6e16",
     "semantic_hash": ""
   },
   "van_dap.md": {
@@ -612,9 +612,9 @@
     "semantic_hash": ""
   },
   "Report DACNTT/main.pdf": {
-    "mtime": 1793958615.3307078,
-    "seen": 1793959630.1747859,
-    "ast_hash": "a50ddafb5a81689fca7cbe3523a9371d",
+    "mtime": 1793985557.4206588,
+    "seen": 1793985646.282186,
+    "ast_hash": "597d46c5c1e8bf211ecf666d9726175e",
     "semantic_hash": ""
   },
   "tai_lieu/10. H\u1ed3 Th\u1ecb Linh - To\u00e0n v\u0103n LATS.pdf": {
@@ -624,57 +624,57 @@
     "semantic_hash": ""
   },
   "Report DACNTT/media/figures/amazon/v2_ablation.png": {
-    "mtime": 1793958889.0537107,
-    "seen": 1793959630.1752913,
+    "mtime": 1793983522.2709837,
+    "seen": 1793985646.282186,
     "ast_hash": "dfe8f99774ba95e1a2e167042a0ec4ad",
     "semantic_hash": ""
   },
   "Report DACNTT/media/figures/amazon/v2_curves.png": {
-    "mtime": 1793958889.4719748,
-    "seen": 1793959630.1752913,
+    "mtime": 1793983522.647219,
+    "seen": 1793985646.282186,
     "ast_hash": "fc9fa727542af1a9690a419a6b97f1f8",
     "semantic_hash": ""
   },
   "Report DACNTT/media/figures/amazon/v2_metrics.png": {
-    "mtime": 1793958888.5650191,
-    "seen": 1793959630.1752913,
-    "ast_hash": "667094463a30a0a0ca586714df45d94f",
+    "mtime": 1793983521.8373134,
+    "seen": 1793985646.282186,
+    "ast_hash": "1d7e3965e85329afc79a05f1555631d7",
     "semantic_hash": ""
   },
   "Report DACNTT/media/figures/amazon/v2_significance.png": {
-    "mtime": 1793958888.8595395,
-    "seen": 1793959630.1752913,
+    "mtime": 1793983522.1202462,
+    "seen": 1793985646.282186,
     "ast_hash": "541342bd2a1c796f28b4197057800bfc",
     "semantic_hash": ""
   },
   "Report DACNTT/media/figures/demo/demo_v2.png": {
-    "mtime": 1793101792.098402,
-    "seen": 1793959630.1752913,
-    "ast_hash": "c55e15608ebb0d903e69cc0e90c628d4",
+    "mtime": 1793985539.7116232,
+    "seen": 1793985646.282186,
+    "ast_hash": "51b3791796d24415fd38e88144a1c1e2",
     "semantic_hash": ""
   },
   "Report DACNTT/media/figures/demo/demo_v2_neighbors.png": {
-    "mtime": 1793101792.0994005,
-    "seen": 1793959630.1752913,
-    "ast_hash": "430302c12d94bfce39341c11aed912ab",
+    "mtime": 1793985539.719264,
+    "seen": 1793985646.282186,
+    "ast_hash": "37ea0cdf84ad9a00630677986a9e9660",
     "semantic_hash": ""
   },
   "Report DACNTT/media/figures/demo/demo_v2_new.png": {
-    "mtime": 1793101792.101409,
-    "seen": 1793959630.1752913,
-    "ast_hash": "66361fb7cd3f86ac4adfb09d32b8aa5c",
+    "mtime": 1793985539.7349648,
+    "seen": 1793985646.282186,
+    "ast_hash": "4320174cca577bfebd0dd45765d51985",
     "semantic_hash": ""
   },
   "Report DACNTT/media/figures/demo/demo_v2_overview.png": {
-    "mtime": 1793101792.1034112,
-    "seen": 1793959630.1752913,
-    "ast_hash": "e454150414379aaf139a9b65c62652d1",
+    "mtime": 1793985539.7429693,
+    "seen": 1793985646.282186,
+    "ast_hash": "558ea83b194ab295162c17518bc9d8aa",
     "semantic_hash": ""
   },
   "Report DACNTT/media/figures/demo/demo_v2_product.png": {
-    "mtime": 1793101792.1054137,
-    "seen": 1793959630.1752913,
-    "ast_hash": "af3ae5dec9a729971a31b437350e15a7",
+    "mtime": 1793985539.7581303,
+    "seen": 1793985646.282186,
+    "ast_hash": "cc38b9a88083111f195476947b9cbd16",
     "semantic_hash": ""
   },
   "Report DACNTT/media/figures/demo/demo_v2_results.png": {
@@ -684,33 +684,33 @@
     "semantic_hash": ""
   },
   "Report DACNTT/media/figures/v2/v2_ablation.png": {
-    "mtime": 1793958866.9950655,
-    "seen": 1793959630.1752913,
+    "mtime": 1793983502.4269433,
+    "seen": 1793985646.282186,
     "ast_hash": "d14fedc756ae9bdff50080be8402f8b0",
     "semantic_hash": ""
   },
   "Report DACNTT/media/figures/v2/v2_curves.png": {
-    "mtime": 1793958867.213509,
-    "seen": 1793959630.1752913,
+    "mtime": 1793983502.6467845,
+    "seen": 1793985646.282186,
     "ast_hash": "08080bfcee1dc9e945d1844351029085",
     "semantic_hash": ""
   },
   "Report DACNTT/media/figures/v2/v2_metrics.png": {
-    "mtime": 1793958866.6074028,
-    "seen": 1793959630.1752913,
-    "ast_hash": "027bab45b9c6d9e6ba1dcf38e8ced486",
+    "mtime": 1793983502.0480852,
+    "seen": 1793985646.282186,
+    "ast_hash": "01e734841d75f6213f57ce4385c6bba0",
     "semantic_hash": ""
   },
   "Report DACNTT/media/figures/v2/v2_significance.png": {
-    "mtime": 1793958866.8905683,
-    "seen": 1793959630.1752913,
+    "mtime": 1793983502.3234468,
+    "seen": 1793985646.282186,
     "ast_hash": "e143d25a560469ecfffb8eee0526b748",
     "semantic_hash": ""
   },
   "Report DACNTT/media/figures/v2/v2_val_vs_test.png": {
-    "mtime": 1793958867.493336,
-    "seen": 1793959630.1752913,
-    "ast_hash": "26dd29b4bce969de10a57193e7c796e6",
+    "mtime": 1793983502.9219131,
+    "seen": 1793985646.282186,
+    "ast_hash": "4d878311d8bb921944e5187b45da87bb",
     "semantic_hash": ""
   },
   "Report DACNTT/media/logo.png": {
@@ -720,57 +720,57 @@
     "semantic_hash": ""
   },
   "neumf_project/outputs/amazon/final/figures/v2_ablation.png": {
-    "mtime": 1793958889.0537107,
-    "seen": 1793959630.1752913,
+    "mtime": 1793983522.2709837,
+    "seen": 1793985646.282186,
     "ast_hash": "dfe8f99774ba95e1a2e167042a0ec4ad",
     "semantic_hash": ""
   },
   "neumf_project/outputs/amazon/final/figures/v2_curves.png": {
-    "mtime": 1793958889.4719748,
-    "seen": 1793959630.1752913,
+    "mtime": 1793983522.647219,
+    "seen": 1793985646.282186,
     "ast_hash": "fc9fa727542af1a9690a419a6b97f1f8",
     "semantic_hash": ""
   },
   "neumf_project/outputs/amazon/final/figures/v2_metrics.png": {
-    "mtime": 1793958888.5650191,
-    "seen": 1793959630.1752913,
-    "ast_hash": "667094463a30a0a0ca586714df45d94f",
+    "mtime": 1793983521.8373134,
+    "seen": 1793985646.282186,
+    "ast_hash": "1d7e3965e85329afc79a05f1555631d7",
     "semantic_hash": ""
   },
   "neumf_project/outputs/amazon/final/figures/v2_significance.png": {
-    "mtime": 1793958888.8595395,
-    "seen": 1793959630.1752913,
+    "mtime": 1793983522.1202462,
+    "seen": 1793985646.282186,
     "ast_hash": "541342bd2a1c796f28b4197057800bfc",
     "semantic_hash": ""
   },
   "neumf_project/outputs/v2/final/figures/v2_ablation.png": {
-    "mtime": 1793958866.9950655,
-    "seen": 1793959630.1752913,
+    "mtime": 1793983502.4269433,
+    "seen": 1793985646.282186,
     "ast_hash": "d14fedc756ae9bdff50080be8402f8b0",
     "semantic_hash": ""
   },
   "neumf_project/outputs/v2/final/figures/v2_curves.png": {
-    "mtime": 1793958867.213509,
-    "seen": 1793959630.1752913,
+    "mtime": 1793983502.6467845,
+    "seen": 1793985646.282186,
     "ast_hash": "08080bfcee1dc9e945d1844351029085",
     "semantic_hash": ""
   },
   "neumf_project/outputs/v2/final/figures/v2_metrics.png": {
-    "mtime": 1793958866.6074028,
-    "seen": 1793959630.1752913,
-    "ast_hash": "027bab45b9c6d9e6ba1dcf38e8ced486",
+    "mtime": 1793983502.0480852,
+    "seen": 1793985646.282186,
+    "ast_hash": "01e734841d75f6213f57ce4385c6bba0",
     "semantic_hash": ""
   },
   "neumf_project/outputs/v2/final/figures/v2_significance.png": {
-    "mtime": 1793958866.8905683,
-    "seen": 1793959630.1752913,
+    "mtime": 1793983502.3234468,
+    "seen": 1793985646.282186,
     "ast_hash": "e143d25a560469ecfffb8eee0526b748",
     "semantic_hash": ""
   },
   "neumf_project/outputs/v2/final/figures/v2_val_vs_test.png": {
-    "mtime": 1793958867.493336,
-    "seen": 1793959630.1752913,
-    "ast_hash": "26dd29b4bce969de10a57193e7c796e6",
+    "mtime": 1793983502.9219131,
+    "seen": 1793985646.282186,
+    "ast_hash": "4d878311d8bb921944e5187b45da87bb",
     "semantic_hash": ""
   },
   "neumf_project/demo/frontend/vendor/chart.umd.min.js": {
@@ -1047,6 +1047,12 @@
     "mtime": 1793959398.4188454,
     "seen": 1793959630.1752913,
     "ast_hash": "d90f1c9cb06eff93ad0b26d34b26a03e",
+    "semantic_hash": ""
+  },
+  "neumf_project/demo/scripts/download_hm_images.py": {
+    "mtime": 1793984544.4457498,
+    "seen": 1793985646.282186,
+    "ast_hash": "86d0d7925e6acc0ca35e15a09576d0c3",
     "semantic_hash": ""
   }
 }

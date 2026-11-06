@@ -164,7 +164,7 @@ Nhóm 1: mô hình đơn lẻ               GMF-F               0,03298 ± 0,002
 Nhóm 1: mô hình đơn lẻ               MLP-F               0,03065 ± 0,00193  0,05107 ± 0,00327  0,08737 ± 0,00656  0,00998 ± 0,00092
 Nhóm 1: mô hình đơn lẻ               GMF                 0,01627 ± 0,00173  0,02533 ± 0,00154  0,05582 ± 0,00303  0,00640 ± 0,00036
 Nhóm 1: mô hình đơn lẻ               MLP                 0,01271 ± 0,00054  0,02045 ± 0,00132  0,04667 ± 0,00324  0,00513 ± 0,00037
-Nhóm 2: học máy truyền thống         Hybrid-CBCF†        0,02664 ± 0,00000  0,03992 ± 0,00000  0,08169 ± 0,00000  0,00998 ± 0,00000
+Nhóm 2: học máy truyền thống         Hybrid-CBCF*        0,02664 ± 0,00000  0,03992 ± 0,00000  0,08169 ± 0,00000  0,00998 ± 0,00000
 Nhóm 2: học máy truyền thống         UserKNN             0,02506 ± 0,00000  0,03553 ± 0,00000  0,07716 ± 0,00000  0,00930 ± 0,00000
 Nhóm 2: học máy truyền thống         ItemKNN             0,02333 ± 0,00000  0,03526 ± 0,00000  0,07186 ± 0,00000  0,00870 ± 0,00000
 Nhóm 2: học máy truyền thống         BPR-MF              0,01144 ± 0,00091  0,01691 ± 0,00164  0,04115 ± 0,00309  0,00498 ± 0,00035
@@ -174,7 +174,7 @@ Nhóm 3: chuyên biệt cho khuyến nghị  NeuMF               0,01978 ± 0,00
 Nhóm 3: chuyên biệt cho khuyến nghị  MostPopular-Recent  0,01401 ± 0,00000  0,02483 ± 0,00000  0,03858 ± 0,00000  0,00416 ± 0,00000
 Nhóm 3: chuyên biệt cho khuyến nghị  Most Popular        0,00872 ± 0,00000  0,01576 ± 0,00000  0,03744 ± 0,00000  0,00390 ± 0,00000
 Cận dưới                             Random              0,00101 ± 0,00028  0,00168 ± 0,00059  0,00446 ± 0,00143  0,00045 ± 0,00014
-† Bổ sung: kết hợp Content, UserKNN, ItemKNN theo mô hình lai trong luận án của GVHD; cách kết hợp chọn trên tập xác thực của mẫu phát triển H&M: {'fusion': 'lr', 'weights': [1.293776, 6.303423, 2.891216]}.
+* Bổ sung: kết hợp Content, UserKNN, ItemKNN theo mô hình lai trong luận án của GVHD; cách kết hợp chọn trên tập xác thực của mẫu phát triển H&M: {'fusion': 'lr', 'weights': [1.293776, 6.303423, 2.891216]}.
 Chấm một lần trên cùng tập kiểm thử (tất định, dùng cho mọi seed); không thuộc họ 10 so sánh đăng ký trước.
 
 

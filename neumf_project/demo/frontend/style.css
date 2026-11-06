@@ -355,6 +355,8 @@ canvas { max-height: 320px; }
 .prow .pth .tile { width: 100%; height: 100%; border-radius: 0; }
 .prow .pth .tile svg { width: 26px; height: 26px; }
 .prow .pth img { width: 100%; height: 100%; object-fit: contain; background: #fff; }
+/* Ảnh H&M chụp trên nền xám nhạt: khung thừa cùng màu thay vì hai dải trắng (Amazon nền trắng, giữ #fff). */
+:root[data-ds="hm"] :is(.pimg, .pd-img, .prow .pth, .items li) img { background: #eaeaea; }
 .prow .t { display: grid; min-width: 0; }
 .prow .pname { -webkit-line-clamp: 1; }
 .prow .ok { font-size: 12px; font-weight: 700; color: var(--good); white-space: nowrap; }

@@ -1,6 +1,7 @@
 const API = "/api";
 // Bộ dữ liệu đang xem (?ds=amazon), gửi kèm mọi lời gọi API; đổi bộ dữ liệu = tải lại trang với ?ds= mới.
 const DS = new URLSearchParams(location.search).get("ds") === "amazon" ? "amazon" : "hm";
+document.documentElement.dataset.ds = DS;  // CSS: nền khung ảnh theo nền ảnh của bộ dữ liệu
 const $ = (id) => document.getElementById(id);
 const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 const fmt = (v, d = 4) => (v == null || Number.isNaN(Number(v)) ? "—" : Number(v).toFixed(d));

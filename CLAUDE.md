@@ -7,7 +7,8 @@ Trả lời bằng tiếng Việt có dấu. Bối cảnh và số liệu: `READ
 - Đối chiếu câu chữ báo cáo với số liệu: `python run.py check-report`
 - Tính lại bảng/hình từ kết quả đã lưu (không mở tập kiểm thử): `python run.py v2-report` / `amazon-report`
 - Demo: `python run.py demo` (localhost:8000). Ảnh trong `demo/static/images/` bị gitignore: Amazon tải bằng
-  `demo/scripts/download_amazon_images.py`, H&M chép bằng `demo/scripts/copy_images.py` (cần `HM_IMAGES_DIR`)
+  `demo/scripts/download_amazon_images.py`, H&M tải bằng
+  `demo/scripts/download_hm_images.py` (Kaggle API) hoặc chép bằng `demo/scripts/copy_images.py` (cần `HM_IMAGES_DIR`)
 - Sơ đồ (báo cáo, slide, `pipeline_neumf_5trang.drawio`): `cd image/src && python so_do_bao_cao.py` (cần draw.io desktop)
 - Báo cáo: `Report DACNTT/compile.bat` (MiKTeX XeLaTeX + biber)
 

@@ -98,7 +98,7 @@ Nhãn $y_{ui} = 1$ chỉ xác nhận khách đã mua, không xác nhận khách 
 Lọc cộng tác có hai thách thức chính:
 \begin{itemize}
     \item Độ thưa dữ liệu. Mỗi khách chỉ mua một phần rất nhỏ trong hàng nghìn sản phẩm, nên gần như mọi ô của ma trận $M \times N$ đều trống. Lọc $k$-core (chỉ giữ khách và sản phẩm có ít nhất $k$ lượt mua) làm giảm độ thưa, nhưng ma trận vẫn rất thưa.
-    \item Khởi đầu lạnh (\textit{cold start}). Khách vừa đăng ký hoặc sản phẩm vừa lên kệ chưa có lượt mua nào, nên lọc cộng tác không có dữ liệu để học vector cho chúng. Những đối tượng chỉ có ít lượt mua gặp dạng nhẹ hơn của vấn đề này: vector mã ID của chúng kém tin cậy.
+    \item \textit{Cold start}. Khách vừa đăng ký hoặc sản phẩm vừa lên kệ chưa có lượt mua nào, nên lọc cộng tác không có dữ liệu để học vector cho chúng. Những đối tượng chỉ có ít lượt mua gặp dạng nhẹ hơn của vấn đề này: vector mã ID của chúng kém tin cậy.
 \end{itemize}
 
 Đề tài bổ sung đặc trưng nội dung và ngữ cảnh vào mô hình lai chủ yếu để giảm ảnh hưởng của hai thách thức này.
@@ -353,7 +353,7 @@ Vì vậy chỉ nên đọc mức cải thiện tương đối so với đối c
     \hline
     Hồ Thị Linh, 2023 & MovieLens (77.764 đánh giá, 27.042 người dùng, 8.203 phim); Amazon Electronics (85.065 đánh giá, 1.042 người dùng), Toys and Games (71.780; 5.462), Video Games (98.769; 2.291). Dự đoán điểm đánh giá; RMSE, MAE, Precision & Chia ngẫu nhiên 80\% huấn luyện (20\% trong đó để xác thực), 20\% kiểm thử. Không xếp hạng trên tập ứng viên & Hợp nhất sớm vector MF và đặc trưng văn bản qua mạng lưới thần kinh (chương 4), Electronics: RMSE 1,01, Precision 82,86\% so với SVD 1,16 và 69,55\% (RMSE giảm 12,93\%, Precision tăng 19,14\%). Transformer hợp nhất nhiều góc nhìn (chương 5), Toys and Games: MAE 0,445, RMSE 0,743, Precision 92,07\% so với SVD 0,844 / 1,120 / 68,06\%. \\
     \hline
-    Đề tài, 2026 & H\&M, mẫu kiểm định (\VData{B}{nusers} khách, \VData{B}{nitems} sản phẩm, \VData{B}{nkeptpairs} cặp) và Amazon Beauty 5-core (\AData{all}{nusers} khách, \AData{all}{nitems} sản phẩm, \AData{all}{nkeptpairs} cặp), phản hồi ẩn. Xếp hạng Top-$K$; NDCG@10 (chính), Recall, HR, Precision ở $K = 10, 15, 20$ & Theo mốc thời gian chung; mẫu khách hàng độc lập (H\&M). Ứng viên: mọi sản phẩm đã có dữ liệu huấn luyện, trừ sản phẩm khách đã mua; trung bình \VData{Btest}{cand} (H\&M), \AData{test}{cand} (Amazon) & Mô hình đề xuất NeuMF-F và 13 mô hình đối chứng, cùng ngân sách tinh chỉnh; kiểm định Wilcoxon, bootstrap và hiệu chỉnh Holm \\ \hline
+    Đề tài, 2026 & H\&M, mẫu kiểm định (\VData{B}{nusers} khách, \VData{B}{nitems} sản phẩm, \VData{B}{nkeptpairs} cặp) và Amazon Beauty 5-core (\AData{all}{nusers} khách, \AData{all}{nitems} sản phẩm, \AData{all}{nkeptpairs} cặp), phản hồi ẩn. Xếp hạng Top-$K$; NDCG@10 (chính), Recall, HR, Precision ở $K = 10, 15, 20$ & Theo mốc thời gian chung; mẫu khách hàng độc lập (H\&M). Ứng viên: mọi sản phẩm đã có dữ liệu huấn luyện, trừ sản phẩm khách đã mua; trung bình \VData{Btest}{cand} (H\&M), \AData{test}{cand} (Amazon) & NeuMF-F: NDCG@10 = \VRes{NeuMFF}{NDCG10} (H\&M), \ARes{NeuMFF}{NDCG10} (Amazon Beauty). Cao hơn NeuMF chỉ dùng ID \VSig{1}{rel} và \ASig{1}{rel} (tương đối). Mô hình cao nhất trên cả hai bộ là LateFusion-F (\VRes{LateF}{NDCG10} và \ARes{LateF}{NDCG10}). \\ \hline
 \end{xltabular}
 \endgroup
 

@@ -20,7 +20,7 @@ Mọi số trong báo cáo lấy từ các file này, không gõ tay.
 Amazon Beauty (NEUMF_CONFIG=configs/amazon.yaml, `python run.py amazon-report`): đọc outputs/amazon/final/, ghi bảng +
 macro (\\ARes, \\ASig, ...) vào content/tables/amazon/ và hình vào media/figures/amazon/ — không đụng bảng của H&M.
 Bổ sung sau đánh giá cuối (audit/PREREG_bosung.md): nếu có <final-dir>/bosung/ (scripts/25_bosung.py) thì thêm mô hình lai
-truyền thống Hybrid-CBCF (đánh dấu †) vào bảng kết quả theo ba nhóm baseline, bảng theo K, bảng độ phủ và bảng tinh
+truyền thống Hybrid-CBCF (đánh dấu *) vào bảng kết quả theo ba nhóm baseline, bảng theo K, bảng độ phủ và bảng tinh
 chỉnh, và kiểm định riêng họ bổ sung B1–B2 (Holm trong họ) -> <final-dir>/bosung/{summary,significance,by_k,beyond}.csv,
 bảng tab_*_sigbs.tex, macro \\VSig{B1}{...}, \\VRes{Hyb}{...}. Các tệp, thứ hạng và họ 10 so sánh của 14 mô hình đăng ký
 trước giữ nguyên.
@@ -62,7 +62,7 @@ KEY = {"random": "Rand", "popularity": "Pop", "recent_pop": "RecPop", "content":
 ABL = {"neumf_f-text": ("AblText", "Bỏ vector văn bản"), "neumf_f-time": ("AblTime", "Bỏ đặc trưng thời gian"),
        "neumf_f-user": ("AblUser", "Bỏ thông tin khách hàng"), "neumf_f-attr": ("AblAttr", "Bỏ thuộc tính sản phẩm"),
        "neumf_f-iddrop": ("AblIdDrop", "Không bỏ ID ngẫu nhiên")}
-# Bổ sung sau đánh giá cuối (audit/PREREG_bosung.md, scripts/25_bosung.py): mô hình lai truyền thống, đánh dấu † trong
+# Bổ sung sau đánh giá cuối (audit/PREREG_bosung.md, scripts/25_bosung.py): mô hình lai truyền thống, đánh dấu * trong
 # bảng; kiểm định trong họ riêng B1–B2 (Holm trong họ) — họ 10 so sánh đăng ký trước không đổi.
 SUP = ("hybrid",)
 DAGGER = r"\textsuperscript{*}"
@@ -541,7 +541,7 @@ def export_data(m: Macros, tables: Path, info_a: dict, info_b: dict | None) -> N
 
 def export_tuning(m: Macros, tables: Path, best: dict, bs: dict | None = None) -> None:
     """Cấu hình tốt nhất trên tập xác thực của mẫu A + thống kê nhật ký tinh chỉnh. bs: bosung_best_configs.json (mô
-    hình bổ sung, dòng đánh dấu †; nhật ký riêng bosung_tuning_log.csv -> bảng các cách kết hợp)."""
+    hình bổ sung, dòng đánh dấu *; nhật ký riêng bosung_tuning_log.csv -> bảng các cách kết hợp)."""
     rows = []
     bs = bs or {}
     for mm in [x for x in MODELS if x in best] + [x for x in SUP if x in bs]:
@@ -685,7 +685,7 @@ def export_supplement(m: Macros, tables: Path, sig_bs: pd.DataFrame, sup: dict, 
 def export_results(m: Macros, tables: Path, seeds, summary, sig, abl, bey, display=None,
                    bey_display=None) -> None:
     """summary, sig, abl, bey: 14 mô hình đăng ký trước (thứ hạng \\<P>Rank tính trên đây). display, bey_display: thêm mô
-    hình bổ sung (SUP, đánh dấu †) — dùng cho bảng kết quả theo ba nhóm và bảng độ phủ."""
+    hình bổ sung (SUP, đánh dấu *) — dùng cho bảng kết quả theo ba nhóm và bảng độ phủ."""
     n_seed = len(seeds)
     models = summary["model"].tolist()
     rank = {mm: i + 1 for i, mm in enumerate(models)}
@@ -861,7 +861,7 @@ def plot_metrics(res, seeds, summary, fig_dir: Path, n_users: int):
         ax.set_xlim(0, mean.max() * 1.3)
         ax.set_title(c, fontsize=11, color=INK, loc="left")
         style(ax, "x")
-    axes[0].set_yticks(y, [NAME[mm] + ("†" if mm in SUP else "") for mm in models], fontsize=9.5, color=INK)
+    axes[0].set_yticks(y, [NAME[mm] + ("*" if mm in SUP else "") for mm in models], fontsize=9.5, color=INK)
     axes[0].invert_yaxis()
     handles = [Patch(color=col, label=gname) for gname, col in GROUP_COLOR.items()]
     handles.append(Line2D([], [], marker="o", color=INK, linestyle="none", markersize=4, label="Từng seed"))
@@ -959,7 +959,7 @@ def plot_val_vs_test(summary: pd.DataFrame, fig_dir: Path):
         ax.plot([v, t], [i, i], color=GRID, linewidth=2, zorder=1)
         ax.scatter([v], [i], s=46, color="#eb6834", zorder=3, edgecolors=SURFACE, linewidths=2)
         ax.scatter([t], [i], s=46, color="#2a78d6", zorder=3, edgecolors=SURFACE, linewidths=2)
-    ax.set_yticks(y, [NAME[mm] + ("†" if mm in SUP else "") for mm in s["model"]], fontsize=9.5, color=INK)
+    ax.set_yticks(y, [NAME[mm] + ("*" if mm in SUP else "") for mm in s["model"]], fontsize=9.5, color=INK)
     ax.invert_yaxis()
     ax.legend(handles=[Line2D([], [], marker="o", color=c, linestyle="none", markersize=7, label=lab)
                        for c, lab in (("#eb6834", "Mẫu phát triển, tập xác thực (tinh chỉnh, seed 42)"),
@@ -1039,11 +1039,11 @@ def text_report(seeds, summary, sig, abl, bey, info_b, bk: pd.DataFrame | None =
     if sup is not None and display is not None:
         d = display.set_index("model")
         md = lambda m, c: f"{f(d.loc[m, f'{c}_mean'])} ± {f(d.loc[m, f'{c}_std'])}"  # noqa: E731
-        groups = [[g, NAME[m] + ("†" if m in SUP else ""), *(md(m, c) for c in TABLE_METRICS[:4])]
+        groups = [[g, NAME[m] + ("*" if m in SUP else ""), *(md(m, c) for c in TABLE_METRICS[:4])]
                   for g, ms in GROUPS for m in display["model"] if m in ms]
         block("6. Bổ sung sau đánh giá cuối: mô hình lai truyền thống Hybrid-CBCF (audit/PREREG_bosung.md) — kết quả "
               "theo ba nhóm mô hình đối chứng", ["Nhóm", "Mô hình", "NDCG@10", "Recall@10", "HR@10", "Precision@10"],
-              groups, ["† Bổ sung: kết hợp Content, UserKNN, ItemKNN theo mô hình lai trong luận án của GVHD; cách "
+              groups, ["* Bổ sung: kết hợp Content, UserKNN, ItemKNN theo mô hình lai trong luận án của GVHD; cách "
                        f"kết hợp chọn trên tập xác thực của mẫu phát triển H&M: {sup['config']['params']}.",
                        "Chấm một lần trên cùng tập kiểm thử (tất định, dùng cho mọi seed); không thuộc họ 10 so sánh "
                        "đăng ký trước."])

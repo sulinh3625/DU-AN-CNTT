@@ -205,7 +205,7 @@ python run.py amazon-bosung-final --reason "..."   # như trên cho Amazon (các
   lúc chạy `bosung-tune` (H&M); nhật ký ghi `bosung_hybrid_hm` / `bosung_hybrid_amazon`, mỗi bộ dữ liệu một lần. Vì
   vậy sau khi commit, chạy `bosung-final` **trước** khi sửa file nào khác.
 - **Nơi ghi:** `outputs/v2/final/bosung/`, `outputs/amazon/final/bosung/`. Các tệp của 14 mô hình đăng ký trước
-  (`summary.csv`, `significance.csv`, `by_k.csv`, ...) không đổi; `24_report_v2.py` thêm Hybrid-CBCF (dấu †) vào bảng
+  (`summary.csv`, `significance.csv`, `by_k.csv`, ...) không đổi; `24_report_v2.py` thêm Hybrid-CBCF (dấu *) vào bảng
   kết quả xếp theo ba nhóm, bảng theo K, bảng độ phủ, và ghi bảng kiểm định họ bổ sung `tab_*_sigbs.tex`.
 - **Đối chiếu thành phần:** lần chấm bổ sung chấm lại Content, UserKNN, ItemKNN và so hạng của từng khách với lần
   đánh giá cuối. Tệp đặc trưng văn bản (`data/processed/hm/catalog_v2.npz`) không nằm trong git, mỗi máy tự dựng, nên
@@ -215,10 +215,10 @@ python run.py amazon-bosung-final --reason "..."   # như trên cho Amazon (các
 
 ```bash
 pytest -q              # tests/ (108 test) — không cần dữ liệu thật
-pytest demo/tests -q   # demo (14 test) — test nạp checkpoint bỏ qua khi chưa có dữ liệu và outputs/v2/final/seed42/
+pytest demo/tests -q   # demo (20 test) — test nạp checkpoint bỏ qua khi chưa có dữ liệu và outputs/v2/final/seed42/
 ```
 
-Ngày 14/10/2026, trên máy chỉ có CPU: `tests/` 108/108 qua; `demo/tests` 14/14 qua.
+Ngày 06/11/2026, trên máy GPU đã chạy đánh giá cuối: `tests/` 108/108 qua; `demo/tests` 20/20 qua.
 
 **Tái lập trên máy khác.** Mô hình không dùng vector văn bản (NeuMF, GMF, MLP, BPR-MF, UserKNN, ItemKNN, hai mô hình
 phổ biến) cho đúng từng hạng đã lưu khi chấm lại, kể cả checkpoint tạo trên GPU chấm lại trên CPU. Vector văn bản thì
@@ -227,6 +227,8 @@ không nằm trong git; mỗi máy tự dựng bằng TF-IDF và TruncatedSVD c�
 khác. Vì vậy bốn mô hình có đặc trưng, Content và Hybrid-CBCF chỉ cho đúng hạng đã lưu khi dùng đúng tệp đặc trưng của
 máy đã tạo kết quả. Muốn khớp tuyệt đối với đánh giá cuối, chép tệp này từ máy đã chạy đánh giá cuối. Demo đối chiếu
 từng kết quả với hạng đã lưu và báo khi lệch (mục 5); test `test_metrics_match_per_user_file` kiểm tra điều đó.
+Hybrid-CBCF được chấm trên một máy chỉ có CPU với tệp đặc trưng khác, nên trên máy GPU nó chỉ trùng hạng đã lưu ở
+khoảng 36% khách H&M và 61% khách Amazon (`demo/README.md` mục 4).
 
 ## 5. Demo
 
@@ -283,6 +285,6 @@ neumf_project/
 `v2/data_dev.json` (tinh chỉnh), `v2/bosung_tuning_log.csv`, `v2/bosung_best_configs.json` (tinh chỉnh bổ sung),
 `test_access_log.csv` (mọi lần mở tập
 kiểm thử, kể cả của giai đoạn phát triển). Lịch sử: `PREREG.md` (giai đoạn phát triển ban đầu, mô hình chỉ dùng ID —
-trong mã gọi là "v1"; báo cáo mục 4.6) và `PREREG_v2_cu.md` (bản đầu của kế hoạch đánh giá, đánh giá trên khối 1). Mã
+trong mã gọi là "v1"; báo cáo mục 3.7.1) và `PREREG_v2_cu.md` (bản đầu của kế hoạch đánh giá, đánh giá trên khối 1). Mã
 nguồn và kết quả của hai giai đoạn này nằm trong lịch sử git: commit `9799f1a` (tag cục bộ `truoc-don-dep`). Code
 đọc/ghi trực tiếp các file trong `audit/` — không sửa tay.

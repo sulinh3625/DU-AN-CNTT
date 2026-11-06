@@ -85,6 +85,10 @@ Giao diện có hai chế độ sáng và tối (nút mặt trăng / mặt trờ
   kể cả máy chỉ có CPU. Bốn mô hình có đặc trưng, Content và Hybrid-CBCF đọc vector văn bản trong `data/processed/`;
   tệp này mỗi máy tự dựng và phụ thuộc phiên bản thư viện, nên chỉ trùng khi giống máy đã tạo kết quả. Khi lệch, khối
   đánh giá hiện số đã lưu kèm lý do. Có test tự động (`demo/tests/test_demo.py`).
+- Hybrid-CBCF được chấm trên máy chỉ có CPU (tệp `catalog` MD5 `496f3566…`), còn 14 mô hình đăng ký trước được chấm
+  trên máy GPU (`fb82f1ca…`), nên không máy nào khớp cả hai. Đo ngày 06/11/2026 trên máy GPU: 14 mô hình trùng hạng
+  đã lưu ở mọi khách (riêng NeuMF-F trên Amazon lệch 1/2.644 khách); Hybrid-CBCF trùng 1.146/3.165 khách H&M và
+  1.617/2.644 khách Amazon, các khách còn lại demo hiện số đã lưu.
 
 ## 5. Biến môi trường
 
@@ -96,12 +100,18 @@ Giao diện có hai chế độ sáng và tối (nút mặt trăng / mặt trờ
 
 ## 6. Ảnh sản phẩm (tuỳ chọn)
 
-Ảnh H&M có dạng `images/<3 chữ số đầu>/<article_id 10 chữ số>.jpg`. Lệnh dưới chỉ chép ảnh của các sản phẩm demo dùng;
-sản phẩm không có ảnh hiển thị ô thay thế ghi loại sản phẩm.
+Ảnh H&M có dạng `images/<3 chữ số đầu>/<article_id 10 chữ số>.jpg`. Hai lệnh dưới chỉ lấy ảnh của các sản phẩm demo
+dùng (khoảng 6.700 ảnh); sản phẩm không có ảnh hiển thị ô thay thế ghi loại sản phẩm.
 
 ```bash
+# Cách 1 — có sẵn thư mục images/ của cuộc thi trên máy:
 HM_IMAGES_DIR=/duong/dan/h-and-m/images python demo/scripts/copy_images.py
+# Cách 2 — tải về (cần mạng và Kaggle API đã đăng nhập; không cần chấp nhận luật cuộc thi):
+python demo/scripts/download_hm_images.py
 ```
+
+Cách 2 tải từ bộ dữ liệu Kaggle `tbierhance/hm-fashion-images-squared-896` (ảnh gốc của cuộc thi, đệm vuông 896×896,
+khoảng 12 KB mỗi ảnh), 16 luồng; chạy lại chỉ tải phần còn thiếu.
 
 Ảnh Amazon Beauty được tải một lần (cần mạng, khoảng 6.000 ảnh, chừng 50 MB) vào `demo/static/images/amazon/<asin>.jpg`.
 Chạy lại chỉ tải phần còn thiếu. Sau đó demo chạy được khi không có mạng: Chart.js cũng nằm sẵn trong
@@ -138,7 +148,7 @@ demo/
 | `GET /api/users/{customer_id}/position?…` | Vị trí của khách trong danh sách đang lọc (cùng tham số), kèm khách liền trước / liền sau |
 | `GET /api/users/{customer_id}/history` | Thông tin khách (`profile`) và lịch sử mua mô hình đã học, sắp theo thời gian; khách mới: `is_new = true`, lịch sử rỗng |
 | `GET /api/users/{customer_id}/recommend?model=&k=` | Top-K, hạng từng sản phẩm đích, số ứng viên, HR/NDCG/Recall@K; khách mới: danh sách Most Popular (`fallback = "popular"`, `evaluation = null`); khách không có sản phẩm đích: gợi ý của mô hình, `evaluation = null` |
-| `GET /api/users/{customer_id}/neighbors?k=10` | Khách tương đồng nhất theo UserKNN, số món mua chung, láng giềng đã mua sản phẩm đích nào; khách mới: danh sách rỗng kèm ghi chú | Dùng ở mục Khách có gu giống của trang Cửa hàng.
+| `GET /api/users/{customer_id}/neighbors?k=10` | Khách tương đồng nhất theo UserKNN, số món mua chung, láng giềng đã mua sản phẩm đích nào (mục Khách có gu giống của trang Cửa hàng); khách mới: danh sách rỗng kèm ghi chú |
 | `GET /api/items/{item_idx}/similar?k=6` | Thẻ chi tiết sản phẩm: thông tin sản phẩm (kèm mô tả gốc `detail_desc` và các màu của mẫu với H&M), số khách đã mua trước mốc, k sản phẩm tương tự nhất theo ItemKNN đã chọn |
 | `GET /api/dashboard` | Các khối của dashboard, kèm file nguồn |
 | `GET /api/results` | Trang Kết quả đánh giá: mô hình (NDCG@10, HR@10), họ 10 so sánh, bóc tách, câu trả lời của ba câu hỏi, quy mô tập kiểm thử; đọc `summary.csv` (hoặc `bosung/summary.csv`), `significance.csv`, `ablation.csv`, `data.json`. Test `test_results_page_matches_report_macros` đối chiếu từng số với macro của báo cáo |
@@ -146,5 +156,3 @@ demo/
 | `GET /api/image/{article_id}` | Ảnh sản phẩm hoặc ô thay thế |
 
 Mọi endpoint (trừ `/api/datasets`) nhận thêm `?dataset=hm|amazon`, mặc định `hm`.
-
-Bản đóng gói Docker (`Dockerfile`, `docker-compose.yml`) chưa được kiểm tra với dữ liệu hiện tại.

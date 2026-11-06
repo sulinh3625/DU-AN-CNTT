@@ -22,9 +22,11 @@ bộ dữ liệu thứ hai, Amazon Beauty.
   có kế hoạch đăng ký riêng; NeuMF-F tốt hơn nó có ý nghĩa trên cả hai bộ.
 - 06/11: kiểm tra lại số liệu (`check-report`: tái lập khớp tuyệt đối, 75/75 khẳng định đúng, đủ macro, bảng, hình;
   không còn tham chiếu hỏng). Đã có slide bảo vệ (16 trang, Artifact trên claude.ai) và poster theo khung Khoa CNTT
-  (`Report DACNTT/poster/`).
-- Còn lại: xác nhận với khoa việc nộp báo cáo giữa kỳ (hạn nghe được khoảng 25/10), chép lại ảnh H&M cho demo
-  (`demo/scripts/copy_images.py`), nộp báo cáo cuối (tháng 11).
+  (`Report DACNTT/poster/`). Rà soát toàn bộ code, demo và báo cáo: 108/108 test, demo 20/20 test và chạy thật không
+  lỗi trên cả hai bộ; sửa ký hiệu Hybrid-CBCF trong hình, vài chỗ lệch quy ước báo cáo; `main.pdf` 102 trang biên dịch
+  lại (chi tiết: `tong_hop.md` mục 2.1).
+- Còn lại: xác nhận với khoa việc nộp báo cáo giữa kỳ (hạn nghe được khoảng 25/10), gửi cô checkpoint
+  và hỏi 5 câu (`tong_hop.md` mục 2.3), nộp báo cáo cuối (tháng 11).
 
 Số liệu, tiến độ chi tiết và đối chiếu góp ý: [`tong_hop.md`](tong_hop.md).
 
@@ -51,4 +53,4 @@ Số liệu, tiến độ chi tiết và đối chiếu góp ý: [`tong_hop.md`]
 | Chuẩn bị vấn đáp | [`van_dap.md`](van_dap.md) |
 
 Giai đoạn phát triển ban đầu (mô hình chỉ dùng ID; trong mã gọi là "v1") và bản đầu của kế hoạch đánh giá (khối 1) là
-**lịch sử phát triển**: xem `tong_hop.md` mục 13 và báo cáo mục 4.6.
+**lịch sử phát triển**: xem `tong_hop.md` mục 13 và báo cáo mục 3.7.1.
