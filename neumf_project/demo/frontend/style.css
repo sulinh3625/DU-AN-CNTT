@@ -56,6 +56,8 @@ header { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 20; back
 body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-area-inset-top, 0px); z-index: 21; background: var(--bg); }
 .top { display: flex; align-items: center; gap: 10px 18px; flex-wrap: wrap; padding-block: 12px 4px; }
 .brand { display: flex; align-items: center; gap: 10px; font-weight: 800; font-size: 15px; letter-spacing: -0.01em; text-decoration: none; }
+/* Logo nhóm (Double L, dùng chung với demo khóa luận): huy hiệu nhiều chi tiết nên để lớn hơn chữ */
+.brand-logo { width: 52px; height: 52px; flex: none; border-radius: 50%; }
 .brand small { display: block; font-weight: 500; font-size: 12px; color: var(--muted); letter-spacing: 0; }
 .tools { margin-left: auto; display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
 .seg { display: inline-flex; flex-wrap: wrap; gap: 2px; padding: 3px; background: var(--surface); border: 1px solid var(--line); border-radius: 999px; }

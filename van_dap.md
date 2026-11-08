@@ -1,7 +1,7 @@
 # Chuẩn bị bảo vệ trước hội đồng — Mô hình gợi ý lai NeuMF-F
 
 Tài liệu này để cả nhóm nắm toàn bộ đề tài và trả lời thống nhất trước hội đồng. Số mục, số bảng, số hình ghi theo
-bản báo cáo hiện tại (104 trang, cập nhật 20/10/2026). Mọi số liệu ở đây khớp với báo cáo (kiểm bằng
+bản báo cáo hiện tại (102 trang, cập nhật 09/11/2026). Mọi số liệu ở đây khớp với báo cáo (kiểm bằng
 `python run.py check-report`).
 
 | Cần gì | Đọc phần |
@@ -453,9 +453,17 @@ việc này ghi trong nhật ký. Không quyết định nào thay đổi vì c�
    tốt hơn NeuMF chỉ ID có ý nghĩa, ngang LateFusion-F và GMF-F.
 8. Chuyển sang Amazon Beauty trên thanh đầu trang để cho thấy hệ thống chạy trên bộ dữ liệu thứ hai.
 
-Lưu ý: nếu máy chưa có thư mục ảnh H&M (`neumf_project/demo/static/images`, hoặc biến `DEMO_IMAGES_DIR`), demo hiện ô
-màu ghi loại sản phẩm thay ảnh — vẫn chạy bình thường. Nên chép ảnh vào trước buổi bảo vệ. Số hạng và độ đo của từng
-khách trong demo là của seed 42, có thể khác đôi chút so với trung bình 5 seed trong báo cáo.
+Lưu ý:
+- Ảnh sản phẩm nằm ở `neumf_project/demo/static/images/` (không có trong git). Máy chưa có ảnh thì demo hiện ô màu ghi
+  loại sản phẩm thay ảnh, vẫn chạy bình thường. Ảnh H&M tải bằng `demo/scripts/download_hm_images.py` hoặc chép từ máy
+  đã có ảnh.
+- Tệp đặc trưng `data/processed/hm/catalog_v2.npz` và `data/processed/amazon/catalog.npz` không có trong git. Trên máy
+  khác máy GPU, hạng tính lại của bốn mô hình có đặc trưng lệch hạng đã lưu ở gần như mọi khách (đo 09/11 trên máy CPU:
+  39–40/40 khách H&M, NeuMF chỉ dùng ID khớp 40/40); khi đó demo hiện số đã lưu kèm dòng "Thứ hạng trên máy này lệch với
+  số đã lưu…". Khách ví dụ (nút "Xem ví dụ") được chọn trong số khách khớp, nên trên máy CPU vẫn
+  trúng ở vị trí 3 và 6 như Hình 3.7, nhưng thứ tự các món không trúng (vị trí 7–10) khác ảnh trong báo cáo. Nếu hội đồng hỏi: số trong báo cáo là số đã lưu của đánh giá cuối; vector văn bản
+  dựng lại bằng phiên bản thư viện khác nên lệch. Muốn tránh thì demo trên máy GPU hoặc chép hai tệp này từ máy GPU sang.
+- Số hạng và độ đo của từng khách trong demo là của seed 42, có thể khác đôi chút so với trung bình 5 seed trong báo cáo.
 
 ---
 
@@ -463,10 +471,10 @@ khách trong demo là của seed 42, có thể khác đôi chút so với trung 
 
 | Chương | Mục chính | Bảng, hình, thuật toán |
 |---|---|---|
-| 1. Tổng quan | 1.1 bối cảnh (1.1.3 ba câu hỏi nghiên cứu); 1.2 mục tiêu, phạm vi; 1.3 phương pháp; 1.4 ý nghĩa | — |
-| 2. Cơ sở lý thuyết | 2.1 hệ gợi ý; 2.2 MF, BPR; 2.3 NCF, hợp nhất; 2.4 hướng gần đây; 2.5 độ đo; 2.6 ba nghiên cứu nền tảng; 2.7 khoảng trống | Hình 2.1 NeuMF, Hình 2.2 hợp nhất; Bảng 2.1 |
-| 3. Phương pháp | 3.1 đường ống; 3.2 dữ liệu; 3.3 NeuMF-F; 3.4 đối chứng; 3.5 lấy mẫu âm, BCE; 3.6 tinh chỉnh; 3.7 đánh giá (3.7.1 khảo sát ban đầu, 3.7.2 sáu nguyên tắc); 3.8 suy luận, khách mới; 3.9 demo | Hình 3.1 đường ống, 3.2 NeuMF-F, 3.3 quy trình đánh giá, 3.4–3.10 demo; Bảng 3.1–3.7; Thuật toán 3.1–3.7 |
-| 4. Thực nghiệm | 4.1 cấu hình; 4.2 tinh chỉnh; 4.3 kết quả H&M (4.3.1 chính, 4.3.2 theo K, 4.3.3 kiểm định, 4.3.4 Hybrid-CBCF, 4.3.5 bóc tách, 4.3.6 độ phủ, 4.3.7 hội tụ); 4.4 Amazon; 4.5 phạm vi; 4.6 trả lời ba câu hỏi nghiên cứu; 4.7 tóm tắt chương | Bảng 4.2–4.10 (H&M), 4.10–4.18 (Amazon); Hình 4.1–4.6 |
+| 1. Tổng quan | 1.1 bối cảnh (1.1.3 ba câu hỏi nghiên cứu); 1.2 mục tiêu, phạm vi; 1.3 phương pháp; 1.4 ý nghĩa; 1.5 bố cục | Hình 1.1 các bước thực hiện |
+| 2. Cơ sở lý thuyết | 2.1 hệ gợi ý; 2.2 MF, BPR; 2.3 NCF, hợp nhất; 2.4 mô hình lai dựa trên đặc trưng; 2.5 độ đo; 2.6 ba nghiên cứu nền tảng; 2.7 khoảng trống | Hình 2.1 NeuMF, Hình 2.2 hợp nhất; Bảng 2.1 |
+| 3. Phương pháp | 3.1 đường ống; 3.2 dữ liệu; 3.3 NeuMF-F; 3.4 đối chứng; 3.5 lấy mẫu âm, BCE; 3.6 tinh chỉnh; 3.7 đánh giá (3.7.1 khảo sát ban đầu, 3.7.2 sáu nguyên tắc); 3.8 suy luận, khách mới; 3.9 demo | Hình 3.1 đường ống, 3.2 xử lý dữ liệu, 3.3 chia theo thời gian, 3.4 NeuMF-F, 3.5 tinh chỉnh và đánh giá cuối, 3.6 kiến trúc demo, 3.7–3.12 giao diện demo; Bảng 3.1–3.7; Thuật toán 3.1–3.7 |
+| 4. Thực nghiệm | 4.1 thiết lập thực nghiệm; 4.2 tinh chỉnh; 4.3 kết quả H&M (4.3.1 chính, 4.3.2 theo K, 4.3.3 kiểm định, 4.3.4 Hybrid-CBCF, 4.3.5 bóc tách, 4.3.6 độ phủ, 4.3.7 hội tụ); 4.4 Amazon; 4.5 phạm vi; 4.6 trả lời ba câu hỏi nghiên cứu | Bảng 4.1 điều kiện chung, 4.2–4.10 (H&M), 4.11–4.19 (Amazon); Hình 4.1–4.5 (H&M), 4.6 (Amazon) |
 | 5. Kết luận | 5.1 kết quả đạt được; 5.2 kết luận; 5.3 hạn chế; 5.4 hướng phát triển | Bảng 5.1 mức độ hoàn thành mục tiêu |
 
 Thuật toán: 3.1 chuẩn bị dữ liệu và k-core · 3.2 lấy mẫu âm · 3.3 huấn luyện, huấn luyện lại · 3.4 xếp hạng toàn bộ ·

@@ -224,8 +224,9 @@ y = ribbon(XL, 8.6, "TÓM TẮT")
 _, tf = textbox(XL, y, CW, 2.9, "Tóm tắt")
 add_par(tf, "Hệ khuyến nghị thời trang thường chỉ có lịch sử mua, rất thưa. Đề tài xây dựng NeuMF-F: giữ hai nhánh "
             "nhân tử hóa ma trận (GMF) và mạng nơ-ron sâu (MLP) của NeuMF, hợp nhất sớm, và bổ sung đặc trưng sản "
-            "phẩm, khách hàng, thời gian. Trên tập kiểm thử H&M, NeuMF-F hơn NeuMF chỉ dùng ID 43,8% và hơn mọi mô "
-            "hình truyền thống; kết luận lặp lại trên Amazon Beauty. Hợp nhất muộn LateFusion-F cao nhất trên cả hai bộ.",
+            "phẩm, khách hàng, thời gian. Trên H&M, NeuMF-F hơn NeuMF chỉ dùng ID 43,8% và hơn mọi mô "
+            "hình truyền thống; lợi ích của đặc trưng lặp lại trên Amazon Beauty. Hợp nhất muộn LateFusion-F cao nhất "
+            "trên cả hai bộ.",
         size=20, first=True)
 
 y = ribbon(XL, 12.2, "DỮ LIỆU")
@@ -277,8 +278,8 @@ ca.tick_labels.font.size = Pt(16)
 ca.tick_labels.font.name = FONT
 ca.format.line.color.rgb = RGBColor(0xBF, 0xBF, 0xBF)
 _, tf = textbox(XL, y + 0.5 + CH_H, CW, 0.75, "Ghi chú biểu đồ")
-add_par(tf, [("Trung bình 5 lần chạy, 3.165 khách. LateFusion-F hơn NeuMF-F 2,2% nhưng không khác biệt có ý nghĩa "
-              "(p Holm = 0,735); NeuMF-F hơn có ý nghĩa 7/9 mô hình trong họ so sánh đăng ký trước.",
+add_par(tf, [("Trung bình 5 lần chạy, 3.165 khách. NeuMF-F thấp hơn LateFusion-F 2,2% nhưng không khác biệt có ý "
+              "nghĩa (p Holm = 0,735); NeuMF-F hơn có ý nghĩa 7/9 mô hình trong họ so sánh đăng ký trước.",
               {"size": 14, "color": MUTED, "italic": True})], align=PP_ALIGN.LEFT, first=True)
 
 # ===== CỘT PHẢI: MÔ HÌNH ĐỀ XUẤT, KẾT LUẬN =====
@@ -298,7 +299,7 @@ y = ribbon(XR, yb + 0.5, "KẾT LUẬN")
 stats = [("+43,8%", "so với NeuMF chỉ dùng ID trên H&M", PURPLE),
          ("+65,7%", "so với NeuMF chỉ dùng ID trên Amazon", PURPLE),
          ("7/9", "đối thủ NeuMF-F tốt hơn có ý nghĩa (H&M)", PURPLE),
-         ("+25,8%", "so với mô hình lai truyền thống Hybrid-CBCF", ORANGE)]
+         ("+25,8%", "so với lai truyền thống Hybrid-CBCF (H&M)", ORANGE)]
 sw = (CW - 0.25) / 2
 for i, (big, lab, col) in enumerate(stats):
     c, ctf = card(XR + (i % 2) * (sw + 0.25), y + (i // 2) * 1.42, sw, 1.3, f"Chỉ số {i}")
@@ -310,9 +311,9 @@ bullets(XR, y, CW, 24.4 - y, "Kết luận", [
      ("NeuMF-F hơn mọi mô hình truyền thống trên cả hai bộ; bỏ đặc trưng thời gian làm NDCG@10 giảm 42,3% "
       "(H&M) và 31,6% (Amazon).", {})],
     [("Hợp nhất sớm chưa hơn từng nhánh: ", B),
-     ("NeuMF-F ngang nhánh GMF-F đứng riêng; LateFusion-F cao nhất trên cả hai bộ, trên Amazon tốt hơn "
-      "NeuMF-F 12,5%.", {})],
-    [("Kết luận lặp lại trên Amazon Beauty ", B),
+     ("NeuMF-F ngang nhánh GMF-F đứng riêng; LateFusion-F cao nhất trên cả hai bộ, trên Amazon NeuMF-F thấp "
+      "hơn có ý nghĩa 12,5%.", {})],
+    [("Lợi ích của đặc trưng lặp lại trên Amazon Beauty ", B),
      ("dù khác lĩnh vực, không có thông tin khách và không tinh chỉnh lại.", {})],
     [("Đánh giá tin cậy: ", B),
      ("kế hoạch đăng ký trước, tập kiểm thử mở đúng một lần, 5 lần chạy, kiểm định có hiệu chỉnh Holm.", {})]],

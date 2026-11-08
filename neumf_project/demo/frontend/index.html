@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="description" content="Demo hệ thống khuyến nghị sản phẩm NeuMF-F: đề tài làm gì, khuyến nghị cho từng khách hàng và kết quả đánh giá.">
 <title>Demo khuyến nghị sản phẩm</title>
+<link rel="icon" type="image/png" href="logo_icon.png">
 <script>
   // Đặt chế độ sáng / tối trước khi vẽ trang (tránh nháy màu): lựa chọn đã lưu, nếu chưa có thì theo hệ điều hành.
   (function () {
@@ -19,7 +20,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <!-- Chart.js 4.4.1 lưu cùng demo để chạy được khi không có mạng; phông Google Fonts thiếu mạng thì dùng Segoe UI -->
 <script src="vendor/chart.umd.min.js"></script>
-<link rel="stylesheet" href="style.css?v=5">
+<link rel="stylesheet" href="style.css?v=6">
 </head>
 <body>
 
@@ -52,7 +53,7 @@
 <header>
   <div class="wrap top">
     <a class="brand" href="#/shop">
-      <svg width="34" height="34" viewBox="0 0 34 34" aria-hidden="true"><rect x="2" y="6" width="18" height="18" rx="5" fill="var(--accent)"/><rect x="14" y="10" width="18" height="18" rx="5" fill="none" stroke="var(--ink)" stroke-width="2.5"/></svg>
+      <img class="brand-logo" src="logo.png" width="52" height="52" alt="">
       <span>Demo khuyến nghị sản phẩm<small>Dự án CNTT · NeuMF-F</small></span>
     </a>
     <div class="tools">
