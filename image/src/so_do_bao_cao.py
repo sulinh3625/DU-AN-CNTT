@@ -73,7 +73,9 @@ def kien_truc(t: Trang, dac_trung: bool) -> None:
     l2 = t.o("mlp", 423, 289, 84, 20, "ReLU", co=11)
     l3 = t.o("mlp", 437, 323, 56, 20, "ReLU", co=11)
     t.o("chu", 530, 240, 110, 20, "Nhánh MLP", them="align=left;")
-    t.o("chu", 530, 289, 110, 20, "3 lớp ẩn", co=12, them="align=left;")
+    # NeuMF-F chọn d = 32 nên tháp là 2d → d → d/2 → d/4 (báo cáo C3); NeuMF chọn d khác nên không ghi số
+    t.o("chu", 530, 280, 130, 38 if dac_trung else 20, "3 lớp ẩn" + ("<br>64 → 32 → 16 → 8" if dac_trung else ""),
+        co=12, them="align=left;")
     phim = t.vec(465 - 14, 365, 2, "tim", nhan="φ<sup>M</sup>", vi="phai", rong_nhan=40)
     doc(t, [noi, l1, l2, l3, phim])
     # hợp nhất sớm, lớp dự đoán
@@ -90,8 +92,9 @@ def kien_truc(t: Trang, dac_trung: bool) -> None:
         y = t.o("ketqua", 265, 512, 90, 34, "ŷ<sub>ui</sub>", co=14)
     t.mt(sg, y, "duoi", "tren")
     if dac_trung:
-        hl = t.o("xuly", 10, 580, 280, 46, k("Khi huấn luyện", "BCE với nhãn y<sub>ui</sub>: 1 = đã mua, 0 = mẫu âm"))
-        kn = t.o("ketqua_hop", 330, 580, 280, 46, k("Khi khuyến nghị", "xếp hạng ứng viên, lấy Top-K"))
+        hl = t.o("xuly", 10, 580, 280, 60, k("Khi huấn luyện", "BCE với nhãn y<sub>ui</sub>: 1 = đã mua, 0 = mẫu âm<br>"
+                                                      "mỗi cặp dương lấy 8 mẫu âm (1 : 8)"))
+        kn = t.o("ketqua_hop", 330, 580, 280, 60, k("Khi khuyến nghị", "xếp hạng ứng viên, lấy Top-K"))
         t.mt(y, hl, "trai", "tren")
         t.mt(y, kn, "phai", "tren")
 

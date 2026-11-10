@@ -215,7 +215,7 @@ python run.py amazon-bosung-final --reason "..."   # như trên cho Amazon (các
 
 ```bash
 pytest -q              # tests/ (108 test) — không cần dữ liệu thật
-pytest demo/tests -q   # demo (20 test) — test nạp checkpoint bỏ qua khi chưa có dữ liệu và outputs/v2/final/seed42/
+pytest demo/tests -q   # demo (21 test) — test nạp checkpoint bỏ qua khi chưa có dữ liệu và outputs/v2/final/seed42/
 ```
 
 Ngày 06/11/2026, trên máy GPU đã chạy đánh giá cuối: `tests/` 108/108 qua; `demo/tests` 20/20 qua.
@@ -243,6 +243,10 @@ Dùng đúng các mô hình của đánh giá cuối, chỉ nạp checkpoint, kh
 Chọn bộ dữ liệu trên thanh đầu trang. **Luôn có gợi ý:** khách chưa có trong dữ liệu đã học nhận 10 sản phẩm phổ biến
 nhất (Most Popular, nhãn "Gợi ý phổ biến") thay cho lỗi; khách có lịch sử nhưng không có sản phẩm đích vẫn nhận gợi ý
 của mô hình. K chọn được 5, 10, 15, 20. Chi tiết: `demo/README.md`.
+
+Khách có sản phẩm đích mang mã ngắn cố định `KH0001`, `KH0002`, … (thứ tự mã nội bộ); demo chỉ hiện mã này, không hiện
+`customer_id` dài. Gõ mã ngắn trong ô tìm, hoặc mở thẳng `?user=KH0028&b=NeuMF#/shop`. Khách mẫu cho buổi bảo vệ
+(NeuMF-F khuyến nghị đúng, NeuMF sai): H&M `KH0028`, `KH0303`; Amazon `KH0376`, `KH0039`.
 
 ## 6. Cấu trúc thư mục
 

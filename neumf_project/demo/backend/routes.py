@@ -101,9 +101,10 @@ def filter_users(df: pd.DataFrame, q: str = "", bucket: str | None = None, area:
         if hit:
             df = df[(df["best_rank"] <= k) == (hit == "hit")]
     cols, asc = SORTS[sort if sort != "rank" or "best_rank" in df else "train_desc"]
-    if q:
-        df = df[df["customer_id"].str.lower().str.contains(q, regex=False)]
-        df = df.assign(_later=~df["customer_id"].str.lower().str.startswith(q))
+    if q:  # khớp customer_id hoặc mã ngắn KH0001
+        ids = df["customer_id"].str.lower() + " " + df["code"].str.lower()
+        df = df[ids.str.contains(q, regex=False)]
+        df = df.assign(_later=~(df["customer_id"].str.lower().str.startswith(q) | df["code"].str.lower().str.startswith(q)))
         cols, asc = ["_later", *cols], [True, *asc]
     return df.sort_values(cols, ascending=asc).drop(columns="_later", errors="ignore")
 
@@ -145,7 +146,8 @@ def user_rows(df: pd.DataFrame) -> list[dict]:
 def user_position(df: pd.DataFrame, customer_id: str) -> dict:
     """Vị trí (từ 0) của khách trong danh sách đã lọc, kèm khách liền trước / liền sau; khách ngoài danh sách thì
     "liền sau" là khách đầu danh sách."""
-    hit = np.flatnonzero(df["customer_id"].to_numpy() == customer_id.strip())
+    s = customer_id.strip()
+    hit = np.flatnonzero((df["customer_id"].to_numpy() == s) | (df["code"].to_numpy() == s.upper()))
     i = int(hit[0]) if len(hit) else None
 
     def at(j: int) -> dict | None:

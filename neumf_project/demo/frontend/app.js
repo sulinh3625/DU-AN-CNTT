@@ -139,9 +139,14 @@ const SORT_LABELS = { train_desc: "Mua nhiều nhất", train_asc: "Mua ít nh�
 const needsRanks = () => Boolean(pk.hit) || pk.sort === "rank";
 const COPY_ICON = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="9" y="9" width="12" height="12" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h10"/></svg>';
 
-// Avatar chữ cái: màu cố định theo customer_id (băm chuỗi), hai ký tự đầu của mã.
+// Avatar: màu cố định theo customer_id (băm chuỗi), chữ là hai số cuối của mã ngắn — không hiện mã khách dài lên demo.
 const hue = (cid) => [...cid].reduce((h, ch) => (h * 31 + ch.charCodeAt(0)) % 360, 7);
-const avatar = (cid, cls = "") => `<span class="avatar ${cls}" style="--h:${hue(cid)}" aria-hidden="true">${esc(cid.slice(0, 2).toUpperCase())}</span>`;
+const avatar = (cid, cls = "", code = "") => `<span class="avatar ${cls}" style="--h:${hue(cid)}" aria-hidden="true">${esc(code ? code.slice(-2) : "KH")}</span>`;
+// Dòng mã trong danh sách chọn khách: chỉ mã ngắn; mã dài chỉ hiện khi đang tìm theo chính mã dài (để thấy chỗ khớp).
+const pickId = (r, q) => {
+  const byLong = q && !(r.code || "").toLowerCase().includes(q.toLowerCase()) && r.customer_id.toLowerCase().includes(q.toLowerCase());
+  return `<b>${esc(r.code || "")}</b>${byLong ? ` · ${idHtml(r.customer_id, q)}` : ""}`;
+};
 // customer_id dài: hiện đầu…cuối; khi đang tìm thì hiện đoạn quanh chỗ khớp và tô đậm phần khớp.
 function idHtml(cid, q = "") {
   const p = q ? cid.toLowerCase().indexOf(q.toLowerCase()) : -1;
@@ -371,8 +376,8 @@ function renderPicker(keepActive = false) {
     pk.active = pk.view.length ? Math.max(0, cur) : -1;
   }
   const opt = (r, i) => `<div class="pk-item" role="option" id="pk-opt-${i}" data-i="${i}" aria-selected="false">
-      ${avatar(r.customer_id)}
-      <div class="pk-text"><div class="pk-id" title="${esc(r.customer_id)}">${idHtml(r.customer_id, pk.q)}</div>
+      ${avatar(r.customer_id, "", r.code)}
+      <div class="pk-text"><div class="pk-id">${pickId(r, pk.q)}</div>
         <div class="pk-meta">${esc(userMeta(r))}</div></div>
       ${r.customer_id === ad.user ? '<span class="pk-check">Đang xem</span>' : ""}
       ${r.best_rank != null ? rankBadge(r.best_rank) : ""}
@@ -380,7 +385,7 @@ function renderPicker(keepActive = false) {
   const head = (t) => `<div class="pk-group">${t}</div>`;
   const filtered = pk.bucket || pk.area || pk.hit;
   const empty = pk.q
-    ? `Không có khách nào có customer_id chứa “${esc(pk.q)}”${filtered ? " trong bộ lọc đang chọn" : ""}.`
+    ? `Không có khách nào có mã chứa “${esc(pk.q)}”${filtered ? " trong bộ lọc đang chọn" : ""}.`
     : "Không có khách nào trong bộ lọc đang chọn.";
   // Mã gõ vào không có trong danh sách (khách mới, hoặc khách không có sản phẩm đích): vẫn xem được khuyến nghị cho mã đó.
   const anyId = pk.q ? `<button type="button" class="btn" id="pk-any">Xem khuyến nghị cho mã “${esc(pk.q)}”</button>
@@ -458,7 +463,7 @@ function renderCustomerEmpty() {
   $("cust-current").innerHTML = `<span class="avatar lg ghost" aria-hidden="true">?</span>
     <div class="cust-info"><div class="cust-title">Chưa chọn khách hàng</div>
       <div class="note">Bấm <b>Xem ví dụ</b> để mở một khách có sẵn, <b>Ngẫu nhiên</b> để thử một khách bất kỳ, hoặc <b>Chọn khách</b> để tìm theo mã.</div>
-      ${recent.length ? `<div class="recent-row"><span>Xem gần đây</span>${recent.map((r) => `<button type="button" class="recent-chip" data-id="${esc(r.customer_id)}" title="${esc(r.customer_id)}">${avatar(r.customer_id)}${esc(r.customer_id.slice(0, 8))}…</button>`).join("")}</div>` : ""}
+      ${recent.length ? `<div class="recent-row"><span>Xem gần đây</span>${recent.map((r) => `<button type="button" class="recent-chip" data-id="${esc(r.customer_id)}">${avatar(r.customer_id, "", r.code)}${esc(r.code || "Khách")}</button>`).join("")}</div>` : ""}
     </div>`;
   $("cust-current").querySelectorAll(".recent-chip").forEach((btn) => btn.addEventListener("click", () => selectUser(btn.dataset.id)));
 }
@@ -478,9 +483,9 @@ function renderCustomer(hist) {
   hist.items.forEach((it) => { counts[it.product_type_name] = (counts[it.product_type_name] || 0) + 1; });
   const top = Object.entries(counts).sort((x, y) => y[1] - x[1]).slice(0, 3)
     .map(([t]) => (DS === "hm" ? typeVi(t) : t).toLowerCase()).join(", ");
-  $("cust-current").innerHTML = `${avatar(p.customer_id, "lg")}
+  $("cust-current").innerHTML = `${avatar(p.customer_id, "lg", p.code)}
     <div class="cust-info">
-      <div class="cust-id"><span class="mono" title="${esc(p.customer_id)}">Khách ${esc(p.customer_id.slice(0, 8))}…</span>
+      <div class="cust-id"><span class="mono">Khách ${esc(p.code || "")}</span>
         <button type="button" class="icon-btn" id="cust-copy" title="Chép mã khách đầy đủ" aria-label="Chép mã khách đầy đủ">${COPY_ICON}</button></div>
       <div class="cust-chips">
         <span class="pill"><b>${num(p.train_count)}</b> món đã mua trước đây</span>
@@ -517,6 +522,8 @@ async function loadAdmin() {
       ...models.map((m) => api(`/users/${uid}/recommend?model=${encodeURIComponent(m)}&k=${k}`)),
     ]);
     if (seq !== ad.seq) return;
+    // gõ mã ngắn KH0012: đổi về customer_id đầy đủ để danh sách, nút ‹ › và URL dùng cùng một mã
+    if (!hist.is_new && hist.profile.customer_id !== ad.user) { ad.user = hist.profile.customer_id; syncUrl(); }
     if (!hist.is_new) rememberUser(hist.profile);
     renderCustomer(hist);
     $("ad-empty").classList.add("hidden");
@@ -630,8 +637,8 @@ function renderNeighbors() {
   const card = $("sh-nb-card");
   if (!ad.nb || !ad.nb.length) { card.classList.add("hidden"); return; }
   card.classList.remove("hidden");
-  $("sh-nb").innerHTML = ad.nb.map((n) => `<div class="nb">${avatar(n.customer_id)}
-    <div><div class="nb-id">Khách ${esc(n.customer_id.slice(0, 8))}…</div>
+  $("sh-nb").innerHTML = ad.nb.map((n) => `<div class="nb">${avatar(n.customer_id, "", n.code)}
+    <div><div class="nb-id">${n.code ? `Khách ${esc(n.code)}` : "Khách tương tự"}</div>
       <div class="nb-meta">mua chung ${num(n.n_common)} món · đã mua ${num(n.train_count)} món</div>
       <div class="nb-items">${n.common_items.map((it) => `<span title="${esc(it.prod_name)}">${esc(it.prod_name)} <i>(${esc(typeOf(it))})</i></span>`).join("")}</div>
       ${ad.revealed && n.bought_target.length ? `<div class="nb-hit">✓ Đã mua món khách này mua sau đó: ${n.bought_target.map((it) => esc(it.prod_name)).join(", ")}</div>` : ""}
@@ -763,7 +770,7 @@ function renderDashboard(d, dash) {
     chart("c-final", {
       type: "bar",
       data: { labels: rows.map((r) => show(r.model)),
-              datasets: [{ label: "NDCG@10 (trung bình qua seed)", data: rows.map((r) => r["NDCG@10_mean"]), backgroundColor: rows.map((r) => (r.model === "NeuMF-F" ? cssVar("--accent") : cssVar("--bar"))), borderRadius: 4 }] },
+              datasets: [{ label: "NDCG@10 (trung bình qua seed)", data: rows.map((r) => r["NDCG@10_mean"]), backgroundColor: cssVar("--bar"), borderRadius: 4 }] },  // mọi mô hình cùng màu (góp ý GVHD 09/11/2026)
       options: { plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true } } },
     });
   }
@@ -827,7 +834,7 @@ async function renderExample(ex) {
   const targets = a.targets;
   const hitRanks = targets.filter((t) => t.rank <= k).map((t) => t.rank);
   const bBest = b.evaluation.rank;
-  const shortId = `${ex.customer_id.slice(0, 8)}…`;
+  const shortId = p.code || `${ex.customer_id.slice(0, 8)}…`;
   $("ov-result").innerHTML = `
     <div class="row"><span>Ví dụ một khách thật</span><span class="num">Khách ${esc(shortId)}</span></div>
     <div class="big">Khách mua ${targets.length} món mới. Mô hình đặt chúng ở vị trí nào trong danh sách khuyến nghị?</div>
@@ -884,7 +891,7 @@ function renderResults(R) {
 
   const pos = R.models.findIndex((m) => m.key === "neumf_f") + 1;
   const rank = R.models.map((m, i) => {
-    const c = m.key === "neumf_f" ? "me" : (m.key === "random" || m.key === "popularity") ? "ref" : "";
+    const c = (m.key === "random" || m.key === "popularity") ? "ref" : "";
     return `<div class="r ${c}"><span class="i num">${i + 1}</span><span class="nm">${esc(m.name)}${m.supplementary ? "*" : ""}</span>
       <span class="track"><span class="fill" style="width:${(m.ndcg10 / max) * 100}%"></span></span><span class="v num">${vi(m.ndcg10, 4)}</span></div>`;
   }).join("");

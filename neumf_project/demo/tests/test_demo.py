@@ -233,6 +233,14 @@ def test_filter_users_search_sort_and_position():
     assert filter_users(df, best_rank=ranks)["best_rank"].tolist() == [11, 3, 25, 10]  # không lọc: chỉ thêm cột
 
 
+def test_short_code_finds_customer():
+    """Mã ngắn KH0001… theo thứ tự mã nội bộ: tìm được trong danh sách chọn khách và định vị được cho nút ‹ ›."""
+    df = _users()
+    assert df["code"].tolist() == ["KH0001", "KH0002", "KH0003", "KH0004"]
+    assert filter_users(df, "kh0003")["customer_id"].tolist() == ["cd03"]
+    assert user_position(filter_users(df), "kh0002")["index"] == 2  # thứ tự mua nhiều nhất: bf04, ab01, ab02, cd03
+
+
 # ------------------------------------------------------------- Amazon Beauty (dữ liệu đối chứng)
 def test_amazon_table_maps_metadata_to_item_columns():
     items = pd.DataFrame({"asin": ["B01", "B02", "B03"], "title": ["Lip balm", None, "Serum"],

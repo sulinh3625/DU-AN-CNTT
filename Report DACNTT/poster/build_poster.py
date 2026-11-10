@@ -260,15 +260,15 @@ ch_.font.name, ch_.font.size = FONT, Pt(16)
 plot = ch_.plots[0]
 plot.gap_width = 40
 ser = plot.series[0]
+# Mọi cột cùng một màu, nhãn như nhau (góp ý GVHD 09/11/2026: không tô nổi mô hình đề xuất, không dùng xám).
 for i, (name, v) in enumerate(data):
-    de_xuat = name == "NeuMF-F"
     pt = ser.points[i]
     pt.format.fill.solid()
-    pt.format.fill.fore_color.rgb = ORANGE if de_xuat else GREY_BAR
+    pt.format.fill.fore_color.rgb = ORANGE
     pt.data_label.position = XL_LABEL_POSITION.OUTSIDE_END
     dtf = pt.data_label.text_frame
     dtf.text = f"{v:.4f}".replace(".", ",")
-    style(dtf.paragraphs[0].runs[0], size=16, bold=de_xuat, color=ORANGE if de_xuat else TEXT)
+    style(dtf.paragraphs[0].runs[0], size=16, color=TEXT)
 va = ch_.value_axis
 va.minimum_scale, va.maximum_scale = 0, 0.047
 va.visible = False
@@ -299,7 +299,7 @@ y = ribbon(XR, yb + 0.5, "KẾT LUẬN")
 stats = [("+43,8%", "so với NeuMF chỉ dùng ID trên H&M", PURPLE),
          ("+65,7%", "so với NeuMF chỉ dùng ID trên Amazon", PURPLE),
          ("7/9", "đối thủ NeuMF-F tốt hơn có ý nghĩa (H&M)", PURPLE),
-         ("+25,8%", "so với lai truyền thống Hybrid-CBCF (H&M)", ORANGE)]
+         ("+25,8%", "so với lai truyền thống Hybrid-CBCF (H&M)", PURPLE)]
 sw = (CW - 0.25) / 2
 for i, (big, lab, col) in enumerate(stats):
     c, ctf = card(XR + (i % 2) * (sw + 0.25), y + (i // 2) * 1.42, sw, 1.3, f"Chỉ số {i}")

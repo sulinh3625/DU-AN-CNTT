@@ -3,7 +3,7 @@
    hàng. Mọi màu là biến: chế độ sáng ở :root, chế độ tối ở [data-theme="dark"] (index.html đặt trước khi vẽ trang). */
 :root {
   --bg: #f5f6fb; --surface: #ffffff; --surface-2: #eef1f8; --ink: #11141f; --muted: #5c6378; --line: #e2e5ee;
-  --accent: #3150f5; --accent-ink: #ffffff; --accent-soft: #e7ecff; --bar: #ccd2df;
+  --accent: #3150f5; --accent-ink: #ffffff; --accent-soft: #e7ecff; --bar: #eb6834;
   --good: #0f9a4c; --good-soft: #def5e8; --warn: #b87300; --warn-soft: #fff1d3; --bad: #e0434a; --bad-soft: #ffe5e5;
   --info: #2457c5; --info-soft: #e5edfb;
   --p-top: #dcebff; --p-bottom: #ffe6d6; --p-under: #ffe0ec; --p-knit: #ebe3ff; --p-other: #ddf4ea;
@@ -18,7 +18,7 @@
 }
 :root[data-theme="dark"] {
   --bg: #0c0f17; --surface: #141927; --surface-2: #1b2133; --ink: #eef0f8; --muted: #9ba3b9; --line: #252c41;
-  --accent: #7d93ff; --accent-ink: #0c0f17; --accent-soft: #1d264d; --bar: #374059;
+  --accent: #7d93ff; --accent-ink: #0c0f17; --accent-soft: #1d264d; --bar: #d95926;
   --good: #3fd07f; --good-soft: #10301e; --warn: #f2b543; --warn-soft: #34270b; --bad: #ff6e73; --bad-soft: #3b191b;
   --info: #8cb4ff; --info-soft: #1a2a48;
   --p-top: #1b2c48; --p-bottom: #3d2618; --p-under: #3d1a2b; --p-knit: #2a2148; --p-other: #15342a;
@@ -197,8 +197,6 @@ select:focus, input[type=text]:focus { border-color: var(--accent); outline: non
 .rank .i { color: var(--muted); font-weight: 600; text-align: right; }
 .rank .nm { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-weight: 500; }
 .rank .track { height: 10px; }
-.rank .r.me .nm { font-weight: 700; color: var(--accent); }
-.rank .r.me .fill { background: var(--accent); }
 .rank .r.ref .nm, .rank .r.ref .v { color: var(--muted); }
 .rank .r.ref .fill { background: repeating-linear-gradient(90deg, var(--bar) 0 6px, transparent 6px 10px); }
 .rank .v { text-align: right; font-weight: 600; }

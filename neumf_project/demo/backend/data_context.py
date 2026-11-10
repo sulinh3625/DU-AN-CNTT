@@ -23,6 +23,7 @@ from __future__ import annotations
 import html
 import json
 import os
+import re
 import sys
 from functools import cached_property
 from pathlib import Path
@@ -187,6 +188,9 @@ def user_table(customer_ids: np.ndarray, target_items: dict, train_df: pd.DataFr
     area = pd.crosstab(tr["user"].to_numpy(), articles["index_group_name"].to_numpy()[tr["item"].to_numpy()])
     dates = by_user["date"].agg(["min", "max"]).reindex(users)
     df = pd.DataFrame({
+        # Mã ngắn dễ nhớ để chọn nhanh và tra ngược khi thuyết trình (góp ý GVHD 09/11/2026); theo thứ tự mã nội bộ nên
+        # cố định giữa các lần chạy trên cùng dữ liệu.
+        "code": [f"KH{i:04d}" for i in range(1, len(users) + 1)],
         "customer_id": customer_ids[users].astype(str),
         "train_count": by_user.size().reindex(users, fill_value=0).to_numpy(),
         "n_targets": [len(target_items[u]) for u in users],
@@ -329,7 +333,12 @@ class DataContext:
         return user_table(self.customer_ids, self.target_items, self.train_df, self.articles, self.user_age)
 
     def resolve_user(self, customer_id: str) -> int:
-        idx = self.user2idx.get(customer_id.strip())
+        """customer_id đầy đủ hoặc mã ngắn KH0001 của danh sách chọn khách -> mã nội bộ."""
+        s = customer_id.strip()
+        idx = self.user2idx.get(s)
+        if idx is None and re.fullmatch(r"KH\d{4,}", s.upper()):
+            hit = self.users.index[self.users["code"] == s.upper()]
+            idx = self.user2idx.get(hit[0]) if len(hit) else None
         if idx is None:
             raise KeyError(customer_id)
         return idx
@@ -405,7 +414,8 @@ class DataContext:
             v = nb["user"]
             theirs = self.train_pos[v]
             out.append({
-                "customer_id": self.customer_ids[v], "similarity": nb["similarity"], "n_common": nb["n_common"],
+                "customer_id": self.customer_ids[v], "code": self.users["code"].get(self.customer_ids[v]),  # None: không có món đích
+                "similarity": nb["similarity"], "n_common": nb["n_common"],
                 "train_count": int(self.train_user_counts[v]),
                 "common_items": [self.item_info(i) for i in sorted(mine & theirs,
                                                                    key=lambda i: -self.train_item_counts[i])[:3]],

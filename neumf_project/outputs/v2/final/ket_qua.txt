@@ -138,7 +138,7 @@ Chỉ mô tả, không kiểm định.
 
 Mô hình             Độ phủ ứng viên  Epoch chọn theo seed  Phút / seed
 ----------------------------------------------------------------------
-LateFusion-F        5,3%             —                     0,0
+LateFusion-F        5,3%             —                     30,1
 NeuMF-F             13,3%            4, 2, 3, 3, 3         15,2
 GMF-F               6,9%             3, 7, 3, 3, 6         13,7
 MLP-F               5,3%             5, 9, 4, 3, 2         16,4

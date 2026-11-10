@@ -124,6 +124,27 @@ def test_beyond_counts_coverage():
     assert final.beyond({0: [0, 2], 1: [0, 1]}, stage, k=2) == {"coverage@2": 1.0}
 
 
+def test_report_beyond_late_fusion_time_is_sum_of_branches():
+    """LateFusion-F không tự huấn luyện: thời gian = của chính nó + GMF-F + MLP-F cùng seed, rồi trung bình qua seed."""
+    meta = lambda g, m: {"train_meta": {"gmf_f": {"select_time_s": g, "refit_time_s": 0}, "mlp_f": {"fit_time_s": m},
+                                        "late_f": {"w": 0.4}}, "beyond": {}}
+    res = {42: meta(600, 1200), 2024: meta(1200, 600)}
+    b = report.beyond([42, 2024], res, ["late_f", "gmf_f"]).set_index("model")["train_min"]
+    assert b["late_f"] == 30.0 and b["gmf_f"] == 15.0
+
+
+def test_report_metric_bars_share_one_color(tmp_path, monkeypatch):
+    """Góp ý GVHD 09/11: mọi cột của v2_metrics cùng một màu, không tô riêng NeuMF-F, không có cột xám."""
+    figs = []
+    monkeypatch.setattr(report.plt, "close", figs.append)
+    models, cols = ["late_f", "neumf_f", "random"], ["NDCG@10", "Recall@10", "HR@10"]
+    summary = pd.DataFrame({"model": models, **{f"{c}_{s}": [0.04, 0.03, 0.001] for c in cols for s in ("mean", "std")}})
+    res = {42: {"results": {m: {c: 0.03 for c in cols} for m in models}}}
+    report.plot_metrics(res, [42], summary, tmp_path, 10)
+    colors = {tuple(p.get_facecolor()) for ax in figs[0].axes for p in ax.patches}
+    assert len(colors) == 1
+
+
 def test_report_runs_end_to_end_on_tiny_results(tmp_path, monkeypatch):
     """24 chạy trọn trên kết quả giả (2 seed, đủ mô hình, 1 ablation): ghi CSV, hình, bảng, macro; không còn cũ/mới."""
     rng = np.random.default_rng(0)

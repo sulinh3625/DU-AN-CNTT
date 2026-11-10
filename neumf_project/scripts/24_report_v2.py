@@ -40,7 +40,6 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 from matplotlib.lines import Line2D
-from matplotlib.patches import Patch
 from matplotlib.ticker import FuncFormatter, MaxNLocator
 from scipy.stats import wilcoxon
 
@@ -74,7 +73,8 @@ GROUPS = [("Mô hình đề xuất", ("neumf_f",)),
           ("Nhóm 2: học máy truyền thống", ("hybrid", "userknn", "itemknn", "bpr", "content")),
           ("Nhóm 3: chuyên biệt cho khuyến nghị", ("late_f", "neumf", "recent_pop", "popularity")),
           ("Cận dưới", ("random",))]
-GROUP_COLOR = dict(zip([g for g, _ in GROUPS], ["#2a78d6", "#8fb8ea", "#1baf7a", "#eb6834", "#898781"]))
+# Mọi cột cùng một màu (góp ý GVHD 09/11/2026: không tô nổi mô hình đề xuất, không dùng xám cho cột).
+BAR = "#2a78d6"
 GROUP_OF = {m: g for g, ms in GROUPS for m in ms}
 # Họ so sánh cố định (PREREG_v2 mục 7), theo đúng thứ tự đăng ký.
 COMPARISONS = [("neumf_f", "neumf"), ("neumf_f", "gmf_f"), ("neumf_f", "mlp_f"), ("neumf_f", "late_f"),
@@ -235,13 +235,23 @@ def ablation(per: pd.DataFrame, res: dict) -> pd.DataFrame:
     return pd.DataFrame(rows)
 
 
+def _train_s(d: dict) -> float:
+    return d.get("select_time_s", 0) + d.get("refit_time_s", 0) + d.get("fit_time_s", 0)
+
+
+# LateFusion-F không tự huấn luyện mạng: chi phí của nó là thời gian huấn luyện hai nhánh (như V.LATE_PARTS; không
+# import v2_common vì module đó cần torch). Bước chọn w trên validation nằm ở 22_tune_v2, không thuộc đánh giá cuối.
+TRAIN_PARTS = {"late_f": ("gmf_f", "mlp_f")}
+
+
 def beyond(seeds, res, models) -> pd.DataFrame:
     s = 42 if 42 in res else seeds[0]
     rows = []
     for m in models:
         meta = [res[x]["train_meta"].get(m, {}) for x in seeds]
         ep = [d["best_epoch"] for d in meta if "best_epoch" in d]
-        t = [d.get("select_time_s", 0) + d.get("refit_time_s", 0) + d.get("fit_time_s", 0) for d in meta]
+        t = [_train_s(d) + sum(_train_s(res[x]["train_meta"].get(p, {})) for p in TRAIN_PARTS.get(m, ()))
+             for x, d in zip(seeds, meta)]
         b = res[s].get("beyond", {}).get(m, {})
         rows.append(dict(model=m, coverage10=b.get("coverage@10", np.nan),
                          best_epoch_mean=float(np.mean(ep)) if ep else np.nan,
@@ -852,7 +862,7 @@ def plot_metrics(res, seeds, summary, fig_dir: Path, n_users: int):
     for ax, c in zip(axes, metrics):
         mean = summary[f"{c}_mean"].to_numpy()
         sd = summary[f"{c}_std"].fillna(0).to_numpy()
-        ax.barh(y, mean, height=0.62, color=[GROUP_COLOR[group(mm)] for mm in models], edgecolor=SURFACE, linewidth=2)
+        ax.barh(y, mean, height=0.62, color=BAR, edgecolor=SURFACE, linewidth=2)
         ax.errorbar(mean, y, xerr=sd, fmt="none", ecolor=INK2, elinewidth=1.1, capsize=3)
         for i, mm in enumerate(models):
             pts = [res[s]["results"][mm][c] for s in seeds]
@@ -863,8 +873,7 @@ def plot_metrics(res, seeds, summary, fig_dir: Path, n_users: int):
         style(ax, "x")
     axes[0].set_yticks(y, [NAME[mm] + ("*" if mm in SUP else "") for mm in models], fontsize=9.5, color=INK)
     axes[0].invert_yaxis()
-    handles = [Patch(color=col, label=gname) for gname, col in GROUP_COLOR.items()]
-    handles.append(Line2D([], [], marker="o", color=INK, linestyle="none", markersize=4, label="Từng seed"))
+    handles = [Line2D([], [], marker="o", color=INK, linestyle="none", markersize=4, label="Từng seed")]
     fig.legend(handles=handles, loc="upper center", ncol=len(handles), frameon=False, fontsize=9, bbox_to_anchor=(0.5, 1.0))
     fig.suptitle(f"{TEXT['test_fig']} — trung bình ± độ lệch chuẩn qua {len(seeds)} seed "
                  f"({thousands(n_users)} người dùng)", fontsize=12, color=INK, y=1.07)
@@ -906,7 +915,7 @@ def plot_ablation(abl: pd.DataFrame, fig_dir: Path):
     fig, ax = plt.subplots(figsize=(8, 3.8), facecolor=SURFACE)
     y = np.arange(len(abl))
     v = abl["NDCG@10"].to_numpy(dtype=float)
-    ax.barh(y, v, height=0.62, color=["#2a78d6"] + ["#8fb8ea"] * (len(abl) - 1), edgecolor=SURFACE, linewidth=2)
+    ax.barh(y, v, height=0.62, color=BAR, edgecolor=SURFACE, linewidth=2)
     for i in range(len(abl)):
         ax.text(v[i] + np.nanmax(v) * 0.02, i, vn_plain(v[i]), va="center", fontsize=8, color=INK)
     ax.set_xlim(0, np.nanmax(v) * 1.25 if np.nanmax(v) > 0 else 0.001)

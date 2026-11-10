@@ -30,7 +30,8 @@ Thực nghiệm chính trên H\&M gồm hai bước:
         Kiến trúc chung của mạng lưới thần kinh & Cùng số chiều vector nhúng $d \in \{32, 64\}$. MLP, MLP-F, NeuMF và NeuMF-F dùng cùng tháp 3 lớp ẩn $[2d \to d \to d/2 \to d/4]$ với ReLU. Lớp đầu ra dùng hàm sigmoid. \\ \hline
         Huấn luyện mạng lưới thần kinh & Hàm mất mát BCE, lấy mẫu âm theo thời điểm, Adam, kích thước lô 512, tối đa 20 epoch, dừng sớm sau 5 epoch không cải thiện, huấn luyện lại đúng số epoch đã chọn. \\ \hline
         Đánh giá & Xếp hạng toàn bộ tập ứng viên. Độ đo chính NDCG@10. Recall, HR, Precision và NDCG ở $K = 10, 15, 20$. Kiểm định Wilcoxon, khoảng tin cậy bootstrap, hiệu chỉnh Holm. \\ \hline
-        Môi trường phần mềm & Python 3.12, PyTorch 2.6, NumPy, pandas, SciPy, scikit-learn. Mọi mô hình chạy trên cùng mã nguồn đánh giá. \\
+        Môi trường phần mềm & Python 3.12, PyTorch 2.6, NumPy, pandas, SciPy, scikit-learn. Mọi mô hình chạy trên cùng mã nguồn đánh giá. \\ \hline
+        Phần cứng & Đánh giá cuối trên H\&M và Amazon Beauty chạy trên cùng một máy: CPU \VData{run}{cpu}, GPU \VData{run}{gpu}. Thời gian huấn luyện trong các bảng được đo trên máy này. Riêng Hybrid-CBCF, phần bổ sung sau, chạy trên CPU \VData{bs}{cpu}. \\
         \hline
     \end{tabularx}
 \end{table}
@@ -179,7 +180,7 @@ Kết quả về độ phủ:
     \item Random có độ phủ gần như toàn bộ danh mục nhưng độ chính xác thấp nhất, nên độ phủ chỉ có giá trị khi được xem cùng với độ chính xác.
 \end{itemize}
 
-Hai cột còn lại của bảng là số epoch được chọn và thời gian huấn luyện, đều lấy trung bình qua 5 seed. Ô ``---'' dành cho mô hình không huấn luyện theo epoch. Các mạng lưới thần kinh chọn trung bình từ 3 đến khoảng 6 epoch, thấp hơn nhiều so với giới hạn 20 epoch. Điều đó cho thấy NDCG@10 trên tập xác thực đạt đỉnh sớm rồi không tăng thêm. LateFusion-F gần như không tốn thời gian riêng vì dùng lại GMF-F và MLP-F đã huấn luyện.
+Hai cột còn lại của bảng là số epoch được chọn và thời gian huấn luyện, đều lấy trung bình qua 5 seed. Ô ``---'' dành cho mô hình không huấn luyện theo epoch. Các mạng lưới thần kinh chọn trung bình từ 3 đến khoảng 6 epoch, thấp hơn nhiều so với giới hạn 20 epoch. Điều đó cho thấy NDCG@10 trên tập xác thực đạt đỉnh sớm rồi không tăng thêm. LateFusion-F không tự huấn luyện mạng nào mà trộn điểm của GMF-F và MLP-F, nên muốn có LateFusion-F phải huấn luyện đủ hai nhánh này. Vì vậy thời gian của LateFusion-F trong bảng là tổng thời gian huấn luyện GMF-F và MLP-F ở cùng seed. Con số này chưa tính bước chọn trọng số trộn trên tập xác thực, vốn chỉ làm một lần lúc tinh chỉnh.
 
 \bangketquaV{tab_v2_beyond.tex}{\texttt{scripts/23\_final\_v2.py}}
 
@@ -364,5 +365,5 @@ Dù LateFusion-F có NDCG@10 trung bình cao nhất trên cả hai bộ dữ li�
     \item LateFusion-F dùng chính hai nhánh có đặc trưng của NeuMF-F và chỉ khác ở bước trộn điểm, nên kết quả của nó cũng ủng hộ kết luận rằng phần cải thiện đến từ đặc trưng.
 \end{itemize}
 
-Khi triển khai, NeuMF-F chỉ cần huấn luyện một mạng, còn LateFusion-F cần huấn luyện hai mạng nhưng cho phép chỉnh trọng số trộn mà không phải huấn luyện lại.
+So với LateFusion-F, NeuMF-F có cả điểm thấp hơn lẫn điểm cao hơn đo được. Về độ chính xác, NDCG@10 của NeuMF-F chênh \VSig{4}{rel} so với LateFusion-F trên H\&M (\VSig{4}{phrase}, p Holm = \VSig{4}{pholm}) và \ASig{4}{rel} trên Amazon Beauty (\ASig{4}{phrase}, p Holm \ASig{4}{pholm}). Trên Amazon Beauty, NeuMF-F còn xếp \ARank{NeuMFF}{NDCG10}, sau cả GMF-F, dù chênh lệch với GMF-F không có ý nghĩa. Về chi phí, NeuMF-F chỉ huấn luyện một mạng, trung bình \VBey{NeuMFF}{time} phút mỗi seed trên H\&M và \ABey{NeuMFF}{time} phút trên Amazon Beauty, còn LateFusion-F cần huấn luyện cả GMF-F lẫn MLP-F, tổng cộng \VBey{LateF}{time} và \ABey{LateF}{time} phút. Độ phủ top-10 ở seed 42 của NeuMF-F cũng cao hơn trên cả hai bộ: \VBey{NeuMFF}{cov} so với \VBey{LateF}{cov} trên H\&M, \ABey{NeuMFF}{cov} so với \ABey{LateF}{cov} trên Amazon Beauty. Các số trên chỉ là thời gian huấn luyện. Đề tài chưa đo thời gian tạo danh sách khuyến nghị, nên chưa kết luận được mô hình nào gợi ý nhanh hơn. Ngược lại, LateFusion-F có ưu điểm là chỉnh được trọng số trộn mà không phải huấn luyện lại.
 
