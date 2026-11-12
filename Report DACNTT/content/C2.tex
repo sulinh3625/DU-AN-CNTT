@@ -10,7 +10,7 @@
 Hệ thống khuyến nghị có ba hướng tiếp cận chính, khác nhau ở loại thông tin được dùng.
 \begin{itemize}
     \item Lọc dựa trên nội dung (\textit{content-based filtering}) dùng thông tin của sản phẩm. Khách vừa mua một chiếc áo len sẽ được khuyến nghị những mẫu có loại hàng, nhóm hàng hay mô tả gần với chiếc áo đó.
-    \item Lọc cộng tác (\textit{collaborative filtering}, CF) dùng hành vi mua của nhiều khách. Nếu nhiều người mua chung hai mẫu quần, khách mua mẫu thứ nhất có thể cũng quan tâm mẫu thứ hai. Cách này cần đủ lượt mua, nên hoạt động kém khi dữ liệu thưa.
+    \item Lọc cộng tác (CF) dùng hành vi mua của nhiều khách. Nếu nhiều người mua chung hai mẫu quần, khách mua mẫu thứ nhất có thể cũng quan tâm mẫu thứ hai. Cách này cần đủ lượt mua, nên hoạt động kém khi dữ liệu thưa.
     \item Lọc lai (\textit{hybrid filtering}) dùng cả hai nguồn thông tin để bù cho nhau.
 \end{itemize}
 
@@ -188,7 +188,7 @@ Hình~\ref{fig:neumf_architecture} vẽ kiến trúc NeuMF theo cách trình bà
 
 \begin{figure}[H]
     \centering
-    \includegraphics[width=0.95\textwidth]{media/figures/so_do/bc_07_kien_truc_neumf.pdf}
+    \includegraphics[width=0.8\textwidth]{media/figures/so_do/hinh_kien_truc_neumf.pdf}
     \caption{Kiến trúc NeuMF}
     \label{fig:neumf_architecture}
 \end{figure}
@@ -198,12 +198,12 @@ Hình~\ref{fig:neumf_architecture} vẽ kiến trúc NeuMF theo cách trình bà
 
 Khi hệ thống khuyến nghị kết hợp nhiều nguồn thông tin, hay nhiều góc nhìn về người dùng và sản phẩm, có hai cách hợp nhất cơ bản. Hai cách này khác nhau ở mức diễn ra phép hợp nhất \parencite{holinh2023multisource}.
 \begin{itemize}
-    \item Hợp nhất sớm (\textit{early fusion}) diễn ra ở mức đặc trưng hoặc biểu diễn. Các vector $v_1, \dots, v_m$ của từng góc nhìn được nối thành một biểu diễn chung, rồi một mô hình $h$ duy nhất học tương tác giữa chúng và đưa ra dự đoán:
+    \item Hợp nhất sớm diễn ra ở mức đặc trưng hoặc biểu diễn. Các vector $v_1, \dots, v_m$ của từng góc nhìn được nối thành một biểu diễn chung, rồi một mô hình $h$ duy nhất học tương tác giữa chúng và đưa ra dự đoán:
     \begin{equation}
         p = h\big([v_1;\, v_2;\, \dots;\, v_m]\big)
         \label{eq:early_fusion}
     \end{equation}
-    \item Hợp nhất muộn (\textit{late fusion}) diễn ra ở mức điểm dự đoán. Mỗi góc nhìn được xử lý bởi một mô hình riêng $h_j$, rồi các dự đoán được kết hợp bằng một cơ chế $F$, như lấy trung bình, bỏ phiếu, trọng số cố định hoặc một mô hình học:
+    \item Hợp nhất muộn diễn ra ở mức điểm dự đoán. Mỗi góc nhìn được xử lý bởi một mô hình riêng $h_j$, rồi các dự đoán được kết hợp bằng một cơ chế $F$, như lấy trung bình, bỏ phiếu, trọng số cố định hoặc một mô hình học:
     \begin{equation}
         p = F\big(h_1(v_1),\, h_2(v_2),\, \dots,\, h_m(v_m)\big)
         \label{eq:late_fusion}
@@ -225,7 +225,7 @@ trong đó điểm $s_{ui}$ của mỗi mô hình được chuẩn hoá min--max
 
 \begin{figure}[H]
     \centering
-    \includegraphics[width=0.95\textwidth]{media/figures/so_do/bc_08_hop_nhat.pdf}
+    \includegraphics[width=0.9\textwidth]{media/figures/so_do/hinh_hop_nhat.pdf}
     \caption{Hợp nhất sớm và hợp nhất muộn}
     \label{fig:fusion_compare}
 \end{figure}
@@ -233,7 +233,7 @@ trong đó điểm $s_{ui}$ của mỗi mô hình được chuẩn hoá min--max
 \subsection{Lấy mẫu âm và hàm mất mát entropy chéo nhị phân}
 \label{subsec:negative_sampling_loss}
 
-Dữ liệu mua hàng chỉ cho biết khách đã mua gì, vì vậy chỉ có nhãn dương ($y_{ui} = 1$). Để mô hình học được cả chiều ngược lại, NCF lấy mẫu âm (\textit{negative sampling}): với mỗi lượt mua, chọn ngẫu nhiên vài sản phẩm khách chưa mua và tạm coi là nhãn âm ($y_{ui} = 0$). Mô hình sau đó được huấn luyện như một bộ phân loại nhị phân, với hàm mất mát entropy chéo nhị phân (\textit{binary cross-entropy}, BCE):
+Dữ liệu mua hàng chỉ cho biết khách đã mua gì, vì vậy chỉ có nhãn dương ($y_{ui} = 1$). Để mô hình học được cả chiều ngược lại, NCF lấy mẫu âm: với mỗi lượt mua, chọn ngẫu nhiên vài sản phẩm khách chưa mua và tạm coi là nhãn âm ($y_{ui} = 0$). Mô hình sau đó được huấn luyện như một bộ phân loại nhị phân, với hàm mất mát entropy chéo nhị phân (BCE):
 \begin{equation}
     \mathcal{L}_{BCE} = -\sum_{(u, i) \in \mathcal{Y} \cup \mathcal{Y}^-} \left[ y_{ui} \log \hat{y}_{ui} + (1 - y_{ui}) \log (1 - \hat{y}_{ui}) \right]
     \label{eq:bce_loss}

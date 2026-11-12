@@ -59,7 +59,7 @@ Quy ước đọc:
 
 ---
 
-## 2. Tiến độ (06/11/2026)
+## 2. Tiến độ (12/11/2026)
 
 ### 2.1 Tình hình
 
@@ -69,9 +69,9 @@ Quy ước đọc:
 | Kiểm chứng Amazon Beauty | Xong ngày 10–11/10/2026; đã đưa vào báo cáo (báo cáo mục 4.4, Chương 5, tóm tắt) |
 | 21 yêu cầu của buổi họp 04/10 | **20 hoàn thành** (#8 chờ cô xác nhận cách xếp nhóm), 1 chưa làm (mục 2.2) |
 | Mô hình lai truyền thống (bổ sung) | Xong 13/10: mã, kế hoạch `PREREG_bosung.md`, tinh chỉnh trên tập xác thực, chấm tập kiểm thử một lần trên H&M và một lần trên Amazon (commit `fcf33f3`); kết quả ở mục 3.7 và 4.6 |
-| Báo cáo | `main.pdf` 102 trang, biên dịch không lỗi; baseline trình bày theo ba nhóm; có kết quả Hybrid-CBCF; tóm tắt Việt, Anh có đoạn kết quả (nêu rõ LateFusion-F cao nhất), mỗi bản một trang; `check-report`: 75/75 câu nhận xét khớp số liệu, đủ mọi macro, bảng, hình |
-| Demo | Luôn có gợi ý (khách mới nhận danh sách phổ biến); chọn được K = 10, 15, 20; ảnh Amazon lưu trên máy (`demo/static/images/amazon/`); ảnh H&M tải ngày 07/11 (6.728/6.749 sản phẩm, `demo/scripts/download_hm_images.py`); ảnh demo trong báo cáo (Hình 3.7, 3.8, 3.10, 3.12) chụp lại có ảnh thật |
-| Kiểm thử | `tests/` 108/108 qua; `demo/tests` 20/20 qua (06/11); demo đối chiếu từng kết quả với số đã lưu (mục 10.3) |
+| Báo cáo | `main.pdf` 98 trang (rút gọn 12/11 theo skill định dạng: bớt ảnh demo trùng ý, hình hội tụ, hình Amazon trùng bảng, bảng API, câu rào đón), biên dịch không lỗi, không còn hộp tràn trang; mục 4.5 mới (Bảng 4.20) chỉ ra phần cải thiện đến từ đặc trưng, không từ tinh chỉnh, dữ liệu hay dao động ngẫu nhiên; 9 sơ đồ vẽ lại bằng `image/src/hinh_bao_cao.py` với một quy tắc màu chung; baseline trình bày theo ba nhóm; có kết quả Hybrid-CBCF; tóm tắt Việt, Anh có đoạn kết quả (nêu rõ LateFusion-F cao nhất), mỗi bản một trang; `check-report`: 75/75 câu nhận xét khớp số liệu, đủ mọi macro, bảng, hình |
+| Demo | Luôn có gợi ý (khách mới nhận danh sách phổ biến); chọn được K = 10, 15, 20; ảnh Amazon lưu trên máy (`demo/static/images/amazon/`); ảnh H&M tải ngày 07/11 (6.728/6.749 sản phẩm, `demo/scripts/download_hm_images.py`); ảnh demo trong báo cáo (Hình 3.7, 3.8) chụp lại có ảnh thật |
+| Kiểm thử | `tests/` 110/110 qua; `demo/tests` 21/21 qua (12/11); demo đối chiếu từng kết quả với số đã lưu (mục 10.3) |
 | Rà soát 06/11 | Code: test và biên dịch toàn bộ mã Python qua; demo chạy thật trên cả hai bộ (mọi trang, khách mới, K sai, mô hình sai, đường dẫn ảnh lạ), không lỗi console, trung vị khoảng 7 ms mỗi lần gợi ý. Đã sửa: hình kết quả đánh dấu Hybrid-CBCF bằng * như bảng (trước là †); Hình 3.2 dùng [H]; bỏ "khởi đầu lạnh" còn sót ở mục 2.1.4; Bảng 2.1 thêm kết quả của đề tài; Chương 5 nêu LateFusion-F cao nhất; `main.pdf` biên dịch lại với hình mới; README demo bỏ Docker đã xoá |
 | Góp ý buổi họp 23/10 | Xong 8/9 việc của báo cáo và demo (bảng dưới); còn việc nộp báo cáo giữa kỳ (mục 2.3) |
 
@@ -102,7 +102,7 @@ trạng thái theo commit `e053c39`.
 | 3 | Dữ liệu | Lọc khách và sản phẩm từ 10 giao dịch | Hoàn thành | k-core 10: còn 8.039 khách (mẫu phát triển), 7.994 khách (mẫu kiểm định) |
 | 4 | Dữ liệu | Lưu dữ liệu đã lọc ra file, mọi mô hình đọc cùng file | Hoàn thành | `outputs/data/*.csv.gz`, kiểm MD5 theo `manifest.json` |
 | 5 | Dữ liệu | Đánh giá cuối trên mẫu khách chưa từng dùng | Hoàn thành | Mẫu kiểm định là khối 2 |
-| 6 | Dữ liệu | Dữ liệu đối chứng Amazon 5-core | Hoàn thành | Mục 4; báo cáo mục 4.4 (Bảng 4.11–4.19, Hình 4.6), Chương 5, tóm tắt |
+| 6 | Dữ liệu | Dữ liệu đối chứng Amazon 5-core | Hoàn thành | Mục 4; báo cáo mục 4.4 (Bảng 4.11–4.19), Chương 5, tóm tắt |
 | 7 | Mô hình | Chỉ một mô hình đề xuất | Hoàn thành | Báo cáo gọi thống nhất "mô hình đề xuất (NeuMF-F)" |
 | 8 | Mô hình | Baseline ba nhóm: đơn lẻ, học máy truyền thống, chuyên biệt cho gợi ý | Hoàn thành | Bảng 3.5 (ba nhóm); Bảng 4.4 và 4.13 xếp theo nhóm. Mô hình lai truyền thống Hybrid-CBCF (mục 8.5): Thuật toán 3.6, Bảng 4.3, mục 4.3.4 (Bảng 4.8), Bảng 4.16. Cách xếp nhóm là đề xuất của nhóm, chờ cô xác nhận |
 | 9 | Đánh giá | Báo cáo ở K = 10, 15, 20 (bỏ K = 5 ngày 24/10) | Hoàn thành | Bảng 4.5–4.6 (H&M), 4.14–4.15 (Amazon); K = 15 tính từ hạng đã lưu, đã ghi vào PREREG mục 10 |
@@ -112,7 +112,7 @@ trạng thái theo commit `e053c39`.
 | 13 | Báo cáo | Vẽ lại đường ống, tách riêng quy trình đánh giá | Hoàn thành | Hình 3.1 (đường ống), Hình 3.5 (quy trình đánh giá); thêm Hình 3.2 (xử lý dữ liệu), Hình 3.3 (chia theo thời gian) |
 | 14 | Báo cáo | Mã giả các thuật toán | Hoàn thành | Thuật toán 3.1–3.7 (3.6: mô hình lai truyền thống) |
 | 15 | Báo cáo | Trình bày tiền xử lý thẳng thắn, thống nhất tên gọi | Hoàn thành | Báo cáo mục 3.2; bỏ "mẫu A/B", "v1/v2" |
-| 16 | Báo cáo | Khởi đầu lạnh: khách mới thì gợi ý sản phẩm phổ biến | Hoàn thành | Báo cáo mục 2.1.4, 3.8, 5.3; Hình 3.10; sửa câu "API báo lỗi" |
+| 16 | Báo cáo | Khởi đầu lạnh: khách mới thì gợi ý sản phẩm phổ biến | Hoàn thành | Báo cáo mục 2.1.4, 3.8, 3.9, 5.3; sửa câu "API báo lỗi" |
 | 17 | Demo | Hiện tên và mô tả sản phẩm | Hoàn thành | Tên, mô tả, ảnh; H&M và Amazon |
 | 18 | Demo | So hai mô hình cạnh nhau, kèm vị trí đoán trúng | Hoàn thành | Chế độ so sánh; Hình 3.7 |
 | 19 | Demo | Luôn có gợi ý, không để trống | Hoàn thành | Mục 10.2 |
@@ -150,9 +150,10 @@ lại gọn, sinh từ `image/src/so_do_bao_cao.py` cùng các hình của báo 
       không?
 4. **Gửi cô checkpoint** (`outputs/v2/final/seed42/`, `outputs/amazon/final/seed42/`) kèm hướng dẫn chạy demo
    (`neumf_project/demo/README.md`).
-5. ~~**Làm slide**~~ — xong 06/11: slide 16 trang (Artifact "Slide NeuMF-F" trên claude.ai, gồm cả Hybrid-CBCF) và
-   poster theo khung Khoa CNTT (`Report DACNTT/poster/`: `build_poster.py` sinh `Poster_DACNTT.pptx`, `.png`, `.pdf`).
-   Số trên slide và poster chép từ mục 3–4; kết quả đổi thì sửa tay theo.
+5. ~~**Làm slide**~~ — xong 06/11, làm lại 12/11: slide 15 trang (`Report DACNTT/slides/`: `build_slides.py` sinh
+   `Slide_DACNTT.pptx`, nội dung hiện dần theo pha) và poster theo khung Khoa CNTT (`Report DACNTT/poster/`:
+   `build_poster.py` sinh `Poster_DACNTT.pptx`, `.png`, `.pdf`). Số trên slide và poster chép từ mục 3–4; kết quả đổi
+   thì sửa tay theo.
 6. **Cập nhật Google Doc tiến độ** theo mục 2.2.
 
 ### 2.4 Mức độ hoàn thành theo hạng mục
@@ -166,10 +167,11 @@ lại gọn, sinh từ `image/src/so_do_bao_cao.py` cùng các hình của báo 
 | Kiểm chứng Amazon | 100% | 5/5 seed; đã commit, đã vào báo cáo |
 | Kiểm định, bảng, hình, macro (kể cả theo K) | 100% | Đã commit |
 | Mô hình lai truyền thống (bổ sung) | 100% | Mã, kế hoạch, tinh chỉnh, chấm tập kiểm thử H&M và Amazon, nhận xét trong báo cáo |
-| Code và kiểm thử | 100% | 108/108 test; demo 20/20 (mục 10.3) |
-| Demo | 100% | Luôn có gợi ý; 6 ảnh trong báo cáo; có ảnh sản phẩm thật cho cả H&M và Amazon |
-| Báo cáo | 98% | Đủ kết quả, kể cả Hybrid-CBCF; đã sửa theo góp ý 23/10; tóm tắt Việt, Anh có đoạn kết quả, mỗi bản một trang; còn chỉnh theo ý cô cho 5 câu hỏi |
-| Chuẩn bị bảo vệ | Một phần | `van_dap.md` viết lại cho hội đồng (20/10); slide và poster xong (06/11); chưa gửi cô checkpoint |
+| Code và kiểm thử | 100% | 110/110 test; demo 21/21 (mục 10.3) |
+| Demo | 100% | Luôn có gợi ý; 2 ảnh trong báo cáo (Hình 3.7, 3.8); có ảnh sản phẩm thật cho cả H&M và Amazon |
+| Báo cáo | 100% (bản nộp 12/11) | `main.pdf` 98 trang; đủ kết quả, kể cả Hybrid-CBCF; sửa theo góp ý 23/10; trình bày lựa chọn của nhóm theo tên đề tài; rút gọn theo skill định dạng; kiểm văn phong 0 cảnh báo; `check-report` khớp. Nếu cô trả lời 5 câu hỏi khác đề xuất của nhóm thì sửa theo |
+| Slide, poster | 100% (bản nộp 12/11) | `Slide_DACNTT.pptx` 15 trang, `Poster_DACNTT.pdf`, cùng sơ đồ, màu và cách trình bày với báo cáo |
+| Chuẩn bị bảo vệ | Một phần | `van_dap.md` viết lại cho hội đồng (20/10), thêm câu 5.4.6 về nguồn gốc cải thiện (12/11); còn luyện vấn đáp và gửi cô checkpoint |
 
 ---
 
@@ -310,7 +312,7 @@ Dữ liệu và cách chia: mục 7.6.
 | Chạy thử trước khi đăng ký | 22:08 ngày 10/10: một script khác chạy thử trên tập xác thực Amazon (Random, MostPopular, BPR-MF, 1 epoch, mốc khác), không mở tập kiểm thử. Ghi ở `PREREG_amazon.md` mục 9; không quyết định nào dựa trên số đó |
 | File | `outputs/amazon/final/`; đọc nhanh ở `ket_qua.txt` |
 
-### 4.2 Kết quả trên tập kiểm thử Amazon (5 seed; báo cáo Bảng 4.13, Hình 4.6)
+### 4.2 Kết quả trên tập kiểm thử Amazon (5 seed; báo cáo Bảng 4.13)
 
 | Hạng | Mô hình | NDCG@10 | HR@10 |
 |---|---|---|---|
@@ -354,7 +356,7 @@ MostPopular-Recent. Hai so sánh có BPR-MF ở Amazon chỉ nên đọc kèm c�
 - So sánh 3: p Holm = 0,0499 (dưới 0,05) nhưng khoảng tin cậy chứa 0, nên theo tiêu chí là không khác biệt có ý nghĩa.
 - **Tổng trên Amazon:** NeuMF-F tốt hơn 6/9 đối thủ, ngang 2 (GMF-F, MLP-F), thua 1 (LateFusion-F).
 
-### 4.4 Ba kết luận của H&M có còn đúng không (báo cáo mục 4.5.2)
+### 4.4 Ba kết luận của H&M có còn đúng không (báo cáo mục 4.4.3)
 
 | Kết luận của H&M | Trên Amazon |
 |---|---|
@@ -838,7 +840,7 @@ Lệnh chạy chi tiết: `neumf_project/README.md` mục 3.
   cạnh Hybrid-CBCF) khi đã có kết quả chấm bổ sung (`outputs/*/final/bosung/results.json`, đã có cho cả hai bộ); nếu
   thiếu, demo ẩn nó kèm lệnh cần chạy, để không chấm tập kiểm thử ngoài kế hoạch. Dashboard đọc bảng `bosung/` (14 mô
   hình + Hybrid-CBCF, dấu *) và có thẻ kiểm định họ bổ sung B1–B2.
-- Ảnh trong báo cáo: Hình 3.7 (so sánh NeuMF-F và NeuMF), Hình 3.9 (khách tương đồng), Hình 3.10 (khách mới).
+- Ảnh trong báo cáo: Hình 3.7 (cửa hàng, so sánh NeuMF-F và NeuMF), Hình 3.8 (màn hình kết quả).
 
 ### 10.3 Kiểm thử
 
@@ -858,6 +860,7 @@ Lệnh chạy chi tiết: `neumf_project/README.md` mục 3.
   này 14 mô hình đăng ký trước trùng hạng đã lưu ở mọi khách (riêng NeuMF-F trên Amazon lệch 1/2.644 khách);
   Hybrid-CBCF, chấm ngày 13/10 trên máy CPU với tệp `catalog` MD5 `496f3566…`, trùng 1.146/3.165 khách H&M và
   1.617/2.644 khách Amazon. Demo hiện số đã lưu kèm lý do cho các khách lệch.
+- **Kết quả ngày 12/11/2026** (máy chỉ có CPU): `tests/` 110/110 qua; `demo/tests` 21/21 qua; `check-report` khớp.
 - **Chẩn đoán test demo hỏng trước đây (14/10):** nguyên nhân **không phải** CPU/GPU. So hạng demo tính lại với hạng
   đã lưu trên 300 khách H&M và 200 khách Amazon: mọi mô hình không dùng vector văn bản (NeuMF, GMF, MLP, BPR-MF,
   UserKNN, ItemKNN, MostPopular, MostPopular-Recent) và Hybrid-CBCF trùng tuyệt đối. Bốn mô hình có đặc trưng lệch
@@ -877,11 +880,11 @@ Số mục, bảng, hình và thuật toán trong bảng này là số của bá
 |---|---|
 | Chương 1 | Mục tiêu và phạm vi có thêm kiểm chứng Amazon và cách xử lý khách mới; bố cục theo các mục mới |
 | Chương 2 | Hình 2.1 (NeuMF) vẽ lại với kích thước ma trận; mục 2.6 và Bảng 2.1 ba nghiên cứu nền tảng (hàng của đề tài có kết quả NDCG@10, 06/11); đoạn cold start cập nhật |
-| Chương 3 | Hình 3.1 đường ống, Hình 3.2 xử lý dữ liệu, Hình 3.3 chia theo thời gian, Hình 3.4 NeuMF-F, Hình 3.5 quy trình đánh giá; Thuật toán 3.1–3.7 (3.6: chọn cách kết hợp của mô hình lai truyền thống); mục 3.7 nguyên tắc đánh giá; mục 3.8 suy luận Top-K và khách mới; mục 3.9 demo (Hình 3.6 kiến trúc, Hình 3.7–3.12 ảnh demo) |
-| Chương 4 | 4.1 thiết lập thực nghiệm (Bảng 4.1 điều kiện chung); 4.2 tinh chỉnh (Bảng 4.2–4.3); 4.3 đánh giá cuối H&M (Bảng 4.4–4.10, Hình 4.1–4.5; theo K: Bảng 4.5–4.6; Hybrid-CBCF: mục 4.3.4, Bảng 4.8); 4.4 kiểm chứng Amazon (Bảng 4.11–4.19, Hình 4.6); 4.5 phạm vi của kết luận; 4.6 thảo luận và trả lời ba câu hỏi nghiên cứu. Mọi số qua macro tự sinh |
+| Chương 3 | Hình 3.1 đường ống, Hình 3.2 xử lý dữ liệu, Hình 3.3 chia theo thời gian, Hình 3.4 NeuMF-F, Hình 3.5 quy trình đánh giá; Thuật toán 3.1–3.7 (3.6: chọn cách kết hợp của mô hình lai truyền thống); mục 3.7 nguyên tắc đánh giá; mục 3.8 suy luận Top-K và khách mới; mục 3.9 demo (Hình 3.6 kiến trúc, Hình 3.7–3.8 ảnh demo) |
+| Chương 4 | 4.1 thiết lập thực nghiệm (Bảng 4.1 điều kiện chung); 4.2 tinh chỉnh (Bảng 4.2–4.3); 4.3 đánh giá cuối H&M (Bảng 4.4–4.10, Hình 4.1–4.4; theo K: Bảng 4.5–4.6; Hybrid-CBCF: mục 4.3.4, Bảng 4.8); 4.4 kiểm chứng Amazon (Bảng 4.11–4.19); 4.5 nguồn gốc của phần cải thiện (Bảng 4.20, bảy yếu tố đã loại trừ); 4.6 phạm vi của kết luận; 4.7 thảo luận và trả lời ba câu hỏi nghiên cứu. Mọi số qua macro tự sinh |
 | Chương 5, tóm tắt Việt/Anh | Chương 5: kết quả đạt được (Bảng 5.1), kết luận (LateFusion-F có NDCG@10 trung bình cao nhất trên cả hai bộ), hạn chế và hướng phát triển. Tóm tắt Việt, Anh có đoạn kết quả, mỗi bản một trang. Không có phụ lục: kế hoạch đăng ký trước, nhật ký mở tập kiểm thử và mã nguồn được trích như tài liệu tham khảo; hướng dẫn chạy mã nguồn ở README |
 | Kiểm tra | `python run.py check-report`: 75/75 câu nhận xét khớp số liệu; không còn số chép tay cũ trong tài liệu md; đủ mọi macro, bảng, hình |
-| Biên dịch | `main.pdf` 102 trang (06/11) (XeLaTeX + Biber, `compile.bat`); 7 thuật toán; không lỗi, không tham chiếu treo |
+| Biên dịch | `main.pdf` 98 trang (12/11) (XeLaTeX + Biber, `compile.bat`); 7 thuật toán; không lỗi, không tham chiếu treo |
 | Chương 2, 4 (bổ sung 13/10) | C2 mục 2.1.1: mô hình lai truyền thống (phân loại của Burke, chương 3 luận án của cô); C4 mục 4.2: bảng ba nhóm mô hình đối chứng + mô tả Hybrid-CBCF, sửa mô tả Content (ba thuộc tính, không phải bốn); 4.3: bảng các cách kết hợp; 4.4: mục "Phân tích bổ sung"; 4.5, 4.8, Chương 5: câu về Hybrid-CBCF bằng macro |
 | Văn phong (sửa 13–14/10) | Viết lại Chương 1–5, tóm tắt và phụ lục: không in đậm trong thân bài; câu ngắn, bỏ gạch ngang chèn ý; thuật ngữ tiếng Việt thống nhất (mô hình đối chứng, vector nhúng, hợp nhất sớm/muộn, xếp hạng toàn bộ, phân tích bóc tách); mỗi nguồn trích ở chỗ dùng, không trích trong tóm tắt và Chương 4–5; bảng kiểu booktabs; chú thích bảng, hình ngắn, chi tiết chuyển xuống ghi chú hoặc thân bài; Phụ lục A còn 36 nguồn, đúng các nguồn được trích trong thân bài. Ngày 14/10: tách các câu dài; tóm tắt bỏ số liệu; bỏ khỏi báo cáo mọi chi tiết tình trạng mã nguồn (MD5, mã băm, nhật ký, commit, bộ kiểm thử tự động, tệp đặc trưng); gộp các ý lặp giữa các chương; bỏ đoạn liệt kê số rời rạc ở Chương 4 (số đã có trong bảng); viết lại Chương 5; bỏ Phụ lục B |
 | Chờ cô | Xác nhận cách xếp ba nhóm và mô hình lai truyền thống; ý kiến về các câu hỏi còn lại (mục 2.3 của file này) |
@@ -949,7 +952,7 @@ hoặc bằng chứng; **Một phần** = làm được một phần, phần cò
 | 4 | Lọc cộng tác hoạt động thế nào | **Đạt** | Báo cáo mục 2.1.2, 3.3.1; `van_dap.md` câu 5.2.7 | — |
 | 5 | Khởi đầu lạnh | **Một phần** | Khách mới: gợi ý sản phẩm phổ biến (báo cáo mục 3.7, demo). Bản đầu kế hoạch (khối 1) đã thử đưa sản phẩm mới vào đánh giá: NDCG@10 trên nhóm này của mọi mô hình dưới 0,002; bản cuối bỏ sản phẩm chưa có người mua theo góp ý | Không đo chất lượng gợi ý cho khách mới và sản phẩm mới — ghi là hạn chế và hướng phát triển |
 | 6 | NDCG và các chỉ số | **Đạt** | NDCG, Recall, HR, Precision ở K = 10, 15, 20 cho cả hai bộ; ví dụ tính tay ở `van_dap.md` câu 5.3.5 | — |
-| 7 | Trình bày kết quả | **Đạt** | Bảng, hình, macro tự sinh; `ket_qua.txt`; 75/75 câu nhận xét khớp số liệu; PDF 102 trang | — |
+| 7 | Trình bày kết quả | **Đạt** | Bảng, hình, macro tự sinh; `ket_qua.txt`; 75/75 câu nhận xét khớp số liệu; PDF 98 trang | — |
 | 8 | Vai trò của MF | **Đạt** | BPR-MF, GMF; nhánh GMF-F là thành phần mạnh nhất của NeuMF-F (GMF-F ngang NeuMF-F trên cả hai bộ) | — |
 | 9 | Mô hình lai thực sự | **Đạt** | NeuMF-F = MF + DNN + đặc trưng; hơn NeuMF chỉ dùng ID 43,8% (H&M) và 65,7% (Amazon), có ý nghĩa | — |
 | 10 | Transformer, Temporal, BERT | **Một phần** | Dùng mô tả văn bản (TF-IDF + SVD). Ablation: bỏ văn bản −2,7% (H&M), −9,8% (Amazon), khoảng tin cậy chứa 0 ở cả hai | BERT, Transformer là hướng phát triển (cô ghi không bắt buộc) |
@@ -957,7 +960,7 @@ hoặc bằng chứng; **Một phần** = làm được một phần, phần cò
 | 12 | Early fusion | **Đạt** | NeuMF-F (và NeuMF) là early fusion theo định nghĩa trong luận án của cô | — |
 | 13 | Late fusion | **Đạt** | LateFusion-F; so sánh #4: trên H&M cao hơn NeuMF-F 2,2% nhưng **không khác biệt có ý nghĩa**; trên Amazon **tốt hơn có ý nghĩa** (NeuMF-F thấp hơn 12,5%) | — |
 | 14 | Baseline; lai có hơn trước khi lai | **Đạt** | Trên H&M, NeuMF-F hơn NeuMF, MLP-F, BPR-MF, ItemKNN, UserKNN, MostPopular-Recent, Content; ngang GMF-F. Trên Amazon hơn NeuMF và cả năm baseline. Phân tích bổ sung: NeuMF-F hơn mô hình lai truyền thống Hybrid-CBCF trên cả hai bộ (+25,8%, +23,0%) | Baseline đã trình bày theo ba nhóm; chờ cô xác nhận cách xếp |
-| 15 | Sơ đồ kiến trúc | **Đạt** | Hình 2.1 (NeuMF) và 3.4 (NeuMF-F) vẽ lại theo góp ý 04/10 và 23/10; Hình 3.1 (đường ống), 3.2 (xử lý dữ liệu), 3.3 (chia theo thời gian), 3.5 (quy trình đánh giá); Hình 2.2 (hai cách hợp nhất), 3.6 (kiến trúc demo); ảnh demo Hình 3.7–3.12; bộ sơ đồ cho slide ở `image/` | — |
+| 15 | Sơ đồ kiến trúc | **Đạt** | Hình 2.1 (NeuMF) và 3.4 (NeuMF-F) vẽ lại theo góp ý 04/10 và 23/10; Hình 3.1 (đường ống), 3.2 (xử lý dữ liệu), 3.3 (chia theo thời gian), 3.5 (quy trình đánh giá); Hình 2.2 (hai cách hợp nhất), 3.6 (kiến trúc demo); ảnh demo Hình 3.7–3.8; bộ sơ đồ cho slide ở `image/` | — |
 | 16 | Mô hình "variational" | **Chưa** | Lý thuyết Mult-VAE ở báo cáo mục 2.4.4; hướng phát triển ở báo cáo mục 5.3 | Buổi họp 04/10 không nêu lại. Tập kiểm thử đã mở, nên nếu cô yêu cầu thì chỉ thêm được dưới dạng **thăm dò sau kiểm thử**, ghi lệch kế hoạch, không đưa vào họ 10 so sánh |
 | 17 | Lộ trình 10 bước | **Đạt** | Bước 1–10 đều có kết quả, kể cả phần thảo luận Chương 4 | — |
 

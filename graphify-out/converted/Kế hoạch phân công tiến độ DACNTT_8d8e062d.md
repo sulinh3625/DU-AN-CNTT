@@ -38,7 +38,7 @@
 – Minh Lý: huấn luyện lại trên train và val, đánh giá cuối, lưu checkpoint cho demo, viết Chương 4 (kết quả) bản đầu.
 – Cả nhóm: báo cáo tiến độ với GVHD ngày 04/10. | 100 |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |
 | 7 | 05/10/2026 | 11/10/2026 | – Hoàn thiện dữ liệu và đánh giá theo góp ý GVHD.
-– Đánh giá cuối trên H&M; kiểm chứng trên bộ dữ liệu thứ hai (Amazon Beauty). | – Yến Linh: thiết kế lại dữ liệu theo góp ý GVHD: gộp sản phẩm theo mẫu thiết kế (product_code), loại sản phẩm chưa có người mua, dữ liệu đã lọc dùng chung có kiểm MD5, mẫu kiểm định mới; chọn Amazon Beauty 2014 làm dữ liệu đối chứng và lập kế hoạch kiểm chứng.
+– Đánh giá cuối trên H&M; kiểm chứng trên bộ dữ liệu thứ hai (Amazon Beauty). | – Yến Linh: thiết kế lại dữ liệu theo góp ý GVHD: gộp sản phẩm theo mẫu thiết kế, loại sản phẩm chưa có người mua, dữ liệu đã lọc dùng chung có kiểm MD5, mẫu kiểm định mới; chọn Amazon Beauty 2014 làm dữ liệu đối chứng và lập kế hoạch kiểm chứng.
 – Minh Lý: chạy đánh giá cuối 5 seed trên mẫu kiểm định H&M; chạy kiểm chứng 5 seed trên Amazon Beauty ; demo chạy được trên cả hai bộ dữ liệu. | 100 |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |
 | 8 | 12/10/2026 | 18/10/2026 | – Hoàn thiện báo cáo theo đủ yêu cầu của GVHD.
 – Bổ sung baseline nhóm học máy truyền thống.
@@ -50,10 +50,15 @@
 – Cả nhóm: báo cáo giữa kỳ với GVHD ngày 23/10, ghi nhận góp ý. | – Cả nhóm (20/10): chốt phạm vi, không thêm mô hình mới, chỉ hoàn thiện báo cáo.
 – Yến Linh: chỉnh văn phong và định dạng toàn bộ báo cáo (Chương 1–5, tóm tắt); bỏ tài liệu nội bộ khỏi danh mục tham khảo; cập nhật tài liệu chuẩn bị vấn đáp.
 – Minh Lý: sửa lỗi còn tồn trong mã (tương thích Python 3.11, tiêu đề Hình 4.3, DOI tràn lề); chỉnh Chương 3–4 và các bảng kết quả; sửa lỗi demo. | 100 |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |
-| 10 | 26/10/2026 | 01/11/2026 | – Cả nhóm: chỉnh báo cáo theo góp ý buổi báo cáo giữa kỳ (23/10); luyện vấn đáp.
-– Yến Linh: rà soát toàn văn báo cáo, thống nhất thuật ngữ và trích dẫn.
-– Minh Lý: kiểm lại toàn bộ số liệu, đóng gói mã nguồn, demo và checkpoint.
-– Cả nhóm: duyệt bản cuối với GVHD. |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |
-| 11 | 02/11/2026 | 08/11/2026 | Nộp báo cáo cuối kỳ |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |
-| 12 | 09/11/2026 | 15/11/2026 | Tổ chức hội đồng bảo vệ đề tài (GVHD + GVPB) |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |
+| 10 | 26/10/2026 | 01/11/2026 | – Chỉnh báo cáo, sơ đồ và demo theo góp ý buổi báo cáo giữa kỳ (23/10).
+– Rà soát toàn văn báo cáo: thuật ngữ, trích dẫn, hình và bảng.
+– Dọn và đóng gói mã nguồn, demo, checkpoint. | – Yến Linh: chỉnh Chương 1–5 và tóm tắt theo góp ý; vẽ lại các sơ đồ báo cáo bằng draw.io, thêm hình xử lý dữ liệu và hình chia theo thời gian vào Chương 3; thêm mục Thiết lập thực nghiệm vào Chương 4; chỉnh trang bìa, bỏ cấu hình Docker không dùng.
+– Minh Lý: vẽ lại hình kiến trúc NeuMF-F và sơ đồ pipeline; cập nhật bảng kết quả ở K = 10, 15, 20; chỉnh tóm tắt tiếng Việt và tiếng Anh; demo hiển thị ảnh sản phẩm khi không có mạng, so sánh NeuMF-F với mô hình đối chứng được chọn. | 100 |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |
+| 11 | 02/11/2026 | 08/11/2026 | – Hoàn thiện báo cáo cuối, kiểm lại toàn bộ số liệu.
+– Thiết kế poster dự án.
+– Tổng hợp nội dung làm slide. | – Yến Linh: rà soát toàn văn báo cáo, thống nhất thuật ngữ và trích dẫn; biên dịch bản PDF cuối để nộp; cập nhật tài liệu chuẩn bị vấn đáp.
+– Minh Lý: kiểm lại toàn bộ số liệu trong báo cáo so với kết quả đã lưu; vẽ lại các hình kết quả; làm slide bảo vệ và poster theo mẫu Khoa CNTT. | 100 |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |
+| 12 | 09/11/2026 | 15/11/2026 | – Yến Linh: trình bày tổng quan, cơ sở lý thuyết, dữ liệu và mô hình đề xuất NeuMF-F.
+– Minh Lý: trình bày thực nghiệm, kết quả trên H&M và Amazon Beauty; chạy demo.
+– Cả nhóm: trả lời câu hỏi của hội đồng; chỉnh báo cáo theo góp ý (nếu có). |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |
 | XÁC NHẬN CỦA LÃNH ĐẠO KHOA |  |  |  | XÁC NHẬN CỦA GIẢNG VIÊN HƯỚNG DẪN |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |

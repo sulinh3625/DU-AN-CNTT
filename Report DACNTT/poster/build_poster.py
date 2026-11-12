@@ -222,11 +222,10 @@ def chu_thich(x, y, w, text):
 # ===== CỘT TRÁI: TÓM TẮT, DỮ LIỆU, KẾT QUẢ =====
 y = ribbon(XL, 8.6, "TÓM TẮT")
 _, tf = textbox(XL, y, CW, 2.9, "Tóm tắt")
-add_par(tf, "Hệ khuyến nghị thời trang thường chỉ có lịch sử mua, rất thưa. Đề tài xây dựng NeuMF-F: giữ hai nhánh "
-            "nhân tử hóa ma trận (GMF) và mạng nơ-ron sâu (MLP) của NeuMF, hợp nhất sớm, và bổ sung đặc trưng sản "
-            "phẩm, khách hàng, thời gian. Trên H&M, NeuMF-F hơn NeuMF chỉ dùng ID 43,8% và hơn mọi mô "
-            "hình truyền thống; lợi ích của đặc trưng lặp lại trên Amazon Beauty. Hợp nhất muộn LateFusion-F cao nhất "
-            "trên cả hai bộ.",
+add_par(tf, "Dữ liệu mua hàng thời trang rất thưa, nên mô hình chỉ học từ mã khách và mã sản phẩm khó khuyến nghị "
+            "chính xác. Đề tài đề xuất NeuMF-F: một mô hình lai giữ hai nhánh GMF và MLP của NeuMF, bổ sung đặc "
+            "trưng sản phẩm, khách hàng và thời gian. NeuMF-F hơn NeuMF chỉ dùng ID 43,8% trên H&M, vượt có ý nghĩa "
+            "cả năm mô hình đối chứng truyền thống, và kết quả lặp lại trên Amazon Beauty.",
         size=20, first=True)
 
 y = ribbon(XL, 12.2, "DỮ LIỆU")
@@ -278,55 +277,54 @@ ca.tick_labels.font.size = Pt(16)
 ca.tick_labels.font.name = FONT
 ca.format.line.color.rgb = RGBColor(0xBF, 0xBF, 0xBF)
 _, tf = textbox(XL, y + 0.5 + CH_H, CW, 0.75, "Ghi chú biểu đồ")
-add_par(tf, [("Trung bình 5 lần chạy, 3.165 khách. NeuMF-F thấp hơn LateFusion-F 2,2% nhưng không khác biệt có ý "
-              "nghĩa (p Holm = 0,735); NeuMF-F hơn có ý nghĩa 7/9 mô hình trong họ so sánh đăng ký trước.",
+add_par(tf, [("Trung bình 5 lần chạy, 3.165 khách. Bốn vị trí đầu đều dùng biểu diễn có đặc trưng của đề tài; "
+              "LateFusion-F trộn điểm của chính hai nhánh GMF-F, MLP-F trong NeuMF-F.",
               {"size": 14, "color": MUTED, "italic": True})], align=PP_ALIGN.LEFT, first=True)
 
 # ===== CỘT PHẢI: MÔ HÌNH ĐỀ XUẤT, KẾT LUẬN =====
 y = ribbon(XR, 8.6, "MÔ HÌNH ĐỀ XUẤT: NeuMF-F")
-# Sơ đồ gần vuông: để rộng 6,3 in cho chữ trong hình đọc được khi in, ý thiết kế xếp cột hẹp bên phải
-W_MH = 6.3
-yb = anh(f"{ROOT}/media/poster_mo_hinh.png", XR + 0.15, y + 0.15, W_MH, "Sơ đồ NeuMF-F", khung=ROSE)
-bullets(XR + W_MH + 0.5, y + 0.15, CW - W_MH - 0.5, yb - y, "Điểm thiết kế", [
-    [("Nhánh GMF: ", B), ("nhân từng phần tử hai vector.", {})],
-    [("Nhánh MLP: ", B), ("nối hai vector, qua 3 lớp ReLU.", {})],
-    [("Hợp nhất sớm: ", B), ("nối hai đầu ra trước lớp σ.", {})],
-    [("Đặc trưng: ", B), ("thuộc tính, mô tả, doanh số theo thời điểm; thông tin khách.", {})],
-    [("Top-K ", B), ("theo điểm ŷ; huấn luyện bằng BCE.", {})]],
-    size=17)
-
+# Sơ đồ NeuMF-F (hình 3.4 của báo cáo) rộng hết cột cho chữ trong hình đọc được khi in; hình đã ghi đủ các khối nên
+# bỏ cột gạch đầu dòng bên cạnh
+yb = anh(f"{ROOT}/media/poster_mo_hinh.png", XR + 0.15, y + 0.15, CW - 0.3, "Sơ đồ NeuMF-F", khung=ROSE)
 y = ribbon(XR, yb + 0.5, "KẾT LUẬN")
 stats = [("+43,8%", "so với NeuMF chỉ dùng ID trên H&M", PURPLE),
          ("+65,7%", "so với NeuMF chỉ dùng ID trên Amazon", PURPLE),
-         ("7/9", "đối thủ NeuMF-F tốt hơn có ý nghĩa (H&M)", PURPLE),
+         ("5/5", "đối chứng truyền thống bị vượt, cả hai bộ", PURPLE),
          ("+25,8%", "so với lai truyền thống Hybrid-CBCF (H&M)", PURPLE)]
 sw = (CW - 0.25) / 2
 for i, (big, lab, col) in enumerate(stats):
-    c, ctf = card(XR + (i % 2) * (sw + 0.25), y + (i // 2) * 1.42, sw, 1.3, f"Chỉ số {i}")
-    add_par(ctf, [(big, {"bold": True, "color": col, "size": 32})], align=PP_ALIGN.CENTER, after=0, first=True)
+    c, ctf = card(XR + (i % 2) * (sw + 0.25), y + (i // 2) * 1.24, sw, 1.12, f"Chỉ số {i}")
+    add_par(ctf, [(big, {"bold": True, "color": col, "size": 30})], align=PP_ALIGN.CENTER, after=0, first=True)
     add_par(ctf, [(lab, {"color": TEXT, "size": 15})], align=PP_ALIGN.CENTER, after=0)
-y += 2 * 1.42 + 0.12
+y += 2 * 1.24 + 0.1
 bullets(XR, y, CW, 24.4 - y, "Kết luận", [
-    [("Đặc trưng là phần đóng góp chính: ", B),
-     ("NeuMF-F hơn mọi mô hình truyền thống trên cả hai bộ; bỏ đặc trưng thời gian làm NDCG@10 giảm 42,3% "
-      "(H&M) và 31,6% (Amazon).", {})],
-    [("Hợp nhất sớm chưa hơn từng nhánh: ", B),
-     ("NeuMF-F ngang nhánh GMF-F đứng riêng; LateFusion-F cao nhất trên cả hai bộ, trên Amazon NeuMF-F thấp "
-      "hơn có ý nghĩa 12,5%.", {})],
-    [("Lợi ích của đặc trưng lặp lại trên Amazon Beauty ", B),
-     ("dù khác lĩnh vực, không có thông tin khách và không tinh chỉnh lại.", {})],
-    [("Đánh giá tin cậy: ", B),
-     ("kế hoạch đăng ký trước, tập kiểm thử mở đúng một lần, 5 lần chạy, kiểm định có hiệu chỉnh Holm.", {})]],
-    size=19)
+    [("Đặc trưng tạo ra phần cải thiện: ", B),
+     ("bỏ riêng đặc trưng thời gian đã làm NDCG@10 giảm 42,3% (H&M) và 31,6% (Amazon).", {})],
+    [("Một mô hình lai, triển khai gọn: ", B),
+     ("một mạng, huấn luyện nhanh hơn, phủ nhiều sản phẩm hơn; hợp nhất muộn cao hơn về NDCG@10 nhờ dùng lại "
+      "hai nhánh này.", {})],
+    [("Đúng trên hai lĩnh vực: ", B),
+     ("kết quả lặp lại trên Amazon Beauty dù không có thông tin khách và không tinh chỉnh lại.", {})],
+    [("Kết luận đáng tin cậy: ", B),
+     ("cùng ngân sách tinh chỉnh, mẫu kiểm định tách rời, 5 lần chạy, kiểm định Wilcoxon và Holm.", {})]],
+    size=17)
 
 # ===== HÀNG DƯỚI CẢ BỀ NGANG: DEMO (ảnh chụp ứng dụng web) =====
-Y_DEMO, W_DEMO = 24.55, 8.9
+Y_DEMO, H_DEMO = 24.55, 4.0
 y = ribbon(XL, Y_DEMO, "DEMO ỨNG DỤNG")
-lech = (CW - W_DEMO) / 2
-yb = anh(f"{ROOT}/media/poster_so_sanh.png", XL + lech, y + 0.05, W_DEMO, "Ảnh so sánh gợi ý", khung=GREY_BAR)
-chu_thich(XL, yb + 0.12, CW, "Gợi ý của NeuMF-F cạnh NeuMF cho cùng một khách; món khách thật sự mua được tô xanh")
-yb = anh(f"{ROOT}/media/poster_ket_qua.png", XR + lech, y + 0.05, W_DEMO, "Ảnh trang kết quả", khung=GREY_BAR)
-chu_thich(XR, yb + 0.12, CW, "Trang kết quả đánh giá: NeuMF-F so với từng mô hình đối chứng")
+# trang cửa hàng của demo (số liệu đã có ở phần kết quả nên không lặp lại): trái là khách ví dụ và lịch sử mua,
+# phải là đầu hai danh sách khuyến nghị NeuMF-F và NeuMF, dòng xanh là món khách mua thật sau mốc kiểm thử
+DEMO = os.path.join(os.path.dirname(ROOT), "media", "figures", "demo", "demo_v2.png")
+for ten, box, x0, nhan, chu in [
+        ("poster_khach.png", (0, 0, 2428, 1195), XL, "Ảnh khách ví dụ",
+         "Khách ví dụ: lịch sử mua và cặp mô hình đang so sánh"),
+        ("poster_khuyen_nghi.png", (0, 1232, 2428, 2360), XR, "Ảnh danh sách khuyến nghị",
+         "Đầu danh sách khuyến nghị của NeuMF-F và NeuMF; dòng xanh là món khách mua thật sau đó")]:
+    im = Image.open(DEMO).crop(box)
+    im.save(f"{ROOT}/media/{ten}")
+    w = H_DEMO * im.width / im.height
+    yb = anh(f"{ROOT}/media/{ten}", x0 + (CW - w) / 2, y + 0.05, w, nhan, khung=GREY_BAR)
+    chu_thich(x0, yb + 0.12, CW, chu)
 
 prs.save(OUT)
 print("saved", OUT)

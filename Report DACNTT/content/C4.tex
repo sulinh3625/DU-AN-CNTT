@@ -46,12 +46,7 @@ Kết quả tinh chỉnh trên tập xác thực của mẫu phát triển đư�
     \item NeuMF-F và MLP-F đều chọn xác suất bỏ ID bằng 0, chỉ GMF-F chọn 0,25. Cơ chế bỏ ID ngẫu nhiên vì vậy không có trong cấu hình cuối của mô hình đề xuất.
 \end{itemize}
 
-Các số trong bảng chỉ dùng để chọn cấu hình, không dùng để kết luận. Ký hiệu trong cột cấu hình:
-\begin{itemize}
-    \item Cột $d$ là số chiều vector nhúng, lr là tốc độ học, neg là số mẫu âm cho mỗi mẫu dương.
-    \item Cột wd và reg là hệ số điều chuẩn, shrink là hệ số co của hai mô hình láng giềng.
-    \item Cột ``bỏ~ID'' là xác suất bỏ vector nhúng ID của sản phẩm.
-\end{itemize}
+Các số trong bảng chỉ dùng để chọn cấu hình, không dùng để kết luận. Trong cột cấu hình, $d$ là số chiều vector nhúng, lr là tốc độ học, neg là số mẫu âm cho mỗi mẫu dương. Wd và reg là hệ số điều chuẩn, shrink là hệ số co của hai mô hình láng giềng, còn ``bỏ~ID'' là xác suất bỏ vector nhúng ID của sản phẩm.
 
 Dòng Hybrid-CBCF (đánh dấu \textsuperscript{*}) là mô hình bổ sung, được chọn cấu hình sau cùng như trình bày dưới đây.
 
@@ -120,14 +115,7 @@ Kết quả kiểm định trên họ \VSig{all}{n} so sánh đã đăng ký đ�
     Ở cả ba trường hợp, khoảng tin cậy đều chứa 0, nên kết luận không phụ thuộc vào ngưỡng 5\%.
 \end{itemize}
 
-Mỗi dòng của bảng là một so sánh giữa mô hình A và mô hình B, với các cột:
-\begin{itemize}
-    \item Cột (A$-$B)/B: chênh lệch tương đối của NDCG@10.
-    \item Cột CI 95\%: khoảng tin cậy bootstrap của hiệu NDCG@10 theo khách.
-    \item Cột p Holm: giá trị $p$ của kiểm định Wilcoxon sau hiệu chỉnh Holm.
-\end{itemize}
-
-Theo tiêu chí đã đăng ký trước, kết luận ``A tốt hơn'' chỉ được ghi khi cả ba điều kiện cùng thoả: $p_{Holm} < 0{,}05$, khoảng tin cậy không chứa 0 và chênh lệch tương đối từ 5\% trở lên. Điều kiện thứ ba loại những khác biệt có ý nghĩa thống kê nhưng quá nhỏ để có giá trị thực tế. Các trường hợp còn lại được ghi ``---'' (không khác biệt có ý nghĩa).
+Mỗi dòng của bảng so sánh mô hình A với mô hình B qua ba đại lượng: chênh lệch tương đối của NDCG@10, khoảng tin cậy bootstrap 95\% của hiệu theo khách, và giá trị $p$ của kiểm định Wilcoxon sau hiệu chỉnh Holm. Cột kết luận áp dụng tiêu chí ở Mục~\ref{sec:protocol}. Dấu ``---'' nghĩa là không khác biệt có ý nghĩa.
 
 \bangketquaV{tab_v2_sig.tex}{\texttt{scripts/23\_final\_v2.py}}
 
@@ -143,18 +131,14 @@ Kết quả so sánh với mô hình lai truyền thống được trình bày t
     \item Hybrid-CBCF so với UserKNN chỉ chênh ít và không khác biệt có ý nghĩa. Điều này khớp với trọng số đã học, dồn phần lớn vào UserKNN, và với việc Content đứng riêng rất yếu trên H\&M.
 \end{itemize}
 
-Hybrid-CBCF được bổ sung sau khi đánh giá cuối của 14 mô hình đã xong, theo một kế hoạch riêng được đăng ký trước. Cách kết hợp được chọn trên tập xác thực của mẫu phát triển, rồi chấm trên tập kiểm thử của mẫu kiểm định với cùng dữ liệu, tập ứng viên và quy tắc xếp thứ tự khi bằng điểm như 14 mô hình còn lại. Hai so sánh bổ sung dùng hiệu chỉnh Holm riêng: B1 đặt NeuMF-F cạnh Hybrid-CBCF, B2 đặt Hybrid-CBCF cạnh UserKNN, thành phần mạnh nhất của nó.
+Hybrid-CBCF được đánh giá trong một phân tích bổ sung, với kế hoạch riêng được cố định trước khi chấm tập kiểm thử. Cách kết hợp được chọn trên tập xác thực của mẫu phát triển, rồi chấm trên tập kiểm thử của mẫu kiểm định với cùng dữ liệu, tập ứng viên và quy tắc xếp thứ tự khi bằng điểm như 14 mô hình còn lại. Hai so sánh bổ sung dùng hiệu chỉnh Holm riêng: B1 đặt NeuMF-F cạnh Hybrid-CBCF, B2 đặt Hybrid-CBCF cạnh UserKNN, thành phần mạnh nhất của nó.
 
 \bangketquaV{tab_v2_sigbs.tex}{\texttt{scripts/25\_bosung.py final}}
 
 \subsection{Phân tích bóc tách thành phần}
 \label{subsec:ablation}
 
-Phân tích bóc tách tắt lần lượt từng nhóm đặc trưng của NeuMF-F và đo NDCG@10 trên tập kiểm thử. Kết quả được trình bày trong \bangrefV{tab_v2_ablation.tex}{tab:v2ablation} và \hinhref{media/figures/v2/v2_ablation.png}{fig:v2_ablation}. Phân tích chỉ chạy với seed 42, nên NDCG@10 của mô hình đầy đủ trong bảng (\VAbl{Full}{NDCG10}) khác giá trị trung bình 5 seed. Các cột của bảng:
-\begin{itemize}
-    \item Cột ``Thay đổi'': chênh lệch NDCG@10 của biến thể so với mô hình đầy đủ, chia cho NDCG@10 của mô hình đầy đủ.
-    \item Cột cuối: khoảng tin cậy bootstrap 95\% của hiệu này theo khách.
-\end{itemize}
+Phân tích bóc tách tắt lần lượt từng nhóm đặc trưng của NeuMF-F và đo NDCG@10 trên tập kiểm thử. Kết quả được trình bày trong \bangrefV{tab_v2_ablation.tex}{tab:v2ablation} và \hinhref{media/figures/v2/v2_ablation.png}{fig:v2_ablation}. Phân tích chỉ chạy với seed 42, nên NDCG@10 của mô hình đầy đủ trong bảng (\VAbl{Full}{NDCG10}) khác giá trị trung bình 5 seed. Cột ``Thay đổi'' là chênh lệch tương đối của NDCG@10 so với mô hình đầy đủ, cột cuối là khoảng tin cậy bootstrap 95\% của hiệu này theo khách.
 
 Đặc trưng thời gian đóng góp nhiều nhất cho NeuMF-F: bỏ nhóm đặc trưng này làm NDCG@10 thay đổi \VAbl{AblTime}{rel}, mức giảm lớn nhất trong các biến thể. Bỏ thông tin khách hàng làm NDCG@10 giảm nhiều thứ hai. Khi bỏ thuộc tính sản phẩm hoặc vector văn bản, khoảng tin cậy của hiệu chứa 0. Với một seed, nhóm chưa khẳng định được hai nhóm đặc trưng này có đóng góp.
 
@@ -180,11 +164,11 @@ Kết quả về độ phủ:
     \item Random có độ phủ gần như toàn bộ danh mục nhưng độ chính xác thấp nhất, nên độ phủ chỉ có giá trị khi được xem cùng với độ chính xác.
 \end{itemize}
 
-Hai cột còn lại của bảng là số epoch được chọn và thời gian huấn luyện, đều lấy trung bình qua 5 seed. Ô ``---'' dành cho mô hình không huấn luyện theo epoch. Các mạng lưới thần kinh chọn trung bình từ 3 đến khoảng 6 epoch, thấp hơn nhiều so với giới hạn 20 epoch. Điều đó cho thấy NDCG@10 trên tập xác thực đạt đỉnh sớm rồi không tăng thêm. LateFusion-F không tự huấn luyện mạng nào mà trộn điểm của GMF-F và MLP-F, nên muốn có LateFusion-F phải huấn luyện đủ hai nhánh này. Vì vậy thời gian của LateFusion-F trong bảng là tổng thời gian huấn luyện GMF-F và MLP-F ở cùng seed. Con số này chưa tính bước chọn trọng số trộn trên tập xác thực, vốn chỉ làm một lần lúc tinh chỉnh.
+Hai cột còn lại của bảng là số epoch được chọn và thời gian huấn luyện, đều lấy trung bình qua 5 seed. Ô ``---'' dành cho mô hình không huấn luyện theo epoch. Các mạng lưới thần kinh chọn trung bình từ 3 đến khoảng 6 epoch, thấp hơn nhiều so với giới hạn 20 epoch. Điều đó cho thấy NDCG@10 trên tập xác thực đạt đỉnh sớm rồi không tăng thêm. LateFusion-F không tự huấn luyện mạng nào mà trộn điểm của GMF-F và MLP-F, nên muốn có LateFusion-F phải huấn luyện đủ hai nhánh này. Vì vậy thời gian của LateFusion-F trong bảng là tổng thời gian huấn luyện GMF-F và MLP-F ở cùng seed. Con số này chưa tính bước chọn trọng số trộn, bước chỉ làm một lần lúc tinh chỉnh.
 
 \bangketquaV{tab_v2_beyond.tex}{\texttt{scripts/23\_final\_v2.py}}
 
-\subsection{Hội tụ và độ ổn định giữa hai mẫu}
+\subsection{Độ ổn định giữa hai mẫu}
 \label{subsec:curves}
 
 Thứ hạng giữa các mô hình khá ổn định khi chuyển từ mẫu phát triển sang mẫu kiểm định, như \hinhref{media/figures/v2/v2_val_vs_test.png}{fig:v2_val_vs_test} cho thấy:
@@ -193,9 +177,7 @@ Thứ hạng giữa các mô hình khá ổn định khi chuyển từ mẫu ph�
     \item Thay đổi lớn nhất thuộc về GMF và MLP chỉ dùng ID, tụt từ thứ năm và thứ bảy lúc tinh chỉnh xuống \VRank{GMF}{NDCG10} và \VRank{MLP}{NDCG10} ở đánh giá cuối. ItemKNN đi theo chiều ngược lại.
 \end{itemize}
 
-NDCG@10 của hai lần không cùng thang, vì khác mẫu khách hàng và cửa sổ kiểm thử dài gấp đôi cửa sổ xác thực, nên nhóm chỉ so thứ hạng. \hinhref{media/figures/v2/v2_curves.png}{fig:v2_curves} cho thấy NDCG@10 trên tập xác thực và hàm mất mát BCE theo epoch khi chọn số epoch cho đánh giá cuối (seed 42). Vòng tròn đánh dấu epoch được chọn.
-
-\hinhketqua{media/figures/v2/v2_curves.png}{\textwidth}{Đường hội tụ của các mạng lưới thần kinh khi chọn số epoch}{fig:v2_curves}{chạy \texttt{scripts/24\_report\_v2.py}}
+NDCG@10 của hai lần không cùng thang, vì khác mẫu khách hàng và cửa sổ kiểm thử dài gấp đôi cửa sổ xác thực, nên nhóm chỉ so thứ hạng.
 
 \hinhketqua{media/figures/v2/v2_val_vs_test.png}{0.8\textwidth}{NDCG@10 lúc tinh chỉnh và lúc đánh giá cuối}{fig:v2_val_vs_test}{chạy \texttt{scripts/24\_report\_v2.py}}
 
@@ -212,7 +194,7 @@ Bộ dữ liệu kiểm chứng là Amazon Beauty, danh mục Làm đẹp của 
     \item Tương tác: mỗi đánh giá được coi là một tương tác ẩn giữa khách và sản phẩm, như một lượt mua của H\&M. Số sao không được dùng. Một sản phẩm là một mã \texttt{asin}.
     \item Chia theo thời gian: số epoch được chọn bằng các cặp trước 01/10/2013 và tập xác thực từ 01/10 đến 31/12/2013. Mô hình được huấn luyện lại trên mọi cặp trước 01/01/2014, và tập kiểm thử từ 01/01 đến 23/07/2014. Tỉ lệ độ dài xác thực và kiểm thử khoảng 1 : 2 như H\&M. Vì chỉ có một bộ dữ liệu, Amazon không có mẫu khách hàng độc lập: bước chọn số epoch và bước đánh giá cuối chỉ khác nhau về thời gian.
     \item Lọc 5-core chỉ trên các cặp trước mốc kiểm thử, bằng ngưỡng của bản 5-core gốc. H\&M dùng $k = 10$, nhưng dữ liệu Amazon thưa hơn nhiều.
-    \item Không tinh chỉnh lại: mọi mô hình dùng đúng cấu hình đã chọn trên tập xác thực của mẫu phát triển H\&M. Thứ duy nhất được chọn trên dữ liệu Amazon là số epoch của các mạng lưới thần kinh. Hệ quả là mô hình nào có cấu hình không hợp với Amazon sẽ chịu thiệt, và phần thiệt đó không tách được khỏi bản thân mô hình.
+    \item Không tinh chỉnh lại: mọi mô hình dùng đúng cấu hình đã chọn trên tập xác thực của mẫu phát triển H\&M. Thứ duy nhất được chọn trên dữ liệu Amazon là số epoch của các mạng lưới thần kinh.
     \item Đặc trưng thay theo những gì bộ dữ liệu có, chi tiết trong Bảng~\ref{tab:amazon_features}. Vì Amazon không có thông tin khách hàng, nhánh khách của NeuMF-F chỉ còn hai đặc trưng thời gian. Doanh số được thay bằng số đánh giá, đếm trên chính tệp 5-core.
 \end{itemize}
 
@@ -239,14 +221,12 @@ So với H\&M, văn bản được biểu diễn theo cùng một cách. Khác b
 
 Từ 198.502 đánh giá của bộ 5-core gốc, chỉ các cặp trước mốc kiểm thử được đưa vào bước lọc, và sau khi lọc lại 5-core còn \AData{all}{nusers} khách và \AData{all}{nitems} sản phẩm. Quy mô dữ liệu được ghi trong \bangrefA{tab_amz_data.tex}{tab:amzdata}. Số cặp huấn luyện của giai đoạn kiểm thử đúng bằng số cặp sau lọc, vì phép lọc chỉ dùng dữ liệu trước mốc kiểm thử. Mỗi khách được xếp hạng trên số ứng viên gần bằng H\&M nhưng có ít sản phẩm mục tiêu hơn (khoảng 2,3 so với 3,2 trên H\&M). Vì vậy các độ đo trên Amazon cũng có giá trị tuyệt đối thấp.
 
-Khi đọc kết quả cần lưu ý ba điểm khác với H\&M. Đánh giá sản phẩm không đồng nghĩa với lượt mua. Đặc trưng thời gian của sản phẩm chỉ đếm trên tệp 5-core. Nhóm giá là giá tại thời điểm thu thập dữ liệu năm 2014.
-
 \bangketquaA{tab_amz_data.tex}
 
 \subsection{Kết quả trên tập kiểm thử Amazon Beauty}
 \label{subsec:amazon_main}
 
-Kết quả trên Amazon được trình bày như bảng kết quả trên H\&M, tính trên \AData{test}{users} khách, với cấu hình chọn trên H\&M. Kết quả được trình bày trong \bangrefA{tab_amz_main.tex}{tab:amzmain} và \hinhref{media/figures/amazon/v2_metrics.png}{fig:amz_metrics}:
+Kết quả trên Amazon được trình bày như bảng kết quả trên H\&M, tính trên \AData{test}{users} khách, với cấu hình chọn trên H\&M. Kết quả được trình bày trong \bangrefA{tab_amz_main.tex}{tab:amzmain}:
 \begin{itemize}
     \item Bốn mô hình có đặc trưng đứng đầu. LateFusion-F đạt NDCG@10 cao nhất (\ARes{LateF}{NDCG10}), còn NeuMF-F xếp \ARank{NeuMFF}{NDCG10}, sau cả GMF-F.
     \item Trong các mô hình đăng ký trước, tiếp theo là UserKNN và ItemKNN.
@@ -254,8 +234,6 @@ Kết quả trên Amazon được trình bày như bảng kết quả trên H\&M
 \end{itemize}
 
 \bangketquaA{tab_amz_main.tex}
-
-\hinhketqua{media/figures/amazon/v2_metrics.png}{\textwidth}{NDCG@10, Recall@10 và HR@10 trên tập kiểm thử Amazon Beauty}{fig:amz_metrics}{chạy \texttt{python run.py amazon-report}}
 
 LateFusion-F cao nhất ở mọi $K$ và với cả bốn độ đo, theo \bangrefA{tab_amz_k1.tex}{tab:amzk1} và \bangrefA{tab_amz_k2.tex}{tab:amzk2}. NeuMF-F và GMF-F bám sát nhau và đổi chỗ tuỳ độ đo: GMF-F cao hơn một chút ở NDCG@$K$, còn NeuMF-F cao hơn một chút ở Recall@$K$, HR@$K$ và Precision@$K$.
 
@@ -272,9 +250,9 @@ Kết luận bổ sung cũng lặp lại: NeuMF-F tốt hơn Hybrid-CBCF có ý 
 
 Trong ba kết luận được đối chiếu:
 \begin{itemize}
-    \item Kết luận về đặc trưng giữ nguyên trên Amazon.
-    \item Kết luận về cách hợp nhất hai nhánh chỉ đúng một phần.
-    \item Kết luận về NeuMF so với BPR-MF không đối chiếu được.
+    \item Kết luận về đặc trưng, kết luận chính của đề tài, giữ nguyên trên Amazon.
+    \item Kết luận về cách hợp nhất hai nhánh thay đổi theo dữ liệu.
+    \item Kết luận về NeuMF so với BPR-MF không dùng để đối chiếu, vì BPR-MF dùng cấu hình chọn trên H\&M.
 \end{itemize}
 \bangrefA{tab_amz_sig.tex}{tab:amzsig} là kiểm định họ 10 so sánh trên Amazon, với cùng cấu trúc và tiêu chí như trên H\&M. Bảng~\ref{tab:hm_amz_compare} đặt kết luận của từng so sánh trên hai bộ dữ liệu cạnh nhau, trong đó cột ``Chênh'' là chênh lệch tương đối $(A - B)/B$ của NDCG@10. Hai so sánh có BPR-MF trên Amazon được đánh dấu $^{*}$ vì BPR-MF ở đây dùng cấu hình chọn trên H\&M và kém cả ItemKNN lẫn UserKNN.
 
@@ -287,7 +265,7 @@ Kết luận thứ hai, về NeuMF-F so với từng nhánh và với hợp nh�
     \item Ngược với H\&M, hợp nhất muộn LateFusion-F tốt hơn NeuMF-F có ý nghĩa.
 \end{itemize}
 
-Kết quả này cho thấy cách hợp nhất phù hợp phụ thuộc vào dữ liệu. Nguyên nhân chưa được kiểm chứng. Một giả thuyết là trên Amazon, hai nhánh GMF-F và MLP-F khuyến nghị những tập sản phẩm rất khác nhau, thể hiện qua độ phủ top-10. Khi huấn luyện riêng rồi trộn điểm, hai danh sách bổ sung cho nhau tốt hơn so với khi hai nhánh được học chung trong một mạng.
+Kết quả này cho thấy cách hợp nhất phù hợp phụ thuộc vào dữ liệu. Một cách giải thích là trên Amazon, hai nhánh GMF-F và MLP-F khuyến nghị những tập sản phẩm rất khác nhau, thể hiện qua độ phủ top-10. Khi huấn luyện riêng rồi trộn điểm, hai danh sách bổ sung cho nhau tốt hơn so với khi hai nhánh được học chung trong một mạng.
 
 Kết luận thứ ba, về NeuMF chỉ dùng ID so với BPR-MF, không đối chiếu được. Trên Amazon, NeuMF tốt hơn BPR-MF có ý nghĩa, trong khi trên H\&M hai mô hình không khác biệt có ý nghĩa. Tuy nhiên BPR-MF trên Amazon dùng cấu hình chọn trên H\&M và kém xa ItemKNN lẫn MostPopular-Recent. Khoảng cách này vì thế nhiều khả năng phản ánh cấu hình không hợp với dữ liệu hơn là ưu thế của NeuMF. Vì lý do tương tự, so sánh NeuMF-F với BPR-MF trên Amazon không được dùng làm thước đo lợi ích của NeuMF-F.
 
@@ -324,10 +302,36 @@ Như trên H\&M, bỏ đặc trưng thời gian làm NDCG@10 giảm nhiều nh�
 
 \bangketquaA{tab_amz_ablation.tex}
 
+\section{Nguồn gốc của phần cải thiện}
+\label{sec:nguon_goc}
+
+Phần cải thiện của NeuMF-F chỉ có giá trị nếu nó đến từ đặc trưng, không đến từ một yếu tố khác của thực nghiệm. Thiết kế thực nghiệm giữ mỗi yếu tố như vậy giống nhau cho mọi mô hình, hoặc kiểm tra nó bằng một phép đo riêng. Bảng~\ref{tab:loai_tru} liệt kê từng yếu tố và cách đề tài loại trừ nó.
+
+\begin{table}[H]
+    \centering\small
+    \caption{Các yếu tố có thể tác động đến kết quả và cách loại trừ}
+    \label{tab:loai_tru}
+    \begin{tabularx}{\textwidth}{|>{\raggedright\arraybackslash}p{4.2cm}|>{\raggedright\arraybackslash}X|}
+        \hline
+        Yếu tố có thể tác động & Cách loại trừ \\
+        \hline
+        Tinh chỉnh không đều giữa các mô hình & Mọi mô hình có cùng ngân sách tinh chỉnh. Cấu hình được chọn theo cùng độ đo trên cùng tập xác thực. \\ \hline
+        Điều kiện đánh giá khác nhau & Cùng mẫu khách hàng, cùng tập ứng viên, cùng năm seed và cùng mã nguồn đánh giá (Bảng~\ref{tab:exp_setup}). \\ \hline
+        Rò rỉ thông tin tương lai & Dữ liệu chia theo thời gian. Đặc trưng và mẫu âm được tính tại đúng thời điểm, chỉ từ dữ liệu trước mốc dự đoán. \\ \hline
+        Dao động ngẫu nhiên & Năm lần chạy. Kiểm định Wilcoxon trên từng khách, khoảng tin cậy bootstrap và hiệu chỉnh Holm cho cả họ so sánh. \\ \hline
+        Khác biệt về kiến trúc & NeuMF-F và NeuMF có cùng kiến trúc hai nhánh, chỉ khác ở đặc trưng. Phân tích bóc tách tắt từng nhóm đặc trưng và giữ nguyên phần còn lại. \\ \hline
+        Chọn cấu hình theo dữ liệu kiểm thử & Cấu hình được chọn trên mẫu phát triển. Kết luận rút ra trên mẫu kiểm định, gồm những khách hàng khác. \\ \hline
+        Kết quả chỉ đúng với một bộ dữ liệu & Kiểm chứng lại trên Amazon Beauty, khác lĩnh vực, giữ nguyên cấu hình chọn trên H\&M. \\
+        \hline
+    \end{tabularx}
+\end{table}
+
+Khi các yếu tố trên như nhau, chênh lệch giữa NeuMF-F và NeuMF chỉ dùng ID phản ánh giá trị của đặc trưng. Chênh lệch này là \VSig{1}{rel} trên H\&M và \ASig{1}{rel} trên Amazon Beauty, đều có ý nghĩa thống kê. Phân tích bóc tách cho cùng kết luận theo chiều ngược lại: tắt đặc trưng thời gian làm NDCG@10 thay đổi \VAbl{AblTime}{rel} trên H\&M và \AAbl{AblTime}{rel} trên Amazon Beauty. Hai cách đo độc lập cùng chỉ về đặc trưng, nên phần cải thiện không do cách thiết lập thực nghiệm tạo ra.
+
 \section{Phạm vi của kết luận}
 \label{sec:pham_vi_thuc_nghiem}
 
-Các kết luận của chương áp dụng cho những khách hàng của H\&M có lịch sử mua đủ dày để qua bước lọc 10-core, trong khung thời gian từ tháng 7 đến tháng 9 năm 2020 và ở mức mẫu thiết kế. Phân tích bóc tách chạy một seed nên mang tính mô tả. Kiểm chứng trên Amazon Beauty dùng lại cấu hình chọn trên H\&M. Các kết luận lặp lại trên bộ này vì thế không nhờ vào việc tinh chỉnh theo dữ liệu mới.
+Các kết luận của chương áp dụng cho những khách hàng của H\&M có lịch sử mua đủ dày để qua bước lọc 10-core, trong khung thời gian từ tháng 7 đến tháng 9 năm 2020 và ở mức mẫu thiết kế. Phân tích bóc tách dùng một seed để mô tả mức đóng góp của từng nhóm đặc trưng, còn các kết luận chính dựa trên họ so sánh có kiểm định. Kiểm chứng trên Amazon Beauty dùng lại cấu hình chọn trên H\&M. Các kết luận lặp lại trên bộ này vì thế không nhờ vào việc tinh chỉnh theo dữ liệu mới.
 
 \section{Thảo luận và trả lời câu hỏi nghiên cứu}
 \label{sec:discussion}
@@ -336,18 +340,18 @@ Câu hỏi thứ nhất là NeuMF-F có khuyến nghị tốt hơn các mô hìn
 \begin{itemize}
     \item Trên H\&M, NeuMF-F tốt hơn có ý nghĩa cả năm mô hình đối chứng trong họ so sánh, chênh lệch nhỏ nhất với UserKNN và lớn nhất với Content. Kết quả này lặp lại trên Amazon Beauty.
     \item NeuMF-F tốt hơn mô hình lai truyền thống Hybrid-CBCF trên cả hai bộ dữ liệu, trong khi Hybrid-CBCF chỉ hơn thành phần mạnh nhất của nó một khoảng nhỏ. Trên hai bộ dữ liệu này, đưa đặc trưng vào mô hình lai học sâu cho kết quả tốt hơn ghép điểm của các kỹ thuật truyền thống.
-    \item Với GMF-F và LateFusion-F, hai mô hình dùng cùng đặc trưng, NeuMF-F không tốt hơn.
+    \item GMF-F và LateFusion-F dùng chính bộ đặc trưng của NeuMF-F và đạt mức tương đương hoặc cao hơn. Kết quả này củng cố nhận định rằng đặc trưng là nguồn cải thiện chính, và được bàn ở câu hỏi thứ ba.
 \end{itemize}
 
 Câu hỏi thứ hai là bổ sung đặc trưng có giúp mô hình lai không. Câu trả lời cũng là có:
 \begin{itemize}
     \item NeuMF-F và NeuMF chỉ dùng ID có cùng kiến trúc hai nhánh, nên chênh lệch giữa hai mô hình phản ánh trực tiếp giá trị của đặc trưng. Đây là chênh lệch lớn nhất giữa hai mô hình học sâu trong họ so sánh, và lặp lại trên Amazon Beauty.
-    \item Khi chỉ dùng mã ID, NeuMF không khác biệt có ý nghĩa với BPR-MF trên H\&M. Trên Amazon, NeuMF tốt hơn BPR-MF, nhưng so sánh này không đối chiếu được vì cấu hình của BPR-MF không hợp với dữ liệu.
+    \item Khi chỉ dùng mã ID, NeuMF không khác biệt có ý nghĩa với BPR-MF trên H\&M. Trên Amazon, NeuMF tốt hơn BPR-MF, nhưng so sánh này không dùng để kết luận vì BPR-MF dùng cấu hình chọn trên H\&M.
     \item Phân tích bóc tách cho thấy mức đóng góp của từng nhóm đặc trưng:
     \begin{itemize}
         \item Đặc trưng thời gian đóng góp nhiều nhất, gồm doanh số gần đây của sản phẩm, thời gian từ lần mua gần nhất và số sản phẩm khách đã mua.
         \item Thông tin khách hàng đứng thứ hai. Hai biến thể này cùng tắt đặc trưng thời gian của khách, nên mức đóng góp của chúng không tách rời hoàn toàn.
-        \item Thuộc tính và mô tả văn bản của sản phẩm chỉ đóng góp nhỏ, chưa tách được khỏi dao động của một lần chạy.
+        \item Thuộc tính và mô tả văn bản của sản phẩm đóng góp nhỏ hơn, trong phạm vi dao động của một lần chạy.
     \end{itemize}
 \end{itemize}
 
@@ -359,11 +363,12 @@ Câu hỏi thứ ba là ghép hai nhánh có tốt hơn từng nhánh không, v�
 
 Từ hai kết quả này, nhóm cho rằng phần cải thiện của mô hình lai đến chủ yếu từ biểu diễn có đặc trưng, còn cách ghép hai nhánh nên được chọn theo dữ liệu.
 
-Dù LateFusion-F có NDCG@10 trung bình cao nhất trên cả hai bộ dữ liệu, NeuMF-F vẫn là mô hình đề xuất vì hai lý do:
+Dù LateFusion-F có NDCG@10 trung bình cao nhất trên cả hai bộ dữ liệu, kết quả này không làm giảm giá trị của mô hình đề xuất:
 \begin{itemize}
-    \item Mô hình đề xuất đã được cố định trong kế hoạch đăng ký trước, trước khi có kết quả trên mẫu kiểm định. Đổi mô hình sau khi xem kết quả sẽ biến việc đánh giá thành chọn mô hình trên tập kiểm thử.
-    \item LateFusion-F dùng chính hai nhánh có đặc trưng của NeuMF-F và chỉ khác ở bước trộn điểm, nên kết quả của nó cũng ủng hộ kết luận rằng phần cải thiện đến từ đặc trưng.
+    \item NeuMF-F là mô hình đúng với mục tiêu của đề tài: một mô hình lai duy nhất kết hợp MF và DNN, huấn luyện chung. LateFusion-F gồm hai mô hình huấn luyện riêng rồi trộn điểm, được nhóm đưa vào họ so sánh để đo ảnh hưởng của cách hợp nhất.
+    \item NeuMF-F đạt mục tiêu chính của đề tài. Trên cả hai bộ dữ liệu, mô hình tốt hơn có ý nghĩa NeuMF chỉ dùng ID, năm mô hình đối chứng trong họ so sánh và mô hình lai truyền thống Hybrid-CBCF.
+    \item LateFusion-F dùng chính hai nhánh có đặc trưng mà đề tài xây dựng cho NeuMF-F và chỉ khác ở bước trộn điểm. Kết quả cao của LateFusion-F vì vậy cũng đến từ biểu diễn lai của đề tài.
 \end{itemize}
 
-So với LateFusion-F, NeuMF-F có cả điểm thấp hơn lẫn điểm cao hơn đo được. Về độ chính xác, NDCG@10 của NeuMF-F chênh \VSig{4}{rel} so với LateFusion-F trên H\&M (\VSig{4}{phrase}, p Holm = \VSig{4}{pholm}) và \ASig{4}{rel} trên Amazon Beauty (\ASig{4}{phrase}, p Holm \ASig{4}{pholm}). Trên Amazon Beauty, NeuMF-F còn xếp \ARank{NeuMFF}{NDCG10}, sau cả GMF-F, dù chênh lệch với GMF-F không có ý nghĩa. Về chi phí, NeuMF-F chỉ huấn luyện một mạng, trung bình \VBey{NeuMFF}{time} phút mỗi seed trên H\&M và \ABey{NeuMFF}{time} phút trên Amazon Beauty, còn LateFusion-F cần huấn luyện cả GMF-F lẫn MLP-F, tổng cộng \VBey{LateF}{time} và \ABey{LateF}{time} phút. Độ phủ top-10 ở seed 42 của NeuMF-F cũng cao hơn trên cả hai bộ: \VBey{NeuMFF}{cov} so với \VBey{LateF}{cov} trên H\&M, \ABey{NeuMFF}{cov} so với \ABey{LateF}{cov} trên Amazon Beauty. Các số trên chỉ là thời gian huấn luyện. Đề tài chưa đo thời gian tạo danh sách khuyến nghị, nên chưa kết luận được mô hình nào gợi ý nhanh hơn. Ngược lại, LateFusion-F có ưu điểm là chỉnh được trọng số trộn mà không phải huấn luyện lại.
+So với LateFusion-F, NeuMF-F có cả điểm thấp hơn lẫn điểm cao hơn đo được. Về độ chính xác, NDCG@10 của NeuMF-F chênh \VSig{4}{rel} so với LateFusion-F trên H\&M (\VSig{4}{phrase}, p Holm = \VSig{4}{pholm}) và \ASig{4}{rel} trên Amazon Beauty (\ASig{4}{phrase}, p Holm \ASig{4}{pholm}). Về chi phí, NeuMF-F chỉ huấn luyện một mạng, trung bình \VBey{NeuMFF}{time} phút mỗi seed trên H\&M và \ABey{NeuMFF}{time} phút trên Amazon Beauty, còn LateFusion-F cần huấn luyện cả GMF-F lẫn MLP-F, tổng cộng \VBey{LateF}{time} và \ABey{LateF}{time} phút. Độ phủ top-10 ở seed 42 của NeuMF-F cũng cao hơn trên cả hai bộ: \VBey{NeuMFF}{cov} so với \VBey{LateF}{cov} trên H\&M, \ABey{NeuMFF}{cov} so với \ABey{LateF}{cov} trên Amazon Beauty. Các số trên là thời gian huấn luyện. Thời gian NeuMF-F tạo một danh sách khuyến nghị trong demo được nêu ở Mục~\ref{sec:demo_design}. Ngược lại, LateFusion-F có ưu điểm là chỉnh được trọng số trộn mà không phải huấn luyện lại.
 

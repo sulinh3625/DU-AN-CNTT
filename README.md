@@ -25,6 +25,8 @@ bộ dữ liệu thứ hai, Amazon Beauty.
   (`Report DACNTT/poster/`). Rà soát toàn bộ code, demo và báo cáo: 108/108 test, demo 20/20 test và chạy thật không
   lỗi trên cả hai bộ; sửa ký hiệu Hybrid-CBCF trong hình, vài chỗ lệch quy ước báo cáo; `main.pdf` 102 trang biên dịch
   lại (chi tiết: `tong_hop.md` mục 2.1).
+- 12/11: sơ đồ báo cáo vẽ lại bằng `image/src/hinh_bao_cao.py` với một quy tắc màu chung; slide bảo vệ làm lại
+  (`Report DACNTT/slides/build_slides.py`), poster cập nhật; báo cáo thêm mục 4.5 về nguồn gốc của phần cải thiện.
 - Còn lại: xác nhận với khoa việc nộp báo cáo giữa kỳ (hạn nghe được khoảng 25/10), gửi cô checkpoint
   và hỏi 5 câu (`tong_hop.md` mục 2.3), nộp báo cáo cuối (tháng 11).
 
@@ -53,4 +55,4 @@ Số liệu, tiến độ chi tiết và đối chiếu góp ý: [`tong_hop.md`]
 | Chuẩn bị vấn đáp | [`van_dap.md`](van_dap.md) |
 
 Giai đoạn phát triển ban đầu (mô hình chỉ dùng ID; trong mã gọi là "v1") và bản đầu của kế hoạch đánh giá (khối 1) là
-**lịch sử phát triển**: xem `tong_hop.md` mục 13 và báo cáo mục 3.7.1.
+**lịch sử phát triển**: xem `tong_hop.md` mục 13 và báo cáo mục 3.7.

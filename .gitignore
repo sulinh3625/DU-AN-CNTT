@@ -17,3 +17,8 @@ Report DACNTT/*.log
 texput.log
 
 .claude/
+
+# Python và tệp tạm
+__pycache__/
+*.pyc
+graphify-out/cache/.gfy-*.tmp

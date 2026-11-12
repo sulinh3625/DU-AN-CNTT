@@ -319,7 +319,7 @@ def claims(d: Data):
         ("frontmatter/abstract_english.tex", "not statistically significant on H\\&M but is significant on Amazon",
          "NeuMF-F ~ LateFusion-F trên H&M; LateFusion-F tốt hơn có ý nghĩa trên Amazon", late_hm_tie_amz_win,
          ["G2", "GA"]),
-        ("content/C4.tex", "hai mô hình dùng cùng đặc trưng, NeuMF-F không tốt hơn",
+        ("content/C4.tex", "dùng chính bộ đặc trưng của NeuMF-F và đạt mức tương đương hoặc cao hơn",
          "H&M và Amazon: NeuMF-F hơn 5 baseline và Hybrid-CBCF; ~ GMF-F; không hơn LateFusion-F",
          lambda: both_beat() and both_gmf_tie() and BETTER not in (verdict("neumf_f", "late_f"),
                                                                     a_verdict("neumf_f", "late_f")),

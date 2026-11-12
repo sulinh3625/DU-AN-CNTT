@@ -18,7 +18,7 @@ Mọi mô hình, kể cả mô hình đối chứng, đều đi qua quy trình n
 
 \begin{figure}[H]
     \centering
-    \includegraphics[width=0.77\textwidth]{media/figures/so_do/bc_01_duong_ong.pdf}
+    \includegraphics[width=0.85\textwidth]{media/figures/so_do/hinh_duong_ong.pdf}
     \caption{Đường ống huấn luyện và đánh giá mô hình}
     \label{fig:system_architecture}
 \end{figure}
@@ -76,7 +76,7 @@ Toàn bộ quá trình xử lý, từ tệp giao dịch gốc tới hai mẫu đ
 
 \begin{figure}[H]
     \centering
-    \includegraphics[width=0.9\textwidth]{media/figures/so_do/bc_02_xu_ly_du_lieu.pdf}
+    \includegraphics[width=0.72\textwidth]{media/figures/so_do/hinh_xu_ly_du_lieu.pdf}
     \caption{Quy trình xử lý dữ liệu H\&M}
     \label{fig:data_pipeline}
 \end{figure}
@@ -154,7 +154,7 @@ trong đó $\mathcal{I}_u(\tau)$ là các sản phẩm $u$ đã mua trước $\t
 
 \begin{figure}[H]
     \centering
-    \includegraphics[width=0.9\textwidth]{media/figures/so_do/bc_03_chia_thoi_gian.pdf}
+    \includegraphics[width=1\textwidth]{media/figures/so_do/hinh_chia_thoi_gian.pdf}
     \caption{Chia dữ liệu theo thời gian}
     \label{fig:time_split}
 \end{figure}
@@ -234,7 +234,7 @@ Với $d = 32$, tháp MLP là $64 \to 32 \to 16 \to 8$ và $\phi \in \mathbb{R}^
 
 \begin{figure}[H]
     \centering
-    \includegraphics[width=0.88\textwidth]{media/figures/so_do/bc_04_kien_truc_neumf_f.pdf}
+    \includegraphics[width=0.8\textwidth]{media/figures/so_do/hinh_kien_truc_neumf_f.pdf}
     \caption{Kiến trúc mô hình đề xuất NeuMF-F}
     \label{fig:neumff_architecture}
 \end{figure}
@@ -242,7 +242,7 @@ Với $d = 32$, tháp MLP là $64 \to 32 \to 16 \to 8$ và $\phi \in \mathbb{R}^
 \subsection{Biểu diễn lai: vector nhúng ID kết hợp đặc trưng}
 \label{subsec:embedding_design}
 
-Với mỗi nhánh $b \in \{G, M\}$ (GMF và MLP), mô hình có bảng vector nhúng ID của khách hàng $P^b \in \mathbb{R}^{|\mathcal{U}| \times d}$, của sản phẩm $Q^b \in \mathbb{R}^{|\mathcal{I}^{ID}| \times d}$, và hai ma trận chiếu đặc trưng $W^b_U \in \mathbb{R}^{d \times d_U}$, $W^b_I \in \mathbb{R}^{d \times d_I}$, không có độ lệch (\textit{bias}). Vector của khách $u$ và sản phẩm $i$ tại ngày $t$ trong nhánh $b$ là:
+Với mỗi nhánh $b \in \{G, M\}$ (GMF và MLP), mô hình có bảng vector nhúng ID của khách hàng $P^b \in \mathbb{R}^{|\mathcal{U}| \times d}$, của sản phẩm $Q^b \in \mathbb{R}^{|\mathcal{I}^{ID}| \times d}$, và hai ma trận chiếu đặc trưng $W^b_U \in \mathbb{R}^{d \times d_U}$, $W^b_I \in \mathbb{R}^{d \times d_I}$, không có độ lệch. Vector của khách $u$ và sản phẩm $i$ tại ngày $t$ trong nhánh $b$ là:
 \begin{equation}
     p^b_u(t) = P^b_u + W^b_U\, x_u(t), \qquad
     q^b_i(t) = m_i\, Q^b_i + W^b_I\, x_i(t)
@@ -438,18 +438,8 @@ Sau mỗi epoch, mạng được chấm NDCG@10 trên tập xác thực bằng c
 \section{Quy trình đánh giá không thiên lệch}
 \label{sec:protocol}
 
-\subsection{Khảo sát ban đầu và định hướng thiết kế}
-\label{sec:v1_history}
+Trước khi xây dựng mô hình đề xuất, nhóm khảo sát NeuMF chỉ dùng mã ID trên mẫu phát triển. NeuMF chỉ dùng ID không vượt BPR-MF đã tinh chỉnh, nên nhóm chọn bổ sung thông tin cho mô hình thay vì thêm tham số, và đây là cơ sở để xây dựng NeuMF-F. Khảo sát cũng cho thấy ở quy mô mẫu này, khả năng khuyến nghị sản phẩm chưa từng bán hầu như không đo được, nên tập ứng viên chỉ giữ sản phẩm đã có dữ liệu huấn luyện. Để kết luận không bị ảnh hưởng bởi những gì đã thấy khi khảo sát, kết luận chỉ được lấy trên một mẫu khách hàng chưa từng được dùng.
 
-Trước khi xây dựng mô hình đề xuất, nhóm khảo sát NeuMF chỉ dùng mã ID trên mẫu phát triển, đồng thời thử đưa cả sản phẩm chưa từng bán vào tập ứng viên. Khảo sát này dẫn tới ba định hướng thiết kế:
-\begin{itemize}
-    \item Mô hình cần thêm thông tin, không chỉ thêm tham số, vì NeuMF chỉ dùng ID không vượt BPR-MF đã tinh chỉnh. Đây là cơ sở để xây dựng NeuMF-F.
-    \item Ở quy mô mẫu này, khả năng khuyến nghị sản phẩm mới hầu như không đo được. Vì vậy quy trình cuối gộp màu theo mẫu thiết kế và chỉ giữ sản phẩm đã có dữ liệu huấn luyện trong tập ứng viên.
-    \item Để kết luận không bị ảnh hưởng bởi những gì đã thấy khi khảo sát, kết luận chỉ được lấy trên một mẫu khách hàng chưa từng được dùng.
-\end{itemize}
-
-\subsection{Các nguyên tắc đánh giá}
-\label{subsec:protocol_rules}
 
 Khi đánh giá mô hình khuyến nghị học sâu, \textcite{dacrema2019progress} chỉ ra hai lỗi thường gặp: chọn số epoch hay cấu hình dựa trên chính tập kiểm thử, và tinh chỉnh mô hình đối chứng sơ sài. Rủi ro thứ ba là sau khi đã xem tập kiểm thử, các quyết định tiếp theo dễ bị ảnh hưởng bởi kết quả đã thấy. Quy trình đánh giá của đề tài tránh ba rủi ro này bằng sáu nguyên tắc dưới đây, tóm tắt trong Hình~\ref{fig:eval_protocol}. Quy trình chỉ gọi lại các bước huấn luyện và suy luận của quy trình ở Hình~\ref{fig:system_architecture} với những mốc thời gian khác nhau, rồi so danh sách khuyến nghị với những gì khách đã mua thật.
 
@@ -472,15 +462,15 @@ Khi đánh giá mô hình khuyến nghị học sâu, \textcite{dacrema2019progr
     \begin{itemize}
         \item Từng cặp mô hình được so sánh bằng kiểm định dấu hạng Wilcoxon ghép cặp theo người dùng \parencite{wilcoxon1945} và khoảng tin cậy 95\% của hiệu trung bình bằng bootstrap ghép cặp với 10.000 lần lấy mẫu lại \parencite{efron1993bootstrap}.
         \item Giá trị $p$ được hiệu chỉnh Holm \parencite{holm1979} trên một họ 10 so sánh đăng ký trước.
-        \item Chín so sánh đặt NeuMF-F cạnh NeuMF, GMF-F, MLP-F, LateFusion-F, BPR-MF, ItemKNN, UserKNN, MostPopular-Recent và Content. So sánh với NeuMF đo lợi ích của đặc trưng, với GMF-F và MLP-F đo lợi ích của việc ghép hai nhánh, với LateFusion-F đặt hợp nhất sớm cạnh hợp nhất muộn.
+        \item Chín so sánh đầu đặt NeuMF-F cạnh chín mô hình: NeuMF, GMF-F, MLP-F, LateFusion-F, BPR-MF, ItemKNN, UserKNN, Content và MostPopular-Recent. So sánh với NeuMF đo lợi ích của đặc trưng, với GMF-F và MLP-F đo lợi ích của việc ghép hai nhánh, với LateFusion-F đặt hợp nhất sớm cạnh hợp nhất muộn.
         \item So sánh thứ mười đặt mô hình lai chỉ dùng ID (NeuMF) cạnh MF (BPR-MF).
     \end{itemize}
-    \item Tiêu chí kết luận cố định. Kết luận ``A tốt hơn B'' chỉ được viết khi đồng thời $p_{Holm} < 0{,}05$, khoảng tin cậy không chứa 0 và chênh lệch tương đối NDCG@10 không dưới 5\%. Các trường hợp còn lại được kết luận là ``không khác biệt có ý nghĩa''. Ngưỡng 5\% là mức cải thiện tối thiểu có ý nghĩa thực tiễn, đặt theo quy ước.
+    \item Tiêu chí kết luận cố định. Kết luận ``A tốt hơn B'' chỉ được viết khi đồng thời $p_{\text{Holm}} < 0{,}05$, khoảng tin cậy không chứa 0 và chênh lệch tương đối NDCG@10 không dưới 5\%. Các trường hợp còn lại được kết luận là ``không khác biệt có ý nghĩa''. Ngưỡng 5\% là mức cải thiện tối thiểu có ý nghĩa thực tiễn, đặt theo quy ước.
 \end{itemize}
 
 \begin{figure}[H]
     \centering
-    \includegraphics[width=0.62\textwidth]{media/figures/so_do/bc_05_tinh_chinh_danh_gia.pdf}
+    \includegraphics[width=0.52\textwidth]{media/figures/so_do/hinh_tinh_chinh_danh_gia.pdf}
     \caption{Quy trình tinh chỉnh và đánh giá cuối}
     \label{fig:eval_protocol}
 \end{figure}
@@ -611,7 +601,7 @@ Vì suy luận được tách khỏi huấn luyện, thời gian phản hồi kh
 
 \begin{figure}[H]
     \centering
-    \includegraphics[width=0.87\textwidth]{media/figures/so_do/bc_06_kien_truc_demo.pdf}
+    \includegraphics[width=0.85\textwidth]{media/figures/so_do/hinh_kien_truc_demo.pdf}
     \caption{Kiến trúc ba tầng của hệ thống demo}
     \label{fig:demo_architecture}
 \end{figure}
@@ -629,15 +619,11 @@ Chức năng chính của API là khuyến nghị Top-$K$. Các điểm cuối k
         \hline
         Điểm cuối & Chức năng \\
         \hline
-        \texttt{GET} \path{/api/context} & Thông tin bộ dữ liệu, lần chạy đang dùng, số người dùng và sản phẩm, số ứng viên, các giá trị $K$ hợp lệ, các mô hình khả dụng. \\ \hline
-        \texttt{GET} \path{/api/users/search}, \path{/random} & Tìm hoặc chọn ngẫu nhiên một khách hàng có sản phẩm đích, lọc theo nhóm ít, trung bình hoặc nhiều giao dịch. \\ \hline
-        \texttt{GET} \path{/api/users/{id}/history} & Lịch sử mua mà mô hình đã học (mọi cặp trước mốc kiểm thử), sắp theo thời gian; với khách mới, lịch sử rỗng và có đánh dấu khách mới. \\ \hline
-        \texttt{GET} \path{/api/users/{id}/recommend} & Top-$K$ của một mô hình, hạng của từng sản phẩm đích, số ứng viên và HR@$K$, NDCG@$K$, Recall@$K$ của khách đó ($K \in \{10, 15, 20\}$). Khách mới nhận danh sách Most Popular gắn nhãn ``khuyến nghị phổ biến''. Khách có lịch sử nhưng không mua gì trong giai đoạn kiểm thử nhận khuyến nghị của mô hình, không có độ đo. \\ \hline
-        \texttt{GET} \path{/api/users/{id}/neighbors} & Các khách có gu giống nhất theo UserKNN: số sản phẩm mua chung, ví dụ sản phẩm mua chung, láng giềng nào đã mua sản phẩm khách này mua sau mốc. \\ \hline
-        \texttt{GET} \path{/api/items/{id}/similar} & Thông tin một sản phẩm (tên, loại, màu, mô tả, số khách đã mua) và các sản phẩm tương tự nhất theo ItemKNN. \\ \hline
-        \texttt{GET} \path{/api/results} & Kết quả của đánh giá cuối cho màn hình kết quả: NDCG@10 và HR@10 của từng mô hình, kết luận của họ so sánh, kết quả bóc tách. \\ \hline
-        \texttt{GET} \path{/api/example} & Một khách ví dụ cho màn hình tổng quan: khách mà NeuMF-F khuyến nghị đúng còn NeuMF chỉ dùng ID khuyến nghị sai, với hạng trùng hạng đã lưu ở đánh giá cuối. \\ \hline
-        \texttt{GET} \path{/api/dashboard} & Số liệu tổng hợp của đánh giá cuối, hiển thị ở bảng số liệu đầy đủ. \\
+        \texttt{GET} \path{/api/users/search}, \path{/random} & Tìm hoặc chọn ngẫu nhiên một khách hàng. \\ \hline
+        \texttt{GET} \path{/api/users/{id}/history} & Lịch sử mua mà mô hình đã học, sắp theo thời gian. \\ \hline
+        \texttt{GET} \path{/api/users/{id}/recommend} & Top-$K$ của một mô hình ($K \in \{10, 15, 20\}$), hạng của từng sản phẩm đích và độ đo của khách đó. Khách mới nhận danh sách sản phẩm bán chạy. \\ \hline
+        \texttt{GET} \path{/api/users/{id}/neighbors}, \path{/api/items/{id}/similar} & Khách có gu giống nhất theo UserKNN và sản phẩm tương tự nhất theo ItemKNN. \\ \hline
+        \texttt{GET} \path{/api/results} & Kết quả đánh giá cuối: NDCG@10 của từng mô hình, kết luận kiểm định, kết quả bóc tách. \\
         \hline
     \end{tabularx}
 \end{table}
@@ -645,46 +631,22 @@ Chức năng chính của API là khuyến nghị Top-$K$. Các điểm cuối k
 \subsection{Lựa chọn mô hình triển khai và yêu cầu phi chức năng}
 \label{subsec:demo_model_choice}
 
-Trong demo, NeuMF-F luôn là mô hình chính. Người xem chọn một mô hình đối chứng để đặt cạnh NeuMF-F, gồm các mô hình của đánh giá cuối (trừ Random) và Hybrid-CBCF. Mặc định là NeuMF chỉ dùng ID, để thấy tác dụng của đặc trưng trên cùng một khách. Demo dùng trọng số của đánh giá cuối ứng với seed 42, vì vậy hạng và độ đo của từng khách có thể khác đôi chút so với giá trị trung bình 5 seed. Lịch sử hiển thị là dữ liệu mô hình đã học, và sản phẩm đích là các món khách mua lần đầu trong giai đoạn kiểm thử.
+Trong demo, NeuMF-F luôn là mô hình chính. Người xem chọn một mô hình đối chứng để đặt cạnh NeuMF-F, gồm các mô hình của đánh giá cuối (trừ Random) và Hybrid-CBCF. Mặc định là NeuMF chỉ dùng ID, để thấy tác dụng của đặc trưng trên cùng một khách. Demo dùng trọng số của seed 42, nên hạng và độ đo của từng khách có thể khác đôi chút so với trung bình 5 seed.
 
-Về yêu cầu phi chức năng, vector của mọi khách và sản phẩm tại mốc dự đoán được tính một lần khi nạp. Mỗi yêu cầu khuyến nghị vì vậy chỉ là một lượt lan truyền thuận trên khoảng \VData{Btest}{cand} ứng viên. Trên máy chỉ dùng CPU (AMD Ryzen 7 6800H), một yêu cầu khuyến nghị Top-10 của NeuMF-F mất trung vị 10 ms, tính cả thời gian xử lý của API. Lần nạp dữ liệu và mô hình đầu tiên mất khoảng 20 giây với H\&M và 6 giây với Amazon Beauty, sau đó được giữ trong bộ nhớ.
+Về yêu cầu phi chức năng, vector của mọi khách và sản phẩm tại mốc dự đoán được tính một lần khi nạp. Mỗi yêu cầu khuyến nghị chỉ là một lượt lan truyền thuận trên khoảng \VData{Btest}{cand} ứng viên. Một yêu cầu Top-10 của NeuMF-F mất trung vị 10 ms, tính cả thời gian xử lý của API.
 
 \subsection{Minh hoạ hệ thống demo}
 \label{subsec:demo_screenshots}
 
 Demo được thiết kế như một cửa hàng trực tuyến, để người xem thấy mô hình khuyến nghị hoạt động trên từng khách trước khi xem số liệu tổng hợp. Màn hình chính là cửa hàng mô phỏng, thể hiện trong \hinhref{media/figures/demo/demo_v2.png}{fig:demo_screenshot_hm}. Người xem chọn một khách bằng mã khách, ngẫu nhiên, hoặc bằng nút khách ví dụ. Cửa hàng hiện những sản phẩm khách đã mua trước mốc kiểm thử, cũng là dữ liệu mô hình đã học, và $K$ sản phẩm được khuyến nghị. Danh sách của NeuMF-F nằm bên trái, danh sách của mô hình đối chứng nằm bên phải. Khi bấm nút ``Xem khách đã mua gì'', những sản phẩm khách thật sự mua sau mốc được tô màu, kèm thứ hạng của chúng trong danh sách của từng mô hình.
 
-\hinhketqua{media/figures/demo/demo_v2.png}{\textwidth}{Giao diện demo: cửa hàng mô phỏng, đã hiện các món khách mua sau mốc}{fig:demo_screenshot_hm}{chụp màn hình demo (\texttt{python run.py demo}) và lưu thành \texttt{media/figures/demo/demo\_v2.png}}
+\hinhketqua{media/figures/demo/demo_v2.png}{0.8\textwidth}{Giao diện demo: cửa hàng mô phỏng, đã hiện các món khách mua sau mốc}{fig:demo_screenshot_hm}{chụp màn hình demo (\texttt{python run.py demo}) và lưu thành \texttt{media/figures/demo/demo\_v2.png}}
 
-Bấm vào một sản phẩm sẽ mở thẻ chi tiết như \hinhref{media/figures/demo/demo_v2_product.png}{fig:demo_product}, gồm:
-\begin{itemize}
-    \item Tên, loại, màu, mô tả gốc của H\&M và số khách đã mua.
-    \item Vị trí của sản phẩm trong danh sách khuyến nghị của khách đang xem.
-    \item Các sản phẩm tương tự nhất theo ItemKNN, là những sản phẩm thường được cùng nhóm khách mua.
-\end{itemize}
+Bấm vào một sản phẩm sẽ mở thẻ chi tiết gồm mô tả gốc, số khách đã mua và các sản phẩm tương tự theo ItemKNN. Phía dưới cửa hàng là danh sách khách có gu giống khách đang xem theo UserKNN, minh hoạ cách lọc cộng tác dựa trên láng giềng chọn ra khuyến nghị. Khách mới chưa có trong dữ liệu đã học nhận danh sách sản phẩm bán chạy kèm nhãn rõ ràng.
 
-Phía dưới cửa hàng là danh sách khách có sở thích giống khách đang xem theo UserKNN, như \hinhref{media/figures/demo/demo_v2_neighbors.png}{fig:demo_neighbors}, kèm những sản phẩm họ mua chung. Sau khi hiện các sản phẩm khách mua sau mốc, những láng giềng cũng đã mua các sản phẩm đó được đánh dấu. Đây là minh hoạ cách lọc cộng tác dựa trên láng giềng chọn ra khuyến nghị.
-
-\hinhketqua{media/figures/demo/demo_v2_product.png}{0.8\textwidth}{Giao diện demo: thẻ chi tiết sản phẩm và sản phẩm tương tự}{fig:demo_product}{chụp màn hình demo và lưu thành \texttt{media/figures/demo/demo\_v2\_product.png}}
-
-\hinhketqua{media/figures/demo/demo_v2_neighbors.png}{\textwidth}{Giao diện demo: khách có gu giống khách đang xem}{fig:demo_neighbors}{chụp màn hình demo và lưu thành \texttt{media/figures/demo/demo\_v2\_neighbors.png}}
-
-Khách mới chưa có trong dữ liệu đã học nhận danh sách sản phẩm bán chạy kèm nhãn rõ ràng, không báo lỗi, như \hinhref{media/figures/demo/demo_v2_new.png}{fig:demo_new_customer}.
-
-\hinhketqua{media/figures/demo/demo_v2_new.png}{\textwidth}{Giao diện demo: khuyến nghị cho khách hàng mới}{fig:demo_new_customer}{chụp màn hình demo với một mã khách không có trong dữ liệu và lưu thành \texttt{media/figures/demo/demo\_v2\_new.png}}
-
-Màn hình kết quả đánh giá trong \hinhref{media/figures/demo/demo_v2_results.png}{fig:demo_results} tổng hợp trên toàn bộ khách của mẫu kiểm định:
-\begin{itemize}
-    \item Phần đầu đặt NeuMF-F cạnh từng mô hình đối chứng trong họ kiểm định, với NDCG@10 của hai bên, chênh lệch tương đối và kết luận kiểm định.
-    \item Phần dưới xếp hạng mọi mô hình theo NDCG@10 và cho biết NDCG@10 giảm bao nhiêu khi bỏ từng nhóm đặc trưng khỏi NeuMF-F.
-    \item Bảng số liệu đầy đủ của đánh giá cuối được mở từ màn hình này.
-\end{itemize}
-
-Màn hình giới thiệu đề tài trong \hinhref{media/figures/demo/demo_v2_overview.png}{fig:demo_overview} nêu bài toán và đặt danh sách khuyến nghị của NeuMF-F và NeuMF cho khách ví dụ cạnh những sản phẩm khách mua sau mốc.
+Màn hình kết quả đánh giá tổng hợp trên toàn bộ khách của mẫu kiểm định, như \hinhref{media/figures/demo/demo_v2_results.png}{fig:demo_results}. Phần đầu đặt NeuMF-F cạnh từng mô hình đối chứng với kết luận kiểm định. Phần dưới xếp hạng mọi mô hình theo NDCG@10 và cho biết mức giảm khi bỏ từng nhóm đặc trưng. Màn hình thứ ba giới thiệu bài toán qua một khách ví dụ.
 
 \hinhketqua{media/figures/demo/demo_v2_results.png}{\textwidth}{Giao diện demo: màn hình kết quả đánh giá}{fig:demo_results}{chụp màn hình demo và lưu thành \texttt{media/figures/demo/demo\_v2\_results.png}}
-
-\hinhketqua{media/figures/demo/demo_v2_overview.png}{\textwidth}{Giao diện demo: màn hình giới thiệu đề tài}{fig:demo_overview}{chụp màn hình demo và lưu thành \texttt{media/figures/demo/demo\_v2\_overview.png}}
 
 \FloatBarrier
 

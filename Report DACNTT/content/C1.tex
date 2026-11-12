@@ -56,6 +56,8 @@ Mô hình lai giữa MF và DNN có thể được ghép theo hai cách:
     \item Hợp nhất muộn (\textit{late fusion}): huấn luyện hai mô hình riêng rồi trộn điểm của chúng.
 \end{itemize}
 
+Đúng với tên đề tài, nhóm chọn hợp nhất sớm cho mô hình đề xuất, để MF và DNN được kết hợp trong một mô hình duy nhất và học chung. Hợp nhất muộn của cùng hai nhánh có đặc trưng được đưa vào làm mô hình đối chứng LateFusion-F, để đo ảnh hưởng của lựa chọn này.
+
 Từ các vấn đề trên, đề tài đặt ra ba câu hỏi nghiên cứu.
 \begin{enumerate}[label=Câu hỏi \arabic*:, leftmargin=*, align=left]
     \item NeuMF-F có khuyến nghị tốt hơn các mô hình đối chứng (\textit{baseline}) được tinh chỉnh đầy đủ không?
@@ -109,7 +111,7 @@ Phạm vi dữ liệu và thực nghiệm như sau:
 
 \begin{figure}[H]
     \centering
-    \includegraphics[width=1\textwidth]{media/figures/so_do/bc_09_cac_buoc.pdf}
+    \includegraphics[width=0.72\textwidth]{media/figures/so_do/hinh_cac_buoc.pdf}
     \caption{Các bước thực hiện đề tài}
     \label{fig:cac_buoc}
 \end{figure}

@@ -218,7 +218,8 @@ pytest -q              # tests/ (108 test) — không cần dữ liệu thật
 pytest demo/tests -q   # demo (21 test) — test nạp checkpoint bỏ qua khi chưa có dữ liệu và outputs/v2/final/seed42/
 ```
 
-Ngày 06/11/2026, trên máy GPU đã chạy đánh giá cuối: `tests/` 108/108 qua; `demo/tests` 20/20 qua.
+Ngày 06/11/2026, trên máy GPU đã chạy đánh giá cuối: `tests/` 108/108 qua; `demo/tests` 20/20 qua. Ngày 12/11/2026,
+trên máy chỉ có CPU: `tests/` 110/110 qua; `demo/tests` 21/21 qua.
 
 **Tái lập trên máy khác.** Mô hình không dùng vector văn bản (NeuMF, GMF, MLP, BPR-MF, UserKNN, ItemKNN, hai mô hình
 phổ biến) cho đúng từng hạng đã lưu khi chấm lại, kể cả checkpoint tạo trên GPU chấm lại trên CPU. Vector văn bản thì
@@ -289,6 +290,6 @@ neumf_project/
 `v2/data_dev.json` (tinh chỉnh), `v2/bosung_tuning_log.csv`, `v2/bosung_best_configs.json` (tinh chỉnh bổ sung),
 `test_access_log.csv` (mọi lần mở tập
 kiểm thử, kể cả của giai đoạn phát triển). Lịch sử: `PREREG.md` (giai đoạn phát triển ban đầu, mô hình chỉ dùng ID —
-trong mã gọi là "v1"; báo cáo mục 3.7.1) và `PREREG_v2_cu.md` (bản đầu của kế hoạch đánh giá, đánh giá trên khối 1). Mã
+trong mã gọi là "v1"; báo cáo mục 3.7) và `PREREG_v2_cu.md` (bản đầu của kế hoạch đánh giá, đánh giá trên khối 1). Mã
 nguồn và kết quả của hai giai đoạn này nằm trong lịch sử git: commit `9799f1a` (tag cục bộ `truoc-don-dep`). Code
 đọc/ghi trực tiếp các file trong `audit/` — không sửa tay.

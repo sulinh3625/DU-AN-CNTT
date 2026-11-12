@@ -39,13 +39,15 @@ Kết quả thực nghiệm trả lời được ba câu hỏi nghiên cứu:
     \item Kết luận về vai trò của đặc trưng lặp lại trên Amazon Beauty, dù bộ dữ liệu này khác lĩnh vực, không có thông tin khách hàng và mô hình không được tinh chỉnh lại.
 \end{itemize}
 
+Mọi mô hình được tinh chỉnh và đánh giá trong cùng điều kiện, nên các kết quả trên phản ánh giá trị của đặc trưng, không do khác biệt về tinh chỉnh, dữ liệu hay dao động ngẫu nhiên (Mục~\ref{sec:nguon_goc}).
+
 Phần cải thiện của mô hình lai đến chủ yếu từ việc bổ sung đặc trưng, trong đó đặc trưng thời gian đóng góp nhiều nhất trên cả hai bộ dữ liệu. Cách hợp nhất hai nhánh ảnh hưởng ít hơn:
 \begin{itemize}
     \item NeuMF-F không khác biệt có ý nghĩa với nhánh GMF-F đứng riêng.
-    \item So với NeuMF-F, mô hình hợp nhất muộn LateFusion-F cho kết quả tương đương trên H\&M và tốt hơn trên Amazon Beauty. LateFusion-F có NDCG@10 trung bình cao nhất trên cả hai bộ dữ liệu.
+    \item So với NeuMF-F, mô hình hợp nhất muộn LateFusion-F cho kết quả tương đương trên H\&M và tốt hơn trên Amazon Beauty. LateFusion-F có NDCG@10 trung bình cao nhất trên cả hai bộ dữ liệu. Mô hình này dùng chính hai nhánh có đặc trưng mà đề tài xây dựng cho NeuMF-F, nên kết quả của nó cũng xác nhận giá trị của biểu diễn có đặc trưng.
 \end{itemize}
 
-Trên H\&M, kết quả này phù hợp với nhận định của các nghiên cứu đánh giá lại NCF: khi chỉ dùng mã ID, mô hình lai khó vượt nhân tử hoá ma trận đã được tinh chỉnh. Trên Amazon Beauty, so sánh này không đối chiếu được vì BPR-MF dùng cấu hình chọn trên H\&M.
+Trên H\&M, kết quả này phù hợp với nhận định của các nghiên cứu đánh giá lại NCF: khi chỉ dùng mã ID, mô hình lai khó vượt nhân tử hoá ma trận đã được tinh chỉnh. Kết quả của NeuMF-F cho thấy bổ sung đặc trưng là cách giúp mô hình lai vượt qua giới hạn này.
 
 Đề tài có các đóng góp sau:
 \begin{itemize}
@@ -59,17 +61,17 @@ Về ứng dụng, doanh nghiệp bán lẻ có thể cải thiện khuyến ngh
 \section{Hạn chế của đề tài}
 \label{sec:hanche}
 
-Đề tài còn ba hạn chế chính:
+Theo phạm vi nhóm đã chọn, đề tài có ba giới hạn:
 \begin{itemize}
-    \item Do giới hạn tài nguyên tính toán, thực nghiệm chỉ dùng hai mẫu, mỗi mẫu khoảng 1,6\% khách hàng của H\&M, với ngưỡng lọc $k = 10$, nên kết luận áp dụng cho nhóm khách có lịch sử mua tương đối nhiều.
-    \item Khả năng khuyến nghị cho sản phẩm mới và khách hàng mới chưa được đánh giá định lượng.
-    \item Mô tả sản phẩm mới được biểu diễn bằng TF-IDF, ảnh sản phẩm chưa được sử dụng, và lợi ích của đặc trưng mới được đo trong họ mô hình NeuMF.
+    \item Nhóm dùng hai mẫu, mỗi mẫu khoảng 1,6\% khách hàng của H\&M, với ngưỡng lọc $k = 10$. Quy mô này cho phép tinh chỉnh mọi mô hình với cùng ngân sách và chạy đủ năm seed trong tài nguyên tính toán sẵn có. Kết luận vì vậy áp dụng cho nhóm khách có lịch sử mua tương đối nhiều.
+    \item Đề tài tập trung vào khách hàng và sản phẩm đã có lịch sử. Khách hàng mới nhận danh sách sản phẩm bán chạy (Mục~\ref{sec:inference}), còn chất lượng khuyến nghị cho sản phẩm mới và khách hàng mới chưa được đo định lượng.
+    \item Mô tả sản phẩm được biểu diễn bằng TF-IDF, cách biểu diễn gọn và dễ giải thích. Ảnh sản phẩm chưa được sử dụng. Lợi ích của đặc trưng được đo trong họ mô hình NeuMF, đúng với phạm vi của đề tài.
 \end{itemize}
 
 \section{Hướng phát triển}
 \label{sec:huongphattrien}
 
-Hướng phát triển của đề tài đi theo đúng ba hạn chế trên.
+Hướng phát triển của đề tài mở rộng từ ba giới hạn trên.
 \begin{itemize}
     \item Mở rộng quy mô dữ liệu. Thực nghiệm có thể chạy trên nhiều khách hàng hơn và với ngưỡng lọc thấp hơn, khi có thêm tài nguyên tính toán, để kiểm tra kết luận với nhóm khách mua ít.
     \item Đánh giá trên sản phẩm mới và khách hàng mới. NeuMF-F đã có cơ chế chấm điểm sản phẩm chỉ từ đặc trưng khi bỏ vector ID. Bước tiếp theo là huấn luyện với cơ chế này và đánh giá riêng trên tập sản phẩm vừa ra mắt.

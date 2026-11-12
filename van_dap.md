@@ -1,7 +1,7 @@
 # Chuẩn bị bảo vệ trước hội đồng — Mô hình gợi ý lai NeuMF-F
 
 Tài liệu này để cả nhóm nắm toàn bộ đề tài và trả lời thống nhất trước hội đồng. Số mục, số bảng, số hình ghi theo
-bản báo cáo hiện tại (102 trang, cập nhật 09/11/2026). Mọi số liệu ở đây khớp với báo cáo (kiểm bằng
+bản báo cáo hiện tại (98 trang, cập nhật 12/11/2026). Mọi số liệu ở đây khớp với báo cáo (kiểm bằng
 `python run.py check-report`).
 
 | Cần gì | Đọc phần |
@@ -36,7 +36,7 @@ bản báo cáo hiện tại (102 trang, cập nhật 09/11/2026). Mọi số li
 | 1 | Mô hình lai có đặc trưng vượt các phương pháp đối chứng | H&M: NeuMF-F tốt hơn có ý nghĩa 7/10 so sánh, không thua so sánh nào; tốt hơn Hybrid-CBCF +25,8% |
 | 2 | Kết quả tổng quát qua hai lĩnh vực | Amazon: NeuMF-F hơn NeuMF chỉ ID +65,7% và cả 5 mô hình đối chứng, **không tinh chỉnh lại** |
 | 3 | Chỉ ra nguồn gốc cải thiện | NeuMF-F hơn NeuMF chỉ ID +43,8% (H&M); bỏ đặc trưng thời gian làm NDCG@10 giảm 42,3% (H&M), 31,6% (Amazon) |
-| 4 | Quy trình đánh giá và hệ thống hoàn chỉnh | Sáu nguyên tắc đánh giá (mục 3.7.2), demo chạy được trên cả hai bộ dữ liệu, 14 mô hình |
+| 4 | Quy trình đánh giá và hệ thống hoàn chỉnh | Sáu nguyên tắc đánh giá (mục 3.7), demo chạy được trên cả hai bộ dữ liệu, 14 mô hình |
 
 ### 1.3 Lời mở đầu gợi ý (khoảng 3 phút)
 
@@ -63,7 +63,7 @@ bản báo cáo hiện tại (102 trang, cập nhật 09/11/2026). Mọi số li
 - **Năm mục tiêu (mục 1.2.1):** (1) lý thuyết; (2) quy trình dữ liệu H&M; (3) cài đặt NeuMF-F và đối chứng; (4) đánh
   giá Top-K có kiểm định; (5) demo. **Tất cả đã hoàn thành** — Bảng 5.1 đối chiếu từng mục tiêu với kết quả.
 - **Mạch của báo cáo:** Chương 1 đặt ba câu hỏi → Chương 2 cho cơ sở lý thuyết → Chương 3 thiết kế mô hình và quy trình
-  để trả lời → Chương 4 trình bày kết quả và trả lời từng câu (mục 4.6, tóm tắt ở 4.7) → Chương 5 đối chiếu mục tiêu.
+  để trả lời → Chương 4 trình bày kết quả, chỉ ra phần cải thiện đến từ đặc trưng (mục 4.5) và trả lời từng câu (mục 4.7) → Chương 5 đối chiếu mục tiêu.
 
 ### 2.2 Cơ sở lý thuyết (Chương 2)
 
@@ -116,7 +116,7 @@ Random là mốc dưới. Tổng cộng 14 mô hình đăng ký trước, cộng
 
 ### 2.6 Quy trình đánh giá (mục 3.7, Hình 3.5)
 
-Sáu nguyên tắc (mục 3.7.2):
+Sáu nguyên tắc (mục 3.7):
 1. Tách mẫu phát triển và mẫu kiểm định.
 2. Đăng ký trước kế hoạch và khóa tập kiểm thử.
 3. Cùng ngân sách tinh chỉnh: 6 cấu hình mỗi mô hình (Bảng 3.6).
@@ -134,7 +134,9 @@ Sáu nguyên tắc (mục 3.7.2):
 - **Bóc tách (mục 4.3.5):** đặc trưng thời gian quan trọng nhất, rồi đến thông tin khách hàng.
 - **Hybrid-CBCF (mục 4.3.4):** NeuMF-F tốt hơn có ý nghĩa; Hybrid-CBCF chỉ ngang UserKNN trên H&M.
 - **Amazon (mục 4.4):** kết luận về đặc trưng giữ nguyên; LateFusion-F cao nhất.
-- **Trả lời câu hỏi (mục 4.6, 4.7):** câu 1 và câu 2 được trả lời "có" trên cả hai bộ; câu 3: biểu diễn có đặc trưng là
+- **Nguồn gốc cải thiện (mục 4.5, Bảng 4.20):** bảy yếu tố có thể tác động đến kết quả (tinh chỉnh, điều kiện đánh
+  giá, rò rỉ, dao động ngẫu nhiên, kiến trúc, chọn cấu hình, một bộ dữ liệu) và cách loại trừ từng yếu tố.
+- **Trả lời câu hỏi (mục 4.7):** câu 1 và câu 2 được trả lời "có" trên cả hai bộ; câu 3: biểu diễn có đặc trưng là
   yếu tố quyết định, cách hợp nhất có thể chọn theo dữ liệu.
 
 ### 2.8 Demo (mục 3.9)
@@ -167,7 +169,7 @@ Amazon.
 | Bóc tách H&M (seed 42) | Bỏ thời gian **−42,3%**, bỏ thông tin khách −10,3% (khoảng tin cậy không chứa 0); bỏ thuộc tính −3,7%, văn bản −2,7% (khoảng tin cậy chứa 0) | mục 4.3.5, Bảng 4.9 |
 | Hybrid-CBCF | H&M: NDCG@10 0,03183, hạng 5/15; NeuMF-F tốt hơn +25,8%; so với UserKNN +2,2% (tương đương). Amazon: 0,02664, hạng 5/15; NeuMF-F tốt hơn +23,0%; so với UserKNN +6,3% (tốt hơn) | mục 4.3.4, 4.4.2 |
 | Trọng số Hybrid-CBCF | Content 0,12; UserKNN 0,60; ItemKNN 0,28 | mục 4.2, Bảng 4.3 |
-| Trọng số LateFusion-F | w = 0,4 cho GMF-F (0,6 cho MLP-F) | mục 3.7.2, Thuật toán 3.5 |
+| Trọng số LateFusion-F | w = 0,4 cho GMF-F (0,6 cho MLP-F) | mục 3.7, Thuật toán 3.5 |
 | Amazon — dữ liệu | Bản 5-core: 198.502 đánh giá, 22.363 khách, 12.101 sản phẩm. Lọc 5-core trước 01/01/2014: 10.681 khách, 6.069 sản phẩm, 94.009 cặp. Kiểm thử 01/01–23/07/2014: 2.644 khách, 6.107 cặp đúng, 6.058 ứng viên mỗi khách | mục 4.4.1, Bảng 4.12 |
 | Amazon — kết quả (NDCG@10, 5 seed) | **LateFusion-F 0,03747** · GMF-F 0,03298 · NeuMF-F 0,03277 · MLP-F 0,03065 · UserKNN 0,02506 · ItemKNN 0,02333 · NeuMF 0,01978 · GMF 0,01627 · MostPopular-Recent 0,01401 · MLP 0,01271 · BPR-MF 0,01144 · Content 0,00945 · Most Popular 0,00872 | mục 4.4.2, Bảng 4.13 |
 | Amazon — 10 so sánh | NeuMF-F tốt hơn NeuMF +65,7% và cả 5 mô hình đối chứng (từ +30,8% với UserKNN); tương đương GMF-F (−0,6%) và MLP-F (+6,9%); LateFusion-F tốt hơn NeuMF-F (NeuMF-F −12,5%) | mục 4.4.3, Bảng 4.17–4.18 |
@@ -186,11 +188,11 @@ trình làm (các lần thử, sự cố, lý do kỹ thuật nhỏ) chỉ nói 
 | Nội dung | Trong báo cáo | Khi được hỏi thì nói thêm |
 |---|---|---|
 | LateFusion-F cao nhất, tốt hơn NeuMF-F trên Amazon | **Có**, nói rõ (mục 4.4.3, 4.6) — đây là kết quả, không được giấu | Lý do giữ NeuMF-F làm mô hình đề xuất (câu 5.4.1) |
-| Khảo sát ban đầu: NeuMF chỉ ID không hơn BPR-MF | Có, như định hướng thiết kế (mục 3.7.1) | Giai đoạn đầu chỉ dùng mã ID, đánh giá trên mẫu phát triển |
+| Khảo sát ban đầu: NeuMF chỉ ID không hơn BPR-MF | Có, như định hướng thiết kế (mục 3.7) | Giai đoạn đầu chỉ dùng mã ID, đánh giá trên mẫu phát triển |
 | Khối 1 (mẫu kiểm định của bản kế hoạch đầu) | Không | Câu 5.6.1 |
 | Seed 42 chạy lại, máy chạy (GPU RTX 3050 / CPU) | Không | Câu 5.6.2 |
 | Content lệch nhẹ giữa Bảng 4.2 và 4.3 | Một câu ngắn (mục 4.2) | Vector văn bản được dựng lại trên máy khác khi chạy phần bổ sung; thứ hạng không đổi |
-| K = 15 tính lại từ hạng đã lưu | Không nói chi tiết (mục 3.7.2 chỉ nói hạng được lưu) | Câu 5.3.6 |
+| K = 15 tính lại từ hạng đã lưu | Không nói chi tiết (mục 3.7 chỉ nói hạng được lưu) | Câu 5.3.6 |
 | Hybrid-CBCF thêm sau đánh giá cuối | Có, ghi là phân tích bổ sung có kế hoạch riêng (mục 3.4, 4.3.4) | Câu 5.5.2 |
 | Amazon không tinh chỉnh lại | Có, như một lựa chọn thiết kế (mục 4.4.1) | Câu 5.5.1 |
 | Không có đối chứng FM dùng cùng đặc trưng | Một câu trong hạn chế và hướng phát triển (mục 5.3, 5.4) | Câu 5.2.4 |
@@ -350,6 +352,9 @@ và cho hai mẫu tương đương nhau (Bảng 3.3). Mở rộng quy mô là h�
 ### 5.4 Kết quả
 
 **5.4.1 "LateFusion-F cao nhất, sao không chọn nó làm mô hình đề xuất?"** (câu quan trọng nhất)
+- Tên đề tài là xây dựng **một** mô hình lai kết hợp MF và DNN. NeuMF-F đúng mục tiêu đó: một mạng, hai nhánh học chung
+  (hợp nhất sớm). LateFusion-F là hai mô hình huấn luyện riêng rồi trộn điểm; nhóm đưa nó vào họ so sánh để đo ảnh
+  hưởng của cách hợp nhất (báo cáo mục 1.1, 4.7).
 - Mô hình đề xuất được cố định **trước** khi có kết quả kiểm thử. Đổi sau khi xem kết quả là chọn mô hình trên tập kiểm
   thử — đúng lỗi phương pháp mà đề tài tránh.
 - LateFusion-F **dùng chính hai nhánh có đặc trưng của NeuMF-F**, chỉ khác bước trộn điểm. Vì vậy thành công của
@@ -368,11 +373,21 @@ tinh chỉnh kỹ. Chính phát hiện đó dẫn tới NeuMF-F, và khi có đ�
 
 **5.4.4 "Thứ hạng có ổn định giữa tinh chỉnh và kiểm thử không?"**
 Ổn định ở nhóm đầu: bốn mô hình có đặc trưng đứng đầu cả hai lần; LateFusion-F và NeuMF-F giữ hai vị trí đầu. GMF, MLP
-chỉ ID tụt từ hạng 5 và 7 xuống 9 và 11; ItemKNN lên từ hạng 10 lên 6 (Hình 4.5).
+chỉ ID tụt từ hạng 5 và 7 xuống 9 và 11; ItemKNN lên từ hạng 10 lên 6 (Hình 4.4).
 
 **5.4.5 "Đặc trưng văn bản có giúp không?"**
 Trên H&M chưa khẳng định được (bỏ văn bản −2,7%, khoảng tin cậy chứa 0). Đặc trưng thời gian và thông tin khách quan
 trọng hơn nhiều. Biểu diễn văn bản bằng mô hình ngôn ngữ là hướng phát triển.
+
+**5.4.6 "Làm sao biết NeuMF-F tốt hơn là nhờ đặc trưng, không phải do may mắn hay do cách làm thực nghiệm?"**
+Báo cáo mục 4.5 (Bảng 4.20) trả lời câu này. Mọi yếu tố khác được giữ giống nhau cho mọi mô hình hoặc được kiểm tra riêng:
+- Cùng ngân sách tinh chỉnh, cùng độ đo, cùng tập xác thực; cùng mẫu khách, tập ứng viên, năm seed và mã đánh giá.
+- Chia dữ liệu theo thời gian, đặc trưng tính tại thời điểm dự đoán nên không rò rỉ tương lai.
+- Năm lần chạy, Wilcoxon trên từng khách, bootstrap và Holm nên không phải dao động ngẫu nhiên.
+- Cấu hình chọn trên mẫu phát triển, kết luận rút trên mẫu kiểm định (khách khác); lặp lại trên Amazon không tinh chỉnh lại.
+
+Hai cách đo độc lập cùng chỉ về đặc trưng: thêm đặc trưng vào cùng kiến trúc (NeuMF-F so với NeuMF chỉ ID: +43,8% H&M,
++65,7% Amazon, đều có ý nghĩa) và tắt đặc trưng thời gian (NDCG@10 giảm 42,3% H&M, 31,6% Amazon).
 
 ### 5.5 Amazon Beauty và Hybrid-CBCF
 
@@ -473,8 +488,8 @@ Lưu ý:
 |---|---|---|
 | 1. Tổng quan | 1.1 bối cảnh (1.1.3 ba câu hỏi nghiên cứu); 1.2 mục tiêu, phạm vi; 1.3 phương pháp; 1.4 ý nghĩa; 1.5 bố cục | Hình 1.1 các bước thực hiện |
 | 2. Cơ sở lý thuyết | 2.1 hệ gợi ý; 2.2 MF, BPR; 2.3 NCF, hợp nhất; 2.4 mô hình lai dựa trên đặc trưng; 2.5 độ đo; 2.6 ba nghiên cứu nền tảng; 2.7 khoảng trống | Hình 2.1 NeuMF, Hình 2.2 hợp nhất; Bảng 2.1 |
-| 3. Phương pháp | 3.1 đường ống; 3.2 dữ liệu; 3.3 NeuMF-F; 3.4 đối chứng; 3.5 lấy mẫu âm, BCE; 3.6 tinh chỉnh; 3.7 đánh giá (3.7.1 khảo sát ban đầu, 3.7.2 sáu nguyên tắc); 3.8 suy luận, khách mới; 3.9 demo | Hình 3.1 đường ống, 3.2 xử lý dữ liệu, 3.3 chia theo thời gian, 3.4 NeuMF-F, 3.5 tinh chỉnh và đánh giá cuối, 3.6 kiến trúc demo, 3.7–3.12 giao diện demo; Bảng 3.1–3.7; Thuật toán 3.1–3.7 |
-| 4. Thực nghiệm | 4.1 thiết lập thực nghiệm; 4.2 tinh chỉnh; 4.3 kết quả H&M (4.3.1 chính, 4.3.2 theo K, 4.3.3 kiểm định, 4.3.4 Hybrid-CBCF, 4.3.5 bóc tách, 4.3.6 độ phủ, 4.3.7 hội tụ); 4.4 Amazon; 4.5 phạm vi; 4.6 trả lời ba câu hỏi nghiên cứu | Bảng 4.1 điều kiện chung, 4.2–4.10 (H&M), 4.11–4.19 (Amazon); Hình 4.1–4.5 (H&M), 4.6 (Amazon) |
+| 3. Phương pháp | 3.1 đường ống; 3.2 dữ liệu; 3.3 NeuMF-F; 3.4 đối chứng; 3.5 lấy mẫu âm, BCE; 3.6 tinh chỉnh; 3.7 đánh giá (khảo sát ban đầu, sáu nguyên tắc); 3.8 suy luận, khách mới; 3.9 demo | Hình 3.1 đường ống, 3.2 xử lý dữ liệu, 3.3 chia theo thời gian, 3.4 NeuMF-F, 3.5 tinh chỉnh và đánh giá cuối, 3.6 kiến trúc demo, 3.7–3.8 giao diện demo; Bảng 3.1–3.7; Thuật toán 3.1–3.7 |
+| 4. Thực nghiệm | 4.1 thiết lập thực nghiệm; 4.2 tinh chỉnh; 4.3 kết quả H&M (4.3.1 chính, 4.3.2 theo K, 4.3.3 kiểm định, 4.3.4 Hybrid-CBCF, 4.3.5 bóc tách, 4.3.6 độ phủ, 4.3.7 độ ổn định giữa hai mẫu); 4.4 Amazon; 4.5 nguồn gốc của phần cải thiện; 4.6 phạm vi; 4.7 trả lời ba câu hỏi nghiên cứu | Bảng 4.1 điều kiện chung, 4.2–4.10 (H&M), 4.11–4.19 (Amazon), 4.20 các yếu tố đã loại trừ; Hình 4.1–4.4 (H&M) |
 | 5. Kết luận | 5.1 kết quả đạt được; 5.2 kết luận; 5.3 hạn chế; 5.4 hướng phát triển | Bảng 5.1 mức độ hoàn thành mục tiêu |
 
 Thuật toán: 3.1 chuẩn bị dữ liệu và k-core · 3.2 lấy mẫu âm · 3.3 huấn luyện, huấn luyện lại · 3.4 xếp hạng toàn bộ ·

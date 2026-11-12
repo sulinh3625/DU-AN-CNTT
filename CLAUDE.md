@@ -9,7 +9,8 @@ Trả lời bằng tiếng Việt có dấu. Bối cảnh và số liệu: `READ
 - Demo: `python run.py demo` (localhost:8000). Ảnh trong `demo/static/images/` bị gitignore: Amazon tải bằng
   `demo/scripts/download_amazon_images.py`, H&M tải bằng
   `demo/scripts/download_hm_images.py` (Kaggle API) hoặc chép bằng `demo/scripts/copy_images.py` (cần `HM_IMAGES_DIR`)
-- Sơ đồ (báo cáo, slide, `pipeline_neumf_5trang.drawio`): `cd image/src && python so_do_bao_cao.py` (cần draw.io desktop)
+- Hình sơ đồ báo cáo: `cd image/src && python hinh_bao_cao.py` (không cần draw.io desktop, cần mạng); sơ đồ cũ
+  `bc_*`, `slide_*`, `pipeline_neumf_5trang.drawio`: `python so_do_bao_cao.py` (cần draw.io desktop)
 - Báo cáo: `Report DACNTT/compile.bat` (MiKTeX XeLaTeX + biber)
 
 ## Ranh giới
