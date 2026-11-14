@@ -42,9 +42,7 @@ def test_bpr_checkpoint_roundtrip_and_demo_scoring_match(tmp_path):
     cand = np.array([5, 0, 3, 2])
     for u in range(3):
         assert np.array_equal(loaded.score_items(u, cand), bpr.score_items(u, cand))
-        # demo/backend/inference.py chấm mọi item bằng Q @ P[u] rồi lấy theo candidates
         assert np.array_equal((loaded.Q @ loaded.P[u])[cand], bpr.score_items(u, cand))
-
 
 
 def test_refit_runs_fixed_epochs_without_validation():

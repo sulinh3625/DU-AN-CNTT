@@ -1,29 +1,15 @@
 """Mô hình lai truyền thống Hybrid-CBCF (audit/PREREG_bosung.md): kết hợp ở mức điểm dự đoán ba mô hình gợi ý truyền
 thống — lọc nội dung (Content), lọc cộng tác theo người dùng (UserKNN) và theo sản phẩm (ItemKNN) — theo mô hình lai
-của Hồ Thị Linh (2023, chương 3), điều chỉnh cho phản hồi ẩn và xếp hạng Top-K:
-
-    x_ui = [minmax(s_Content(u, C_u))_i, minmax(s_UserKNN(u, C_u))_i, minmax(s_ItemKNN(u, C_u))_i]
-
-- điểm của từng thành phần được chuẩn hoá min–max trên tập ứng viên C_u của khách (như LateFusion-F) để ba thang điểm
-  so sánh được với nhau;
-- bỏ phiếu (voted-based): điểm lai = trung bình, max hoặc min của ba điểm đã chuẩn hoá;
-- trọng số (weighted-based): điểm lai = w · x_ui. Luận án học w bằng mạng truyền thẳng f(x) = Σ w_i x_i trên điểm đánh
-  giá (rating). Phản hồi ẩn không có điểm đánh giá, nên w được học theo cặp: với sản phẩm đúng p và sản phẩm không đúng j
-  trong tập ứng viên của cùng một khách, P(p xếp trên j) = σ(w · (x_up − x_uj)) — hồi quy logistic trên hiệu đặc trưng,
-  không hệ số chặn (tiêu chí BPR với hàm điểm tuyến tính). Học theo từng cặp (khách, ứng viên) độc lập thì không được:
-  gộp mọi khách vào một hồi quy logistic, trọng số bị chi phối bởi khác biệt giữa các khách chứ không phải thứ tự trong
-  danh sách của từng khách.
-Không có khởi tạo ngẫu nhiên; mẫu âm của bước học trọng số rút bằng numpy seed cố định — cùng dữ liệu cho cùng kết quả.
-"""
+của Hồ Thị Linh (2023, chương 3), điều chỉnh cho phản hồi ẩn và xếp hạng Top-K."""
 from __future__ import annotations
 
 import numpy as np
 
 from src.models.late_fusion import minmax
 
-COMPONENTS = ("content", "userknn", "itemknn")  # thứ tự cột của x và của w
-FUSIONS = ("mean", "max", "min", "lr")  # ba cách bỏ phiếu + trọng số học bằng hồi quy logistic theo cặp
-N_NEG, PAIR_SEED, C_REG = 50, 0, 1.0  # số sản phẩm không đúng mỗi sản phẩm đúng, seed rút mẫu, hệ số điều chuẩn 1/λ
+COMPONENTS = ("content", "userknn", "itemknn")
+FUSIONS = ("mean", "max", "min", "lr")
+N_NEG, PAIR_SEED, C_REG = 50, 0, 1.0
 
 
 def combine(x: np.ndarray, fusion: str, weights=None) -> np.ndarray:
@@ -64,7 +50,7 @@ class TraditionalHybrid:
 def pair_differences(features: list[np.ndarray], labels: list[np.ndarray], n_neg: int = N_NEG,
                      seed: int = PAIR_SEED) -> tuple[np.ndarray, np.ndarray]:
     """Mẫu học trọng số: với mỗi khách (theo thứ tự danh sách) và mỗi sản phẩm đúng p, rút n_neg sản phẩm không đúng j
-    trong tập ứng viên (không lặp). Hiệu x_p − x_j mang nhãn 1, x_j − x_p nhãn 0 (đối xứng, nên không cần hệ số chặn)."""
+    trong tập ứng viên (không lặp)."""
     rng = np.random.default_rng(seed)
     diffs = []
     for x, y in zip(features, labels):
@@ -93,8 +79,7 @@ def fit_weights(features: list[np.ndarray], labels: list[np.ndarray], n_neg: int
 
 def crossfit_scores(features: list[np.ndarray], labels: list[np.ndarray], users, n_folds: int = 2):
     """Điểm 'lr' khớp chéo theo khách: khách u thuộc phần u mod n_folds và được chấm bằng w học trên các phần còn lại,
-    để số trên tập xác thực không lạc quan vì w học trên chính khách được chấm. Trả về (điểm của từng khách theo thứ tự
-    đầu vào, {phần: w})."""
+    để số trên tập xác thực không lạc quan vì w học trên chính khách được chấm."""
     fold = np.asarray(users, dtype=np.int64) % n_folds
     w = {f: fit_weights([features[i] for i in np.flatnonzero(fold != f)],
                         [labels[i] for i in np.flatnonzero(fold != f)]) for f in range(n_folds)}

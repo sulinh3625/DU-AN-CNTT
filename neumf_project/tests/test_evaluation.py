@@ -16,13 +16,13 @@ from src.evaluation.ranking_utils import rank_positives
 def test_full_ranking_excludes_seen_and_keeps_positive():
     eval_df = pd.DataFrame({"user": [0], "item": [4]})
     rec = build_full_ranking_records_multi(eval_df, 6, [{0, 1, 2, 3, 4}])[0]
-    assert rec.candidates.tolist() == [4, 5]  # món đã mua bị loại, món đúng luôn giữ
+    assert rec.candidates.tolist() == [4, 5]
 
 
 def test_multi_records_keep_all_positives_and_pool():
     eval_df = pd.DataFrame({"user": [0, 0], "item": [2, 3]})
     rec = build_full_ranking_records_multi(eval_df, 6, [{0, 1}], item_pool=[0, 1, 2, 4])[0]
-    assert rec.positives.tolist() == [2, 3]              # item 3 ngoài pool vẫn giữ vì là item đúng
+    assert rec.positives.tolist() == [2, 3]
     assert rec.candidates.tolist() == [2, 3, 4]
 
 
@@ -48,7 +48,7 @@ def test_multi_metrics_two_relevant_items():
     m = multi_ranking_metrics([1, 4], k=3)
     assert m["HR"] == 1.0 and m["Recall"] == 0.5 and m["Precision"] == pytest.approx(1 / 3)
     assert m["NDCG"] == pytest.approx(1.0 / (1.0 + 1 / math.log2(3)))
-    assert multi_ranking_metrics([1, 2], k=10)["NDCG"] == pytest.approx(1.0)  # thứ tự lý tưởng
+    assert multi_ranking_metrics([1, 2], k=10)["NDCG"] == pytest.approx(1.0)
 
 
 def test_perfect_model_hr_ndcg_one():
@@ -75,6 +75,6 @@ def test_per_user_rows_match_summary_and_count_candidates():
     summary = evaluate_score_function(lambda u, i: float(i), records, [2], include_redundant=True, per_user=rows)
     assert [r["n_candidates"] for r in rows] == [4, 5]
     assert [r["n_positives"] for r in rows] == [1, 2]
-    assert rows[0]["ranks"] == "2" and rows[1]["ranks"] == "1;5"   # điểm = id item -> 8 đứng đầu, 2 đứng cuối
+    assert rows[0]["ranks"] == "2" and rows[1]["ranks"] == "1;5"
     for name, value in summary.items():
         assert np.mean([r[name] for r in rows]) == value

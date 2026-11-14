@@ -47,7 +47,7 @@ import v2_common as V
 from src.evaluation.metrics import multi_ranking_metrics  # noqa: E402  (đường dẫn src do v2_common thêm)
 
 PROJECT_ROOT = V.PROJECT_ROOT
-AUDIT = V.AUDIT  # audit/v2 (H&M) hoặc audit/amazon
+AUDIT = V.AUDIT
 REPORT = PROJECT_ROOT.parent / "Report DACNTT"
 
 MODELS = ["neumf_f", "late_f", "gmf_f", "mlp_f", "neumf", "gmf", "mlp", "bpr", "itemknn", "userknn", "content",
@@ -61,29 +61,21 @@ KEY = {"random": "Rand", "popularity": "Pop", "recent_pop": "RecPop", "content":
 ABL = {"neumf_f-text": ("AblText", "Bỏ vector văn bản"), "neumf_f-time": ("AblTime", "Bỏ đặc trưng thời gian"),
        "neumf_f-user": ("AblUser", "Bỏ thông tin khách hàng"), "neumf_f-attr": ("AblAttr", "Bỏ thuộc tính sản phẩm"),
        "neumf_f-iddrop": ("AblIdDrop", "Không bỏ ID ngẫu nhiên")}
-# Bổ sung sau đánh giá cuối (audit/PREREG_bosung.md, scripts/25_bosung.py): mô hình lai truyền thống, đánh dấu * trong
-# bảng; kiểm định trong họ riêng B1–B2 (Holm trong họ) — họ 10 so sánh đăng ký trước không đổi.
 SUP = ("hybrid",)
 DAGGER = r"\textsuperscript{*}"
 COMPARISONS_BS = [("neumf_f", "hybrid"), ("hybrid", "userknn")]
-# Ba nhóm baseline theo góp ý của GVHD (PREREG_bosung mục 5; cách xếp chờ GVHD xác nhận). Trong mỗi nhóm, bảng xếp theo
-# NDCG@10 giảm dần.
 GROUPS = [("Mô hình đề xuất", ("neumf_f",)),
           ("Nhóm 1: mô hình đơn lẻ", ("gmf_f", "mlp_f", "gmf", "mlp")),
           ("Nhóm 2: học máy truyền thống", ("hybrid", "userknn", "itemknn", "bpr", "content")),
           ("Nhóm 3: chuyên biệt cho khuyến nghị", ("late_f", "neumf", "recent_pop", "popularity")),
           ("Cận dưới", ("random",))]
-# Mọi cột cùng một màu (góp ý GVHD 09/11/2026: không tô nổi mô hình đề xuất, không dùng xám cho cột).
 BAR = "#2a78d6"
 GROUP_OF = {m: g for g, ms in GROUPS for m in ms}
-# Họ so sánh cố định (PREREG_v2 mục 7), theo đúng thứ tự đăng ký.
 COMPARISONS = [("neumf_f", "neumf"), ("neumf_f", "gmf_f"), ("neumf_f", "mlp_f"), ("neumf_f", "late_f"),
                ("neumf_f", "bpr"), ("neumf_f", "itemknn"), ("neumf_f", "userknn"), ("neumf_f", "recent_pop"),
                ("neumf_f", "content"), ("neumf", "bpr")]
 METRICS = ["NDCG@10", "Recall@10", "HR@10", "Precision@10", "NDCG@5", "NDCG@20"]
 TABLE_METRICS = ["NDCG@10", "Recall@10", "HR@10", "Precision@10"]
-# Bảng theo K: tính lại từ hạng đã lưu của đánh giá cuối (by_k), không chấm lại tập kiểm thử. by_k.csv vẫn tính đủ
-# K_ALL (để đối chiếu tái lập); báo cáo chỉ trình bày K_BAOCAO (nhóm bỏ K = 5 ngày 24/10/2026: quá ít để khuyến nghị trúng).
 K_ALL = (5, 10, 15, 20)
 K_BAOCAO = (10, 15, 20)
 K_METRICS = ("NDCG", "Recall", "HR", "Precision")
@@ -91,8 +83,6 @@ NOT_SIG = "không khác biệt có ý nghĩa"
 N_BOOT, BOOT_SEED, ALPHA, MIN_REL = 10_000, 0, 0.05, 0.05
 INK, INK2, MUTED, GRID, SURFACE = "#0b0b0b", "#52514e", "#898781", "#e1e0d9", "#fcfcfb"
 HEADER = "% Sinh tự động bởi neumf_project/scripts/24_report_v2.py — KHÔNG sửa tay."
-# Chữ, tên file và macro theo bộ dữ liệu. H&M: kết luận trên tập kiểm thử của mẫu kiểm định; Amazon Beauty: dữ liệu kiểm
-# chứng (một bộ, chia theo thời gian, cấu hình chọn trên H&M — audit/PREREG_amazon.md), macro \ARes, \ASig, ... riêng.
 TEXT = {
     "hm": dict(test="tập kiểm thử của mẫu kiểm định", test_fig="Tập kiểm thử của mẫu kiểm định H&M",
                test_cap="tập kiểm thử của mẫu kiểm định H\\&M", short="H\\&M",
@@ -113,7 +103,6 @@ def mk(metric: str) -> str:
     return metric.replace("@", "").replace("_", "")
 
 
-# ------------------------------------------------------------------ thống kê
 def holm(p) -> np.ndarray:
     p = np.asarray(p, dtype=float)
     order = np.argsort(p)
@@ -141,28 +130,18 @@ def verdict(p_holm: float, lo: float, hi: float, rel: float, diff: float) -> str
     return NOT_SIG
 
 
-# --------------------------------------------------------------------- dữ liệu
 def load(final_dir: Path):
     seeds = sorted(int(p.name[4:]) for p in final_dir.glob("seed*") if (p / "results.json").exists())
     if not seeds:
         raise SystemExit(f"Chưa có kết quả trong {final_dir} — chạy scripts/23_final_v2.py trước.")
     res = {s: json.loads((final_dir / f"seed{s}" / "results.json").read_text(encoding="utf-8")) for s in seeds}
     per = pd.concat([pd.read_csv(final_dir / f"seed{s}" / "per_user.csv.gz") for s in seeds], ignore_index=True)
-    parts = []
-    for s in seeds:
-        try:
-            parts.append(pd.read_csv(final_dir / f"seed{s}" / "history.csv").assign(seed=s))
-        except (FileNotFoundError, pd.errors.EmptyDataError):
-            pass
-    hist = pd.concat(parts, ignore_index=True) if parts else pd.DataFrame()
     models = [m for m in MODELS if all(m in res[s]["results"] for s in seeds)]
-    return seeds, res, per, hist, models
+    return seeds, res, per, models
 
 
 def load_supplement(final_dir: Path, seeds, res: dict):
-    """Kết quả bổ sung của scripts/25_bosung.py trong <final-dir>/bosung/. Mô hình tất định, chấm một lần: per_user có
-    một bản cho mỗi seed của đánh giá cuối. Trả về (results.json bổ sung hoặc None, per_user, res có thêm mô hình bổ sung
-    ở mọi seed — chỉ để dựng bảng hiển thị chung với 14 mô hình)."""
+    """Kết quả bổ sung của scripts/25_bosung.py trong <final-dir>/bosung/."""
     d = final_dir / "bosung"
     if not (d / "results.json").exists():
         return None, pd.DataFrame(), res
@@ -239,8 +218,6 @@ def _train_s(d: dict) -> float:
     return d.get("select_time_s", 0) + d.get("refit_time_s", 0) + d.get("fit_time_s", 0)
 
 
-# LateFusion-F không tự huấn luyện mạng: chi phí của nó là thời gian huấn luyện hai nhánh (như V.LATE_PARTS; không
-# import v2_common vì module đó cần torch). Bước chọn w trên validation nằm ở 22_tune_v2, không thuộc đánh giá cuối.
 TRAIN_PARTS = {"late_f": ("gmf_f", "mlp_f")}
 
 
@@ -261,9 +238,7 @@ def beyond(seeds, res, models) -> pd.DataFrame:
 
 def by_k(per: pd.DataFrame, models: list[str], summary: pd.DataFrame, ks=K_ALL) -> pd.DataFrame:
     """NDCG/Recall/HR/Precision@K cho mọi K trong ks, tính lại từ hạng của từng sản phẩm đúng mà đánh giá cuối đã lưu
-    (cột ranks của per_user.csv.gz, cùng hàm multi_ranking_metrics lúc chấm) — không chấm lại tập kiểm thử. Mỗi seed:
-    trung bình theo người dùng; rồi trung bình ± độ lệch chuẩn qua seed như summary.csv. Cột @K đã có trong summary.csv
-    phải trùng khớp, nếu không thì dừng (hạng đã lưu không phải hạng đã chấm). Không có cột ranks: bảng rỗng."""
+    (cột ranks của per_user.csv.gz, cùng hàm multi_ranking_metrics lúc chấm) — không chấm lại tập kiểm thử."""
     if "ranks" not in per.columns:
         return pd.DataFrame()
     p = per[per["model"].isin(models) & per["ranks"].notna()]
@@ -307,7 +282,6 @@ def dev_info() -> dict:
     return json.loads(path.read_text(encoding="utf-8"))
 
 
-# ---------------------------------------------------------------------- LaTeX
 def vn(x: float, nd: int = 5, sign: bool = False) -> str:
     if x is None or (isinstance(x, float) and np.isnan(x)):
         return "---"
@@ -389,7 +363,6 @@ def table(label: str, caption: str, colspec: str, header: list[str] | str, rows:
     sep = f"\\setlength{{\\tabcolsep}}{{{colsep}}}" if colsep else ""
     return (f"{HEADER}\n\\begin{{table}}[H]\n    \\centering{size}{sep}\n"
             f"    \\caption{{{caption}}}\n    \\label{{{label}}}\n"
-            # [H] đặt bảng đúng chỗ trong văn bản, nên bảng cao hơn trang (kết quả chính) phải tự thu nhỏ cho vừa
             "    \\begin{adjustbox}{max width=\\textwidth, max totalheight=0.85\\textheight}\n"
             f"    \\begin{{tabular}}{{{grid(colspec)}}}\n        \\hline\n"
             f"{head}\n{body}\n"
@@ -515,8 +488,7 @@ def export_data_amazon(m: Macros, tables: Path, info: dict, entry: dict) -> None
 
 
 def export_data(m: Macros, tables: Path, info_a: dict, info_b: dict | None) -> None:
-    """Quy mô dữ liệu H&M. info_b = None trước đánh giá cuối (mẫu kiểm định chưa được dựng). Khoá macro: A = mẫu phát
-    triển, B = mẫu kiểm định (\\VData{A}{nusers}, \\VData{Btest}{cand}, ...)."""
+    """Quy mô dữ liệu H&M. info_b = None trước đánh giá cuối (mẫu kiểm định chưa được dựng)."""
     ta, tb = info_a, info_b or {}
 
     rows = [
@@ -557,7 +529,6 @@ def export_tuning(m: Macros, tables: Path, best: dict, bs: dict | None = None) -
     for mm in [x for x in MODELS if x in best] + [x for x in SUP if x in bs]:
         cfg = best.get(mm) or bs[mm]
         v = cfg["val"]
-        # trong ô bảng "bỏ ID" không bị ngắt giữa hai dòng (macro \VCfg giữ nguyên chuỗi)
         rows.append([NAME[mm] + (DAGGER if mm in SUP else ""), params_text(mm, cfg["params"]).replace("bỏ ID", "bỏ~ID"),
                      vn(v["NDCG@10"]), vn(v.get("HR@10"))])
         for c in ("NDCG@10", "Recall@10", "HR@10"):
@@ -596,7 +567,6 @@ def export_hybrid_tuning(m: Macros, tables: Path, best: dict, hb: dict) -> None:
     t = t[t["model"] == "hybrid"].drop_duplicates("params", keep="last")
     chosen = json.dumps(hb["params"], sort_keys=True)
     parts = hb.get("components_val") or {k: best[k]["val"] for k in ("content", "userknn", "itemknn")}
-    # (nhãn, NDCG@10, HR@10): ba thành phần đứng riêng rồi bốn cách kết hợp; in đậm số cao nhất mỗi cột như các bảng khác
     comp = [(NAME[k], parts[k]["NDCG@10"], parts[k]["HR@10"]) for k in ("content", "userknn", "itemknn")]
     for k in ("content", "userknn", "itemknn"):
         m.add("val", "Hyb" + KEY[k], "NDCG10", vn(parts[k]["NDCG@10"]))
@@ -608,12 +578,10 @@ def export_hybrid_tuning(m: Macros, tables: Path, best: dict, hb: dict) -> None:
             label += " (được chọn)"
         fus.append((label, r["val_NDCG@10"], r["val_HR@10"]))
         m.add("val", "Hyb" + p["fusion"].capitalize(), "NDCG10", vn(r["val_NDCG@10"]))
-    top = [max(x[i] for x in comp + fus) for i in (1, 2)]
-    bold = lambda v, i: vn(v)  # Không in đậm số lớn nhất theo yêu cầu
     rows = [[r"\multicolumn{3}{|l|}{\textit{Thành phần đứng riêng}}"]]
-    rows += [[lab, bold(a, 0), bold(b, 1)] for lab, a, b in comp]
+    rows += [[lab, vn(a), vn(b)] for lab, a, b in comp]
     rows += [[r"\multicolumn{3}{|l|}{\textit{Hybrid-CBCF theo cách kết hợp}}"]]
-    rows += [[lab, bold(a, 0), bold(b, 1)] for lab, a, b in fus]
+    rows += [[lab, vn(a), vn(b)] for lab, a, b in fus]
     w = hybrid_weights(hb["params"]) if hb["params"]["fusion"] == "lr" else None
     if w is not None:
         for name, x in zip(("wCont", "wUKNN", "wIKNN"), w):
@@ -647,8 +615,6 @@ def export_run(m: Macros, seeds, res) -> None:
     m.add("data", "run", "seedlist", ", ".join(map(str, seeds)))
 
 
-# Bảng kiểm định: mỗi so sánh một hàng hai dòng (dòng trên A, dòng dưới B) để bảng vừa khổ trang ở cỡ chữ \small;
-# khoảng tin cậy cũng xuống dòng (cận dưới; cận trên).
 SIG_COLS = "rlrrcrc"
 SIG_HEADER = ["\\#", r"\tbl{Mô hình A}{Mô hình B}", r"\tbc{NDCG@10}{của A, B}", "(A$-$B)/B",
               r"\tbc{CI 95\%}{của A$-$B}", "p Holm", "Kết luận"]
@@ -668,7 +634,7 @@ def sig_rows(m: Macros, sig: pd.DataFrame) -> list[list[str]]:
     return rows
 
 
-def export_supplement(m: Macros, tables: Path, sig_bs: pd.DataFrame, sup: dict, n_seed: int) -> None:
+def export_supplement(m: Macros, tables: Path, sig_bs: pd.DataFrame, sup: dict) -> None:
     """Phân tích bổ sung (audit/PREREG_bosung.md): kiểm định họ B1–B2 (Holm trong họ), thông tin lần chấm bổ sung và đối
     chiếu ba thành phần của Hybrid-CBCF với lần đánh giá cuối đã đăng ký."""
     tab, lab = TEXT["tab"], TEXT["label"]
@@ -694,19 +660,17 @@ def export_supplement(m: Macros, tables: Path, sig_bs: pd.DataFrame, sup: dict, 
 
 def export_results(m: Macros, tables: Path, seeds, summary, sig, abl, bey, display=None,
                    bey_display=None) -> None:
-    """summary, sig, abl, bey: 14 mô hình đăng ký trước (thứ hạng \\<P>Rank tính trên đây). display, bey_display: thêm mô
-    hình bổ sung (SUP, đánh dấu *) — dùng cho bảng kết quả theo ba nhóm và bảng độ phủ."""
+    """summary, sig, abl, bey: 14 mô hình đăng ký trước (thứ hạng \\<P>Rank tính trên đây). display, bey_display: thêm
+    mô hình bổ sung (SUP, đánh dấu *) — dùng cho bảng kết quả theo ba nhóm và bảng độ phủ."""
     n_seed = len(seeds)
     models = summary["model"].tolist()
     rank = {mm: i + 1 for i, mm in enumerate(models)}
     display = summary if display is None else display
     bey = bey if bey_display is None else bey_display
-    shown = display["model"].tolist()  # NDCG@10 giảm dần
+    shown = display["model"].tolist()
     by = display.set_index("model")
     tab, lab = TEXT["tab"], TEXT["label"]
 
-    # Kết quả chính, xếp theo ba nhóm mô hình đối chứng; trong nhóm theo NDCG@10 giảm dần
-    best_val = {c: by[f"{c}_mean"].max() for c in TABLE_METRICS}
     rows = []
     for gname, members in GROUPS:
         ms = [mm for mm in shown if mm in members]
@@ -718,7 +682,7 @@ def export_results(m: Macros, tables: Path, seeds, summary, sig, abl, bey, displ
             for c in TABLE_METRICS:
                 mean, sd = by.loc[mm, f"{c}_mean"], by.loc[mm, f"{c}_std"]
                 cell = vn(mean)
-                r.append(rf"\tbsd{{{cell}}}{{{vn(sd)}}}")  # độ lệch chuẩn ở dòng dưới, cùng cỡ chữ
+                r.append(rf"\tbsd{{{cell}}}{{{vn(sd)}}}")
             rows.append(r)
     for mm in shown:
         for c in METRICS:
@@ -726,7 +690,7 @@ def export_results(m: Macros, tables: Path, seeds, summary, sig, abl, bey, displ
             m.add("sd", KEY[mm], mk(c), vn(by.loc[mm, f"{c}_std"]))
         if mm in rank:
             m.add("rank", KEY[mm], "NDCG10", ORDINAL.get(rank[mm], str(rank[mm])))
-        else:  # mô hình bổ sung: thứ hạng trong toàn bộ mô hình của bảng (14 + bổ sung)
+        else:
             k = shown.index(mm) + 1
             m.add("rank", KEY[mm], "all", ORDINAL.get(k, str(k)))
     m.add("rank", "all", "n", str(len(shown)))
@@ -734,11 +698,10 @@ def export_results(m: Macros, tables: Path, seeds, summary, sig, abl, bey, displ
         f"{lab}main", f"Kết quả trên tập kiểm thử {TEXT['short']}",
         "l" + "r" * len(TABLE_METRICS),
         ["Mô hình", *[rf"\tbc{{{c.split('@')[0]}}}{{@{c.split('@')[1]}}}" for c in TABLE_METRICS]], rows,
-        colsep="5pt", size="\\footnotesize"), encoding="utf-8")  # 7 cột hai dòng: vừa khổ trang không cần thu nhỏ
+        colsep="5pt", size="\\footnotesize"), encoding="utf-8")
     m.add("data", "run", "seeds", str(n_seed))
-    models = shown  # bảng độ phủ: mọi mô hình của bảng chính
+    models = shown
 
-    # Kiểm định
     if not sig.empty:
         rows = sig_rows(m, sig)
         s_vn, s_en = family_summary(sig)
@@ -750,7 +713,6 @@ def export_results(m: Macros, tables: Path, seeds, summary, sig, abl, bey, displ
             f"{lab}sig", f"Kiểm định họ {len(sig)} so sánh trên {TEXT['short']}",
             SIG_COLS, SIG_HEADER, rows), encoding="utf-8")
 
-    # Ablation
     if not abl.empty:
         rows = []
         for _, r in abl.iterrows():
@@ -769,7 +731,6 @@ def export_results(m: Macros, tables: Path, seeds, summary, sig, abl, bey, displ
             f"{lab}ablation", f"Phân tích bóc tách NeuMF-F trên {TEXT['short']}", "lrrc",
             ["Biến thể", "NDCG@10", "Thay đổi", "CI 95\\% của hiệu"], rows), encoding="utf-8")
 
-    # Mô tả top-10 và thời gian
     b = bey.set_index("model")
     rows = []
     for mm in models:
@@ -786,8 +747,7 @@ def export_results(m: Macros, tables: Path, seeds, summary, sig, abl, bey, displ
 
 
 def export_by_k(m: Macros, tables: Path, bk: pd.DataFrame) -> None:
-    """Hai bảng theo K = 10, 15, 20 (NDCG và Recall; HR và Precision) + macro \\<P>Res{mô hình}{NDCG15}, ...
-    Thứ tự dòng như bảng kết quả chính (NDCG@10 giảm dần)."""
+    """Hai bảng theo K = 10, 15, 20 (NDCG và Recall; HR và Precision) + macro \\<P>Res{mô hình}{NDCG15}, ..."""
     if bk.empty:
         return
     by = bk.set_index("model")
@@ -799,7 +759,6 @@ def export_by_k(m: Macros, tables: Path, bk: pd.DataFrame) -> None:
     tab, lab = TEXT["tab"], TEXT["label"]
     for part, pair in ((1, ("NDCG", "Recall")), (2, ("HR", "Precision"))):
         cols = [f"{n}@{k}" for n in pair for k in K_BAOCAO]
-        best = {c: by[f"{c}_mean"].max() for c in cols}
         rows = []
         for mm in by.index:
             r = [NAME[mm] + (DAGGER if mm in SUP else "")]
@@ -820,7 +779,6 @@ def ensure(p: Path) -> Path:
     return p
 
 
-# --------------------------------------------------------------------- hình
 def vn_plain(x, nd=4):
     return f"{x:.{nd}f}".replace(".", ",")
 
@@ -922,37 +880,8 @@ def plot_ablation(abl: pd.DataFrame, fig_dir: Path):
     ax.set_title("NDCG@10", fontsize=10.5, color=INK, loc="left")
     style(ax, "x")
     ax.set_yticks(y, names, fontsize=9.5, color=INK)
-    ax.invert_yaxis()  # không đặt suptitle: chú thích LaTeX đã là tiêu đề của hình
+    ax.invert_yaxis()
     fig.savefig(fig_dir / "v2_ablation.png", dpi=200, bbox_inches="tight", facecolor=SURFACE)
-    plt.close(fig)
-
-
-CURVE_COLOR = {"neumf_f": "#2a78d6", "gmf_f": "#8fb8ea", "mlp_f": "#173f7a", "neumf": "#eb6834", "gmf": "#f2b134",
-               "mlp": "#b2462a"}
-
-
-def plot_curves(hist: pd.DataFrame, fig_dir: Path, seed: int = 42):
-    if hist.empty or "NDCG@10" not in hist:
-        return
-    h = hist[(hist["seed"] == (seed if seed in set(hist["seed"]) else hist["seed"].min())) & (hist["phase"] == "select")]
-    fig, axes = plt.subplots(1, 2, figsize=(12.5, 4.2), facecolor=SURFACE)
-    for mm, col in CURVE_COLOR.items():
-        d = h[h["model"] == mm]
-        if d.empty:
-            continue
-        axes[0].plot(d["epoch"], d["NDCG@10"], color=col, linewidth=1.8, marker="o", markersize=3, label=NAME[mm])
-        b = d.loc[d["NDCG@10"].idxmax()]
-        axes[0].scatter([b["epoch"]], [b["NDCG@10"]], s=90, facecolors="none", edgecolors=col, linewidths=1.8, zorder=3)
-        axes[1].plot(d["epoch"], d["loss"], color=col, linewidth=1.8, marker="o", markersize=3, label=NAME[mm])
-    axes[0].set_title("NDCG@10 trên tập xác thực theo epoch (vòng tròn: epoch chọn)", fontsize=10.5, color=INK,
-                      loc="left")
-    axes[1].set_title("Hàm mất mát BCE trên tập huấn luyện theo epoch", fontsize=10.5, color=INK, loc="left")
-    for ax, fmt in zip(axes, (4, 3)):
-        style(ax, "y")
-        ax.set_xlabel("Epoch", fontsize=9, color=INK2)
-        ax.xaxis.set_major_locator(MaxNLocator(integer=True))
-    axes[0].legend(loc="lower right", frameon=False, fontsize=8.5, ncol=2)
-    fig.savefig(fig_dir / "v2_curves.png", dpi=200, bbox_inches="tight", facecolor=SURFACE)
     plt.close(fig)
 
 
@@ -981,7 +910,6 @@ def plot_val_vs_test(summary: pd.DataFrame, fig_dir: Path):
     plt.close(fig)
 
 
-# ------------------------------------------------------------------ ket_qua.txt
 def text_report(seeds, summary, sig, abl, bey, info_b, bk: pd.DataFrame | None = None, sup: dict | None = None,
                 display: pd.DataFrame | None = None, sig_bs: pd.DataFrame | None = None,
                 bk_all: pd.DataFrame | None = None) -> str:
@@ -1080,7 +1008,6 @@ def text_report(seeds, summary, sig, abl, bey, info_b, bk: pd.DataFrame | None =
     return "\n".join(out) + "\n"
 
 
-# ---------------------------------------------------------------------- main
 def main():
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--final-dir", default=str(V.OUT / "final"))
@@ -1090,12 +1017,11 @@ def main():
                     help="trước đánh giá cuối: chỉ xuất bảng dữ liệu mẫu phát triển và kết quả tinh chỉnh (không đọc "
                          "mẫu kiểm định)")
     args = ap.parse_args()
-    # NDCG@10 lúc tinh chỉnh chỉ có khi tinh chỉnh trên chính bộ này (Amazon dùng cấu hình H&M: không có cột đó)
     best = json.loads(V.BEST_CONFIGS.read_text(encoding="utf-8")) if V.TUNED_HERE else {}
-    bs_path = V.BEST_CONFIGS.with_name("bosung_best_configs.json")  # mô hình bổ sung (25_bosung.py tune)
+    bs_path = V.BEST_CONFIGS.with_name("bosung_best_configs.json")
     bs_best = json.loads(bs_path.read_text(encoding="utf-8")) if V.TUNED_HERE and bs_path.exists() else {}
     if args.tuning_only:
-        if not V.TUNED_HERE:  # Amazon không tinh chỉnh: không có bảng tinh chỉnh, không được ghi đè bảng của H&M
+        if not V.TUNED_HERE:
             raise SystemExit(f"{V.NAME} không tinh chỉnh — --tuning-only chỉ dùng cho H&M")
         if not args.report_dir:
             raise SystemExit("--tuning-only ghi bảng vào báo cáo — cần --report-dir")
@@ -1107,7 +1033,7 @@ def main():
         print(f"Đã ghi bảng dữ liệu (mẫu A) và kết quả tinh chỉnh vào {tables}")
         return
     final_dir = Path(args.final_dir)
-    seeds, res, per, hist, models = load(final_dir)
+    seeds, res, per, models = load(final_dir)
 
     summary = summarize(seeds, res, models, best)
     sig = significance(user_matrix(per, models))
@@ -1121,7 +1047,6 @@ def main():
     if not bk.empty:
         bk.to_csv(final_dir / "by_k.csv", index=False)
 
-    # Phân tích bổ sung (audit/PREREG_bosung.md): bảng hiển thị gồm 14 mô hình + mô hình bổ sung; họ kiểm định riêng
     sup, sup_per, res_all = load_supplement(final_dir, seeds, res)
     models_all = models + [mm for mm in SUP if sup is not None and mm in sup["results"]]
     per_all, display, bey_all, bk_all, sig_bs = per, summary, bey, bk, pd.DataFrame()
@@ -1146,7 +1071,6 @@ def main():
     plot_metrics(res_all, seeds, display, fig_dir, n_users)
     plot_significance(sig, fig_dir)
     plot_ablation(abl, fig_dir)
-    plot_curves(hist, fig_dir)
     plot_val_vs_test(display, fig_dir)
 
     pd.set_option("display.width", 220)
@@ -1165,14 +1089,14 @@ def main():
         if V.TUNED_HERE:
             export_data(m, tables, dev_info(), info_b)
             export_tuning(m, tables, best, bs_best)
-        else:  # Amazon: một bộ dữ liệu, không tinh chỉnh
+        else:
             manifest = json.loads(V.MANIFEST.read_text(encoding="utf-8")) if V.MANIFEST.exists() else {}
             export_data_amazon(m, tables, info_b, manifest.get(V.data_name("holdout"), {}))
         export_results(m, tables, seeds, summary, sig, abl, bey, display, bey_all)
         export_by_k(m, tables, bk_all)
         export_run(m, seeds, res)
         if sup is not None:
-            export_supplement(m, tables, sig_bs, sup, len(seeds))
+            export_supplement(m, tables, sig_bs, sup)
         m.write(tables / TEXT["macros_file"])
         fig_out = ensure(report / "media" / "figures" / TEXT["subdir"])
         for f in fig_dir.glob("*.png"):

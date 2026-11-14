@@ -1,13 +1,4 @@
-"""Amazon review data 2014 (McAuley, Stanford SNAP) — dữ liệu đối chứng của đề tài (configs/amazon.yaml).
-
-- reviews_<Danh mục>_5.json.gz: mỗi dòng một JSON (reviewerID, asin, overall, unixReviewTime, ...). Mỗi đánh giá coi là
-  một tương tác ẩn khách–sản phẩm, như một giao dịch H&M (không dùng điểm sao).
-- meta_<Danh mục>.json.gz: mỗi dòng một dict Python (nháy đơn, không phải JSON — đọc bằng ast.literal_eval): title,
-  description, categories, brand, price, imUrl, ...
-
-Mã sản phẩm: asin đổi sang số nguyên = vị trí trong danh sách asin đã sắp xếp của file đánh giá (asin_list), vì đường ống
-v2 (protocol_v2) coi mã sản phẩm là số nguyên. Catalog dùng đúng thứ tự đó nên Catalog.rows(mã) = mã.
-"""
+"""Amazon review data 2014 (McAuley, Stanford SNAP) — dữ liệu đối chứng của đề tài (configs/amazon.yaml)."""
 from __future__ import annotations
 
 import ast
@@ -24,7 +15,7 @@ from ..features import Catalog, DailySales, category_codes, text_vectors, to_day
 from .base import DatasetAdapter
 
 ITEM_CAT_COLS = ["brand", "category_1", "category_2", "category_3", "price_bucket"]
-PRICE_EDGES = [5, 10, 15, 20, 30, 50, 100]  # USD: <5, 5–10, ..., 50–100, >=100; 0 = không có giá
+PRICE_EDGES = [5, 10, 15, 20, 30, 50, 100]
 ITEM_INFO_COLS = ["asin", "title", "brand", "category_1", "category_2", "category_3", "price", "imUrl"]
 _ASIN = re.compile(r"'asin': '([^']+)'")
 
@@ -95,12 +86,11 @@ def item_info(reviews_path: str | Path, meta_path: str | Path) -> pd.DataFrame:
 
 def build_features(reviews_path: str | Path, meta_path: str | Path, day0, text_dim: int = 64,
                    seed: int = 0) -> tuple[Catalog, DailySales, pd.DataFrame]:
-    """Đặc trưng của Amazon theo đúng dạng của H&M (features.py), mã sản phẩm = vị trí trong asin_list:
-    - Catalog: ITEM_CAT_COLS (thương hiệu, 3 cấp danh mục, nhóm giá; 0 = không biết) và vector văn bản (title +
-      description, cùng TF-IDF + SVD như H&M);
-    - DailySales: số đánh giá mỗi (sản phẩm, ngày) của toàn bộ file đánh giá, ngày tính từ day0 — thay cho doanh số
-      theo ngày của H&M; đặc trưng thời gian tại ngày t vẫn chỉ đọc các ngày < t;
-    - bảng thông tin sản phẩm (item_info, bỏ cột description) cho demo."""
+    """Đặc trưng của Amazon theo đúng dạng của H&M (features.py), mã sản phẩm = vị trí trong asin_list: - Catalog:
+    ITEM_CAT_COLS (thương hiệu, 3 cấp danh mục, nhóm giá; 0 = không biết) và vector văn bản (title + description,
+    cùng TF-IDF + SVD như H&M); - DailySales: số đánh giá mỗi (sản phẩm, ngày) của toàn bộ file đánh giá, ngày tính
+    từ day0 — thay cho doanh số theo ngày của H&M; đặc trưng thời gian tại ngày t vẫn chỉ đọc các ngày < t; - bảng
+    thông tin sản phẩm (item_info, bỏ cột description) cho demo."""
     r = read_reviews(reviews_path)
     info = item_info(reviews_path, meta_path)
     price = info["price"].to_numpy()

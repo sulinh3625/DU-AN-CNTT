@@ -20,7 +20,6 @@ def test_aggregate_before_kcore_counts_unique_edges():
         "source_order": np.arange(8),
     })
     agg = aggregate_unique_user_item(events)
-    # u1 has only 2 unique items, not 6 interactions as raw rows suggest.
     assert len(agg[agg.user_raw == "u1"]) == 2
     filtered = iterative_k_core(agg, 2)
     assert set(filtered.user_raw) == {"u1", "u2"}

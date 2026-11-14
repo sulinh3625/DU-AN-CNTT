@@ -18,13 +18,11 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-<!-- Chart.js 4.4.1 lưu cùng demo để chạy được khi không có mạng; phông Google Fonts thiếu mạng thì dùng Segoe UI -->
 <script src="vendor/chart.umd.min.js"></script>
 <link rel="stylesheet" href="style.css?v=6">
 </head>
 <body>
 
-<!-- Biểu tượng dùng lại (hình sản phẩm theo nhóm hàng, kết luận, tab) -->
 <svg width="0" height="0" style="position:absolute" aria-hidden="true">
   <defs>
     <symbol id="g-top" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round" d="M8.5 3.5 4 6l1.6 4 1.9-.8V20.5h9V9.2l1.9.8L20 6l-4.5-2.5c-.6 1.4-2 2.2-3.5 2.2s-2.9-.8-3.5-2.2Z"/></symbol>
@@ -74,7 +72,6 @@
 </header>
 
 <main class="wrap">
-  <!-- ============ TỔNG QUAN ============ -->
   <section id="view-overview" class="page">
     <div class="hero">
       <div class="hero-text">
@@ -100,7 +97,6 @@
     </div>
   </section>
 
-  <!-- ============ GỢI Ý THEO KHÁCH ============ -->
   <section id="view-shop" class="page hidden">
     <div class="page-head">
       <span class="eyebrow">Cửa hàng mô phỏng</span>
@@ -108,7 +104,6 @@
       <p class="lede" id="shop-lede">Chọn một khách, xem NeuMF-F và một mô hình khác khuyến nghị gì cho cùng khách đó.</p>
     </div>
 
-    <!-- Khách đang xem: thông tin, chuyển khách trước / sau trong danh sách đang lọc, chọn ngẫu nhiên, mở bảng chọn -->
     <div class="card cust-bar">
       <div class="cust-current" id="cust-current"></div>
       <div class="cust-actions">
@@ -125,7 +120,6 @@
     </div>
 
     <div class="card model-bar">
-      <!-- NeuMF-F luôn là mô hình chính; người xem chỉ chọn mô hình đặt cạnh để so sánh -->
       <div class="toolbar">
         <div class="field"><span class="lbl">Mô hình đề xuất</span><span class="fixed-model" id="ad-main">NeuMF-F</span></div>
         <span class="vs-word">so với</span>
@@ -156,13 +150,11 @@
       </section>
     </div>
 
-    <!-- Thẻ chi tiết sản phẩm: tên, loại, màu, mô tả; sản phẩm tương tự theo ItemKNN -->
     <dialog class="product" id="product" aria-label="Chi tiết sản phẩm">
       <button type="button" class="icon-btn pd-close" id="pd-close" aria-label="Đóng">✕</button>
       <div id="pd-body"></div>
     </dialog>
 
-    <!-- Bảng chọn khách: tìm theo mã khách, lọc nhóm giao dịch / khu vực, sắp xếp -->
     <dialog class="picker" id="picker" aria-label="Chọn khách hàng">
       <div class="pk-search">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
@@ -188,7 +180,6 @@
     </dialog>
   </section>
 
-  <!-- ============ KẾT QUẢ ĐÁNH GIÁ ============ -->
   <section id="view-results" class="page hidden">
     <div class="page-head">
       <span class="eyebrow" id="rs-eyebrow"></span>
@@ -198,7 +189,6 @@
     <div id="rs-body"></div>
   </section>
 
-  <!-- ============ BẢNG SỐ LIỆU ============ -->
   <section id="view-dashboard" class="page hidden">
     <div class="page-head">
       <span class="eyebrow"><a href="#/results">← Kết quả đánh giá</a></span>

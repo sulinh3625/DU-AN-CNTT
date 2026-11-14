@@ -16,8 +16,6 @@ class RandomBaseline:
     __call__ = score
 
     def score_items(self, user: int, items) -> np.ndarray:
-        # Deterministic across processes; không dùng Python built-in hash.
-        # Hash splitmix64 vector hoá — tạo default_rng cho từng item thì full ranking mất hàng giờ.
         with np.errstate(over="ignore"):
             x = (np.uint64(self.seed) * np.uint64(1000003) + np.uint64(int(user)) * np.uint64(9176)
                  + np.asarray(items, dtype=np.uint64) * np.uint64(6361))
@@ -46,8 +44,6 @@ class MostPopularBaseline:
 
 
 class BPRMFBaseline:
-    # Clip trước sigmoid để tránh overflow của np.exp(); 35 đủ lớn để
-    # sigmoid(-35) ~ 0 về mặt số học, không ảnh hưởng gradient thực tế.
     SIGMOID_CLIP = 35.0
 
     def __init__(self, n_users: int, n_items: int, embedding_dim: int = 32, seed: int = 42):
@@ -86,7 +82,6 @@ class BPRMFBaseline:
                 qi = self.Q[i].copy()
                 qj = self.Q[j].copy()
                 x = float(pu @ (qi - qj))
-                # sigmoid(-x), stable enough with clipping.
                 x = np.clip(x, -self.SIGMOID_CLIP, self.SIGMOID_CLIP)
                 grad_factor = 1.0 / (1.0 + np.exp(x))
 

@@ -1,9 +1,4 @@
-"""Dựng poster đồ án NeuMF-F trên khung mẫu Khoa CNTT TDTU (Poster.pptx).
-
-Cùng bố cục với poster khóa luận của nhóm (Khoa_luan/Report KLTN/build_poster.py). Số liệu lấy từ báo cáo
-(Chương 4, macro do scripts/24_report_v2.py sinh) và tong_hop.md mục 3-4; sửa số ở đây khi kết quả đổi.
-Chạy: python build_poster.py [đường_dẫn_ra.pptx]
-"""
+"""Dựng poster đồ án NeuMF-F trên khung mẫu Khoa CNTT TDTU (Poster.pptx)."""
 import copy
 import io
 import os
@@ -25,7 +20,6 @@ ROOT = os.path.dirname(os.path.abspath(__file__)).replace("\\", "/")
 SRC, OUT = f"{ROOT}/Poster.pptx", sys.argv[1] if len(sys.argv) > 1 else f"{ROOT}/Poster_DACNTT.pptx"
 REPO_URL = "https://github.com/sulinh3625/DU-AN-CNTT"
 
-# Bảng màu lấy từ khung nền Khoa CNTT: tím mận làm chủ đạo, cam hổ phách làm điểm nhấn
 PURPLE = RGBColor(0x4A, 0x1A, 0x45)
 ORANGE = RGBColor(0xE0, 0x81, 0x2A)
 TINT = RGBColor(0xF7, 0xF1, 0xF6)
@@ -33,7 +27,7 @@ TEXT = RGBColor(0x2A, 0x2A, 0x2A)
 MUTED = RGBColor(0x66, 0x66, 0x66)
 GREY_BAR = RGBColor(0xCD, 0xBF, 0xCB)
 WHITE = RGBColor(0xFF, 0xFF, 0xFF)
-ROSE = RGBColor(0x8E, 0x5C, 0x60)      # nâu hồng của dải băng tiêu đề trong poster mẫu
+ROSE = RGBColor(0x8E, 0x5C, 0x60)
 FONT = "Arial"
 BODY = 21
 B = {"bold": True}
@@ -41,7 +35,6 @@ B = {"bold": True}
 prs = Presentation(SRC)
 s = prs.slides[0]
 
-# 1. Bỏ nội dung đề tài cũ (bảng + hình), giữ ảnh nền và các ô tiêu đề
 for sh in list(s.shapes):
     if sh.has_table or sh.shape_type == 13:
         if sh.shape_type == 13:
@@ -49,7 +42,6 @@ for sh in list(s.shapes):
         sh._element.getparent().remove(sh._element)
 
 
-# 2. Ô tiêu đề: giữ định dạng run đầu, thay chữ
 def set_runs(shape, parts, bold=False):
     """parts: list[(text, superscript?)]. Font SVN-Gilroy của mẫu thường không có trên máy in → Arial, bỏ giãn chữ."""
     p = shape.text_frame.paragraphs[0]
@@ -68,7 +60,7 @@ def set_runs(shape, parts, bold=False):
         extra._p.getparent().remove(extra._p)
     end = p._p.find(qn("a:endParaRPr"))
     for text, sup in parts:
-        if text == "\n":  # ngắt dòng chủ động, tránh tách một cụm từ ra hai dòng
+        if text == "\n":
             br = etree.SubElement(p._p, qn("a:br"))
             br.append(copy.deepcopy(rpr))
             continue
@@ -103,7 +95,6 @@ set_runs(aff, [("1", True), (" Sinh viên ngành Mạng máy tính và Truyền 
                ("*", True), (" GVHD Khoa Công nghệ thông tin", False)])
 aff.top, aff.height = Inches(6.6), Inches(1.0)
 
-# 3. QR vào ô "Xem chi tiết" (ô trắng x 18,65–21,97; y 3,65–6,99)
 qr = qrcode.QRCode(border=1, box_size=20)
 qr.add_data(REPO_URL)
 buf = io.BytesIO()
@@ -112,7 +103,6 @@ buf.seek(0)
 s.shapes.add_picture(buf, Inches(18.96), Inches(3.97), Inches(2.7), Inches(2.7)).name = "QR kho mã nguồn"
 
 
-# ---------- tiện ích ----------
 def textbox(x, y, w, h, name):
     tb = s.shapes.add_textbox(Inches(x), Inches(y), Inches(w), Inches(h))
     tb.name = name
@@ -219,7 +209,6 @@ def chu_thich(x, y, w, text):
     add_par(tf, [(text, {"size": 15, "color": MUTED, "italic": True})], align=PP_ALIGN.CENTER, first=True)
 
 
-# ===== CỘT TRÁI: TÓM TẮT, DỮ LIỆU, KẾT QUẢ =====
 y = ribbon(XL, 8.6, "TÓM TẮT")
 _, tf = textbox(XL, y, CW, 2.9, "Tóm tắt")
 add_par(tf, "Dữ liệu mua hàng thời trang rất thưa, nên mô hình chỉ học từ mã khách và mã sản phẩm khó khuyến nghị "
@@ -241,7 +230,6 @@ y = ribbon(XL, 16.3, "KẾT QUẢ THỰC NGHIỆM")
 _, tf = textbox(XL, y, CW, 0.45, "Tên biểu đồ")
 add_par(tf, [("NDCG@10 của 14 mô hình trên tập kiểm thử H&M", {"bold": True, "size": 18})],
         align=PP_ALIGN.LEFT, first=True)
-# Báo cáo Bảng 4.4 / tong_hop.md mục 3.2; xếp tăng dần vì biểu đồ thanh vẽ mục đầu ở dưới cùng
 data = [("Random", 0.00098), ("Content", 0.00506), ("Most Popular", 0.02184), ("MLP", 0.02373),
         ("BPR-MF", 0.02661), ("GMF", 0.02695), ("MostPopular-Recent", 0.02760), ("NeuMF", 0.02783),
         ("ItemKNN", 0.02860), ("UserKNN", 0.03114), ("MLP-F", 0.03480), ("GMF-F", 0.03902),
@@ -259,7 +247,6 @@ ch_.font.name, ch_.font.size = FONT, Pt(16)
 plot = ch_.plots[0]
 plot.gap_width = 40
 ser = plot.series[0]
-# Mọi cột cùng một màu, nhãn như nhau (góp ý GVHD 09/11/2026: không tô nổi mô hình đề xuất, không dùng xám).
 for i, (name, v) in enumerate(data):
     pt = ser.points[i]
     pt.format.fill.solid()
@@ -281,10 +268,7 @@ add_par(tf, [("Trung bình 5 lần chạy, 3.165 khách. Bốn vị trí đầu 
               "LateFusion-F trộn điểm của chính hai nhánh GMF-F, MLP-F trong NeuMF-F.",
               {"size": 14, "color": MUTED, "italic": True})], align=PP_ALIGN.LEFT, first=True)
 
-# ===== CỘT PHẢI: MÔ HÌNH ĐỀ XUẤT, KẾT LUẬN =====
 y = ribbon(XR, 8.6, "MÔ HÌNH ĐỀ XUẤT: NeuMF-F")
-# Sơ đồ NeuMF-F (hình 3.4 của báo cáo) rộng hết cột cho chữ trong hình đọc được khi in; hình đã ghi đủ các khối nên
-# bỏ cột gạch đầu dòng bên cạnh
 yb = anh(f"{ROOT}/media/poster_mo_hinh.png", XR + 0.15, y + 0.15, CW - 0.3, "Sơ đồ NeuMF-F", khung=ROSE)
 y = ribbon(XR, yb + 0.5, "KẾT LUẬN")
 stats = [("+43,8%", "so với NeuMF chỉ dùng ID trên H&M", PURPLE),
@@ -309,11 +293,8 @@ bullets(XR, y, CW, 24.4 - y, "Kết luận", [
      ("cùng ngân sách tinh chỉnh, mẫu kiểm định tách rời, 5 lần chạy, kiểm định Wilcoxon và Holm.", {})]],
     size=17)
 
-# ===== HÀNG DƯỚI CẢ BỀ NGANG: DEMO (ảnh chụp ứng dụng web) =====
 Y_DEMO, H_DEMO = 24.55, 4.0
 y = ribbon(XL, Y_DEMO, "DEMO ỨNG DỤNG")
-# trang cửa hàng của demo (số liệu đã có ở phần kết quả nên không lặp lại): trái là khách ví dụ và lịch sử mua,
-# phải là đầu hai danh sách khuyến nghị NeuMF-F và NeuMF, dòng xanh là món khách mua thật sau mốc kiểm thử
 DEMO = os.path.join(os.path.dirname(ROOT), "media", "figures", "demo", "demo_v2.png")
 for ten, box, x0, nhan, chu in [
         ("poster_khach.png", (0, 0, 2428, 1195), XL, "Ảnh khách ví dụ",

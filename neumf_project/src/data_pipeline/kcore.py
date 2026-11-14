@@ -4,11 +4,7 @@ import pandas as pd
 
 
 def iterative_k_core(df: pd.DataFrame, k: int) -> pd.DataFrame:
-    """Bipartite k-core trên bảng unique user-item.
-
-    Mỗi dòng phải đại diện đúng một cạnh user-item. Lọc user và item lặp
-    đến fixed point để mọi node còn lại có degree >= k.
-    """
+    """Bipartite k-core trên bảng unique user-item."""
     if k <= 0:
         return df.copy().reset_index(drop=True)
 

@@ -29,27 +29,24 @@ import pandas as pd
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 REPO_ROOT = PROJECT_ROOT.parent
 FINAL_V2 = PROJECT_ROOT / "outputs" / "v2" / "final"
-FINAL_AMZ = PROJECT_ROOT / "outputs" / "amazon" / "final"  # kiểm chứng Amazon Beauty (audit/PREREG_amazon.md)
+FINAL_AMZ = PROJECT_ROOT / "outputs" / "amazon" / "final"
 REPORT = REPO_ROOT / "Report DACNTT"
 TABLES = REPORT / "content" / "tables"
 BEST = PROJECT_ROOT / "audit" / "v2" / "best_configs.json"
-# Phân tích bổ sung (audit/PREREG_bosung.md): mô hình lai truyền thống Hybrid-CBCF
 BS_BEST = PROJECT_ROOT / "audit" / "v2" / "bosung_best_configs.json"
 BS_LOG = PROJECT_ROOT / "audit" / "v2" / "bosung_tuning_log.csv"
-# mã mô hình của scripts/v2_common.py
-FEAT = {"late_f", "neumf_f", "gmf_f", "mlp_f"}  # mô hình có đặc trưng
+FEAT = {"late_f", "neumf_f", "gmf_f", "mlp_f"}
 NEURAL = ["neumf_f", "late_f", "gmf_f", "mlp_f", "neumf", "gmf", "mlp"]
 BASELINES = ["popularity", "recent_pop", "content", "itemknn", "userknn", "bpr"]
-COMPARED_BASELINES = ["bpr", "itemknn", "userknn", "recent_pop", "content"]  # so sánh 5–9 của họ đăng ký trước
+COMPARED_BASELINES = ["bpr", "itemknn", "userknn", "recent_pop", "content"]
 NOT_SIG, BETTER = "không khác biệt có ý nghĩa", "A tốt hơn"
 DOCS = [REPO_ROOT / "tong_hop.md", REPO_ROOT / "van_dap.md", PROJECT_ROOT / "README.md", REPO_ROOT / "README.md"]
 V2_FILES = (("summary.csv", ["model"]), ("significance.csv", ["A", "B"]),
             ("ablation.csv", ["variant"]), ("beyond.csv", ["model"]), ("by_k.csv", ["model"]))
-K_ALL = (10, 15, 20)  # K báo cáo trình bày (by_k.csv vẫn có K = 5)
+K_ALL = (10, 15, 20)
 K_METRICS = ("NDCG", "Recall", "HR", "Precision")
 
 
-# ---------------------------------------------------------------- dữ liệu
 def read_csv(name: str, committed: bool = False, root: Path = FINAL_V2, **kw) -> pd.DataFrame | None:
     if not committed:
         path = root / name
@@ -75,18 +72,16 @@ class Data:
                     None if a is None or a.empty else a.set_index("variant"),
                     None if k is None or k.empty else k.set_index("model"))
 
-        self.S2, self.G2, self.B2, self.A2, self.K2 = load(FINAL_V2)  # H&M
-        self.SA, self.GA, self.BA, self.AA, self.KA = load(FINAL_AMZ)  # Amazon Beauty
+        self.S2, self.G2, self.B2, self.A2, self.K2 = load(FINAL_V2)
+        self.SA, self.GA, self.BA, self.AA, self.KA = load(FINAL_AMZ)
         info = FINAL_V2 / "data.json"
         self.info2 = json.loads(info.read_text(encoding="utf-8")) if info.exists() else None
         self.best = json.loads(BEST.read_text(encoding="utf-8")) if BEST.exists() else None
-        # bổ sung: cấu hình chọn + nhật ký các cách kết hợp (tập xác thực), kết quả chấm bổ sung của từng bộ dữ liệu
         self.HB = json.loads(BS_BEST.read_text(encoding="utf-8")).get("hybrid") if BS_BEST.exists() else None
         log = read_csv(BS_LOG.name, root=BS_LOG.parent)
         self.HL = None if log is None else {json.loads(p)["fusion"]: v for p, v in zip(log["params"], log["val_NDCG@10"])}
         res = {r: r / "bosung" / "results.json" for r in (FINAL_V2, FINAL_AMZ)}
         self.RB2, self.RBA = (json.loads(p.read_text(encoding="utf-8")) if p.exists() else None for p in res.values())
-        # bảng 15 mô hình, họ so sánh bổ sung B1–B2 và độ phủ có Hybrid-CBCF (scripts/24_report_v2.py ghi vào bosung/)
         self.SB2, self.GB2, self.BB2, _, _ = load(FINAL_V2 / "bosung")
         self.SBA, self.GBA, self.BBA, _, _ = load(FINAL_AMZ / "bosung")
 
@@ -96,8 +91,6 @@ def order(s: pd.Series) -> list:
     return list(s.sort_values(ascending=False).index)
 
 
-# ---------------------------------------------------------- khẳng định
-# (tệp, đoạn văn bản neo để tìm dòng, mô tả, điều kiện, các nguồn dữ liệu cần có)
 def claims(d: Data):
     S2, G2, B2, A2, info, best = d.S2, d.G2, d.B2, d.A2, d.info2, d.best
     K2, SA, GA, BA, AA, KA = d.K2, d.SA, d.GA, d.BA, d.AA, d.KA
@@ -122,7 +115,6 @@ def claims(d: Data):
     time_most = lambda: abl().index[0] == "neumf_f-time"  # noqa: E731
     rho0 = lambda: best["neumf_f"]["params"].get("id_dropout") == 0  # noqa: E731
 
-    # ---- theo K (by_k.csv) và Amazon Beauty (outputs/amazon/final/)
     def by_k_order(K, metric, k):
         return order(K[f"{metric}@{k}_mean"].drop("random", errors="ignore"))
 
@@ -156,10 +148,7 @@ def claims(d: Data):
                         and all(KA.loc["neumf_f", f"{n}@{k}_mean"] > KA.loc["gmf_f", f"{n}@{k}_mean"]
                                 for n in ("Recall", "HR", "Precision") for k in (10, 15, 20)))
     a_late_top_all_k = lambda: all(by_k_order(KA, n, k)[0] == "late_f" for n in K_METRICS for k in K_ALL)  # noqa: E731
-    late_not_worse = lambda: (S2.loc["late_f", "NDCG@10_mean"] >= S2.loc["neumf_f", "NDCG@10_mean"]  # noqa: E731
-                              and SA.loc["late_f", "NDCG@10_mean"] >= SA.loc["neumf_f", "NDCG@10_mean"])
 
-    # ---- phân tích bổ sung: Hybrid-CBCF (audit/PREREG_bosung.md)
     HB, HL = d.HB, d.HL
 
     def hybrid_val_order():
@@ -170,11 +159,10 @@ def claims(d: Data):
                 and HL["lr"] == max(HL.values()) and HL["lr"] > max(parts.values()) and HB["params"]["fusion"] == "lr")
 
     def cf_weights_lead():
-        w = HB["params"]["weights"]  # Content, UserKNN, ItemKNN
+        w = HB["params"]["weights"]
         return w[1] + w[2] > w[0] and max(range(3), key=lambda i: w[i]) == 1
 
-    SB2, GB2, BB2, SBA, GBA, BBA = d.SB2, d.GB2, d.BB2, d.SBA, d.GBA, d.BBA
-    # họ so sánh bổ sung: B1 = (neumf_f, hybrid), B2 = (hybrid, userknn)
+    SB2, GB2, BB2, SBA, GBA = d.SB2, d.GB2, d.BB2, d.SBA, d.GBA
     bs = lambda G, a, b, col="verdict": G.loc[(a, b), col]  # noqa: E731
     bs_rel = lambda G, a, b: abs(bs(G, a, b, "rel_diff"))  # noqa: E731
 
@@ -185,10 +173,8 @@ def claims(d: Data):
 
     b1_both = lambda: bs(GB2, "neumf_f", "hybrid") == BETTER == bs(GBA, "neumf_f", "hybrid")  # noqa: E731
     content_ratio = lambda S: S.loc["content", "NDCG@10_mean"] / S.loc["userknn", "NDCG@10_mean"]  # noqa: E731
-    # tất cả so sánh có ý nghĩa trên H&M đều là "NeuMF-F tốt hơn"
     hm_sig_all_neumff = lambda: all(v == NOT_SIG or (v == BETTER and a == "neumf_f")  # noqa: E731
                                     for (a, _), v in G2["verdict"].items())
-    # tóm tắt: NeuMF-F hơn NeuMF, 5 baseline và Hybrid-CBCF trên cả hai bộ; ~ GMF-F; LateFusion-F cao nhất
     both_beat = lambda: (all(verdict("neumf_f", b) == BETTER == a_verdict("neumf_f", b)  # noqa: E731
                              for b in ["neumf", *COMPARED_BASELINES]) and b1_both())
     both_gmf_tie = lambda: verdict("neumf_f", "gmf_f") == NOT_SIG == a_verdict("neumf_f", "gmf_f")  # noqa: E731
@@ -196,7 +182,6 @@ def claims(d: Data):
     both_late_top = lambda: test()[0] == "late_f" == a_test()[0]  # noqa: E731
     late_hm_tie_amz_win = lambda: verdict("neumf_f", "late_f") == NOT_SIG and a_late_wins()  # noqa: E731
     return [
-        # ---- C4: kết quả trên H&M
         ("content/C4.tex", "Giá trị tuyệt đối của các độ đo thấp", "v2: NDCG@10 cao nhất < 0,05",
          lambda: S2["NDCG@10_mean"].max() < 0.05, ["S2"]),
         ("content/C4.tex", "Giá trị tuyệt đối của các độ đo thấp vì mỗi khách",
@@ -244,14 +229,12 @@ def claims(d: Data):
                   == {"gmf", "mlp", "itemknn"}
                   and set(S2.index[S2["NDCG@10_mean"] < S2["val_NDCG@10"]]) == {"gmf", "mlp"})(rank_shift()),
          ["S2"]),
-        # kiểm định họ 10 so sánh (mục 4.4.3)
         ("content/C4.tex", "NeuMF-F tốt hơn có ý nghĩa ở \\VSig{all}{nsig} so sánh",
          "v2: mọi so sánh có ý nghĩa đều là NeuMF-F tốt hơn: NeuMF, MLP-F, cả 5 baseline (nhỏ nhất UserKNN, lớn nhất "
          "Content)", lambda: hm_abstract_family() and hm_sig_all_neumff(), ["G2"]),
         ("content/C4.tex", "Ba so sánh không khác biệt có ý nghĩa",
          "v2: NeuMF-F ~ GMF-F, ~ LateFusion-F; NeuMF ~ BPR-MF",
          lambda: not_gmf_late() and verdict("neumf", "bpr") == NOT_SIG, ["G2"]),
-        # thảo luận (mục 4.8)
         ("content/C4.tex", "Trên H\\&M, NeuMF-F tốt hơn có ý nghĩa cả năm mô hình đối chứng trong họ so sánh",
          "v2: NeuMF-F tốt hơn có ý nghĩa cả 5 baseline; chênh nhỏ nhất UserKNN, lớn nhất Content",
          lambda: all(verdict("neumf_f", b) == BETTER for b in COMPARED_BASELINES)
@@ -270,7 +253,6 @@ def claims(d: Data):
          lambda: test()[0] == "late_f" and verdict("neumf_f", "late_f") == NOT_SIG, ["S2", "G2"]),
         ("content/C4.tex", "và không khác biệt có ý nghĩa với LateFusion-F", "v2: NeuMF-F tốt hơn MLP-F, không khác biệt với GMF-F "
          "và LateFusion-F", fusion, ["G2"]),
-        # ---- C5: kết luận
         ("content/C5.tex", "nhánh MLP-F và năm mô hình đối chứng trong họ so sánh",
          "v2: NeuMF-F tốt hơn có ý nghĩa NeuMF, MLP-F và cả 5 baseline", hm_abstract_family, ["G2"]),
         ("content/C5.tex", "Kết luận về vai trò của đặc trưng lặp lại trên Amazon Beauty",
@@ -288,7 +270,6 @@ def claims(d: Data):
          "bổ sung: NeuMF-F tốt hơn Hybrid-CBCF có ý nghĩa trên H&M và Amazon", b1_both, ["GB2", "GBA"]),
         ("content/C5.tex", "mô hình lai khó vượt nhân tử hoá ma trận đã được tinh chỉnh",
          "v2: NeuMF vs BPR-MF không khác biệt có ý nghĩa", lambda: verdict("neumf", "bpr") == NOT_SIG, ["G2"]),
-        # ---- tóm tắt (không chứa số liệu): một câu kết luận chung
         ("frontmatter/abstract.tex", "bổ sung đặc trưng giúp mô hình khuyến nghị tốt hơn rõ rệt so với khi chỉ dùng mã định danh",
          "NeuMF-F tốt hơn NeuMF chỉ dùng ID có ý nghĩa trên H&M và Amazon",
          lambda: verdict("neumf_f", "neumf") == BETTER == a_verdict("neumf_f", "neumf"), ["G2", "GA"]),
@@ -327,7 +308,6 @@ def claims(d: Data):
         ("content/C5.tex", "tốt hơn NeuMF gốc và các mô hình khuyến nghị truyền thống được so sánh trên hai bộ dữ liệu",
          "H&M và Amazon: NeuMF-F tốt hơn có ý nghĩa NeuMF, 5 baseline và Hybrid-CBCF", both_beat,
          ["G2", "GA", "GB2", "GBA"]),
-        # ---- theo K (H&M)
         ("content/C4.tex", "thứ tự của bốn mô hình có đặc trưng giữ nguyên",
          "theo K: ở mọi K và mọi độ đo, thứ tự đầu là LateFusion-F, NeuMF-F, GMF-F, MLP-F",
          lambda: feat_lead_all_k(K2), ["K2"]),
@@ -335,7 +315,6 @@ def claims(d: Data):
          "theo K: HR@K, Recall@K của NeuMF-F tăng, Precision@K giảm từ K = 10 đến 20", neumff_k_trend, ["K2"]),
         ("content/C4.tex", "MostPopular-Recent vượt UserKNN ở HR@15 và HR@20",
          "theo K: MostPopular-Recent cao hơn UserKNN ở HR@15, HR@20", recpop_over_uknn, ["K2"]),
-        # ---- Amazon Beauty
         ("content/C4.tex", "LateFusion-F đạt NDCG@10 cao nhất (\\ARes{LateF}{NDCG10}",
          "Amazon: LateFusion-F cao nhất, rồi GMF-F, NeuMF-F", lambda: a_test()[:3] == ["late_f", "gmf_f", "neumf_f"],
          ["SA"]),
@@ -384,7 +363,6 @@ def claims(d: Data):
         ("content/C4.tex", "Ngược với H\\&M, hợp nhất muộn LateFusion-F tốt hơn NeuMF-F có ý nghĩa",
          "NeuMF-F ~ LateFusion-F trên H&M; LateFusion-F tốt hơn có ý nghĩa trên Amazon",
          lambda: verdict("neumf_f", "late_f") == NOT_SIG and a_late_wins(), ["G2", "GA"]),
-        # ---- bổ sung: mô hình lai truyền thống
         ("content/C4.tex", "Bỏ phiếu lấy trung bình thấp hơn UserKNN đứng riêng",
          "bổ sung (tập xác thực): trung bình < UserKNN; min, max < trung bình; trọng số cao nhất, hơn mọi thành phần",
          hybrid_val_order, ["HB", "HL"]),
@@ -425,7 +403,6 @@ def claims(d: Data):
     ]
 
 
-
 def find_line(rel: str, anchor: str) -> int | None:
     path = REPORT / rel
     if not path.exists():
@@ -449,7 +426,7 @@ def check_claims(d: Data) -> tuple[int, int]:
             ok = bool(pred())
         except (KeyError, ValueError) as exc:
             ok, desc = False, f"{desc} [lỗi đọc dữ liệu: {exc}]"
-        if line is None:  # câu đã đổi: khẳng định không còn được kiểm, tính là lỗi để tóm tắt không báo "khớp"
+        if line is None:
             bad += 1
             print(f"   [CHÚ Ý] {where}: câu đã đổi — cập nhật danh sách khẳng định trong 19_check_report.py")
         elif not ok:
@@ -461,7 +438,6 @@ def check_claims(d: Data) -> tuple[int, int]:
     return bad, total
 
 
-# ------------------------------------------------------------- tái lập
 def compare_with_committed() -> dict[str, float]:
     print("1. Tái lập: so với bản đã commit (git HEAD)")
     out = {}
@@ -471,7 +447,6 @@ def compare_with_committed() -> dict[str, float]:
             print(f"   {name}: {'chưa có file mới' if new is None else 'chưa có bản commit'} — bỏ qua")
             continue
         num = [c for c in new.columns if c not in key and pd.api.types.is_numeric_dtype(new[c])]
-        # hậu tố riêng: bản commit cũ có thể có cột tên "..._old" (vd. NDCG@10_old của bản có sản phẩm mới)
         m = new.merge(old, on=key, suffixes=("", "@commit"), how="outer", indicator=True)
         if (m["_merge"] != "both").any():
             print(f"   {name}: tập dòng khác bản commit ({int((m['_merge'] != 'both').sum())} dòng lệch)")
@@ -483,7 +458,6 @@ def compare_with_committed() -> dict[str, float]:
     return out
 
 
-# ------------------------------------------------------- số chép tay
 def vn(x: float, nd: int) -> str:
     return f"{x:.{nd}f}".replace(".", ",")
 
@@ -527,7 +501,6 @@ def stale_doc_numbers() -> int:
     return hits
 
 
-# ------------------------------------------------- macro và bảng của báo cáo
 MACRO_RE = re.compile(r"\\(Res|Sig|VRes|VSd|VVal|VRank|VSig|VAbl|VBey|VData|VCfg|ARes|ASd|ARank|ASig|AAbl|ABey|AData)"
                       r"\{([^{}]*)\}\{([^{}]*)\}")
 

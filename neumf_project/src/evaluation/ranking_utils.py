@@ -4,7 +4,6 @@ import numpy as np
 
 
 def deterministic_tie_key(user: int, item_ids: np.ndarray, seed: int) -> np.ndarray:
-    # 64-bit integer mixing; stable between Python runs.
     x = item_ids.astype(np.uint64)
     x ^= np.uint64((int(user) + 1) * 0x9E3779B1)
     x ^= np.uint64((int(seed) + 1) * 0x85EBCA77)

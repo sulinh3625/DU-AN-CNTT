@@ -1,23 +1,4 @@
-"""Nạp đúng dữ liệu và checkpoint của đánh giá cuối (outputs/v2/final/seed42/, scripts/23_final_v2.py) cho demo.
-
-Dữ liệu dựng lại bằng chính scripts/v2_common.py rồi đối chiếu với data.json của lần chạy; mô hình chỉ dùng ID được bọc
-MaskedScorer/MaskedScoreFn như lúc chấm, nên số per-user khớp outputs/v2/final/seed42/per_user.csv.gz. Mô hình dùng tệp
-đặc trưng văn bản (data/processed/, mỗi máy tự dựng) chỉ khớp khi tệp này giống máy đã chạy đánh giá cuối; mỗi lần gợi ý,
-demo đối chiếu hạng tính lại với hạng đã lưu (saved_final_ranks) và hiện kèm số đã lưu khi khác. Chỉ dùng khi kết
-quả được tạo từ đúng file dữ liệu đã lọc hiện tại (data_md5 khớp outputs/data/manifest.json) — kiểm TRƯỚC khi dựng dữ
-liệu, để demo không dựng tập kiểm thử của mẫu kiểm định cho một kết quả cũ. DEMO_V2_DIR=outputs/v2/dry_run để thử với
-bản chạy thử (mẫu phát triển, tập xác thực).
-
-Một "sản phẩm" là một product_code (mọi màu của một mẫu gộp lại). Tên, loại và ảnh lấy theo biến thể có article_id nhỏ
-nhất — đúng biến thể mà features.group_by_product lấy thuộc tính.
-
-Hai bộ dữ liệu (DATASETS), chọn trên thanh đầu trang: H&M (configs/v2.yaml, outputs/v2/final/) và Amazon Beauty
-(configs/amazon.yaml, outputs/amazon/final/ — dữ liệu đối chứng, audit/PREREG_amazon.md). Cả hai chỉ nạp checkpoint
-seed 42 của đánh giá cuối, không huấn luyện lại; chưa có kết quả thì demo báo lệnh cần chạy. Amazon: một sản phẩm là
-một asin; tên, thương hiệu, danh mục, giá, ảnh lấy từ data/processed/amazon/items.csv.gz (scripts/21_build_features.py).
-
-Chỉ import hàm từ src/ và scripts/, không sửa code huấn luyện.
-"""
+"""Nạp đúng dữ liệu và checkpoint của đánh giá cuối (outputs/v2/final/seed42/, scripts/23_final_v2.py) cho demo."""
 from __future__ import annotations
 
 import html
@@ -48,7 +29,6 @@ from src.models.late_fusion import LateFusion  # noqa: E402
 V2_DIR = Path(os.environ.get("DEMO_V2_DIR", str(PROJECT_ROOT / "outputs" / "v2" / "final")))
 if not V2_DIR.is_absolute():
     V2_DIR = PROJECT_ROOT / V2_DIR
-# Bộ dữ liệu của demo: cấu hình, thư mục kết quả đánh giá cuối, chữ hiển thị.
 DATASETS = {
     "hm": dict(config="configs/v2.yaml", label="H&M", tagline="khuyến nghị thời trang", final_cmd="v2-final",
                history_note="Dataset H&M chỉ có lịch sử mua, không có lịch sử xem.",
@@ -66,32 +46,23 @@ CONFIGS = {k: V.read_config(PROJECT_ROOT / d["config"]) for k, d in DATASETS.ite
 def results_dir(dataset: str) -> Path:
     """Thư mục kết quả đánh giá cuối của bộ dữ liệu (H&M: V2_DIR, đổi được bằng DEMO_V2_DIR)."""
     return V2_DIR if dataset == "hm" else PROJECT_ROOT / CONFIGS[dataset]["out_dir"] / "final"
-SEED = 42  # 23_final_v2.py chỉ lưu checkpoint của seed 42
-# tên hiển thị -> mã mô hình trong scripts/v2_common.py
+SEED = 42
 V2_NEURAL = {"NeuMF-F": "neumf_f", "GMF-F": "gmf_f", "MLP-F": "mlp_f", "NeuMF": "neumf", "GMF": "gmf", "MLP": "mlp"}
 V2_STATIC = {"MostPopular": "popularity", "MostPopular-Recent": "recent_pop", "Content": "content",
              "ItemKNN": "itemknn", "UserKNN": "userknn"}
 V2_ORDER = ["NeuMF-F", "LateFusion-F", "GMF-F", "MLP-F", "NeuMF", "GMF", "MLP", "BPR-MF", "Hybrid-CBCF", "UserKNN",
             "ItemKNN", "MostPopular-Recent", "Content", "MostPopular"]
-# Mô hình lai truyền thống (bổ sung sau đánh giá cuối, scripts/25_bosung.py): chỉ dựng khi <kết quả>/bosung/results.json
-# đã có — tức tập kiểm thử đã được chấm cho mô hình này theo audit/PREREG_bosung.md; demo không chấm trước kế hoạch.
 HYBRID = "Hybrid-CBCF"
-BPR_CHECKPOINT = "bpr.npz"  # mảng P (users x d), Q (items x d)
+BPR_CHECKPOINT = "bpr.npz"
 ARTICLES_PATH = PROJECT_ROOT / "data" / "raw" / "hm" / "articles.csv"
 CUSTOMERS_PATH = PROJECT_ROOT / "data" / "raw" / "hm" / "customers.csv"
-# K của demo = K báo cáo trình bày (10, 15, 20; nhóm bỏ K = 5 ngày 24/10/2026). Tính trên cùng thứ hạng nên số @10/@20
-# vẫn khớp file kết quả; không sửa configs/ (cấu hình huấn luyện, đánh giá và mã băm v2 vẫn có K = 5).
 DEMO_K = (10, 15, 20)
 ARTICLE_COLUMNS = ["article_id", "product_code", "prod_name", "product_type_name", "product_group_name",
                    "index_group_name", "colour_group_name", "detail_desc"]
 
 
 def v2_data_mismatch(v2_dir: Path = V2_DIR, seed: int = SEED, cfg: dict | None = None) -> str | None:
-    """Lý do kết quả trong v2_dir không dùng được với file dữ liệu đã lọc hiện tại; None = dùng được.
-
-    So data_md5 mà 23_final_v2.py ghi vào data.json với MD5 trong outputs/data/manifest.json của đúng mẫu (bản chạy thử:
-    mẫu phát triển; đánh giá cuối: mẫu kiểm định). Gọi TRƯỚC khi dựng dữ liệu: dựng lại mẫu kiểm định kèm tập kiểm thử
-    cho một kết quả cũ là mở tập kiểm thử ngoài đánh giá cuối. cfg: cấu hình của bộ dữ liệu (mặc định của tiến trình)."""
+    """Lý do kết quả trong v2_dir không dùng được với file dữ liệu đã lọc hiện tại; None = dùng được."""
     results = json.loads((v2_dir / f"seed{seed}" / "results.json").read_text(encoding="utf-8"))
     info = json.loads((v2_dir / "data.json").read_text(encoding="utf-8"))
     sample = "dev" if str(results.get("evaluated_on", "")).startswith("dry-run") else "holdout"
@@ -105,12 +76,11 @@ def v2_data_mismatch(v2_dir: Path = V2_DIR, seed: int = SEED, cfg: dict | None =
 
 
 def unavailable_reason(dataset: str = "hm", seed: int = SEED) -> str | None:
-    """Vì sao demo chưa nạp được bộ dữ liệu (thiếu kết quả / checkpoint, hoặc kết quả của dữ liệu khác); None = nạp được.
-    Demo không huấn luyện gì: thiếu thì chỉ báo lệnh cần chạy."""
+    """Vì sao demo chưa nạp được bộ dữ liệu (thiếu kết quả / checkpoint, hoặc kết quả của dữ liệu khác); None = nạp
+    được."""
     root = results_dir(dataset)
     d = root / f"seed{seed}"
     files = [d / "results.json", root / "data.json", *(d / f"{k}.pt" for k in V2_NEURAL.values())]
-    # thư mục kết quả có thể nằm ngoài dự án (DEMO_V2_DIR, out_dir tuyệt đối): khi đó in đường dẫn đầy đủ
     missing = [(f.relative_to(PROJECT_ROOT) if f.is_relative_to(PROJECT_ROOT) else f).as_posix()
                for f in files if not f.exists()]
     if missing:
@@ -126,9 +96,7 @@ def v2_available(seed: int = SEED, dataset: str = "hm") -> bool:
 
 def saved_final_ranks(root: Path, seed: int = SEED) -> dict[tuple[str, int], list[int]]:
     """Hạng của các sản phẩm đích đã lưu ở đánh giá cuối (seed<seed>/per_user.csv.gz) và ở lần chấm bổ sung
-    (bosung/per_user.csv.gz), khoá (tên mô hình hiển thị, khách). Demo dùng để đối chiếu hạng tính lại trên máy đang
-    chạy: mô hình dùng tệp đặc trưng văn bản (data/processed/, không nằm trong git) có thể xếp khác khi tệp này được dựng
-    lại bằng phiên bản thư viện khác máy đã chạy đánh giá cuối."""
+    (bosung/per_user.csv.gz), khoá (tên mô hình hiển thị, khách)."""
     frames = [root / f"seed{seed}" / "per_user.csv.gz", root / "bosung" / "per_user.csv.gz"]
     df = pd.concat([pd.read_csv(p, usecols=["model", "seed", "user", "ranks"]) for p in frames if p.exists()],
                    ignore_index=True)
@@ -138,12 +106,12 @@ def saved_final_ranks(root: Path, seed: int = SEED) -> dict[tuple[str, int], lis
 
 
 def product_table(articles: pd.DataFrame, item_product: np.ndarray) -> pd.DataFrame:
-    """Một dòng mỗi sản phẩm (index = chỉ số item, theo item_product): cột của biến thể có article_id nhỏ nhất và số
-    màu (số biến thể) của mẫu. Sản phẩm không có trong articles thì ghi "Unknown"."""
+    """Một dòng mỗi sản phẩm (index = chỉ số item, theo item_product): cột của biến thể có article_id nhỏ nhất và số màu
+    (số biến thể) của mẫu."""
     a = articles.sort_values("article_id")
     out = a.drop_duplicates("product_code").set_index("product_code").reindex(item_product)
     out["n_colours"] = a.groupby("product_code").size().reindex(item_product, fill_value=0).to_numpy()
-    if "colour_group_name" in a:  # các màu của mẫu, theo thứ tự article_id (hiện ở thẻ chi tiết sản phẩm)
+    if "colour_group_name" in a:
         colours = a.groupby("product_code")["colour_group_name"].agg(lambda s: ", ".join(dict.fromkeys(s.dropna())))
         out["colours"] = colours.reindex(item_product).to_numpy()
     out = out.reset_index(drop=True).fillna("Unknown")
@@ -153,15 +121,15 @@ def product_table(articles: pd.DataFrame, item_product: np.ndarray) -> pd.DataFr
 
 def amazon_table(items: pd.DataFrame, item_product: np.ndarray) -> pd.DataFrame:
     """Như product_table cho Amazon (items.csv.gz của 21_build_features.py, index = mã asin): article_id = asin, tên =
-    title, loại = danh mục sâu nhất, nhóm = danh mục cấp 2, khu vực (index_group_name) = danh mục cấp 1; thêm subtitle
-    (thương hiệu · loại · giá), image_src (imUrl gốc, chỉ để demo/scripts/download_amazon_images.py tải về) và
-    image_url (ảnh do máy chủ demo phục vụ từ bản đã tải, không kéo trực tiếp từ Amazon khi demo)."""
+    title, loại = danh mục sâu nhất, nhóm = danh mục cấp 2, khu vực (index_group_name) = danh mục cấp 1; thêm
+    subtitle (thương hiệu · loại · giá), image_src (imUrl gốc, chỉ để demo/scripts/download_amazon_images.py tải về)
+    và image_url (ảnh do máy chủ demo phục vụ từ bản đã tải, không kéo trực tiếp từ Amazon khi demo)."""
     it = items.reindex(item_product)
     cat = it[["category_1", "category_2", "category_3"]].fillna("").astype(str)
     leaf = (cat["category_3"].where(cat["category_3"] != "", cat["category_2"]).where(lambda s: s != "", cat["category_1"])
             .replace("", "Beauty"))
     asin = it["asin"].fillna("").astype(str)
-    title = it["title"].fillna("").astype(str).map(html.unescape)  # tên gốc của Amazon còn thực thể HTML (&amp;)
+    title = it["title"].fillna("").astype(str).map(html.unescape)
     price = it["price"].map(lambda p: f"${p:.2f}" if pd.notna(p) else "")
     brand = it["brand"].fillna("").astype(str).map(html.unescape)
     out = pd.DataFrame({
@@ -177,19 +145,13 @@ def amazon_table(items: pd.DataFrame, item_product: np.ndarray) -> pd.DataFrame:
 
 def user_table(customer_ids: np.ndarray, target_items: dict, train_df: pd.DataFrame, articles: pd.DataFrame,
                user_age: pd.Series) -> pd.DataFrame:
-    """Danh sách chọn khách của màn hình Admin: một dòng cho mỗi khách có sản phẩm đích, index = customer_id.
-
-    Cột: số món đã mua (cặp mô hình đã học), số món đích, nhóm giao dịch theo tam phân vị số món đã mua (low / mid /
-    high, ngưỡng ở attrs["thresholds"]), khu vực mua nhiều nhất (index_group_name) kèm tỉ lệ, tuổi (customers.csv, có
-    thể thiếu), ngày mua đầu tiên / gần nhất (cột date của train_df)."""
+    """Danh sách chọn khách của màn hình Admin: một dòng cho mỗi khách có sản phẩm đích, index = customer_id."""
     users = np.array(sorted(target_items), dtype=np.int64)
     tr = train_df[train_df["user"].isin(users)]
     by_user = tr.groupby("user")
     area = pd.crosstab(tr["user"].to_numpy(), articles["index_group_name"].to_numpy()[tr["item"].to_numpy()])
     dates = by_user["date"].agg(["min", "max"]).reindex(users)
     df = pd.DataFrame({
-        # Mã ngắn dễ nhớ để chọn nhanh và tra ngược khi thuyết trình (góp ý GVHD 09/11/2026); theo thứ tự mã nội bộ nên
-        # cố định giữa các lần chạy trên cùng dữ liệu.
         "code": [f"KH{i:04d}" for i in range(1, len(users) + 1)],
         "customer_id": customer_ids[users].astype(str),
         "train_count": by_user.size().reindex(users, fill_value=0).to_numpy(),
@@ -238,12 +200,11 @@ class DataContext:
         self.customer_ids = np.asarray([str(c) for c in D.user_raw], dtype=object)
         self.user2idx = {cid: i for i, cid in enumerate(self.customer_ids)}
         self.item_product = D.item_product
-        self.records = {int(r.user): r for r in ev.records}  # đúng tập ứng viên và sản phẩm đích lúc chấm
-        self.scoreable_items = np.flatnonzero(ev.scoreable)  # sản phẩm có dữ liệu huấn luyện trước mốc
+        self.records = {int(r.user): r for r in ev.records}
+        self.scoreable_items = np.flatnonzero(ev.scoreable)
         self.train_pos = [set(int(i) for i in s) for s in ev.train_pos]
         self.target_items = {u: sorted(int(i) for i in r.positives) for u, r in self.records.items()}
         self.target_users = np.array(sorted(self.target_items), dtype=np.int64)
-        # Lịch sử hiển thị = đúng dữ liệu mô hình đã học (mọi cặp trước mốc), ngày = ngày mua đầu.
         tr = ev.train
         self.train_df = tr.assign(date=day0 + tr["day"].to_numpy().astype("timedelta64[D]"))
         self.train_item_counts = np.bincount(tr["item"].to_numpy(), minlength=self.n_items)
@@ -253,10 +214,10 @@ class DataContext:
                              "targets": len(ev.targets), "train_pairs": len(tr), "n_kept_pairs": len(D.kept),
                              "date_min": str(day0 + int(D.kept["day"].min())), "val_start": cfg["val_start"],
                              "test_start": cfg["test_start"], "k_core": cfg["k_core"]}
-        self.saved_ranks = saved_final_ranks(root, SEED)  # (mô hình, khách) -> hạng đã lưu của các sản phẩm đích
+        self.saved_ranks = saved_final_ranks(root, SEED)
 
         self.models: dict[str, torch.nn.Module] = {}
-        self.scorers: dict = {}  # mô hình không phải mạng PyTorch: tên -> đối tượng có score_items(user, items)
+        self.scorers: dict = {}
         self.unavailable: dict[str, str] = {}
         configs = results.get("configs", {})
         for name, key in V2_NEURAL.items():
@@ -314,7 +275,6 @@ class DataContext:
             return pd.Series(dtype=float)
         with CUSTOMERS_PATH.open(encoding="utf-8") as f:
             first = f.readline()
-        # Bản customers.csv trong repo có thêm dòng "Column1;..." phía trên header và phân cách bằng ';'.
         sep = ";" if ";" in first else ","
         skip = 1 if first.startswith("Column1") else 0
         cust = pd.read_csv(CUSTOMERS_PATH, sep=sep, skiprows=skip, usecols=["customer_id", "age"])
@@ -322,7 +282,6 @@ class DataContext:
         cust = cust[cust["customer_id"].isin(self.user2idx)]
         return pd.Series(cust["age"].to_numpy(dtype=float), index=cust["customer_id"].map(self.user2idx).to_numpy())
 
-    # ------------------------------------------------------------- accessors
     @property
     def available_models(self) -> list[str]:
         return [m for m in V2_ORDER if m in self.models or m in self.scorers]
@@ -344,9 +303,9 @@ class DataContext:
         return idx
 
     def record(self, u: int) -> EvalRecord:
-        """Ứng viên và sản phẩm đích của khách u: đúng record lúc chấm nếu khách có sản phẩm đích; khách có lịch sử nhưng
-        không mua món mới nào trong giai đoạn đánh giá thì ứng viên = sản phẩm có dữ liệu huấn luyện trừ món đã mua,
-        không có sản phẩm đích (vẫn gợi ý được bằng mô hình, chỉ không có gì để chấm)."""
+        """Ứng viên và sản phẩm đích của khách u: đúng record lúc chấm nếu khách có sản phẩm đích; khách có lịch sử
+        nhưng không mua món mới nào trong giai đoạn đánh giá thì ứng viên = sản phẩm có dữ liệu huấn luyện trừ món đã
+        mua, không có sản phẩm đích (vẫn gợi ý được bằng mô hình, chỉ không có gì để chấm)."""
         rec = self.records.get(int(u))
         if rec is not None:
             return rec
@@ -355,8 +314,8 @@ class DataContext:
         return EvalRecord(int(u), -1, cand, np.empty(0, dtype=np.int64))
 
     def popular_items(self, k: int) -> tuple[list[int], list[int]]:
-        """K sản phẩm phổ biến nhất cho khách mới (Most Popular): sản phẩm có dữ liệu huấn luyện xếp theo số khách đã mua
-        trước mốc, bằng nhau thì theo khoá tất định. Trả về (sản phẩm, số khách đã mua)."""
+        """K sản phẩm phổ biến nhất cho khách mới (Most Popular): sản phẩm có dữ liệu huấn luyện xếp theo số khách đã
+        mua trước mốc, bằng nhau thì theo khoá tất định."""
         items = self.scoreable_items
         counts = self.train_item_counts[items]
         order = np.lexsort((deterministic_tie_key(-1, items, self.tie_seed), -counts))[:k]
@@ -366,7 +325,7 @@ class DataContext:
         a = self.articles.iloc[int(item)]
         text = lambda col: "" if str(a.get(col, "")) in ("", "Unknown", "nan") else str(a[col])  # noqa: E731
         return {
-            "description": text("detail_desc"),  # mô tả gốc của H&M (tiếng Anh); Amazon không có
+            "description": text("detail_desc"),
             "colours": text("colours"),
             "item_idx": int(item),
             "product_code": int(self.item_product[int(item)]),
@@ -387,9 +346,10 @@ class DataContext:
 
     @cached_property
     def _item_sim(self):
-        """Ma trận top-k sản phẩm tương tự của ItemKNN đã chọn (hàng i: các sản phẩm giống i nhất); None nếu thiếu ItemKNN."""
+        """Ma trận top-k sản phẩm tương tự của ItemKNN đã chọn (hàng i: các sản phẩm giống i nhất); None nếu thiếu
+        ItemKNN."""
         knn = self.scorers.get("ItemKNN")
-        return None if knn is None else knn.fn.ST.T.tocsr()  # ST = S^T của ItemKNNBaseline
+        return None if knn is None else knn.fn.ST.T.tocsr()
 
     def similar_items(self, item: int, top: int = 6) -> list[dict] | None:
         """Sản phẩm giống `item` nhất theo ItemKNN (cosine trên tập khách đã mua), kèm độ tương đồng."""
@@ -397,7 +357,7 @@ class DataContext:
         if S is None:
             return None
         row = S[int(item)]
-        order = np.lexsort((row.indices, -row.data))[:top]  # tương đồng giảm dần, hoà thì theo chỉ số
+        order = np.lexsort((row.indices, -row.data))[:top]
         return [{**self.item_info(int(i)), "similarity": round(float(s), 4)}
                 for i, s in zip(row.indices[order], row.data[order])]
 
@@ -406,7 +366,7 @@ class DataContext:
         knn = self.scorers.get("UserKNN")
         if knn is None:
             return None
-        knn = knn.fn  # MaskedScoreFn bọc UserKNNBaseline
+        knn = knn.fn
         mine = self.train_pos[u]
         targets = set(self.target_items.get(u, []))
         out = []
@@ -414,7 +374,7 @@ class DataContext:
             v = nb["user"]
             theirs = self.train_pos[v]
             out.append({
-                "customer_id": self.customer_ids[v], "code": self.users["code"].get(self.customer_ids[v]),  # None: không có món đích
+                "customer_id": self.customer_ids[v], "code": self.users["code"].get(self.customer_ids[v]),
                 "similarity": nb["similarity"], "n_common": nb["n_common"],
                 "train_count": int(self.train_user_counts[v]),
                 "common_items": [self.item_info(i) for i in sorted(mine & theirs,

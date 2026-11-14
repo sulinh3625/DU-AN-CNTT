@@ -1,12 +1,4 @@
-"""Phần dùng chung của giao thức v2 (audit/PREREG_v2.md): nạp dữ liệu, dựng mô hình, huấn luyện, chấm điểm.
-
-Mọi mô hình được huấn luyện và đánh giá bằng cùng các hàm ở đây, cả khi tinh chỉnh (22_tune_v2.py) lẫn khi đánh giá
-cuối (23_final_v2.py). Mô hình chỉ dùng ID được bọc MaskedScorer/MaskedScoreFn: sản phẩm không có dữ liệu huấn luyện
-của giai đoạn nhận điểm -inf, tức bị xếp cuối (tập ứng viên vốn chỉ gồm sản phẩm có dữ liệu huấn luyện).
-
-Bộ dữ liệu chọn bằng biến môi trường NEUMF_CONFIG (mặc định configs/v2.yaml = H&M; configs/amazon.yaml = dữ liệu đối
-chứng Amazon Beauty, audit/PREREG_amazon.md): cùng mã, mọi đường dẫn (dữ liệu, nhật ký, kết quả) lấy từ cấu hình.
-"""
+"""Phần dùng chung của giao thức v2 (audit/PREREG_v2.md): nạp dữ liệu, dựng mô hình, huấn luyện, chấm điểm."""
 from __future__ import annotations
 
 import itertools
@@ -45,25 +37,22 @@ def read_config(path) -> dict:
 
 
 CFG = read_config(CONFIG)
-DATASET = CFG.get("dataset", "hm")  # "hm" | "amazon"
+DATASET = CFG.get("dataset", "hm")
 NAME = CFG.get("name", "H&M")
-AUDIT = PROJECT_ROOT / CFG.get("audit_dir", "audit/v2")  # nhật ký tinh chỉnh, cấu hình tốt nhất
-# Cấu hình tốt nhất dùng cho đánh giá cuối. Amazon: best_configs trỏ tới cấu hình đã chọn trên H&M — không tinh chỉnh
-# trên bộ này (TUNED_HERE = False: 22 không chạy, 23 không so mã băm với nhật ký tinh chỉnh).
+AUDIT = PROJECT_ROOT / CFG.get("audit_dir", "audit/v2")
 TUNED_HERE = "best_configs" not in CFG
 BEST_CONFIGS = PROJECT_ROOT / CFG.get("best_configs", f"{CFG.get('audit_dir', 'audit/v2')}/best_configs.json")
-OUT = PROJECT_ROOT / CFG.get("out_dir", "outputs/v2")  # checkpoint tinh chỉnh, dry_run/, final/
-DATA_DIR = PROJECT_ROOT / CFG["data_dir"]  # file dữ liệu đã lọc của scripts/02_prepare_data.py
+OUT = PROJECT_ROOT / CFG.get("out_dir", "outputs/v2")
+DATA_DIR = PROJECT_ROOT / CFG["data_dir"]
 MANIFEST = DATA_DIR / "manifest.json"
 METRICS = ["NDCG@10", "Recall@10", "HR@10", "Precision@10", "NDCG@5", "NDCG@20"]
 
 DISPLAY = {"random": "Random", "popularity": "MostPopular", "recent_pop": "MostPopular-Recent", "content": "Content",
            "itemknn": "ItemKNN", "userknn": "UserKNN", "bpr": "BPR-MF", "gmf": "GMF", "mlp": "MLP", "neumf": "NeuMF",
            "gmf_f": "GMF-F", "mlp_f": "MLP-F", "neumf_f": "NeuMF-F", "late_f": "LateFusion-F",
-           "hybrid": "Hybrid-CBCF"}  # hybrid: mô hình lai truyền thống bổ sung sau đánh giá cuối (25_bosung.py)
+           "hybrid": "Hybrid-CBCF"}
 TORCH_ID = ("gmf", "mlp", "neumf")
 TORCH_FEAT = ("gmf_f", "mlp_f", "neumf_f")
-# Ablation của NeuMF-F (cùng siêu tham số với NeuMF-F, tắt một thành phần) — chỉ mô tả.
 ABLATIONS = {"neumf_f-text": dict(use_text=False), "neumf_f-time": dict(use_time=False),
              "neumf_f-user": dict(use_user=False), "neumf_f-attr": dict(use_attr=False),
              "neumf_f-iddrop": dict(id_dropout=0.0)}
@@ -89,7 +78,7 @@ GRIDS = {
     "neumf_f": FEAT,
     "late_f": dict(w=W_GRID),
 }
-FULL_GRID = ("recent_pop", "content", "late_f")  # một tham số, thử đủ mọi giá trị của lưới
+FULL_GRID = ("recent_pop", "content", "late_f")
 _NEURAL_DEFAULT = dict(lr=1e-3, negative_ratio=4, embedding_dim=32, weight_decay=1e-6, dropout=0.2)
 DEFAULTS = {
     "recent_pop": dict(window=7), "content": dict(half_life=None),
@@ -101,8 +90,8 @@ DEFAULTS = {
     "mlp_f": {**_NEURAL_DEFAULT, "id_dropout": 0.25}, "neumf_f": {**_NEURAL_DEFAULT, "id_dropout": 0.25},
     "late_f": dict(w=0.5),
 }
-LATE_PARTS = ("gmf_f", "mlp_f")  # Late Fusion-F = trộn điểm GMF-F và MLP-F huấn luyện riêng
-HYBRID_PARTS = HYBRID_COMPONENTS  # Hybrid-CBCF = kết hợp Content, UserKNN, ItemKNN (audit/PREREG_bosung.md)
+LATE_PARTS = ("gmf_f", "mlp_f")
+HYBRID_PARTS = HYBRID_COMPONENTS
 
 
 def sample_configs(grid: dict, default: dict, n: int, seed: int = CFG.get("tuning", {}).get("grid_seed", 0)) -> list[dict]:
@@ -116,7 +105,7 @@ def sample_configs(grid: dict, default: dict, n: int, seed: int = CFG.get("tunin
 
 
 def configs_for(model: str, n: int) -> list[dict]:
-    if model not in GRIDS:  # Random, Most Popular: không có tham số
+    if model not in GRIDS:
         return [{}]
     if model in FULL_GRID:
         g = GRIDS[model]
@@ -124,10 +113,8 @@ def configs_for(model: str, n: int) -> list[dict]:
     return sample_configs(GRIDS[model], DEFAULTS[model], n)
 
 
-# ------------------------------------------------------------------ dữ liệu
 def data_name(sample: str, cfg: dict | None = None) -> str:
-    """Tên file dữ liệu đã lọc của một mẫu = tên file mẫu bỏ mọi đuôi (mau_phat_trien, mau_kiem_dinh,
-    reviews_Beauty_5)."""
+    """Tên file dữ liệu đã lọc của một mẫu = tên file mẫu bỏ mọi đuôi (mau_phat_trien, mau_kiem_dinh, reviews_Beauty_5)."""
     return Path((cfg or CFG)["samples"][sample]).name.split(".")[0]
 
 
@@ -139,7 +126,7 @@ def load_data(sample: str, with_test: bool = False, cfg: dict | None = None) -> 
     """Dựng dữ liệu của mẫu từ file đã lọc <data_dir>/<tên mẫu>.csv.gz — mọi mô hình đọc cùng file này — sau khi kiểm
     MD5 (nội dung đã giải nén) với manifest.json; không dựng lại từ dữ liệu thô. cfg: cấu hình khác CFG (demo nạp cả
     H&M lẫn Amazon trong một tiến trình)."""
-    own = cfg is None  # cấu hình của tiến trình: dùng DATA_DIR, MANIFEST của module
+    own = cfg is None
     cfg = CFG if own else cfg
     prep = "python run.py prepare" if cfg.get("dataset", "hm") == "hm" else "python run.py amazon-data"
     name = data_name(sample, cfg)
@@ -160,12 +147,12 @@ def load_data(sample: str, with_test: bool = False, cfg: dict | None = None) -> 
         if not (PROJECT_ROOT / p).exists():
             raise SystemExit(f"Thiếu {p} — chạy `{prep}` (gồm scripts/21_build_features.py) trước.")
     catalog, sales = load_catalog(PROJECT_ROOT / f["catalog"]), load_daily_sales(PROJECT_ROOT / f["sales"])
-    if cfg.get("dataset", "hm") == "hm":  # gộp mọi màu của một mẫu (product_code); Amazon: một asin là một sản phẩm
+    if cfg.get("dataset", "hm") == "hm":
         catalog, sales = group_by_product(catalog, sales)
     D = build_from_pairs(pairs, cfg["val_start"], cfg["test_start"], catalog, sales,
                          PROJECT_ROOT / f["customers"] if f.get("customers") else None, with_test=with_test,
                          day0=cfg.get("day0", DAY0))
-    if D.user_cats is None:  # không có thông tin khách (Amazon): nhánh user của NeuMF-F chỉ còn đặc trưng thời gian
+    if D.user_cats is None:
         D.user_cats, D.user_cards = np.zeros((D.n_users, 0), dtype=np.int32), []
     D.meta.update(k_core=cfg["k_core"], sample=f"{cfg['data_dir']}/{name}.csv.gz", data_md5=entry["md5"],
                   dataset=cfg.get("dataset", "hm"), content_onehot=cfg.get("content_onehot"))
@@ -195,12 +182,12 @@ def provenance() -> dict:
 
 
 CODE_FILES = ["src", "scripts/v2_common.py", "scripts/22_tune_v2.py", "scripts/02_prepare_data.py",
-              CONFIG.relative_to(PROJECT_ROOT).as_posix()]  # cấu hình đang dùng (configs/v2.yaml hoặc amazon.yaml)
+              CONFIG.relative_to(PROJECT_ROOT).as_posix()]
 
 
 def code_hash() -> str:
-    """Mã băm nội dung mã nguồn ảnh hưởng tới kết quả v2 (src/*.py, script v2, cấu hình) — truy vết được cả khi
-    chạy trước lúc commit: cùng mã băm = cùng mã nguồn."""
+    """Mã băm nội dung mã nguồn ảnh hưởng tới kết quả v2 (src/*.py, script v2, cấu hình) — truy vết được cả khi chạy
+    trước lúc commit: cùng mã băm = cùng mã nguồn."""
     import hashlib
 
     h = hashlib.sha256()
@@ -217,7 +204,6 @@ def eval_kw():
     return dict(k_values=CFG["evaluation"]["k_values"], tie_seed=CFG["evaluation"]["tie_break_seed"])
 
 
-# ---------------------------------------------------------------- mô hình
 def mlp_layers(d: int) -> list[int]:
     return [2 * d, d, d // 2, d // 4]
 
@@ -255,8 +241,8 @@ def torch_scorer(key: str, net: torch.nn.Module, stage: Stage, D: DataV2, dev) -
 
 def fit_torch(key: str, p: dict, D: DataV2, train_stage: Stage, val_stage: Stage | None, epochs: int, patience: int,
               seed: int, dev):
-    """Huấn luyện trên train_stage.train; có val_stage thì dừng sớm theo NDCG@10 của giai đoạn đó (chọn số epoch),
-    không có thì chạy đúng `epochs` epoch (huấn luyện lại trước khi đánh giá cuối)."""
+    """Huấn luyện trên train_stage.train; có val_stage thì dừng sớm theo NDCG@10 của giai đoạn đó (chọn số epoch), không
+    có thì chạy đúng `epochs` epoch (huấn luyện lại trước khi đánh giá cuối)."""
     seed_everything(seed)
     net = build_torch(key, p, D, dev)
     if is_feature(key):

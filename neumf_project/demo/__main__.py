@@ -1,6 +1,4 @@
-"""Chạy web demo:  python -m demo  (từ thư mục neumf_project/)
-
-Cổng mặc định 8000; nếu cổng đang bận (thường do một demo cũ chưa tắt) thì tự dùng cổng trống kế tiếp và in địa chỉ."""
+"""Chạy web demo: python -m demo (từ thư mục neumf_project/)"""
 import socket
 
 import uvicorn

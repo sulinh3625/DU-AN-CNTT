@@ -1,8 +1,4 @@
-"""Demo shop thời trang H&M: inference-only trên checkpoint đã huấn luyện.
-
-Chạy từ thư mục neumf_project/:
-    python -m uvicorn demo.backend.main:app --port 8000
-"""
+"""Demo shop thời trang H&M: inference-only trên checkpoint đã huấn luyện."""
 from __future__ import annotations
 
 import sys
@@ -13,8 +9,6 @@ from fastapi.staticfiles import StaticFiles
 
 from .routes import router
 
-# Như run.py: khi output bị chuyển hướng (file log, dịch vụ), Windows dùng codepage cp1258 -> print tiếng Việt lúc nạp
-# dữ liệu (data_context.py) làm hỏng request đầu tiên.
 sys.stdout.reconfigure(encoding="utf-8", errors="replace")
 sys.stderr.reconfigure(encoding="utf-8", errors="replace")
 

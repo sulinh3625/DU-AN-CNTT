@@ -1,13 +1,4 @@
-"""Tải một lần ảnh H&M của các sản phẩm demo đang dùng về demo/static/images/<3 số đầu>/<article_id>.jpg.
-
-Dùng khi không có thư mục images/ gốc của cuộc thi (copy_images.py cần HM_IMAGES_DIR) và tài khoản Kaggle chưa chấp
-nhận luật cuộc thi. Nguồn: bộ dữ liệu Kaggle tbierhance/hm-fashion-images-squared-896 — ảnh gốc của cuộc thi, đệm
-vuông 896x896. Tải từng tệp qua Kaggle API bị giới hạn (429), nên script gọi API đúng một lần để lấy đường dẫn của tệp
-zip (2,4 GB), đọc mục lục zip rồi chỉ tải phần byte của các ảnh cần (khoảng 100 MB). Cần Kaggle API đã đăng nhập
-(~/.kaggle). Chạy lại chỉ tải phần còn thiếu; sản phẩm không có ảnh thì demo vẽ ô thay thế.
-Chạy từ neumf_project/ (cần mạng):
-    python demo/scripts/download_hm_images.py
-"""
+"""Tải một lần ảnh H&M của các sản phẩm demo đang dùng về demo/static/images/<3 số đầu>/<article_id>.jpg."""
 from __future__ import annotations
 
 import argparse
@@ -73,13 +64,13 @@ def zip_url() -> tuple[str, int]:
         req = ApiDownloadDatasetRequest()
         req.owner_slug, req.dataset_slug = OWNER, SLUG
         r = k.datasets.dataset_api_client.download_dataset(req)
-    r.close()  # chỉ cần đường dẫn, không đọc thân
+    r.close()
     return r.url, int(r.headers["Content-Length"])
 
 
 def member_bytes(url: str, info: zipfile.ZipInfo) -> bytes:
     """Nội dung một mục zip: đọc local header (30 byte + tên + extra) rồi giải nén nếu cần."""
-    slack = 30 + len(info.filename.encode()) + 1024  # extra của local header có thể dài hơn bản trong mục lục
+    slack = 30 + len(info.filename.encode()) + 1024
     raw = get_range(url, info.header_offset, info.header_offset + slack + info.compress_size)
     n, m = struct.unpack("<HH", raw[26:30])
     data = raw[30 + n + m:30 + n + m + info.compress_size]
@@ -95,7 +86,7 @@ def fetch(url: str, info: zipfile.ZipInfo | None, dst: Path) -> str:
     for attempt in range(3):
         try:
             data = member_bytes(url, info)
-            if data[:3] != b"\xff\xd8\xff":  # chỉ giữ tệp JPEG thật
+            if data[:3] != b"\xff\xd8\xff":
                 return "fail"
             dst.parent.mkdir(parents=True, exist_ok=True)
             dst.with_suffix(".part").write_bytes(data)

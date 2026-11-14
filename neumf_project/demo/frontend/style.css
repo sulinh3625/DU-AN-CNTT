@@ -1,6 +1,3 @@
-/* Demo gợi ý sản phẩm — bảng màu và bố cục theo bản xem nhanh đã duyệt.
-   Một màu chính (cobalt) cho NeuMF-F và thao tác; xanh / vàng / đỏ chỉ dùng cho kết luận; ô sản phẩm màu pastel theo nhóm
-   hàng. Mọi màu là biến: chế độ sáng ở :root, chế độ tối ở [data-theme="dark"] (index.html đặt trước khi vẽ trang). */
 :root {
   --bg: #f5f6fb; --surface: #ffffff; --surface-2: #eef1f8; --ink: #11141f; --muted: #5c6378; --line: #e2e5ee;
   --accent: #3150f5; --accent-ink: #ffffff; --accent-soft: #e7ecff; --bar: #eb6834;
@@ -51,12 +48,10 @@ p { margin: 0; }
 .missing { background: var(--warn-soft); color: var(--warn); border-radius: 10px; padding: 10px 14px; font-size: 14px; font-weight: 600; }
 .card { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding: 20px; box-shadow: var(--shadow); min-width: 0; }
 
-/* ---------- Thanh trên ---------- */
 header { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 20; background: color-mix(in srgb, var(--bg) 85%, transparent); backdrop-filter: saturate(1.4) blur(12px); -webkit-backdrop-filter: saturate(1.4) blur(12px); border-bottom: 1px solid var(--line); }
 body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-area-inset-top, 0px); z-index: 21; background: var(--bg); }
 .top { display: flex; align-items: center; gap: 10px 18px; flex-wrap: wrap; padding-block: 12px 4px; }
 .brand { display: flex; align-items: center; gap: 10px; font-weight: 800; font-size: 15px; letter-spacing: -0.01em; text-decoration: none; }
-/* Logo nhóm (Double L, dùng chung với demo khóa luận): huy hiệu nhiều chi tiết nên để lớn hơn chữ */
 .brand-logo { width: 52px; height: 52px; flex: none; border-radius: 50%; }
 .brand small { display: block; font-weight: 500; font-size: 12px; color: var(--muted); letter-spacing: 0; }
 .tools { margin-left: auto; display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
@@ -85,7 +80,6 @@ main { padding-block: 30px 56px; }
 footer { border-top: 1px solid var(--line); }
 footer .wrap { padding-block: 18px; display: flex; gap: 8px 24px; flex-wrap: wrap; justify-content: space-between; font-size: 13px; color: var(--muted); }
 
-/* ---------- Nút, ô nhập ---------- */
 .btn { border: 1px solid transparent; border-radius: 999px; padding: 8px 16px; font-weight: 700; font-size: 14px; cursor: pointer; background: var(--accent); color: var(--accent-ink); }
 .btn:hover { filter: brightness(1.06); }
 .btn.ghost { background: var(--surface); color: var(--ink); border-color: var(--line); }
@@ -117,11 +111,9 @@ select:focus, input[type=text]:focus { border-color: var(--accent); outline: non
 .tag.head { background: var(--warn-soft); color: var(--warn); }
 .step { display: inline-grid; place-items: center; width: 24px; height: 24px; margin-right: 8px; border-radius: 50%; background: var(--accent); color: var(--accent-ink); font-size: 12px; font-weight: 800; vertical-align: 2px; }
 
-/* ---------- Ô sản phẩm ---------- */
 .tile { width: 40px; height: 40px; border-radius: 10px; display: grid; place-items: center; flex: none; }
 .tile svg { width: 24px; height: 24px; }
 
-/* ---------- Tổng quan ---------- */
 .hero { display: grid; grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr); gap: 32px; align-items: center; }
 @media (max-width: 880px) { .hero { grid-template-columns: 1fr; } }
 .hero-text { display: grid; gap: 14px; }
@@ -164,9 +156,7 @@ select:focus, input[type=text]:focus { border-color: var(--accent); outline: non
 .outcome p { font-size: 14px; }
 .outcome .note { margin-top: 2px; }
 
-/* ---------- Kết quả đánh giá ---------- */
 #rs-body { display: grid; gap: 24px; }
-/* NeuMF-F so với từng mô hình: tên, hai thanh NDCG@10, giá trị, chênh lệch, kết luận kiểm định */
 .cmp-head { display: flex; justify-content: space-between; align-items: baseline; gap: 8px 16px; flex-wrap: wrap; margin-bottom: 10px; }
 .cmp-head h2 { margin: 0; }
 .me-score { font-size: 14px; color: var(--muted); }
@@ -207,7 +197,6 @@ select:focus, input[type=text]:focus { border-color: var(--accent); outline: non
 .abl .fill { background: var(--bad); }
 .abl .a.unsure .fill { background: var(--bar); }
 
-/* ---------- Gợi ý theo khách: thanh khách ---------- */
 .cust-bar { display: flex; align-items: center; gap: 16px 24px; flex-wrap: wrap; }
 .cust-current { display: flex; align-items: center; gap: 14px; flex: 1 1 460px; min-width: 0; }
 .cust-info { min-width: 0; flex: 1; }
@@ -235,7 +224,6 @@ select:focus, input[type=text]:focus { border-color: var(--accent); outline: non
 .model-bar .note:not(:empty) { margin-top: 10px; }
 .case-note { padding: 12px 16px; border-radius: 12px; background: var(--info-soft); color: var(--info); font-size: 14px; font-weight: 500; }
 
-/* ---------- Gợi ý theo khách: bảng chọn khách ---------- */
 dialog.picker { width: min(760px, calc(100vw - 24px)); height: min(640px, calc(100vh - 96px)); margin: 7vh auto auto; padding: 0; border: 1px solid var(--line); border-radius: 18px; background: var(--surface); color: var(--ink); box-shadow: var(--shadow-lg); overflow: hidden; }
 dialog.picker[open] { display: flex; flex-direction: column; }
 dialog.picker::backdrop { background: rgba(10, 12, 20, .45); backdrop-filter: blur(3px); }
@@ -263,7 +251,6 @@ dialog.picker::backdrop { background: rgba(10, 12, 20, .45); backdrop-filter: bl
   .pk-foot span:last-child, .pk-item .badge, .btn kbd { display: none; }
 }
 
-/* ---------- Gợi ý theo khách: kết quả ---------- */
 #ad-history-note { margin-bottom: 10px; }
 .scroll { max-height: 640px; overflow-y: auto; }
 .verdict { display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap; margin-bottom: 10px; padding: 8px 12px; border-radius: 10px; font-size: 13px; background: var(--surface-2); color: var(--muted); }
@@ -279,7 +266,6 @@ dialog.picker::backdrop { background: rgba(10, 12, 20, .45); backdrop-filter: bl
 #ad-answer h3 { margin-bottom: 8px; }
 .cid { font: 12px var(--mono); word-break: break-all; color: var(--muted); }
 
-/* ---------- Bảng số liệu ---------- */
 table { border-collapse: collapse; width: 100%; font-size: 13px; font-variant-numeric: tabular-nums; }
 th, td { padding: 7px 9px; border-bottom: 1px solid var(--line); text-align: right; }
 th:first-child, td:first-child { text-align: left; }
@@ -312,7 +298,6 @@ canvas { max-height: 320px; }
 }
 .mc { color: var(--mc); }
 
-/* ---------- Cửa hàng mô phỏng ---------- */
 .shop { display: grid; gap: 20px; }
 .shop.loading { opacity: .55; pointer-events: none; }
 .shelf-head { display: flex; justify-content: space-between; align-items: center; gap: 8px 16px; flex-wrap: wrap; margin-bottom: 14px; }
@@ -340,7 +325,6 @@ canvas { max-height: 320px; }
 .recs-row + .recs-row { margin-top: 20px; padding-top: 18px; border-top: 1px dashed var(--line); }
 .recs-head { display: flex; align-items: center; gap: 8px 10px; flex-wrap: wrap; margin-bottom: 12px; font-size: 16px; }
 #sh-reveal[aria-pressed="true"] { background: var(--surface-2); color: var(--ink); }
-/* Hai cột so sánh: NeuMF-F bên trái, mô hình so sánh bên phải, cùng thứ hạng nằm cùng hàng */
 .recs-cols { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
 @media (max-width: 760px) { .recs-cols { grid-template-columns: 1fr; } }
 .recs-col { border: 1px solid var(--line); border-top: 4px solid var(--bar); border-radius: 14px; padding: 14px; background: var(--surface); }
@@ -355,7 +339,6 @@ canvas { max-height: 320px; }
 .prow .pth .tile { width: 100%; height: 100%; border-radius: 0; }
 .prow .pth .tile svg { width: 26px; height: 26px; }
 .prow .pth img { width: 100%; height: 100%; object-fit: contain; background: #fff; }
-/* Ảnh H&M chụp trên nền xám nhạt: khung thừa cùng màu thay vì hai dải trắng (Amazon nền trắng, giữ #fff). */
 :root[data-ds="hm"] :is(.pimg, .pd-img, .prow .pth, .items li) img { background: #eaeaea; }
 .prow .t { display: grid; min-width: 0; }
 .prow .pname { -webkit-line-clamp: 1; }

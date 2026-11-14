@@ -38,8 +38,7 @@ def positive_ranks(scores, record: EvalRecord, tie_seed: int):
 
 def evaluate_v2(scorer, records, device="cpu", tie_seed: int = 2026, k_values=K_VALUES,
                 per_user: list | None = None, topk: dict | None = None, max_k: int = 20):
-    """scorer: nn.Module (gọi (users, items)) hoặc đối tượng có score_items(user, items).
-    Trả về dict trung bình theo người dùng "{NDCG,HR,Recall,Precision}@K" và "users" = số người dùng được chấm."""
+    """scorer: nn.Module (gọi (users, items)) hoặc đối tượng có score_items(user, items)."""
     if isinstance(scorer, torch.nn.Module):
         all_scores = _torch_scores(scorer, records, device)
     else:
@@ -49,7 +48,7 @@ def evaluate_v2(scorer, records, device="cpu", tie_seed: int = 2026, k_values=K_
         ranks, ordered = positive_ranks(scores, rec, tie_seed)
         row = {"user": int(rec.user), "n_candidates": len(rec.candidates), "n_positives": len(ranks),
                "ranks": ";".join(map(str, ranks))}
-        for k in k_values if len(ranks) else ():  # người dùng không có sản phẩm đúng: không tính vào trung bình
+        for k in k_values if len(ranks) else ():
             m = multi_ranking_metrics(ranks, k)
             for n in NAMES:
                 acc[f"{n}@{k}"].append(m[n])

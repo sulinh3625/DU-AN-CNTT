@@ -266,7 +266,7 @@ neumf_project/
 │   └── evaluation/      xếp hạng toàn bộ, độ đo; v2.py (chấm theo kế hoạch đánh giá)
 ├── scripts/      xem bảng dưới
 ├── audit/        bằng chứng thực nghiệm đã commit (bảng dưới)
-├── outputs/      data/ (manifest dữ liệu đã lọc), v2/tuning/ (checkpoint tinh chỉnh), v2/final/ (kết quả H&M),
+├── outputs/      data/ (manifest dữ liệu đã lọc), v2/final/ (kết quả H&M; v2-tune ghi lại checkpoint vào v2/tuning/),
 │                 amazon/ (dữ liệu đã lọc và kết quả Amazon)
 ├── demo/         web demo
 ├── tests/

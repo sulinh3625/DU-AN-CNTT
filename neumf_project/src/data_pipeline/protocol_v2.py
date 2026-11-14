@@ -1,21 +1,4 @@
-"""Giao thức đánh giá v2 (audit/PREREG_v2.md).
-
-Khác giao thức cũ:
-1. Lọc k-core chỉ trên các cặp (user, item) có lần mua đầu TRƯỚC mốc kiểm thử — không dùng thông tin của giai đoạn
-   kiểm thử để chọn dữ liệu.
-2. Mỗi giai đoạn (xác thực: mốc val_start; kiểm thử: mốc test_start) có:
-   - tập huấn luyện = các cặp đã lọc k-core có ngày mua đầu < mốc cắt;
-   - sản phẩm "chấm được" (scoreable) = sản phẩm có ít nhất một cặp huấn luyện;
-   - ứng viên của một người dùng = sản phẩm chấm được, trừ sản phẩm người dùng đã mua trước mốc;
-   - sản phẩm đúng = các cặp mua lần đầu trong cửa sổ sau mốc cắt của người dùng đã có lịch sử, sản phẩm chấm được.
-   Sản phẩm chưa có người mua trước mốc cắt không nằm trong tập ứng viên lẫn đáp án.
-
-Dữ liệu đi qua một file chung để mọi mô hình đọc cùng dữ liệu (scripts/02_prepare_data.py, kiểm bằng MD5):
-- prepare_pairs: sự kiện theo schema DatasetAdapter -> mọi cặp đã gộp kèm cờ in_kcore (không riêng H&M);
-- save_pairs / load_pairs: ghi / đọc file cặp, cùng dữ liệu ra cùng bytes;
-- build_from_pairs: file cặp + catalog/doanh số đã gộp theo sản phẩm -> DataV2.
-build_v2 làm cả ba bước trong bộ nhớ cho H&M (HMAdapter, gộp màu theo product_code).
-"""
+"""Giao thức đánh giá v2 (audit/PREREG_v2.md)."""
 from __future__ import annotations
 
 import gzip
@@ -42,13 +25,13 @@ PAIR_COLUMNS = ["user_id", "item_id", "first_day", "in_kcore"]
 @dataclass
 class Stage:
     name: str
-    cutoff: int  # chỉ số ngày của mốc cắt
-    train: pd.DataFrame  # user, item, day, sample_weight
+    cutoff: int
+    train: pd.DataFrame
     train_pos: list
-    scoreable: np.ndarray  # bool [n_items]
-    targets: pd.DataFrame  # user, item, day — cặp mua lần đầu trong cửa sổ đánh giá
+    scoreable: np.ndarray
+    targets: pd.DataFrame
     records: list[EvalRecord]
-    user_time: np.ndarray  # float32 [n_users, USER_TIME_DIM] tại mốc cắt
+    user_time: np.ndarray
 
     @property
     def pool(self) -> np.ndarray:
@@ -59,13 +42,13 @@ class Stage:
 class DataV2:
     n_users: int
     n_items: int
-    n_id_items: int  # = n_items: mọi sản phẩm đều có cặp trong dữ liệu đã lọc k-core
+    n_id_items: int
     user_raw: np.ndarray
-    item_product: np.ndarray  # mã sản phẩm theo chỉ số item (H&M: product_code, int64)
-    kept: pd.DataFrame  # mọi cặp đã lọc k-core (trước mốc kiểm thử)
+    item_product: np.ndarray
+    kept: pd.DataFrame
     item_cats: np.ndarray
     item_text: np.ndarray
-    item_cum: np.ndarray  # doanh số cộng dồn toàn H&M [n_items, n_days + 1]
+    item_cum: np.ndarray
     item_first_day: np.ndarray
     item_cards: list
     user_cats: np.ndarray | None
@@ -79,12 +62,8 @@ class DataV2:
 
 
 def prepare_pairs(events: pd.DataFrame, test_start: str, k_core: int, item_map=None, day0=DAY0) -> pd.DataFrame:
-    """Mọi cặp (khách, sản phẩm) đã gộp từ sự kiện theo schema DatasetAdapter (user_raw, item_raw, timestamp,
-    value_raw, source_order), cột PAIR_COLUMNS, sắp xếp ổn định theo (user_id, item_id).
-
-    item_map (nếu có) đổi mã sản phẩm TRƯỚC khi gộp cặp — với H&M là product_code_of: hai màu của cùng một mẫu do một
-    khách mua chỉ còn một cặp, first_day là lần mua sớm nhất. k-core lặp chỉ trên các cặp có ngày mua đầu < test_start;
-    in_kcore = cặp nằm trong kết quả k-core. first_day tính từ day0 (to_day)."""
+    """Mọi cặp (khách, sản phẩm) đã gộp từ sự kiện theo schema DatasetAdapter (user_raw, item_raw, timestamp, value_raw,
+    source_order), cột PAIR_COLUMNS, sắp xếp ổn định theo (user_id, item_id)."""
     if item_map is not None:
         events = events.assign(item_raw=item_map(events["item_raw"]))
     agg = aggregate_unique_user_item(events)
@@ -163,8 +142,8 @@ def build_from_pairs(pairs: pd.DataFrame, val_start: str, test_start: str, catal
 
 def build_v2(sample_path: str | Path, val_start: str, test_start: str, k_core: int, catalog: Catalog,
              sales: DailySales, customers_path: str | Path | None = None, with_test: bool = False) -> DataV2:
-    """H&M trong bộ nhớ: HMAdapter -> prepare_pairs (gộp màu theo product_code) -> build_from_pairs. catalog, sales
-    là bản theo article_id (cache của 21_build_features.py); hàm tự gộp theo sản phẩm."""
+    """H&M trong bộ nhớ: HMAdapter -> prepare_pairs (gộp màu theo product_code) -> build_from_pairs. catalog, sales là
+    bản theo article_id (cache của 21_build_features.py); hàm tự gộp theo sản phẩm."""
     pairs = prepare_pairs(HMAdapter(sample_path).load_events(), test_start, k_core, item_map=product_code_of)
     data = build_from_pairs(pairs, val_start, test_start, *group_by_product(catalog, sales), customers_path,
                             with_test=with_test)
@@ -177,7 +156,7 @@ def make_stage(name: str, cutoff: int, window_end: int, kept: pd.DataFrame, pair
     train = kept[kept["day"] < cutoff].reset_index(drop=True)
     scoreable = np.zeros(data.n_items, dtype=bool)
     scoreable[train["item"].unique()] = True
-    pool = scoreable  # tập ứng viên: chỉ sản phẩm có cặp huấn luyện trước mốc cắt
+    pool = scoreable
     users = np.unique(train["user"].to_numpy())
     t = pairs[(pairs["day"] >= cutoff) & (pairs["day"] < window_end) & pairs["user"].isin(users)]
     targets = t[pool[t["item"].to_numpy()]][["user", "item", "day"]].reset_index(drop=True)

@@ -1,8 +1,5 @@
 """Chuyển các biểu tượng Tabler (media/tabler/*.svg, giấy phép MIT, https://tabler.io/icons) sang PNG 256 px có nền
-trong suốt, mỗi biểu tượng hai màu: xanh của slide và trắng. PNG ghi vào media/icons/<tên>_<màu>.png.
-Vẽ SVG bằng Microsoft Edge chạy ngầm (có sẵn trên Windows), rồi cắt từng ô bằng Pillow.
-Chạy: python tao_bieu_tuong.py
-"""
+trong suốt, mỗi biểu tượng hai màu: xanh của slide và trắng."""
 import subprocess
 import tempfile
 from pathlib import Path

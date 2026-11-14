@@ -1,9 +1,4 @@
-"""Copy ảnh H&M của các sản phẩm demo đang dùng (biến thể đại diện của mỗi product_code) sang demo/static/images.
-
-Cấu trúc ảnh gốc: <HM_IMAGES_DIR>/<3 chữ số đầu>/<article_id 10 chữ số>.jpg
-Chạy từ neumf_project/:
-    HM_IMAGES_DIR=/path/to/h-and-m/images python demo/scripts/copy_images.py
-"""
+"""Copy ảnh H&M của các sản phẩm demo đang dùng (biến thể đại diện của mỗi product_code) sang demo/static/images."""
 from __future__ import annotations
 
 import argparse

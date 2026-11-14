@@ -1,5 +1,5 @@
 """Khoá tập kiểm thử (src/utils/io.py, dùng trong scripts/23_final_v2.py): kế hoạch phải đã commit; mỗi lần chấm tập
-kiểm thử ghi một dòng audit/test_access_log.csv. Phần còn lại của khoá: tests/test_v2_final.py."""
+kiểm thử ghi một dòng audit/test_access_log.csv."""
 from __future__ import annotations
 
 import csv

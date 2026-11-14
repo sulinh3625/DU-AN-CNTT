@@ -57,12 +57,12 @@ def _script(name: str, file: str):
     return mod
 
 
-F = _script("final_v2", "23_final_v2.py")  # khoá kiểm thử, thông tin máy, cột per_user, độ phủ — dùng chung
-T = _script("tune_v2", "22_tune_v2.py")  # ghi / đọc nhật ký tinh chỉnh
+F = _script("final_v2", "23_final_v2.py")
+T = _script("tune_v2", "22_tune_v2.py")
 
 MODEL = "hybrid"
 PREREG = V.PROJECT_ROOT / "audit" / "PREREG_bosung.md"
-BEST = V.BEST_CONFIGS.with_name("bosung_best_configs.json")  # audit/v2/ — Amazon dùng đúng file của H&M
+BEST = V.BEST_CONFIGS.with_name("bosung_best_configs.json")
 LOG = V.AUDIT / "bosung_tuning_log.csv"
 RUN_TAG = f"bosung_hybrid_{V.DATASET}"
 NAMES = [V.DISPLAY[MODEL], *(V.DISPLAY[k] for k in COMPONENTS)]
@@ -92,7 +92,6 @@ def provenance() -> dict:
     return {**V.provenance(), "feature_md5": {k: file_md5(f[k]) for k in ("catalog", "sales")}}
 
 
-# ------------------------------------------------------------------ tinh chỉnh
 def tune(args) -> None:
     if not V.TUNED_HERE:
         raise SystemExit(f"{V.NAME} không tinh chỉnh — dùng cách kết hợp chọn trên H&M ({BEST.name}, "
@@ -113,8 +112,6 @@ def tune(args) -> None:
     print(f"[{V.NAME}] mẫu phát triển, tập xác thực: {len(st.records):,} người dùng, {len(st.targets):,} cặp đúng | "
           f"thành phần {comps} | code {prov['code_hash']} "
           f"({time.time() - t0:.0f}s)", flush=True)
-    # Ba thành phần đứng riêng trên cùng máy, cùng tệp đặc trưng (min–max không đổi thứ tự): để đặt cạnh các cách kết
-    # hợp; Content có thể lệch nhẹ so với lần tinh chỉnh đã đăng ký (PREREG_bosung mục 3).
     parts = {}
     for j, k in enumerate(COMPONENTS):
         res = V.evaluate(Precomputed(st.records, [x[:, j] for x in feats]), st, "cpu")
@@ -125,7 +122,7 @@ def tune(args) -> None:
     for cid, fusion in enumerate(FUSIONS):
         t1 = time.time()
         p = {"fusion": fusion}
-        if fusion == "lr":  # số xác thực: khớp chéo theo khách; trọng số lưu lại: học trên toàn bộ tập xác thực
+        if fusion == "lr":
             scores, w_fold = crossfit_scores(feats, labels, users)
             p["weights"] = [round(float(x), 6) for x in fit_weights(feats, labels)]
             print(f"    trọng số theo phần: {({f: np.round(w, 4).tolist() for f, w in w_fold.items()})}", flush=True)
@@ -154,7 +151,6 @@ def tune(args) -> None:
           f"({(time.time() - t0) / 60:.1f} phút)", flush=True)
 
 
-# ------------------------------------------------------------------ đánh giá cuối
 def opened_tags() -> set[str]:
     if not F.TEST_LOG.exists():
         return set()

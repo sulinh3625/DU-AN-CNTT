@@ -1,6 +1,6 @@
 """Dữ liệu đã lọc của giao thức v2 (protocol_v2.prepare_pairs / build_from_pairs, scripts/02_prepare_data.py): gộp màu
-theo product_code, ứng viên và đáp án chỉ gồm sản phẩm có cặp huấn luyện, xuất file tất định, đọc lại có kiểm MD5, dựng
-từ file khớp với build_v2 dựng trực tiếp. Chỉ dùng dữ liệu tổng hợp nhỏ, mã sản phẩm dạng thật của H&M."""
+theo product_code, ứng viên và đáp án chỉ gồm sản phẩm có cặp huấn luyện, xuất file tất định, đọc lại có kiểm MD5,
+dựng từ file khớp với build_v2 dựng trực tiếp."""
 from __future__ import annotations
 
 import importlib.util
@@ -25,7 +25,7 @@ prep = importlib.util.module_from_spec(_spec)
 _spec.loader.exec_module(prep)
 V = prep.V
 
-VAL, TEST, K = "2018-11-19", "2018-12-09", 2  # ngày 60 và 80 kể từ 2018-09-20
+VAL, TEST, K = "2018-11-19", "2018-12-09", 2
 
 
 def _day(d: int) -> str:
@@ -34,8 +34,7 @@ def _day(d: int) -> str:
 
 def _hm_sample(path: Path, seed: int = 0) -> tuple[Catalog, DailySales]:
     """Ghi mẫu H&M giả (như transactions_train.csv): 40 khách, 26 mẫu × 2 màu, 100 ngày; mẫu cuối (109700) chỉ bán từ
-    ngày 61 (trong cửa sổ xác thực); khách "zz" chỉ mua trong cửa sổ kiểm thử. Trả về catalog và doanh số theo
-    article_id."""
+    ngày 61 (trong cửa sổ xác thực); khách "zz" chỉ mua trong cửa sổ kiểm thử."""
     rng = np.random.default_rng(seed)
     articles = np.array([(108775 + 37 * p) * 1000 + c for p in range(26) for c in (15, 44)], dtype=np.int64)
     buys = [(int(rng.integers(0, 100)), f"u{u:02d}", int(rng.choice(articles[:-2])))
@@ -53,28 +52,26 @@ def _hm_sample(path: Path, seed: int = 0) -> tuple[Catalog, DailySales]:
     return Catalog(articles, cats, [3] * 11, text), DailySales(counts, first)
 
 
-# ------------------------------------------------------------------ dựng dữ liệu
 def test_prepare_pairs_merges_two_colours_into_one_pair():
-    # khách u mua màu 044 ngày 9 (dòng đầu của file) rồi màu 015 ngày 3 -> một cặp (u, 108775), ngày mua đầu = 3
     ev = pd.DataFrame({"user_raw": ["u", "u", "v"], "item_raw": ["0108775044", "0108775015", "0108775015"],
                        "timestamp": pd.to_datetime([_day(9), _day(3), _day(5)]), "value_raw": 0.01,
                        "source_order": [0, 1, 2]})
     pairs = prepare_pairs(ev, TEST, 1, item_map=product_code_of)
     assert pairs.columns.tolist() == ["user_id", "item_id", "first_day", "in_kcore"]
     assert pairs[["user_id", "item_id", "first_day"]].values.tolist() == [["u", 108775, 3], ["v", 108775, 5]]
-    assert len(prepare_pairs(ev, TEST, 1)) == 3  # không có item_map: mỗi màu là một sản phẩm
+    assert len(prepare_pairs(ev, TEST, 1)) == 3
 
 
 def test_candidates_and_targets_only_items_with_training_pairs(tmp_path):
     cat, sales = _hm_sample(tmp_path / "s.csv")
     data = build_v2(tmp_path / "s.csv", VAL, TEST, K, cat, sales, with_test=True)
-    assert "zz" not in set(data.user_raw)  # khách chỉ mua trong cửa sổ kiểm thử không có trong dữ liệu
+    assert "zz" not in set(data.user_raw)
     assert data.n_items == data.n_id_items
-    late = data.item_product == 109700  # có trong k-core nhưng chưa có cặp nào trước mốc xác thực
+    late = data.item_product == 109700
     assert late.sum() == 1 and not data.val.scoreable[late].any() and data.test.scoreable[late].all()
     for st in (data.val, data.test):
         has_train = np.zeros(data.n_items, dtype=bool)
-        has_train[st.train["item"].to_numpy()] = True  # có ít nhất 1 cặp huấn luyện trước mốc cắt
+        has_train[st.train["item"].to_numpy()] = True
         assert (st.train["day"] < st.cutoff).all() and np.array_equal(st.scoreable, has_train)
         assert np.array_equal(st.pool, np.flatnonzero(st.scoreable))
         assert st.records and st.scoreable[st.targets["item"].to_numpy()].all()
@@ -85,12 +82,10 @@ def test_candidates_and_targets_only_items_with_training_pairs(tmp_path):
         def score_items(self, user, items):
             return np.asarray(items, dtype=float)
 
-    # Stage.new (luôn toàn False) và chỉ số _old/_new đã bỏ khỏi evaluate_v2: không còn sản phẩm mới nào để tách nhóm.
     res = evaluate_v2(ByIndex(), data.test.records)
     assert np.isfinite(res["NDCG@10"]) and res["users"] == len(data.test.records)
 
 
-# ------------------------------------------------------------- file dữ liệu
 def test_export_twice_gives_same_bytes_and_md5(tmp_path):
     _hm_sample(tmp_path / "s.csv")
     out = [tmp_path / d / "mau.csv.gz" for d in ("a", "b")]
@@ -107,14 +102,14 @@ def test_load_data_rejects_missing_file_and_md5_mismatch(tmp_path, monkeypatch):
     _hm_sample(tmp_path / "s.csv")
     monkeypatch.setattr(V, "DATA_DIR", tmp_path)
     monkeypatch.setattr(V, "MANIFEST", tmp_path / "manifest.json")
-    with pytest.raises(SystemExit, match="run.py prepare"):  # chưa chạy prepare
+    with pytest.raises(SystemExit, match="run.py prepare"):
         V.load_data("dev")
     name = V.data_name("dev")
     entry = {**prep.export(tmp_path / "s.csv", tmp_path / f"{name}.csv.gz", TEST, K),
              "k_core": V.CFG["k_core"], "test_start": V.CFG["test_start"]}
     with pytest.raises(ValueError, match="MD5"):
         load_pairs(tmp_path / f"{name}.csv.gz", "0" * 32)
-    for bad in ({"md5": "0" * 32}, {"k_core": V.CFG["k_core"] + 1}):  # file bị sửa / manifest lọc với tham số khác
+    for bad in ({"md5": "0" * 32}, {"k_core": V.CFG["k_core"] + 1}):
         (tmp_path / "manifest.json").write_text(json.dumps({name: {**entry, **bad}}), encoding="utf-8")
         with pytest.raises(SystemExit, match="run.py prepare"):
             V.load_data("dev")
@@ -134,20 +129,20 @@ def test_prepare_again_keeps_manifest_when_only_commit_differs(tmp_path, monkeyp
         return json.loads(V.MANIFEST.read_text(encoding="utf-8"))["s"]
 
     first, second = run("a", True), run("b", False)
-    assert second == {**first, "git_commit": "b", "git_dirty": False}  # mục cũ từ mã chưa commit -> ghi lại
-    assert run("c", True) == second  # chỉ khác commit -> giữ mục cũ: chạy lại không làm đổi manifest
+    assert second == {**first, "git_commit": "b", "git_dirty": False}
+    assert run("c", True) == second
 
 
 def test_tune_refuses_log_from_other_data(tmp_path, monkeypatch):
     spec = importlib.util.spec_from_file_location("tune_v2", ROOT / "scripts" / "22_tune_v2.py")
     tune = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(tune)
-    (tmp_path / "tuning_log.csv").write_text("model,params,code_hash\npopularity,{},abc\n",  # trước khi có data_md5
+    (tmp_path / "tuning_log.csv").write_text("model,params,code_hash\npopularity,{},abc\n",
                                              encoding="utf-8")
     monkeypatch.setattr(tune, "CKPT", tmp_path / "ckpt")
     monkeypatch.setattr(V, "load_data", lambda *a, **k: SimpleNamespace(meta={"data_md5": "x"}))
     monkeypatch.setattr(sys, "argv", ["22_tune_v2.py", "--resume", "--log-dir", str(tmp_path)])
-    with pytest.raises(SystemExit, match="1 dòng tinh chỉnh trên dữ liệu khác"):  # dừng trước khi bỏ qua / huấn luyện
+    with pytest.raises(SystemExit, match="1 dòng tinh chỉnh trên dữ liệu khác"):
         tune.main()
 
 

@@ -1,5 +1,4 @@
-"""Đọc file kết quả của scripts/24_report_v2.py (outputs/v2/final/ hoặc outputs/amazon/final/) cho dashboard. Không tính lại, không có số mặc định:
-thiếu file thì trả status "missing" kèm lệnh cần chạy."""
+"""Đọc file kết quả của scripts/24_report_v2.py (outputs/v2/final/ hoặc outputs/amazon/final/) cho dashboard."""
 from __future__ import annotations
 
 import json
@@ -36,10 +35,7 @@ def _by_k(df: pd.DataFrame) -> pd.DataFrame:
 
 def dashboard(ctx) -> dict:
     m = ctx.run_metadata
-    # Phân tích bổ sung (scripts/24_report_v2.py ghi bosung/*.csv): bảng gồm 14 mô hình + mô hình lai truyền thống (cột
-    # supplementary) — có thì dùng thay bảng của 14 mô hình; kiểm định họ bổ sung B1–B2 là một khối riêng.
     bs = "bosung/" if (ctx.results_dir / "bosung" / "summary.csv").exists() else ""
-    # by_k.csv (24_report_v2.py, tính từ hạng đã lưu) có đủ K; demo hiện K = 10, 15, 20; kết quả cũ chưa có thì dùng summary.csv
     by_k_file = "by_k.csv" if (ctx.results_dir / "by_k.csv").exists() else "summary.csv"
     if bs and (ctx.results_dir / bs / by_k_file).exists():
         by_k_file = bs + by_k_file

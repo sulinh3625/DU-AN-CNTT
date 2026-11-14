@@ -22,3 +22,6 @@ texput.log
 __pycache__/
 *.pyc
 graphify-out/cache/.gfy-*.tmp
+
+# file khoá của Word/PowerPoint/Excel khi đang mở
+~$*

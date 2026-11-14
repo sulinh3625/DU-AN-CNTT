@@ -1,12 +1,4 @@
-"""Late fusion — hợp nhất ở mức quyết định/điểm dự đoán (Hồ Thị Linh, 2023, mục 1.1.2.2; Atrey et al., 2010).
-
-    p = F(h_A(u, i), h_B(u, i)),   F = w · minmax(điểm A) + (1 − w) · minmax(điểm B)
-
-Hai mô hình thành phần được huấn luyện RIÊNG; min-max lấy trên tập ứng viên của từng user (đưa hai thang điểm về
-[0, 1]); w chọn trên validation. Với A = GMF (MF) và B = MLP (DNN) đây là late fusion MF + DNN dùng đúng hai thành
-phần của NeuMF — NeuMF là early fusion của cùng hai nhánh (nối vector rồi một lớp dự đoán, học chung).
-w = 1 cho đúng thứ hạng của A, w = 0 cho đúng thứ hạng của B.
-"""
+"""Late fusion — hợp nhất ở mức quyết định/điểm dự đoán (Hồ Thị Linh, 2023, mục 1.1.2.2; Atrey et al., 2010)."""
 from __future__ import annotations
 
 import numpy as np

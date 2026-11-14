@@ -34,7 +34,7 @@ def test_report_claims_hold_on_committed_results(data):
             continue
         try:
             ok = pred()
-        except (KeyError, ValueError) as exc:  # cột không còn trong file kết quả: câu trong báo cáo đã lỗi thời
+        except (KeyError, ValueError) as exc:
             ok, desc = False, f"{desc} [{exc!r}]"
         if not ok:
             failed.append(desc)
@@ -54,7 +54,6 @@ def test_report_claims_detect_changed_results(data):
 
 
 def test_check_flags_missing_generated_tables_and_figures(tmp_path, monkeypatch):
-    # Lệnh \bangketqua (bảng v1) đã bỏ khỏi preamble của báo cáo; bảng sinh tự động dùng \bangketquaV (content/tables/v2/).
     report = tmp_path / "report"
     tables = report / "content" / "tables"
     (tables / "v2").mkdir(parents=True)

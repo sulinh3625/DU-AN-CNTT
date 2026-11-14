@@ -13,7 +13,6 @@ class EvalRecord:
     user: int
     positive_item: int
     candidates: np.ndarray
-    # Chia theo mốc thời gian chung: user có thể có nhiều item đúng. None = chỉ positive_item.
     positive_items: np.ndarray | None = None
 
     @property
@@ -24,11 +23,7 @@ class EvalRecord:
 
 
 def build_full_ranking_records_multi(eval_df, n_items: int, seen_positive_sets, item_pool=None) -> list[EvalRecord]:
-    """Một record cho mỗi user, gom mọi item đúng của user trong eval_df.
-
-    candidates = item trong item_pool (mặc định: mọi item) trừ item đã thấy (seen);
-    luôn giữ đủ các item đúng.
-    """
+    """Một record cho mỗi user, gom mọi item đúng của user trong eval_df."""
     all_items = np.arange(n_items, dtype=np.int64)
     pool = np.ones(n_items, dtype=bool)
     if item_pool is not None:
@@ -75,11 +70,7 @@ def _append(metrics, ranks, k_values, include_redundant):
 @torch.no_grad()
 def evaluate_torch_model(model, records, k_values, device="cpu", batch_size=16384, tie_seed=2026, include_redundant=False, return_topk=False,
                          per_user: list | None = None):
-    """Evaluate PyTorch model with flattened batched scoring.
-
-    Tránh gọi model một lần cho từng user; toàn bộ candidate pairs được flatten
-    rồi score theo batch lớn, sau đó cắt lại theo offsets để tính rank từng user.
-    """
+    """Evaluate PyTorch model with flattened batched scoring."""
     model.eval()
     metrics = _empty_metric_lists(k_values, include_redundant)
     max_k = max(k_values)
@@ -124,8 +115,8 @@ def evaluate_torch_model(model, records, k_values, device="cpu", batch_size=1638
 
 def evaluate_score_function(score_fn, records, k_values, tie_seed=2026, include_redundant=False, return_topk=False,
                             per_user: list | None = None):
-    """score_fn(user, item) -> float; nếu có thêm score_fn.score_items(user, items)
-    thì chấm điểm cả candidate set một lần (vector hoá, nhanh hơn nhiều)."""
+    """score_fn(user, item) -> float; nếu có thêm score_fn.score_items(user, items) thì chấm điểm cả candidate set một
+    lần (vector hoá, nhanh hơn nhiều)."""
     metrics = _empty_metric_lists(k_values, include_redundant)
     max_k = max(k_values)
     recommendations = {} if return_topk else None

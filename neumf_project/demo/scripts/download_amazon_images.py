@@ -1,10 +1,4 @@
-"""Tải một lần ảnh Amazon Beauty của các sản phẩm demo đang dùng về demo/static/images/amazon/<asin>.jpg.
-
-Sau khi tải, demo phục vụ ảnh từ máy (qua /api/image/<asin>?dataset=amazon), không kéo trực tiếp từ Amazon lúc trình
-bày. Ảnh nào tải lỗi thì demo vẽ ô thay thế. Chạy lại chỉ tải phần còn thiếu.
-Chạy từ neumf_project/ (cần mạng):
-    python demo/scripts/download_amazon_images.py
-"""
+"""Tải một lần ảnh Amazon Beauty của các sản phẩm demo đang dùng về demo/static/images/amazon/<asin>.jpg."""
 from __future__ import annotations
 
 import argparse
@@ -32,7 +26,7 @@ def fetch(asin: str, url: str, timeout: float) -> str:
         try:
             with urllib.request.urlopen(urllib.request.Request(u, headers=HEADERS), timeout=timeout) as r:
                 data = r.read()
-            if data[:3] == b"\xff\xd8\xff":  # chỉ giữ tệp JPEG thật
+            if data[:3] == b"\xff\xd8\xff":
                 tmp = dst.with_suffix(".part")
                 tmp.write_bytes(data)
                 tmp.replace(dst)

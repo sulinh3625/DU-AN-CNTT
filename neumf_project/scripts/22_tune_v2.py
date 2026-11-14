@@ -37,7 +37,7 @@ CKPT = V.OUT / "tuning"
 
 def log_row(path: Path, row: dict) -> None:
     new = not path.exists()
-    if not new:  # nhật ký cũ thiếu/thừa cột (vd. trước khi có data_md5) -> ghi nối sẽ lệch cột
+    if not new:
         with path.open(encoding="utf-8") as f:
             header = next(csv.reader(f), [])
         if header != list(row):
@@ -73,7 +73,7 @@ def main():
     t0 = time.time()
     D = V.load_data("dev", with_test=False)
     other = [r for r in logged(log_path) if r.get("data_md5") != D.meta["data_md5"]]
-    if other:  # nhật ký của dữ liệu khác (vd. trước bản cuối): --resume sẽ bỏ qua nhầm, best_configs.json cũng cũ
+    if other:
         raise SystemExit(f"{log_path} có {len(other)} dòng tinh chỉnh trên dữ liệu khác (data_md5) — chuyển "
                          f"tuning_log.csv và best_configs.json trong {log_dir} sang chỗ khác rồi chạy lại.")
     st, dev, seed = D.val, V.device(), V.CFG["tuning"]["seed"]
@@ -115,7 +115,7 @@ def main():
                   f"{row['time_s']:.0f}s", flush=True)
             if state is not None and model in V.LATE_PARTS:
                 prev = best.get(model, {}).get("val", {}).get("NDCG@10", -1.0)
-                if metrics["NDCG@10"] > prev:  # giữ checkpoint của cấu hình tốt nhất cho Late Fusion-F
+                if metrics["NDCG@10"] > prev:
                     torch.save(state, CKPT / f"{model}_best.pt")
                     best[model] = dict(params=p, val={k: metrics[k] for k in V.METRICS}, best_epoch=best_epoch)
                     best_path.write_text(json.dumps(best, indent=2, ensure_ascii=False), encoding="utf-8")

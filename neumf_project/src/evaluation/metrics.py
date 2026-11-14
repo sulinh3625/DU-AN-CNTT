@@ -20,11 +20,7 @@ def recall_at_k(rank: int, k: int) -> float:
 
 
 def multi_ranking_metrics(ranks, k: int) -> dict[str, float]:
-    """HR/NDCG/Precision/Recall@k khi user có nhiều item đúng (relevance nhị phân).
-
-    ranks: rank (1-based) của từng item đúng. Với 1 item đúng các giá trị trùng
-    đúng hr_at_k / ndcg_at_k / precision_at_k / recall_at_k.
-    """
+    """HR/NDCG/Precision/Recall@k khi user có nhiều item đúng (relevance nhị phân)."""
     ranks = [int(r) for r in ranks]
     hits = [r for r in ranks if r <= k]
     idcg = sum(1.0 / math.log2(i + 1) for i in range(1, min(k, len(ranks)) + 1))

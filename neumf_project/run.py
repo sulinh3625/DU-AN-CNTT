@@ -44,21 +44,17 @@ import time
 from datetime import timedelta
 from pathlib import Path
 
-# Console Windows mặc định dùng codepage (vd. cp1258) không encode được tiếng Việt -> crash khi in --help hoặc thông báo
-# lỗi. Ép UTF-8 cho tiến trình này và các script con; line_buffering + PYTHONUNBUFFERED để dòng tiến trình và output của
-# script con ra đúng thứ tự, kể cả khi ghi ra file log.
 sys.stdout.reconfigure(encoding="utf-8", errors="replace", line_buffering=True)
 sys.stderr.reconfigure(encoding="utf-8", errors="replace")
 _ENV = {**os.environ, "PYTHONIOENCODING": "utf-8", "PYTHONUNBUFFERED": "1"}
 
 ROOT = Path(__file__).resolve().parent
-CONFIGS = {"hm": "configs/v2.yaml", "amazon": "configs/amazon.yaml"}  # NEUMF_CONFIG của script con (v2_common.py)
+CONFIGS = {"hm": "configs/v2.yaml", "amazon": "configs/amazon.yaml"}
 
 
 def _amazon(args) -> bool:
     return str(getattr(args, "command", "")).startswith("amazon")
 
-# Màu chỉ khi in ra terminal (tắt bằng biến môi trường NO_COLOR); os.system("") bật mã màu ANSI trên console Windows cũ.
 _COLOR = sys.stdout.isatty() and "NO_COLOR" not in os.environ
 if _COLOR and os.name == "nt":
     os.system("")
@@ -74,8 +70,8 @@ def _s(script: str, *args) -> list[str]:
 
 
 def _show(step: list[str], config: str = CONFIGS["hm"]) -> str:
-    """Dòng lệnh để in và chạy lại tay (tham số có dấu cách đặt trong ngoặc kép; Amazon: kèm NEUMF_CONFIG, cú pháp
-    bash / Git Bash)."""
+    """Dòng lệnh để in và chạy lại tay (tham số có dấu cách đặt trong ngoặc kép; Amazon: kèm NEUMF_CONFIG, cú pháp bash
+    / Git Bash)."""
     env = "" if config == CONFIGS["hm"] else f"NEUMF_CONFIG={config} "
     return env + "python " + " ".join(f'"{a}"' if " " in a or not a else a for a in step)
 
@@ -84,11 +80,9 @@ def _hms(seconds: float) -> str:
     return str(timedelta(seconds=round(seconds)))
 
 
-# ------------------------------------------------------------------ chạy các bước
 def run_steps(name: str, steps: list[list[str]], config: str = CONFIGS["hm"]) -> int:
-    """Chạy lần lượt các bước với NEUMF_CONFIG=config, in thanh tiến trình trước mỗi bước; dừng ở bước lỗi đầu tiên.
-    Trả về mã thoát."""
-    n, t0, done = len(steps), time.monotonic(), []  # done: (giây, mã thoát; None = bị ngắt)
+    """Chạy lần lượt các bước với NEUMF_CONFIG=config, in thanh tiến trình trước mỗi bước; dừng ở bước lỗi đầu tiên."""
+    n, t0, done = len(steps), time.monotonic(), []
     env = {**_ENV, "NEUMF_CONFIG": config}
     show = lambda step: _show(step, config)  # noqa: E731
     for i, step in enumerate(steps, 1):
@@ -106,7 +100,7 @@ def run_steps(name: str, steps: list[list[str]], config: str = CONFIGS["hm"]) ->
         print(_c(f"✓ bước {i}/{n} xong sau {_hms(done[-1][0])}", "32"))
 
     ok = len(done) == n and done[-1][1] == 0
-    if n > 1 or not ok:  # bảng tóm tắt
+    if n > 1 or not ok:
         state = "xong" if ok else "DỪNG"
         print(_c(f"\n━━ {name}: {state} sau {_hms(time.monotonic() - t0)}", "1;32" if ok else "1;31"))
         for i, step in enumerate(steps, 1):
@@ -125,7 +119,6 @@ def run_steps(name: str, steps: list[list[str]], config: str = CONFIGS["hm"]) ->
     return 130 if rc is None else rc
 
 
-# ------------------------------------------------------------------ các lệnh: trả về danh sách bước
 def cmd_sample_hm(args):
     return [_s("00_sample_hm.py", "--block", args.block)]
 
@@ -139,8 +132,8 @@ def cmd_check_report(args):
 
 
 def cmd_v2_data(args):
-    """Mẫu kiểm định (khối 2, khách khác hẳn mẫu phát triển), đặc trưng danh mục/doanh số theo ngày, rồi file dữ liệu
-    đã lọc của mọi mẫu."""
+    """Mẫu kiểm định (khối 2, khách khác hẳn mẫu phát triển), đặc trưng danh mục/doanh số theo ngày, rồi file dữ liệu đã
+    lọc của mọi mẫu."""
     return [_s("00_sample_hm.py", "--block", 2), _s("21_build_features.py"), _s("02_prepare_data.py")]
 
 
@@ -211,7 +204,6 @@ COMMANDS = {
     "amazon-bosung-final": cmd_bosung_final,
 }
 
-# ------------------------------------------------------------------ menu
 MENU = (
     ("Dữ liệu (chạy 1 lần, cần dữ liệu gốc H&M)", ("sample-hm", "v2-data", "prepare")),
     ("Huấn luyện và đánh giá (giao thức v2)",
@@ -222,7 +214,6 @@ MENU = (
      ("bosung-tune", "bosung-dry-run", "bosung-final", "amazon-bosung-final")),
     ("Khác", ("demo",)),
 )
-# chấm tập kiểm thử: menu hỏi lại, mặc định Không (all --final cũng vậy)
 OPENS_TEST = ("v2-final", "amazon-final", "bosung-final", "amazon-bosung-final")
 
 
@@ -245,7 +236,7 @@ def menu(sub) -> list[str] | None:
     p = sub.choices[name]
     print("\n" + p.format_help())
     argv = [name]
-    for a in p._actions:  # tham số bắt buộc (vd. --reason): hỏi riêng từng cái
+    for a in p._actions:
         if a.required:
             argv += [a.option_strings[0], input(f"{a.option_strings[0]} — {a.help}: ").strip()]
     try:
@@ -306,7 +297,7 @@ def main():
             return
     args = parser.parse_args(argv)
     steps = COMMANDS[args.command](args)
-    if len(steps) > 1 or interactive:  # xem trước các bước
+    if len(steps) > 1 or interactive:
         print(_c(f"▶ {args.command}: {len(steps)} bước", "1"))
         for i, step in enumerate(steps, 1):
             print(f"  {i}. {_show(step, CONFIGS['amazon' if _amazon(args) else 'hm'])}")
@@ -325,6 +316,6 @@ def main():
 if __name__ == "__main__":
     try:
         main()
-    except (KeyboardInterrupt, EOFError):  # Ctrl+C / Ctrl+Z lúc đang ở menu
+    except (KeyboardInterrupt, EOFError):
         print()
         sys.exit(130)

@@ -29,10 +29,10 @@ class Table:
 
 def test_features_are_minmax_on_the_candidate_set():
     h = TraditionalHybrid([Table([[1, 2, 3, 5]]), Table([[0, 0, 4, 2]]), Table([[7, 7, 7, 7]])], "mean")
-    x = h.features(0, [0, 1, 3])  # chuẩn hoá trên chính tập ứng viên, không phải trên mọi sản phẩm
+    x = h.features(0, [0, 1, 3])
     assert np.allclose(x[:, 0], [0, 0.25, 1])
     assert np.allclose(x[:, 1], [0, 0, 1])
-    assert np.allclose(x[:, 2], 0)  # điểm như nhau -> không mang thông tin
+    assert np.allclose(x[:, 2], 0)
     assert np.allclose(h.score_items(0, [0, 1, 3]), x.mean(axis=1))
 
 
@@ -45,7 +45,7 @@ def test_four_fusions():
     with pytest.raises(ValueError):
         combine(x, "vote")
     with pytest.raises(ValueError):
-        TraditionalHybrid([Table([[0]])] * 3, "lr")  # cách 'lr' cần trọng số
+        TraditionalHybrid([Table([[0]])] * 3, "lr")
 
 
 def _synthetic(n_users=60, n_items=80, seed=1):
@@ -65,10 +65,10 @@ def test_pairwise_weights_rank_informative_components_and_are_deterministic():
     feats, labels = _synthetic()
     w = fit_weights(feats, labels)
     assert w[1] > w[2] > abs(w[0])
-    assert np.array_equal(w, fit_weights(feats, labels))  # mẫu âm rút bằng seed cố định
+    assert np.array_equal(w, fit_weights(feats, labels))
     X, y = pair_differences(feats, labels, n_neg=5)
     assert X.shape == (2 * 60 * 3 * 5, 3) and y.sum() == len(y) // 2
-    assert np.allclose(X[: len(X) // 2], -X[len(X) // 2:])  # mỗi cặp có cả hai chiều
+    assert np.allclose(X[: len(X) // 2], -X[len(X) // 2:])
 
 
 def test_crossfit_scores_use_weights_learned_on_other_users():
@@ -80,7 +80,6 @@ def test_crossfit_scores_use_weights_learned_on_other_users():
     assert np.allclose(scores[0], feats[0] @ w[0]) and np.allclose(scores[1], feats[1] @ w[1])
 
 
-# ------------------------------------------------------------------ 25_bosung.py: khoá kiểm thử
 def _load(name, file):
     spec = importlib.util.spec_from_file_location(name, ROOT / "scripts" / file)
     mod = importlib.util.module_from_spec(spec)
@@ -114,11 +113,11 @@ def test_bosung_lock_passes_and_overrides_are_explicit(monkeypatch):
     monkeypatch.setattr(bosung, "opened_tags", lambda: set())
     hb, ok = {"code_hash": "abc"}, {"code_hash": "abc"}
     assert bosung.lock_errors(_args(), ok, hb) == []
-    if bosung.V.TUNED_HERE:  # H&M: mã nguồn phải trùng lúc tinh chỉnh
+    if bosung.V.TUNED_HERE:
         assert bosung.lock_errors(_args(), {"code_hash": "khac"}, hb)
         assert bosung.lock_errors(_args(allow_code_change=True), {"code_hash": "khac"}, hb) == []
-    monkeypatch.setattr(bosung, "opened_tags", lambda: {bosung.RUN_TAG})  # đã mở tập kiểm thử với run_tag này
+    monkeypatch.setattr(bosung, "opened_tags", lambda: {bosung.RUN_TAG})
     assert bosung.lock_errors(_args(), ok, hb)
     assert bosung.lock_errors(_args(allow_rerun=True), ok, hb) == []
-    monkeypatch.setattr(bosung, "prereg_committed", lambda p: p != bosung.BEST)  # kết quả tinh chỉnh chưa commit
+    monkeypatch.setattr(bosung, "prereg_committed", lambda p: p != bosung.BEST)
     assert any("chưa commit" in e for e in bosung.lock_errors(_args(allow_rerun=True), ok, hb))

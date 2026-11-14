@@ -26,20 +26,19 @@ def _sales(counts: np.ndarray) -> DailySales:
     return DailySales(c, first)
 
 
-# ---------------------------------------------------------------- đặc trưng
 def test_item_time_features_use_only_days_before_t():
     counts = np.zeros((2, 20), dtype=np.int64)
-    counts[0, 5], counts[0, 10] = 3, 100  # bán ngày 5 và ngày 10
+    counts[0, 5], counts[0, 10] = 3, 100
     ds = _sales(counts)
     cum = ds.cumulative(np.arange(2))
     f10 = item_time_features(cum, ds.first_day, np.array([0]), 10)[0]
-    assert np.isclose(f10[0], np.log1p(3) / 10)  # 7 ngày trước ngày 10 = ngày 3..9: chỉ 3 giao dịch của ngày 5
+    assert np.isclose(f10[0], np.log1p(3) / 10)
     f11 = item_time_features(cum, ds.first_day, np.array([0]), 11)[0]
-    assert np.isclose(f11[0], np.log1p(103) / 10)  # 100 giao dịch của ngày 10 chỉ được thấy từ ngày 11
-    assert np.isclose(f10[3], np.log1p(5) / 10)  # tuổi sản phẩm: bán lần đầu ngày 5
-    new = item_time_features(cum, ds.first_day, np.array([1]), 10)[0]  # sản phẩm chưa từng bán
+    assert np.isclose(f11[0], np.log1p(103) / 10)
+    assert np.isclose(f10[3], np.log1p(5) / 10)
+    new = item_time_features(cum, ds.first_day, np.array([1]), 10)[0]
     assert new[-1] == 1.0 and np.allclose(new[:-1], 0.0)
-    launch = item_time_features(cum, ds.first_day, np.array([0]), 5)[0]  # đúng ngày ra mắt: chưa có doanh số
+    launch = item_time_features(cum, ds.first_day, np.array([0]), 5)[0]
     assert launch[-1] == 1.0 and np.allclose(launch[:-1], 0.0)
 
 
@@ -53,46 +52,44 @@ def test_user_time_features_strictly_before_day():
 
 
 def test_group_by_product_merges_colour_variants():
-    ids = np.array([108775015, 108775044, 110065001], dtype=np.int64)  # hai màu của mẫu 108775 và một mẫu khác
-    cats = (np.arange(33, dtype=np.int32).reshape(3, 11) % 7) + 1  # thuộc tính khác nhau giữa các biến thể
+    ids = np.array([108775015, 108775044, 110065001], dtype=np.int64)
+    cats = (np.arange(33, dtype=np.int32).reshape(3, 11) % 7) + 1
     cards = list(range(10, 21))
     text = np.array([[0.6, 0.8, 0, 0], [0, 0, 0, 1], [0, 0, 0, 0]], dtype=np.float32)
     counts = np.zeros((3, 10), dtype=np.int64)
-    counts[0, 4], counts[1, 2], counts[1, 4] = 2, 1, 3  # 108775015 bán ngày 4; 108775044 bán ngày 2 và 4
+    counts[0, 4], counts[1, 2], counts[1, 4] = 2, 1, 3
     cat, ds = group_by_product(Catalog(ids, cats, cards, text), _sales(counts))
     assert cat.article_ids.tolist() == [108775, 110065]
     assert ds.counts.dtype == np.int32 and ds.counts.toarray().tolist() == [(counts[0] + counts[1]).tolist(),
                                                                             counts[2].tolist()]
-    assert ds.first_day.tolist() == [2, 10]  # ngày bán đầu sớm nhất của các màu; 10 = chưa từng bán
+    assert ds.first_day.tolist() == [2, 10]
     colour = [ITEM_CAT_COLS.index(c) for c in COLOUR_COLS]
     other = [k for k in range(len(ITEM_CAT_COLS)) if k not in colour]
     assert cat.cats.shape == (2, len(ITEM_CAT_COLS)) and (cat.cats[:, colour] == 0).all()
     assert [cat.cardinalities[k] for k in colour] == [1, 1, 1]
-    assert (cat.cats[0, other] == cats[0, other]).all()  # thuộc tính khác lấy theo biến thể có mã nhỏ nhất
+    assert (cat.cats[0, other] == cats[0, other]).all()
     assert (cat.cats[1, other] == cats[2, other]).all()
     assert [cat.cardinalities[k] for k in other] == [cards[k] for k in other]
     mean = (text[0] + text[1]) / 2
     assert np.allclose(cat.text[0], mean / np.linalg.norm(mean)) and np.isclose(np.linalg.norm(cat.text[0]), 1.0)
-    assert (cat.text[1] == 0).all()  # hàng văn bản toàn 0 giữ 0
+    assert (cat.text[1] == 0).all()
 
 
-# ------------------------------------------------------------ dữ liệu huấn luyện
 def test_feature_dataset_negatives_launched_and_not_positive():
     train = pd.DataFrame({"user": [0, 0, 1, 2], "item": [0, 1, 2, 3], "day": [10, 50, 50, 50],
                           "sample_weight": 1.0})
-    first = np.array([0, 40, 5, 45, 1000])  # item 4 không có trong tập huấn luyện
+    first = np.array([0, 40, 5, 45, 1000])
     ds = FeatureTrainDataset(train, n_items=5, item_first_day=first, neg_ratio=8, seed=0)
     neg = ds.labels == 0
     assert set(ds.items[neg]) <= {0, 1, 2, 3}
-    assert np.all(first[ds.items[neg]] <= ds.extras["day"][neg])  # sản phẩm đã ra mắt tại ngày của mẫu
+    assert np.all(first[ds.items[neg]] <= ds.extras["day"][neg])
     pos = set(zip(train["user"], train["item"]))
     assert not any((int(u), int(i)) in pos for u, i in zip(ds.users[neg], ds.items[neg]))
     assert len(ds.extras["day"]) == len(ds.users) == len(ds.extras["utime"])
     early = neg & (ds.extras["day"] == 10)
-    assert set(ds.items[early]) <= {0, 2}  # tại ngày 10 chỉ item 0 (ngày 0) và 2 (ngày 5) đã ra mắt; item 0 là của u0
+    assert set(ds.items[early]) <= {0, 2}
 
 
-# ------------------------------------------------------------------ giao thức
 def _write_sample(path, rows):
     pd.DataFrame(rows, columns=["t_dat", "customer_id", "article_id", "price", "sales_channel_id"]).to_csv(path, index=False)
 
@@ -107,39 +104,34 @@ def _day(s: int) -> str:
 
 
 def test_v2_kcore_before_test_and_candidates_have_training_pairs(tmp_path):
-    # Đổi kỳ vọng theo quyết định của GVHD: một sản phẩm = một product_code (article_id // 1000) và sản phẩm chưa có
-    # người mua trước mốc cắt bị bỏ khỏi tập ứng viên lẫn đáp án. Mã cũ 101–107 chia 1000 gộp làm một nên dùng mã dạng
-    # thật; không còn sản phẩm mới (trước đây ứng viên của a là {104, 106, 107}).
     p1, p1b, p2, p3, p4, p5, p6, never = (108775015, 108775044, 110065001, 111565001, 111586001, 111593001,
-                                          111609001, 112679048)  # p1, p1b: hai màu của mẫu 108775
+                                          111609001, 112679048)
     rows = []
     for u in ("a", "b", "c"):
         rows += [(_day(1), u, p1, 1, 1), (_day(2), u, p2, 1, 1), (_day(30), u, p3, 1, 1)]
     rows += [(_day(35), "b", p4, 1, 1), (_day(36), "c", p4, 1, 1)]
     rows += [(_day(61), "a", p4, 1, 1), (_day(61), "a", p5, 1, 1), (_day(62), "b", p6, 1, 1),
              (_day(62), "c", p1b, 1, 1)]
-    rows += [(_day(70), "z", p6, 1, 1)] * 5  # khách z chỉ mua trong giai đoạn kiểm thử
+    rows += [(_day(70), "z", p6, 1, 1)] * 5
     sample = tmp_path / "s.csv"
     _write_sample(sample, rows)
     ids = [p1, p1b, p2, p3, p4, p5, p6, never]
     counts = np.zeros((len(ids), 100), dtype=np.int64)
-    for a, d in ((p1, 1), (p1b, 62), (p2, 2), (p3, 30), (p4, 35), (p5, 61), (p6, 55)):  # never: chưa từng bán
+    for a, d in ((p1, 1), (p1b, 62), (p2, 2), (p3, 30), (p4, 35), (p5, 61), (p6, 55)):
         counts[ids.index(a), d] = 1
     data = build_v2(sample, _day(40), _day(60), 2, _catalog(ids), _sales(counts), with_test=True)
-    assert "z" not in set(data.user_raw)  # k-core chỉ trên dữ liệu trước mốc kiểm thử
+    assert "z" not in set(data.user_raw)
     assert data.n_items == data.n_id_items == 4
     prod = lambda i: int(data.item_product[i])  # noqa: E731
-    st = data.test  # (trường Stage.new, luôn toàn False, đã bỏ; ứng viên chỉ gồm sản phẩm có cặp huấn luyện — kiểm dưới)
+    st = data.test
     assert {prod(i) for i in np.flatnonzero(st.scoreable)} == {108775, 110065, 111565, 111586}
     tg = {(data.user_raw[u], prod(i)) for u, i in zip(st.targets["user"], st.targets["item"])}
-    # p5 chưa ai mua trước mốc; p6 đã bán trên toàn H&M nhưng không có cặp huấn luyện; p1b của c là mua lại mẫu p1
     assert tg == {("a", 111586)}
     rec = st.records[0]
-    assert {prod(i) for i in rec.candidates} == {111586}  # a đã mua p1–p3; ứng viên chỉ gồm sản phẩm có cặp huấn luyện
+    assert {prod(i) for i in rec.candidates} == {111586}
     assert set(data.val.train["day"]) == {1, 2, 30, 35, 36} and data.val.cutoff == 40
 
 
-# ---------------------------------------------------------------- mô hình
 def _toy_model(**kw):
     torch.manual_seed(0)
     m = NeuMFF(n_users=3, n_id_items=4, item_cards=[3] * 11, user_cards=[9, 4, 4, 3, 3], text_dim=4, gmf_dim=8,
@@ -165,7 +157,7 @@ def test_neumff_eval_matches_training_path_and_time_features():
     users = torch.tensor([0, 1, 2, 0, 1, 2])
     ev = m(users, items)
     tr = m(users, items, day=torch.full((6,), 20), utime=torch.as_tensor(utime[[0, 1, 2, 0, 1, 2]]))
-    assert torch.allclose(ev, tr, atol=1e-5)  # sản phẩm 4, 5 (>= n_id) không có ID ở cả hai đường
+    assert torch.allclose(ev, tr, atol=1e-5)
 
 
 def test_neumff_branch_flags_and_items_without_id_scored():
@@ -198,10 +190,10 @@ def test_recent_popularity_and_content_profile():
     cum = np.cumsum(np.array([[0, 5, 5, 5], [0, 0, 0, 9]]), axis=1)
     cum = np.concatenate([np.zeros((2, 1)), cum], axis=1)
     rp = RecentPopularity(cum, cutoff=3, window=2)
-    assert list(rp.score_items(0, [0, 1])) == [10.0, 0.0]  # ngày 3 (9 giao dịch của item 1) chưa được thấy
+    assert list(rp.score_items(0, [0, 1])) == [10.0, 0.0]
     text = np.eye(3, 4, dtype=np.float32)
     cats = np.zeros((3, 11), dtype=np.int64)
     cp = ContentProfile(text, cats, [2] * 11, pd.DataFrame({"user": [0], "item": [0], "day": [1]}), n_users=1,
                         cutoff=5)
     s = cp.score_items(0, [0, 1, 2])
-    assert s[0] > s[1] and s[0] > s[2]  # sản phẩm giống lịch sử nhất được chấm cao nhất, kể cả sản phẩm chưa có ID
+    assert s[0] > s[1] and s[0] > s[2]

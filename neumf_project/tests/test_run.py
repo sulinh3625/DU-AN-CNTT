@@ -13,7 +13,7 @@ def test_run_steps_stops_at_first_failure_and_reports_it(tmp_path, capsys):
     steps = [["-c", "pass"], ["-c", "import sys; sys.exit(3)"], ["-c", f"open(r'{marker}', 'w')"]]
     assert run.run_steps("thu", steps) == 3
     out = capsys.readouterr().out
-    assert not marker.exists()  # bước sau bước lỗi không chạy
+    assert not marker.exists()
     assert "bước 2/3" in out and "mã thoát 3" in out and "chưa chạy" in out
     assert 'Chạy lại riêng bước này:  python -c "import sys; sys.exit(3)"' in out
     assert run.run_steps("thu", [["-c", "pass"]] * 2) == 0
@@ -29,7 +29,7 @@ def test_all_tunes_then_dry_run_and_opens_test_only_with_final(monkeypatch):
                  ["scripts/23_final_v2.py", "--dry-run", "--max-epochs", "1", "--seeds", "42"],
                  ["scripts/24_report_v2.py", "--final-dir", "outputs/v2/dry_run", "--report-dir", ""]]
     ns = run.argparse.Namespace
-    assert run.cmd_all(ns(final=False, reason="")) == overnight  # mặc định không chấm tập kiểm thử
+    assert run.cmd_all(ns(final=False, reason="")) == overnight
     assert run.cmd_all(ns(final=True, reason="đêm")) == overnight + [
         ["scripts/23_final_v2.py", "--reason", "đêm"], ["scripts/24_report_v2.py"]]
     with pytest.raises(SystemExit, match="--reason"):
@@ -42,7 +42,6 @@ def _menu(monkeypatch, answers):
     monkeypatch.setattr(sys, "argv", ["run.py"])
     monkeypatch.setattr(sys, "stdin", type("Tty", (), {"isatty": lambda self: True})())
     monkeypatch.setattr("builtins.input", lambda prompt="": next(it))
-    # run_steps nhận thêm cấu hình (NEUMF_CONFIG: configs/v2.yaml hoặc configs/amazon.yaml) từ khi có lệnh amazon-*
     monkeypatch.setattr(run, "run_steps", lambda name, steps, config=None: ran.append(steps) or 0)
     try:
         run.main()
@@ -53,7 +52,7 @@ def _menu(monkeypatch, answers):
 
 def test_menu_asks_required_args_and_defaults_to_no_for_test_commands(monkeypatch, capsys):
     pick = run.MENU[1][1].index("v2-final") + len(run.MENU[0][1]) + 1
-    assert _menu(monkeypatch, ["0", str(pick), "lý do thử", "--seeds 42", ""]) == []  # Enter = Không chạy
+    assert _menu(monkeypatch, ["0", str(pick), "lý do thử", "--seeds 42", ""]) == []
     out = capsys.readouterr().out
     assert "Không có lựa chọn '0'" in out
     assert 'scripts/23_final_v2.py --reason "lý do thử" --seeds 42' in out and "chấm tập kiểm thử" in out
@@ -61,6 +60,6 @@ def test_menu_asks_required_args_and_defaults_to_no_for_test_commands(monkeypatc
 
 def test_menu_runs_command_with_extra_options(monkeypatch):
     pick = run.MENU[0][1].index("prepare") + 1
-    assert _menu(monkeypatch, [str(pick), "--sample holdout", ""]) == [  # Enter = Có chạy
+    assert _menu(monkeypatch, [str(pick), "--sample holdout", ""]) == [
         [["scripts/02_prepare_data.py", "--sample", "holdout"]]]
-    assert _menu(monkeypatch, [""]) == []  # Enter ở menu = thoát (hỏi thêm sẽ hết câu trả lời -> lỗi)
+    assert _menu(monkeypatch, [""]) == []

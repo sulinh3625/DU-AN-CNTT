@@ -1,6 +1,5 @@
 """Dữ liệu cho trang "Kết quả đánh giá": đọc file kết quả của scripts/24_report_v2.py (cùng nguồn với bảng và macro số
-liệu của báo cáo), không tính lại, không có số gõ tay. Câu trả lời cho ba câu hỏi nghiên cứu suy ra từ kết luận kiểm định
-đã lưu, nên đổi theo dữ liệu."""
+liệu của báo cáo), không tính lại, không có số gõ tay."""
 from __future__ import annotations
 
 import json
@@ -9,13 +8,11 @@ import pandas as pd
 
 from .data_context import PROJECT_ROOT
 
-# Biến thể bóc tách -> nhãn hiển thị. Amazon không có thuộc tính khách: "bỏ thông tin khách" là bỏ đặc trưng thời gian
-# của khách (audit/PREREG_amazon.md).
 ABL_LABEL = {"neumf_f-time": "Bỏ đặc trưng thời gian", "neumf_f-user": "Bỏ thông tin khách hàng",
              "neumf_f-attr": "Bỏ thuộc tính sản phẩm", "neumf_f-text": "Bỏ mô tả văn bản",
              "neumf_f-iddrop": "Không bỏ ID ngẫu nhiên"}
 ABL_LABEL_DATASET = {"amazon": {"neumf_f-user": "Bỏ đặc trưng thời gian của khách"}}
-VERDICT = {"A tốt hơn": "A", "B tốt hơn": "B"}  # mọi kết luận khác: "=" (không khác biệt có ý nghĩa)
+VERDICT = {"A tốt hơn": "A", "B tốt hơn": "B"}
 
 
 def _verdict(v: str) -> str:

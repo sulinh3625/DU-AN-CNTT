@@ -1,16 +1,4 @@
-"""Đặc trưng cho mô hình lai có đặc trưng (giao thức v2, audit/PREREG_v2.md).
-
-Ba nguồn, đều KHÔNG dùng nhãn của giai đoạn được đánh giá:
-- Danh mục sản phẩm (articles.csv): 11 thuộc tính mã hoá thành chỉ số (0 = không biết) và vector mô tả văn bản
-  (TF-IDF trên tên + mô tả, giảm chiều bằng SVD). Đây là thông tin tĩnh của catalogue, không dùng tương tác.
-- Doanh số theo ngày của toàn bộ H&M (transactions_train.csv): đếm giao dịch mỗi (sản phẩm, ngày), lưu cộng dồn.
-  Đặc trưng thời gian tại ngày t chỉ dùng các ngày < t (item_time_features).
-- Thông tin khách (customers.csv): nhóm tuổi, trạng thái hội viên, tần suất nhận tin, FN, Active.
-
-Cache (bị .gitignore): data/processed/hm/catalog_v2.npz, data/processed/hm/daily_sales_v2.npz — tạo bằng
-`python scripts/21_build_features.py`. Cache theo article_id; mô hình dùng bản đã gộp mọi màu của một mẫu thành một sản
-phẩm (product_code = article_id // 1000) bằng group_by_product.
-"""
+"""Đặc trưng cho mô hình lai có đặc trưng (giao thức v2, audit/PREREG_v2.md)."""
 from __future__ import annotations
 
 from dataclasses import dataclass
@@ -20,31 +8,31 @@ import numpy as np
 import pandas as pd
 from scipy import sparse
 
-DAY0 = np.datetime64("2018-09-20")  # ngày đầu của transactions_train.csv
+DAY0 = np.datetime64("2018-09-20")
 ITEM_CAT_COLS = ["product_type_no", "product_group_name", "graphical_appearance_no", "colour_group_code",
                  "perceived_colour_value_id", "perceived_colour_master_id", "department_no", "index_code",
                  "index_group_no", "section_no", "garment_group_no"]
-COLOUR_COLS = ("colour_group_code", "perceived_colour_value_id", "perceived_colour_master_id")  # hằng số sau khi gộp
+COLOUR_COLS = ("colour_group_code", "perceived_colour_value_id", "perceived_colour_master_id")
 USER_CAT_COLS = ["age_bucket", "club_member_status", "fashion_news_frequency", "FN", "Active"]
-AGE_EDGES = [20, 25, 30, 35, 45, 55, 65]  # nhóm tuổi: <20, 20–24, ..., 55–64, 65+
+AGE_EDGES = [20, 25, 30, 35, 45, 55, 65]
 SALES_WINDOWS = (7, 28, 91)
-ITEM_TIME_DIM = len(SALES_WINDOWS) + 2  # log1p(doanh số 7/28/91 ngày), log1p(tuổi sản phẩm), cờ chưa từng bán
-USER_TIME_DIM = 2  # log1p(số ngày từ lần mua gần nhất), log1p(số cặp đã mua)
-LOG_SCALE = 10.0  # chia log1p(·) cho hằng số để đặc trưng số nằm cỡ [0, 1]
+ITEM_TIME_DIM = len(SALES_WINDOWS) + 2
+USER_TIME_DIM = 2
+LOG_SCALE = 10.0
 
 
 def to_day(ts, day0=DAY0) -> np.ndarray:
-    """Chỉ số ngày của một mảng thời điểm, 0 = day0 (mặc định 2018-09-20 của H&M; Amazon: day0 trong configs/amazon.yaml)."""
+    """Chỉ số ngày của một mảng thời điểm, 0 = day0 (mặc định 2018-09-20 của H&M; Amazon: day0 trong
+    configs/amazon.yaml)."""
     return (np.asarray(ts, dtype="datetime64[D]") - np.datetime64(day0, "D")).astype(np.int64)
 
 
-# ------------------------------------------------------------------ catalogue
 @dataclass
 class Catalog:
-    article_ids: np.ndarray  # int64, tăng dần
-    cats: np.ndarray  # int32 [n_articles, len(ITEM_CAT_COLS)], 0 = không biết
-    cardinalities: list[int]  # số giá trị mỗi thuộc tính, gồm cả 0
-    text: np.ndarray  # float32 [n_articles, text_dim], chuẩn hoá L2
+    article_ids: np.ndarray
+    cats: np.ndarray
+    cardinalities: list[int]
+    text: np.ndarray
 
     def rows(self, article_ids) -> np.ndarray:
         """Vị trí trong catalogue của các article_id (int); lỗi nếu có mã không thuộc catalogue."""
@@ -94,12 +82,11 @@ def load_catalog(path: str | Path) -> Catalog:
     return Catalog(z["article_ids"], z["cats"], z["cardinalities"].tolist(), z["text"])
 
 
-# --------------------------------------------------------------- doanh số
 @dataclass
 class DailySales:
     """Số giao dịch mỗi (sản phẩm, ngày) của toàn bộ H&M; hàng theo thứ tự Catalog.article_ids."""
-    counts: sparse.csr_matrix  # int32 [n_articles, n_days]
-    first_day: np.ndarray  # int64 [n_articles], ngày bán đầu tiên; n_days nếu chưa từng bán trong dữ liệu
+    counts: sparse.csr_matrix
+    first_day: np.ndarray
 
     @property
     def n_days(self) -> int:
@@ -148,8 +135,8 @@ def load_daily_sales(path: str | Path) -> DailySales:
 
 def item_time_features(cum: np.ndarray, first_day: np.ndarray, items: np.ndarray, day) -> np.ndarray:
     """Đặc trưng thời gian của item tại ngày `day` (scalar hoặc mảng cùng cỡ items), chỉ dùng các ngày < day:
-    log1p(doanh số trong 7/28/91 ngày trước), log1p(tuổi sản phẩm tính từ ngày bán đầu), cờ "chưa từng bán trước day".
-    `cum` là ma trận cộng dồn của DailySales.cumulative (hàng theo chỉ số item của mô hình)."""
+    log1p(doanh số trong 7/28/91 ngày trước), log1p(tuổi sản phẩm tính từ ngày bán đầu), cờ "chưa từng bán trước
+    day". `cum` là ma trận cộng dồn của DailySales.cumulative (hàng theo chỉ số item của mô hình)."""
     items = np.asarray(items, dtype=np.int64)
     day = np.broadcast_to(np.asarray(day, dtype=np.int64), items.shape)
     now = cum[items, np.clip(day, 0, cum.shape[1] - 1)].astype(np.float32)
@@ -162,7 +149,6 @@ def item_time_features(cum: np.ndarray, first_day: np.ndarray, items: np.ndarray
     return out
 
 
-# ---------------------------------------------------- gộp màu theo product_code
 def product_code_of(article_ids) -> np.ndarray:
     """product_code của H&M = article_id // 1000 (3 chữ số cuối là biến thể màu)."""
     return np.asarray(article_ids, dtype=np.int64) // 1000
@@ -178,13 +164,7 @@ def check_product_code(articles_path: str | Path) -> None:
 
 
 def group_by_product(catalog: Catalog, sales: DailySales) -> tuple[Catalog, DailySales]:
-    """Gộp mọi màu của cùng một mẫu thành một sản phẩm (product_code_of).
-
-    Catalog mới giữ tên trường article_ids nhưng giá trị là product_code (tăng dần, duy nhất). Thuộc tính lấy theo biến
-    thể có article_id nhỏ nhất; 3 cột màu (COLOUR_COLS) đặt về 0, cardinality 1 — số cột vẫn là len(ITEM_CAT_COLS) nên
-    NeuMFF không phải đổi. Văn bản = trung bình các biến thể rồi chuẩn hoá L2 (hàng toàn 0 giữ 0). Doanh số theo ngày =
-    tổng các biến thể; ngày bán đầu = ngày sớm nhất. Dùng ma trận thưa chỉ báo (sản phẩm × biến thể)."""
-    # article_ids tăng dần -> lần xuất hiện đầu của mỗi product_code là biến thể có article_id nhỏ nhất
+    """Gộp mọi màu của cùng một mẫu thành một sản phẩm (product_code_of)."""
     codes, first, inv = np.unique(product_code_of(catalog.article_ids), return_index=True, return_inverse=True)
     n_var = len(catalog.article_ids)
     onehot = sparse.csr_matrix((np.ones(n_var, dtype=np.int32), (inv, np.arange(n_var))), shape=(len(codes), n_var))
@@ -201,10 +181,9 @@ def group_by_product(catalog: Catalog, sales: DailySales) -> tuple[Catalog, Dail
     return Catalog(codes, cats, cards, text), DailySales(counts, first_day)
 
 
-# ---------------------------------------------------------------- khách hàng
 @dataclass
 class UserProfile:
-    cats: np.ndarray  # int32 [n_users, len(USER_CAT_COLS)], 0 = không biết
+    cats: np.ndarray
     cardinalities: list[int]
 
 
@@ -233,8 +212,8 @@ def _codes(s: pd.Series, vocab: list[str]) -> np.ndarray:
 
 
 def user_time_features(pair_users: np.ndarray, pair_days: np.ndarray, users: np.ndarray, days) -> np.ndarray:
-    """Đặc trưng thời gian của user tại ngày `days`, từ các cặp (user, ngày mua đầu) TRƯỚC ngày đó:
-    log1p(số ngày từ lần mua gần nhất; 730 nếu chưa mua) và log1p(số cặp đã mua)."""
+    """Đặc trưng thời gian của user tại ngày `days`, từ các cặp (user, ngày mua đầu) TRƯỚC ngày đó: log1p(số ngày từ lần
+    mua gần nhất; 730 nếu chưa mua) và log1p(số cặp đã mua)."""
     users = np.asarray(users, dtype=np.int64)
     days = np.broadcast_to(np.asarray(days, dtype=np.int64), users.shape)
     order = np.lexsort((pair_days, pair_users))

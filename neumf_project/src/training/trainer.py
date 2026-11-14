@@ -109,7 +109,6 @@ def train_one_model(
             i = torch.from_numpy(train_dataset.items[idx]).long().to(device)
             y = torch.from_numpy(train_dataset.labels[idx]).float().to(device)
             w = torch.from_numpy(train_dataset.sample_weights[idx]).float().to(device)
-            # Dữ liệu có đặc trưng (FeatureTrainDataset) mang thêm đầu vào theo từng mẫu, vd. ngày mua và đặc trưng user.
             extra = {k: torch.from_numpy(v[idx]).to(device) for k, v in getattr(train_dataset, "extras", {}).items()}
 
             optimizer.zero_grad(set_to_none=True)
@@ -120,7 +119,6 @@ def train_one_model(
             total_loss += float(loss.item())
             n_batches += 1
 
-            # Cập nhật batch progress bar
             avg_loss = total_loss / n_batches
             batch_bar.set_postfix(loss=f"{avg_loss:.4f}")
 
@@ -128,7 +126,7 @@ def train_one_model(
 
         epoch_time = time.perf_counter() - t0
         total_train_time += epoch_time
-        if val_records is None:  # refit: chạy đúng max_epochs, không có val để chọn -> giữ trọng số epoch cuối
+        if val_records is None:
             avg_loss = total_loss / max(n_batches, 1)
             history.append({"epoch": epoch, "loss": avg_loss, "epoch_time_s": epoch_time})
             best_epoch = epoch
@@ -147,7 +145,6 @@ def train_one_model(
         }
         history.append(row)
 
-        # Cập nhật epoch progress bar
         star = ""
         if metric > best_metric + 1e-12:
             best_metric = metric

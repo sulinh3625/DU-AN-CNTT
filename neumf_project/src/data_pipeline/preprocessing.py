@@ -4,11 +4,7 @@ import pandas as pd
 
 
 def aggregate_unique_user_item(events: pd.DataFrame) -> pd.DataFrame:
-    """Gộp transaction lặp trước khi k-core.
-
-    Giữ cả số lần tương tác, tổng value và mốc thời gian đầu/cuối.
-    last_source_order là tie-breaker deterministic khi nhiều item cùng timestamp.
-    """
+    """Gộp transaction lặp trước khi k-core."""
     required = {"user_raw", "item_raw", "timestamp", "value_raw", "source_order"}
     missing = required - set(events.columns)
     if missing:

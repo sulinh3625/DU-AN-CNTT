@@ -1,16 +1,10 @@
-"""Biểu tượng cho sơ đồ draw.io: ô vuông bo góc tô màu chuyển nhẹ, hình vẽ nét trắng ở giữa (kiểu biểu tượng ứng dụng).
-
-Hình vẽ lấy từ bộ Tabler Icons (giấy phép MIT, https://tabler.io/icons), các tệp SVG nằm ở
-Report DACNTT/slides/media/tabler/. Mỗi biểu tượng nhúng thẳng vào draw.io dưới dạng data URI nên tệp .drawio mở được ở
-máy khác mà không cần thư viện ngoài.
-"""
+"""Biểu tượng cho sơ đồ draw.io: ô vuông bo góc tô màu chuyển nhẹ, hình vẽ nét trắng ở giữa (kiểu biểu tượng ứng dụng)."""
 import base64
 import re
 from pathlib import Path
 
 TABLER = Path(__file__).resolve().parents[2] / "Report DACNTT" / "slides" / "media" / "tabler"
 
-# màu ô: (sáng, đậm), chuyển từ góc trên trái xuống góc dưới phải
 MAU_O = {
     "xam": ("#8A99AF", "#56657C"),
     "xanh": ("#3B86E6", "#1858B0"),

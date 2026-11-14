@@ -50,9 +50,3 @@ python xuat_anh_drawio.py <file.drawio> <thư_mục> [tên ...]   # xuất PNG c
 ```
 
 Mỗi hình là một hàm trong `hinh_bao_cao.py`. Sửa xong thì biên dịch lại báo cáo (`Report DACNTT/compile.bat`).
-
-## Tệp cũ
-
-`src/so_do_bao_cao.py` và `src/drawio_kit.py` là bộ vẽ cũ (cần draw.io desktop). Báo cáo và slide không còn dùng hình của
-bộ này; nó chỉ còn sinh `pipeline_neumf_5trang.drawio` ở gốc repo. `src/pipeline_goc.drawio` là bản vẽ tay ban đầu của nhóm.
-Các ảnh `bc_*`, `slide_*` cũ đã được xoá ngày 11/11/2026; chạy lại `so_do_bao_cao.py` sẽ sinh lại chúng.

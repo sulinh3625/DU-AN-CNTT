@@ -16,35 +16,32 @@ from .data_context import DATASETS, DEMO_ROOT, DataContext, unavailable_reason
 
 IMAGES_DIR = os.environ.get("DEMO_IMAGES_DIR", str(DEMO_ROOT / "static" / "images"))
 BUCKET_LABELS = {"low": "Ít giao dịch", "mid": "Trung bình", "high": "Nhiều giao dịch"}
-# Thứ tự danh sách chọn khách: khoá -> (cột, tăng dần?); hoà thì theo customer_id để thứ tự luôn tất định.
 SORTS = {
     "train_desc": (["train_count", "customer_id"], [False, True]),
     "train_asc": (["train_count", "customer_id"], [True, True]),
     "targets_desc": (["n_targets", "train_count", "customer_id"], [False, False, True]),
     "id": (["customer_id"], [True]),
-    "rank": (["best_rank", "train_count", "customer_id"], [True, False, True]),  # hạng món đích tốt nhất của mô hình
+    "rank": (["best_rank", "train_count", "customer_id"], [True, False, True]),
 }
 Bucket = Literal["low", "mid", "high"]
 Sort = Literal["train_desc", "train_asc", "targets_desc", "id", "rank"]
 Hit = Literal["hit", "miss"]
-Dataset = Literal["hm", "amazon"]  # mọi API nhận ?dataset=, mặc định H&M
+Dataset = Literal["hm", "amazon"]
 
 router = APIRouter(prefix="/api")
-_cache: dict[str, DataContext] = {}  # bộ dữ liệu -> dữ liệu và mô hình đã nạp (nạp lần đầu khi cần)
-_ranks: dict[tuple[str, str], pd.Series] = {}  # (bộ dữ liệu, mô hình) -> hạng tốt nhất theo customer_id
+_cache: dict[str, DataContext] = {}
+_ranks: dict[tuple[str, str], pd.Series] = {}
 _ctx_lock = Lock()
-_ranks_lock = Lock()  # ponytail: một khoá chung, hai mô hình không chấm song song — đủ cho demo một người xem
+_ranks_lock = Lock()
 
 
 def ctx(dataset: str = "hm") -> DataContext:
-    with _ctx_lock:  # các request đầu đến cùng lúc: chỉ nạp một lần
+    with _ctx_lock:
         if dataset not in _cache:
             why = unavailable_reason(dataset)
-            if why:  # chưa có kết quả đánh giá cuối: báo lệnh cần chạy, không huấn luyện gì
+            if why:
                 raise HTTPException(503, why)
             c = DataContext(dataset=dataset)
-            # Dựng bảng khách trước khi có luồng nền: cached_property không có khoá, hai luồng cùng dựng thì pandas
-            # đôi khi báo "cannot reindex on an axis with duplicate labels" (500 ở lần mở trang đầu).
             c.users
             _cache[dataset] = c
             warm_example(dataset)
@@ -65,8 +62,8 @@ NEW_CUSTOMER_NOTE = ("Khách chưa có trong dữ liệu đã học (khách mớ
 
 
 def user_profile(c: DataContext, u: int | None, customer_id: str) -> dict:
-    """Hồ sơ khách cho thanh khách của màn hình Admin: dòng của bảng khách có sản phẩm đích; khách có lịch sử nhưng không
-    có sản phẩm đích thì dựng các cột tương tự từ lịch sử; khách mới thì chỉ có mã và cờ is_new."""
+    """Hồ sơ khách cho thanh khách của màn hình Admin: dòng của bảng khách có sản phẩm đích; khách có lịch sử nhưng
+    không có sản phẩm đích thì dựng các cột tương tự từ lịch sử; khách mới thì chỉ có mã và cờ is_new."""
     empty = dict(customer_id=customer_id.strip(), train_count=0, n_targets=0, area=None, area_share=None, age=None,
                  first_date=None, last_date=None, bucket=None)
     if u is None:
@@ -88,9 +85,9 @@ def user_profile(c: DataContext, u: int | None, customer_id: str) -> dict:
 def filter_users(df: pd.DataFrame, q: str = "", bucket: str | None = None, area: str | None = None,
                  sort: str = "train_desc", best_rank: pd.Series | None = None, hit: str | None = None,
                  k: int = 10) -> pd.DataFrame:
-    """Lọc và sắp bảng khách (DataContext.users): customer_id chứa q (không phân biệt hoa thường, khớp ở đầu xếp
-    trước), nhóm giao dịch, khu vực mua nhiều nhất; có best_rank (hạng món đích tốt nhất của một mô hình, index
-    customer_id) thì thêm cột best_rank và lọc hit = có món đích trong top-k / miss = không có."""
+    """Lọc và sắp bảng khách (DataContext.users): customer_id chứa q (không phân biệt hoa thường, khớp ở đầu xếp trước),
+    nhóm giao dịch, khu vực mua nhiều nhất; có best_rank (hạng món đích tốt nhất của một mô hình, index customer_id)
+    thì thêm cột best_rank và lọc hit = có món đích trong top-k / miss = không có."""
     q = q.strip().lower()
     if bucket:
         df = df[df["bucket"] == bucket]
@@ -101,7 +98,7 @@ def filter_users(df: pd.DataFrame, q: str = "", bucket: str | None = None, area:
         if hit:
             df = df[(df["best_rank"] <= k) == (hit == "hit")]
     cols, asc = SORTS[sort if sort != "rank" or "best_rank" in df else "train_desc"]
-    if q:  # khớp customer_id hoặc mã ngắn KH0001
+    if q:
         ids = df["customer_id"].str.lower() + " " + df["code"].str.lower()
         df = df[ids.str.contains(q, regex=False)]
         df = df.assign(_later=~(df["customer_id"].str.lower().str.startswith(q) | df["code"].str.lower().str.startswith(q)))
@@ -144,8 +141,8 @@ def user_rows(df: pd.DataFrame) -> list[dict]:
 
 
 def user_position(df: pd.DataFrame, customer_id: str) -> dict:
-    """Vị trí (từ 0) của khách trong danh sách đã lọc, kèm khách liền trước / liền sau; khách ngoài danh sách thì
-    "liền sau" là khách đầu danh sách."""
+    """Vị trí (từ 0) của khách trong danh sách đã lọc, kèm khách liền trước / liền sau; khách ngoài danh sách thì "liền
+    sau" là khách đầu danh sách."""
     s = customer_id.strip()
     hit = np.flatnonzero((df["customer_id"].to_numpy() == s) | (df["code"].to_numpy() == s.upper()))
     i = int(hit[0]) if len(hit) else None
@@ -176,7 +173,7 @@ def amazon_image_path(asin: str) -> str:
 
 def has_images(dataset: str) -> bool:
     """Có ảnh sản phẩm thật trên máy không: H&M cần ảnh đã chép (copy_images.py), Amazon cần ảnh đã tải
-    (download_amazon_images.py). Demo không kéo ảnh trực tiếp từ nguồn ngoài."""
+    (download_amazon_images.py)."""
     if not os.path.isdir(IMAGES_DIR):
         return False
     if dataset == "amazon":
@@ -208,15 +205,13 @@ def results(dataset: Dataset = "hm"):
         raise HTTPException(503, f"Thiếu file kết quả ({e.filename}) — chạy python run.py {cmd}.") from e
 
 
-_examples: dict[str, dict] = {}  # bộ dữ liệu -> khách ví dụ của trang Tổng quan (chọn một lần)
+_examples: dict[str, dict] = {}
 
 
 def pick_example(c: DataContext, a: str = "NeuMF-F", b: str = "NeuMF", k: int = 10) -> dict | None:
     """Khách ví dụ cho trang Tổng quan, chọn theo dữ liệu chứ không gõ tay: trong các khách mà a gợi ý trúng còn b trượt
-    (theo hạng đã lưu, xếp theo chênh hạng), lấy khách có nhiều món đích nhất trong top-k của a, lịch sử 6–40 món, mọi
-    sản phẩm có loại rõ, và hạng tính lại của cả hai mô hình trùng hạng đã lưu ở đánh giá cuối."""
-    # Ứng viên lấy từ hạng đã lưu (per_user.csv.gz) thay vì chấm lại mọi khách: a trúng, b trượt, chênh hạng lớn trước.
-    # Từng ứng viên vẫn được tính lại thật và chỉ nhận khi hạng tính lại trùng hạng đã lưu (điều kiện match bên dưới).
+    (theo hạng đã lưu, xếp theo chênh hạng), lấy khách có nhiều món đích nhất trong top-k của a, lịch sử 6–40 món,
+    mọi sản phẩm có loại rõ, và hạng tính lại của cả hai mô hình trùng hạng đã lưu ở đánh giá cuối."""
     df = c.users.assign(best_rank=saved_best_series(c, a).reindex(c.users.index).to_numpy(),
                         rank_b=saved_best_series(c, b).reindex(c.users.index).to_numpy())
     df = df[(df["best_rank"] <= k) & (df["rank_b"] > k) & df["train_count"].between(6, 40)]
@@ -232,7 +227,7 @@ def pick_example(c: DataContext, a: str = "NeuMF-F", b: str = "NeuMF", k: int = 
         hits = sum(it["is_target"] for it in ra["items"])
         if best is None or hits > best[0]:
             best = (hits, row, ra, rb)
-        if hits >= 2 and hits == len(ra["targets"]):  # mọi món khách mua sau đó đều lọt top-k: không cần tìm tiếp
+        if hits >= 2 and hits == len(ra["targets"]):
             break
     if best is None:
         return None
@@ -247,8 +242,7 @@ _example_lock = Lock()
 
 @router.get("/example")
 def example(dataset: Dataset = "hm"):
-    """Khách ví dụ của trang Tổng quan. Lần đầu phải chấm mọi khách với hai mô hình (vài chục giây trên CPU) nên được
-    tìm sẵn ở luồng nền ngay khi nạp dữ liệu (warm_example); sau đó giữ lại."""
+    """Khách ví dụ của trang Tổng quan."""
     c = ctx(dataset)
     with _example_lock:
         if dataset not in _examples:
@@ -292,7 +286,7 @@ def search_users(f: dict = Depends(user_filter), offset: int = Query(0, ge=0), l
 
 @router.get("/users/random")
 def random_user(f: dict = Depends(user_filter)):
-    df = _filtered({**f, "q": ""})  # ngẫu nhiên trong bộ lọc, bỏ qua chữ đang gõ trong ô tìm
+    df = _filtered({**f, "q": ""})
     if df.empty:
         raise HTTPException(404, "Không có khách nào khớp bộ lọc.")
     return user_rows(df.sample(1))[0]
@@ -306,8 +300,7 @@ def saved_best_series(c: DataContext, model: str) -> pd.Series:
 
 def showcase_users(c: DataContext, a: str, b: str, k: int, limit: int) -> pd.DataFrame:
     """Ví dụ để đặt hai mô hình cạnh nhau: khách mà mô hình a có món đích trong top-k còn mô hình b thì không, xếp theo
-    mức chênh hạng giảm dần. Chỉ lấy khách có hạng tính lại trên máy này trùng hạng đã lưu ở đánh giá cuối (với cả hai
-    mô hình), để ví dụ luôn khớp số của báo cáo. Thêm cột best_rank (hạng của a) và rank_b."""
+    mức chênh hạng giảm dần."""
     for m in (a, b):
         if m not in c.available_models:
             raise HTTPException(404, f"Model '{m}' không khả dụng.")

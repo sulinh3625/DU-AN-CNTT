@@ -32,12 +32,11 @@ def _args(**kw):
     return SimpleNamespace(**{**base, **kw})
 
 
-# ------------------------------------------------------------------ khoá kiểm thử
 def test_opened_seeds_reads_only_tags_of_current_holdout(tmp_path, monkeypatch):
     log = tmp_path / "test_access_log.csv"
     log.write_text("time,git_commit,git_dirty,config_hash,config_path,run_tag,models,reason\n"
-                   "t,c,False,h,p,final_seed2025,M,r\n"          # nhật ký của giao thức v1: không tính
-                   "t,c,False,h,p,v2_final_seed2026,M,r\n"       # khối 1 (hm500k_b, 04/10/2026): mẫu khác, không tính
+                   "t,c,False,h,p,final_seed2025,M,r\n"
+                   "t,c,False,h,p,v2_final_seed2026,M,r\n"
                    "t,c,False,h,p,v2_kiemdinh_seed2024,M,r\n"
                    "t,c,False,h,p,v2_kiemdinh_seed42_rerun,M,r\n", encoding="utf-8")
     monkeypatch.setattr(final, "TEST_LOG", log)
@@ -55,7 +54,7 @@ def test_lock_lists_every_violation(monkeypatch):
     for frag in ("PREREG_v2.md chưa commit", "--reason", "chưa commit", "src/new_model.py", "chưa tinh chỉnh xong",
                  "mã nguồn khác lúc tinh chỉnh", "seed [42]", "--max-epochs"):
         assert frag in errs
-    assert "ghi_chu.txt" not in errs  # chỉ chặn file mã nguồn chưa theo dõi
+    assert "ghi_chu.txt" not in errs
 
 
 def test_lock_passes_and_overrides_are_explicit(monkeypatch):
@@ -67,7 +66,7 @@ def test_lock_passes_and_overrides_are_explicit(monkeypatch):
     best = {m: {} for m in final.TUNED}
     ok = {"git_dirty": False, "code_hash": "abc"}
     assert final.lock_errors(_args(seeds=[2024]), ok, best) == []
-    assert final.lock_errors(_args(seeds=[42]), ok, best)                      # seed đã mở tập kiểm thử
+    assert final.lock_errors(_args(seeds=[42]), ok, best)
     assert final.lock_errors(_args(seeds=[42], allow_rerun=True), ok, best) == []
     changed = {"git_dirty": False, "code_hash": "khac"}
     assert final.lock_errors(_args(seeds=[2024]), changed, best)
@@ -75,17 +74,18 @@ def test_lock_passes_and_overrides_are_explicit(monkeypatch):
 
 
 def test_lock_skips_tuning_hash_when_configs_come_from_other_dataset(monkeypatch):
-    """Amazon (best_configs = cấu hình chọn trên H&M): không có nhật ký tinh chỉnh để so mã băm; các khoá khác giữ nguyên."""
+    """Amazon (best_configs = cấu hình chọn trên H&M): không có nhật ký tinh chỉnh để so mã băm; các khoá khác giữ
+    nguyên."""
     monkeypatch.setattr(final, "prereg_committed", lambda p: True)
     monkeypatch.setattr(final, "git", lambda *a: "")
     monkeypatch.setattr(final, "tuning_code_hashes", lambda: set())
     monkeypatch.setattr(final, "opened_seeds", lambda: {42})
     monkeypatch.setattr(final, "dirty_files", lambda: [])
     best, prov = {m: {} for m in final.TUNED}, {"git_dirty": False, "code_hash": "abc"}
-    assert final.lock_errors(_args(seeds=[2024]), prov, best)  # H&M: phải có nhật ký tinh chỉnh cùng mã
+    assert final.lock_errors(_args(seeds=[2024]), prov, best)
     monkeypatch.setattr(final.V, "TUNED_HERE", False)
     assert final.lock_errors(_args(seeds=[2024]), prov, best) == []
-    assert final.lock_errors(_args(seeds=[42]), prov, best)  # seed đã mở vẫn bị chặn
+    assert final.lock_errors(_args(seeds=[42]), prov, best)
 
 
 def test_dirty_files_ignores_outputs_and_test_log(monkeypatch):
@@ -103,15 +103,13 @@ def test_final_runs_every_registered_model():
     assert set(report.MODELS) == set(final.MODELS)
 
 
-# Phân tích độ nhạy "chỉ sản phẩm cũ" và tỉ lệ sản phẩm mới đã bỏ: dữ liệu theo product_code không còn sản phẩm mới,
-# chấm "chỉ sản phẩm cũ" ra đúng kết quả chính.
 def test_ablation_skips_variant_identical_to_neumf_f():
     assert "neumf_f-iddrop" not in final.ablations({"id_dropout": 0.0})
     assert final.ablations({"id_dropout": 0.25}) == list(final.V.ABLATIONS)
 
 
 def test_final_refuses_output_dir_with_results_of_other_data(tmp_path):
-    for seed, md5 in ((42, "abc"), (2024, None)):  # seed 2024: kết quả cũ chưa ghi data_md5
+    for seed, md5 in ((42, "abc"), (2024, None)):
         (tmp_path / f"seed{seed}").mkdir()
         prov = {"data_md5": md5} if md5 else {}
         (tmp_path / f"seed{seed}" / "results.json").write_text(json.dumps({"provenance": prov}), encoding="utf-8")
@@ -189,16 +187,15 @@ def test_by_k_recomputes_metrics_from_saved_ranks():
     assert {f"{n}@{k}_mean" for n in report.K_METRICS for k in report.K_ALL} <= set(bk.columns)
     with pytest.raises(SystemExit):
         report.by_k(per, ["neumf_f", "gmf"], summary.assign(**{"NDCG@10_mean": exp[10] + 0.01}))
-    assert report.by_k(per.drop(columns="ranks"), ["neumf_f"], summary).empty  # kết quả cũ không có cột ranks
+    assert report.by_k(per.drop(columns="ranks"), ["neumf_f"], summary).empty
 
 
-# ------------------------------------------------------------------ kiểm định
 def test_verdict_requires_all_three_conditions():
     assert report.verdict(0.01, 0.001, 0.002, 0.10, 0.0015) == "A tốt hơn"
     assert report.verdict(0.01, -0.002, -0.001, -0.10, -0.0015) == "B tốt hơn"
-    assert report.verdict(0.10, 0.001, 0.002, 0.10, 0.0015) == report.NOT_SIG   # p Holm quá lớn
-    assert report.verdict(0.01, -0.001, 0.002, 0.10, 0.0005) == report.NOT_SIG  # CI chứa 0
-    assert report.verdict(0.01, 0.001, 0.002, 0.03, 0.0015) == report.NOT_SIG   # chênh lệch < 5%
+    assert report.verdict(0.10, 0.001, 0.002, 0.10, 0.0015) == report.NOT_SIG
+    assert report.verdict(0.01, -0.001, 0.002, 0.10, 0.0005) == report.NOT_SIG
+    assert report.verdict(0.01, 0.001, 0.002, 0.03, 0.0015) == report.NOT_SIG
 
 
 def test_holm_adjustment():
@@ -213,5 +210,5 @@ def test_significance_uses_registered_family_and_detects_clear_winner():
     sig = report.significance(um)
     assert list(zip(sig["A"], sig["B"])) == report.COMPARISONS and sig["id"].tolist() == list(range(1, 11))
     assert (sig.loc[sig["A"] == "neumf_f", "verdict"] == "A tốt hơn").all()
-    assert sig.iloc[-1]["verdict"] == report.NOT_SIG  # NeuMF vs BPR-MF: chỉ khác nhau do nhiễu
+    assert sig.iloc[-1]["verdict"] == report.NOT_SIG
     assert (sig["p_holm"] >= sig["p_wilcoxon"]).all()

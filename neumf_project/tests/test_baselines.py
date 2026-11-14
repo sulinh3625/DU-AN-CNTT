@@ -13,7 +13,6 @@ from src.models.neumf import GMF, MLP
 
 
 def _toy():
-    # 5 user × 6 item, mỗi cặp là một lần mua
     pairs = [(0, 0), (0, 1), (0, 2), (1, 0), (1, 1), (2, 1), (2, 2), (2, 3), (3, 3), (3, 4), (4, 4), (4, 5), (4, 0)]
     return pd.DataFrame(pairs, columns=["user", "item"]), 5, 6
 
@@ -43,17 +42,16 @@ def test_topk_cosine_matches_dense_bruteforce(k, shrink):
     got = topk_cosine(X, k, shrink, block=2).toarray()
     sim = _dense_cosine(X.toarray(), shrink)
     for r in range(nu):
-        # cùng tập giá trị top-k (hoà điểm có thể chọn chỉ số khác nhau) và chỉ giữ sim > 0
         assert np.allclose(np.sort(got[r][got[r] > 0]), np.sort(_topk_dense(sim, k)[r][_topk_dense(sim, k)[r] > 0]))
 
 
 def test_itemknn_scores_follow_definition():
     df, nu, ni = _toy()
-    model = ItemKNNBaseline(df, nu, ni, k=ni, shrink=0.0)  # k đủ lớn -> giữ mọi láng giềng
-    sim = _dense_cosine(interaction_matrix(df, nu, ni).toarray().T)  # item × item
+    model = ItemKNNBaseline(df, nu, ni, k=ni, shrink=0.0)
+    sim = _dense_cosine(interaction_matrix(df, nu, ni).toarray().T)
     X = interaction_matrix(df, nu, ni).toarray()
     for u in range(nu):
-        expected = sim @ X[u]  # điểm item j = tổng sim(j, i) trên item i user đã mua
+        expected = sim @ X[u]
         assert np.allclose(model.score_items(u, np.arange(ni)), expected)
 
 

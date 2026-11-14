@@ -1,23 +1,6 @@
-"""Dựng slide bảo vệ DACNTT: 15 slide (khoảng 10 phút), theo thứ tự GVHD dặn ở buổi họp 09/11/2026: bài toán và câu
-hỏi nghiên cứu -> cơ sở liên quan và mô hình đề xuất -> dữ liệu, quy trình thực nghiệm -> kết quả và phân tích -> demo ->
-kết luận. Không có slide tài liệu tham khảo (người dùng bỏ ngày 11/11/2026);
-slide không nhắc kế hoạch đăng ký trước, LateFusion-F chỉ nêu ở slide hợp nhất và câu trả lời câu hỏi 3.
-
-Giao diện và cách dựng theo slide bảo vệ khóa luận của nhóm (Khoa_luan/Report KLTN, 15 slide):
-- font Be Vietnam Pro, nền sáng có mảng xanh mờ, logo TDT, nhãn chương ở góc phải, thanh "Nhận xét" cuối slide;
-- sơ đồ theo lối sơ đồ kiến trúc tác tử của khóa luận: khung nét đứt đánh số, thẻ có biểu tượng, số thứ tự đặt trên mũi
-  tên, các tầng có dải màu dọc bên trái, giai đoạn A/B nối bằng một mũi tên có số;
-- một slide chứa nhiều pha nhờ hiệu ứng: nhóm hình hiện ra (mờ dần, phóng nhẹ, lau từ trái), thoát ra (mờ dần) để pha
-  sau dùng lại đúng chỗ đó; khung cam phóng vào từng phần của sơ đồ kèm chú thích đánh số ở vị trí thanh nhận xét.
-Sơ đồ dựng bằng hình khối PowerPoint, sửa được trực tiếp.
-
-Mọi con số lấy từ macro do neumf_project/scripts/24_report_v2.py sinh (Report DACNTT/content/tables/*/..._macros.tex) và
-từ summary.csv của đánh giá cuối, không gõ tay. Biểu đồ: mọi cột cùng một màu, không tô riêng mô hình đề xuất (góp ý
-GVHD). Biểu tượng ở media/icons (sinh bằng tao_bieu_tuong.py); ảnh demo cắt từ Report DACNTT/media/figures/demo/.
-
-Chạy: python build_slides.py [đường_dẫn_ra.pptx]
-Ngoài file .pptx, script ghi <tên>.buoc.json: các hình bị ẩn ở từng lần bấm, để xuất ảnh xem trước từng pha.
-"""
+"""Dựng slide bảo vệ DACNTT: 15 slide (khoảng 10 phút), theo thứ tự GVHD dặn ở buổi họp 09/11/2026: bài toán và câu hỏi
+nghiên cứu -> cơ sở liên quan và mô hình đề xuất -> dữ liệu, quy trình thực nghiệm -> kết quả và phân tích -> demo ->
+kết luận."""
 import csv
 import json
 import math
@@ -43,7 +26,6 @@ REPORT = os.path.dirname(HERE)
 REPO = os.path.dirname(REPORT)
 OUT = sys.argv[1] if len(sys.argv) > 1 else os.path.join(HERE, "Slide_DACNTT.pptx")
 
-# ----------------------------------------------------------------------------------------------- số liệu từ báo cáo
 BS = chr(92)
 MACRO = re.compile(re.escape(BS + "csname ") + r"(\S+?)" + re.escape(BS + "endcsname{") + r"(.*)}")
 
@@ -72,8 +54,8 @@ def summary(ds: str) -> list[tuple[str, float]]:
 
 
 def n_better(p: str) -> str:
-    """Số mô hình đối chứng truyền thống (so sánh 5–9: BPR-MF, ItemKNN, UserKNN, MostPopular-Recent, Content) mà
-    NeuMF-F tốt hơn có ý nghĩa, dạng 'a/5'."""
+    """Số mô hình đối chứng truyền thống (so sánh 5–9: BPR-MF, ItemKNN, UserKNN, MostPopular-Recent, Content) mà NeuMF-F
+    tốt hơn có ý nghĩa, dạng 'a/5'."""
     v = [M[f"{p}sig-{i}-verdict"] for i in range(5, 10)]
     return f"{sum(x == 'A tốt hơn' for x in v)}/{len(v)}"
 
@@ -93,13 +75,11 @@ def vn4(x: float) -> str:
 
 SO_CHU = {2: "hai", 3: "ba", 4: "bốn", 5: "năm", 6: "sáu"}
 
-# ----------------------------------------------------------------------------------------------- giao diện
 C = RGBColor.from_string
 BLUE, NAVY, INK, MUTED = C("1E46D1"), C("1F2F5C"), C("1E293B"), C("475569")
 DEEP, PALE, LINE, CARD = C("2A4A9C"), C("DCE7FB"), C("B9CCF0"), C("F3F7FE")
 FOOT, BG, WHITE, GOLD = C("C9D7F2"), C("FDFDFD"), C("FFFFFF"), C("FFD166")
 DASH, SUB = C("8DB3DA"), C("D6E2FA")
-# sơ đồ: xanh = nhánh GMF, xanh ngọc = nhánh MLP, cam = đặc trưng / hợp nhất / khung chú thích, xanh lá = đầu ra
 GMF_NEN, MLP, MLP_NEN = C("EEF3FD"), C("0891B2"), C("E6F6FA")
 CAM, CAM_NEN, CAM_NHAT, LA, LA_NEN = C("E07B24"), C("FCE3C7"), C("FFF6EC"), C("2E7D32"), C("EAF6EC")
 NAVY_NEN = C("E8EEF9")
@@ -117,14 +97,13 @@ CAM_ON = os.path.join(HERE, "media", "minh_hoa_cam_on.png")
 prs = Presentation()
 prs.slide_width, prs.slide_height = Inches(W), Inches(H)
 TITLE_ONLY, BLANK = prs.slide_layouts[5], prs.slide_layouts[6]
-SLIDES = []      # (slide, ô số trang hoặc None) theo thứ tự
-ANIM = {}        # slide_id -> các lần bấm (xem bam())
+SLIDES = []
+ANIM = {}
 
 
 def paras(tf, items, size=16, color=INK, bold=False, font=FONT, align=PP_ALIGN.LEFT, after=4, bullet=False,
           spacing=None):
-    """items: chuỗi, hoặc danh sách (chữ, tuỳ chọn) cho một đoạn nhiều kiểu chữ.
-    Tuỳ chọn của một đoạn chữ: size, color, bold, font, italic, sup, sub."""
+    """items: chuỗi, hoặc danh sách (chữ, tuỳ chọn) cho một đoạn nhiều kiểu chữ."""
     tf.word_wrap = True
     for i, it in enumerate(items):
         p = tf.paragraphs[0] if i == 0 else tf.add_paragraph()
@@ -305,7 +284,6 @@ def the_bt(s, x, y, w, h, ten, tieu_de, mo_ta="", fill=WHITE, line=LINE, d=0.55,
     return [c, *v, t]
 
 
-# ----------------------------------------------------------------------------------------------- khung slide
 def ra_sau(s, *pics):
     """Đưa ảnh nền xuống dưới mọi hình khác (kể cả placeholder tiêu đề có sẵn từ bố cục)."""
     tree = s.shapes._spTree
@@ -369,7 +347,6 @@ def slide(tieu_de, chuong, notes, blob=(10.3, -3.3, 6.0, 6.1), blob2=None, panel
     return s
 
 
-# ----------------------------------------------------------------------------------------------- hiệu ứng theo lần bấm
 def phang(x):
     """Làm phẳng danh sách lồng nhau thành danh sách hình."""
     if isinstance(x, (list, tuple)):
@@ -379,8 +356,7 @@ def phang(x):
 
 def bam(s, ra=(), zoom=(), lau=(), vao=(), auto=False, nhip=90):
     """Một lần bấm. ra: các hình thoát (mờ dần) trước; rồi zoom (mờ dần + phóng nhẹ như khóa luận), lau (lau từ trái
-    sang), vao (mờ dần) hiện ra. Mỗi phần tử cấp một của zoom/lau/vao hiện sau phần tử trước nhip mili giây; muốn
-    nhiều hình hiện cùng lúc thì gói chúng vào một danh sách con. auto=True: lần 'bấm' đầu chạy ngay khi vào slide."""
+    sang), vao (mờ dần) hiện ra."""
     items = [(sh, "ra", 0) for sh in phang(ra)]
     t0, k = (300 if items else 0), 0
     for kind, seq in (("zoom", zoom), ("lau", lau), ("vao", vao)):
@@ -477,8 +453,8 @@ def ghi_hieu_ung(s, clicks):
 
 
 def trang_thai(clicks):
-    """Danh sách id hình bị ẩn ở từng trạng thái: trạng thái 0 là khi vừa vào slide (đã chạy phần tự động), trạng thái
-    k là sau k lần bấm. Dùng để xuất ảnh xem trước từng pha."""
+    """Danh sách id hình bị ẩn ở từng trạng thái: trạng thái 0 là khi vừa vào slide (đã chạy phần tự động), trạng thái k
+    là sau k lần bấm."""
     an = set()
     first = {}
     for cl in clicks:
@@ -495,7 +471,6 @@ def trang_thai(clicks):
     return out or [[]]
 
 
-# ----------------------------------------------------------------------------------------------- biểu đồ
 def bieu_do(s, data, x, y, w, h, ten, co=13, max_ty=1.2, dao=False):
     cd = CategoryChartData()
     cd.categories = [n for n, _ in data]
@@ -513,7 +488,7 @@ def bieu_do(s, data, x, y, w, h, ten, co=13, max_ty=1.2, dao=False):
     ser = plot.series[0]
     ser.format.fill.solid()
     ser.format.fill.fore_color.rgb = BLUE
-    for i, (_, v) in enumerate(data):  # nhãn ghi tay để có dấu phẩy thập phân như báo cáo
+    for i, (_, v) in enumerate(data):
         dl = ser.points[i].data_label
         dl.position = XL_LABEL_POSITION.OUTSIDE_END
         dl.text_frame.text = vn4(v)
@@ -535,8 +510,7 @@ def bieu_do(s, data, x, y, w, h, ten, co=13, max_ty=1.2, dao=False):
 
 
 def chuoi_buoc(s, x0, y, w, h, gap, buoc, mau=BLUE, so0=1):
-    """Một hàng thẻ đọc từ trái sang phải, mỗi thẻ có số thứ tự ở góc (như sơ đồ quy trình của khóa luận).
-    Trả về danh sách nhóm hình, mỗi bước một nhóm (thẻ + mũi tên dẫn vào nó)."""
+    """Một hàng thẻ đọc từ trái sang phải, mỗi thẻ có số thứ tự ở góc (như sơ đồ quy trình của khóa luận)."""
     nhom = []
     for k, (ic, a, b) in enumerate(buoc):
         x = x0 + k * (w + gap)
@@ -552,8 +526,7 @@ HINH_DIR = os.path.join(REPO, "image")
 
 
 def hinh(s, ten, x, y, k, name=None):
-    """Chèn hình sơ đồ của báo cáo (image/<ten>.png, xuất ở hệ số 2) với tỉ lệ k inch cho mỗi đơn vị draw.io.
-    Dùng cùng k cho hai hình có cùng bố cục (NeuMF, NeuMF-F) để các hàng trùng chỗ khi hình này thay hình kia."""
+    """Chèn hình sơ đồ của báo cáo (image/<ten>.png, xuất ở hệ số 2) với tỉ lệ k inch cho mỗi đơn vị draw.io."""
     p = os.path.join(HINH_DIR, ten + ".png")
     w_px, h_px = Image.open(p).size
     return anh(s, p, x, y, w_px / 2 * k, h_px / 2 * k, name or ten)
@@ -579,7 +552,6 @@ def cat_anh(ten, src, box=None):
     return out
 
 
-# =============================================================================================== 1. Mở đầu
 s = prs.slides.add_slide(BLANK)
 nen(s, (7.6, -1.6, 6.0, 6.1), (-2.2, 4.6, 4.6, 4.65))
 logo(s)
@@ -600,7 +572,6 @@ for x, ic, a, b in [(0.6, "school", "Giảng viên hướng dẫn", ["TS. Hồ T
     text(s, x + 0.8, 5.06, 3.4, 1.2, [[(a, {"size": 13, "color": MUTED})]] +
          [[(n, {"size": 17, "bold": True, "color": INK})] for n in b], after=1)
 text(s, 0.6, 6.85, 6.0, 0.35, ["Khoa Công nghệ thông tin · TP. Hồ Chí Minh, 2026"], size=13, color=BLUE)
-# mạng khách hàng – sản phẩm: một tâm, sáu vệ tinh; hiện dần ngay khi vào slide
 cx, cy, rr = 11.0, 3.7, 1.85
 ve_tinh = ["users", "shirt", "users", "perfume", "users", "shopping-bag"]
 day, nut = [], []
@@ -614,7 +585,6 @@ for k, ic in enumerate(ve_tinh):
 tam = vong(s, "affiliate", cx - 0.85, cy - 0.85, 1.7, fill=BLUE, mau="trang", line=WHITE, lw=3, ti=0.56)
 bam(s, zoom=[tam, day, *nut, vien], auto=True, nhip=110)
 
-# =============================================================================================== 2. Bài toán
 s = slide("Bối cảnh và bài toán", "Chương 1 · Tổng quan",
           "Khoảng 40 giây. Dữ liệu thời trang chỉ có lịch sử mua, ma trận khách–sản phẩm rất thưa. NeuMF (He và cộng "
           "sự, 2017) ghép GMF với MLP nhưng chỉ dùng mã khách và mã sản phẩm, nên chưa khai thác thông tin có sẵn: thuộc tính, "
@@ -624,7 +594,7 @@ g1 = [the(s, L, 1.98, 4.9, 3.85, name="Thẻ ma trận")]
 g1.append(text(s, L + 0.3, 2.12, 4.3, 0.4, ["Ma trận khách – sản phẩm"], size=17, bold=True, color=NAVY))
 rnd = random.Random(7)
 o_mua = []
-for r_ in range(8):  # ô tô màu = khách đã mua sản phẩm; phần lớn ô trống
+for r_ in range(8):
     for c_ in range(14):
         on = rnd.random() < 0.09
         o = hop(s, L + 0.32 + c_ * 0.305, 2.68 + r_ * 0.3, 0.25, 0.25, fill=BLUE if on else WHITE,
@@ -650,7 +620,6 @@ bam(s, zoom=o_mua, auto=True, nhip=25)
 bam(s, zoom=[g2[1], *nguon])
 bam(s, lau=[g3])
 
-# =============================================================================================== 3. Câu hỏi nghiên cứu
 s = slide("Mục tiêu và câu hỏi nghiên cứu", "Chương 1 · Tổng quan",
           "Khoảng 20 giây. Ba câu hỏi; phần kết quả và slide kết luận trả lời lần lượt từng câu. Câu hỏi 1 là câu hỏi "
           "chính.", panel=True)
@@ -677,13 +646,12 @@ bam(s, zoom=[nhom[1]])
 bam(s, zoom=[nhom[2]])
 bam(s, vao=[nx])
 
-# =============================================================================================== 4. NeuMF -> NeuMF-F
 s = slide("Từ NeuMF đến mô hình đề xuất NeuMF-F", "Chương 2, 3 · Mô hình",
           "Khoảng 1 phút 30. Đầu tiên là NeuMF gốc (cơ sở lý thuyết): khách và sản phẩm vào bằng mã ID; nhánh GMF nhân "
           "từng phần tử, tổng quát hoá MF; nhánh MLP nối hai vector rồi qua lớp ẩn; nối hai đầu ra là hợp nhất sớm. "
           "Bấm 1: hạn chế chỉ dùng ID. Bấm 2: hình đổi thành NeuMF-F (cùng kiểu hình 3.4 của báo cáo), ba nhóm đặc "
           "trưng hiện ở dưới. Bấm 3–5: đọc hình theo số, khung cam chỉ phần đang nói. Bấm 6: nhận xét.")
-K4 = CW / 1674  # bản nằm ngang của hình 2.1 và 3.4 (image/hinh_*_ngang.png), cùng tỉ lệ nên các cột trùng chỗ
+K4 = CW / 1674
 h_neumf = hinh(s, "hinh_neumf_ngang", L, 1.95, K4)
 h_neumf_f = hinh(s, "hinh_neumf_f_ngang", L, 1.95, K4)
 co_so = []
@@ -706,7 +674,7 @@ for k, (ic, a, b) in enumerate([("shirt", "Sản phẩm", "thuộc tính danh m�
                       text(s, x + 0.9, 5.0, 3.0, 1.08, [[(a, {"bold": True, "color": CAM})], [(b, {"size": 12.5})]],
                            size=14, anchor=MSO_ANCHOR.MIDDLE, after=1)])
 han_che = nhan_xet(s, "Hạn chế", "NeuMF chỉ dùng mã ID, không tận dụng thông tin của khách và sản phẩm.")
-G4 = (0, 30)  # toạ độ nhỏ nhất của các hình trên hai trang nằm ngang
+G4 = (0, 30)
 doc = [(khung_tren_hinh(s, h_neumf_f, G4, (0, 30, 610, 320), 1),
         chu_thich(s, 1, "Biểu diễn lai: mỗi vector là vector nhúng mã ID cộng với phép chiếu của đặc trưng (ô màu cam).",
                   size=14.5)),
@@ -723,7 +691,6 @@ bam(s, ra=doc[0], zoom=[doc[1]])
 bam(s, ra=doc[1], zoom=[doc[2]])
 bam(s, ra=doc[2], vao=[cuoi])
 
-# =============================================================================================== 5. Dữ liệu
 s = slide("Dữ liệu: H&M và Amazon Beauty", "Chương 3 · Dữ liệu",
           "Khoảng 50 giây. H&M: lấy hai mẫu khách tách rời, gộp màu theo mẫu thiết kế, lọc 10-core, chia theo thời "
           "gian. Mẫu phát triển để tinh chỉnh, mẫu kiểm định để kết luận. Bấm: chuyển sang Amazon Beauty, bộ kiểm chứng "
@@ -760,19 +727,17 @@ bam(s, zoom=hm[1:], auto=True, nhip=80)
 bam(s, ra=hm, zoom=am, nhip=80)
 bam(s, vao=[nx])
 
-# =============================================================================================== 6. Quy trình
 s = slide("Quy trình thực nghiệm", "Chương 3 · Đánh giá",
           "Khoảng 1 phút, phần cô dặn phải nói rõ. Trục thời gian: học trên quá khứ, đoán tương lai. Bấm 1: giai đoạn A "
           "trên mẫu phát triển: mọi mô hình học thử 6 cấu hình, chọn theo NDCG@10 trên tập xác thực, rồi giữ cố định. "
           "Bấm 2: giai đoạn B trên mẫu kiểm định với cấu hình đã chọn: huấn luyện lại 5 seed, xếp hạng mọi ứng viên, "
           "kiểm định Wilcoxon, khoảng tin cậy bootstrap, hiệu chỉnh Holm. Tập kiểm thử chỉ dùng cho đánh giá cuối.")
-tl = [hinh(s, "hinh_chia_thoi_gian", L, 2.0, CW / 958)]  # hình 3.3 của báo cáo
+tl = [hinh(s, "hinh_chia_thoi_gian", L, 2.0, CW / 958)]
 tl += [the(s, L, 5.0, CW, 1.0, fill=WHITE),
        text(s, L + 0.3, 5.0, CW - 0.6, 1.0,
             [[("Học trên quá khứ, đánh giá trên tương lai. ", {"bold": True, "color": NAVY}),
               ("Đặc trưng và mẫu âm đều tính tại đúng thời điểm, nên mô hình không nhìn thấy thông tin của giai đoạn "
                "được đánh giá.", {})]], size=15, anchor=MSO_ANCHOR.MIDDLE, after=0)]
-# sơ đồ hai giai đoạn A, B như sơ đồ quy trình huấn luyện của khóa luận
 A = [hop(s, L, 1.95, CW, 1.68, fill=C("F5F8FE"), line=BLUE, lw=1.5, r=0.04, dash=True),
      text(s, L + 0.2, 2.0, CW - 0.4, 0.4, [[("A · CHỌN CẤU HÌNH", {"bold": True, "color": BLUE}),
                                             ("   mẫu phát triển · tập xác thực 4 tuần · seed 42",
@@ -788,13 +753,12 @@ B = [hop(s, L, 4.33, CW, 1.68, fill=C("FFF8F1"), line=CAM, lw=1.5, r=0.04, dash=
      text(s, L + 2.4, 4.38, CW - 2.6, 0.4, [[("B · ĐÁNH GIÁ CUỐI", {"bold": True, "color": CAM}),
                                             ("   mẫu kiểm định · tập kiểm thử 8 tuần cuối",
                                              {"size": 12.5, "color": MUTED})]], size=15, anchor=MSO_ANCHOR.MIDDLE,
-          align=PP_ALIGN.RIGHT)]  # căn phải để mũi tên nối từ A xuống không cắt qua chữ
+          align=PP_ALIGN.RIGHT)]
 buoc_b = chuoi_buoc(s, x0, 4.88, bw, 0.92, gap,
                     [("player-play", "Huấn luyện lại", f"{M['vdata-run-seeds']} lần chạy, dữ liệu trước 29/07/2020"),
                      ("list-numbers", "Xếp hạng", "mọi ứng viên của từng khách"),
                      ("scale", "Kiểm định", "Wilcoxon, bootstrap, Holm"),
                      ("checks", "Kết luận", "NeuMF-F với từng đối chứng")], mau=CAM, so0=5)
-# mũi tên từ "Khoá kế hoạch" (cuối hàng A) vòng xuống đầu hàng B, đi trong khe giữa hai khung nên không cắt hình nào
 xa, xb, ym = x0 + 3 * (bw + gap) + bw / 2, x0 + bw / 2, 3.98
 noi = [mui_ten(s, xa, 3.42, xa, ym, color=NAVY, w=2, dau=False), mui_ten(s, xa, ym, xb, ym, color=NAVY, w=2, dau=False),
        mui_ten(s, xb, ym, xb, 4.85, color=NAVY, w=2),
@@ -806,7 +770,6 @@ bam(s, ra=[tl], zoom=[A, *buoc_a], nhip=120)
 bam(s, lau=[noi], zoom=[B, *buoc_b], nhip=120)
 bam(s, vao=[nx])
 
-# =============================================================================================== 7. Đối chứng
 s = slide("Mô hình đối chứng", "Chương 3 · Đối chứng",
           "Khoảng 25 giây. Ba nhóm đối chứng theo góp ý của cô: mô hình đơn lẻ, học máy truyền thống, chuyên biệt cho "
           "khuyến nghị. GMF-F, MLP-F là từng nhánh có đặc trưng đứng riêng; LateFusion-F là hợp nhất muộn của chính "
@@ -814,7 +777,6 @@ s = slide("Mô hình đối chứng", "Chương 3 · Đối chứng",
 cx_ = L + CW / 2
 g = the_bt(s, cx_ - 1.85, 1.95, 3.7, 0.8, "brain", "NeuMF-F", "mô hình đề xuất", fill=NAVY, line=None,
            mau_chu=WHITE, mau_phu=SUB, vong_fill=BLUE, mau_bt="trang", d=0.56, co=17, co_phu=12.5)
-# mỗi nhóm là các hàng hai viên bằng nhau; hàng chỉ có một viên thì viên đó rộng hết hàng
 nhom_dc = [("stack-2", "Mô hình đơn lẻ", "từng nhánh, có và không có đặc trưng",
             [["GMF", "MLP"], ["GMF-F", "MLP-F"]]),
            ("books", "Học máy truyền thống", "láng giềng, nhân tử hoá, nội dung, lai",
@@ -847,7 +809,6 @@ bam(s, lau=[day_], zoom=g2, auto=True, nhip=160)
 bam(s, vao=[nx])
 
 
-# =============================================================================================== 8–9. Kết quả
 def ket_qua(ds, p, ten, n_users, the3, xet, notes):
     s = slide(f"Kết quả trên {ten}", "Chương 4 · Thực nghiệm", notes)
     text(s, L, 1.88, 7.6, 0.35, [f"NDCG@10 trên tập kiểm thử, trung bình 5 seed, {n_users} khách"], size=15,
@@ -893,7 +854,6 @@ ket_qua("amazon", "a", "Amazon Beauty", M["adata-test-users"], so_voi_truyen_tho
         f"trưng lặp lại: NeuMF-F hơn NeuMF chỉ dùng ID {M['asig-1-rel']} và tốt hơn có ý nghĩa mọi mô hình học máy "
         f"truyền thống, kể cả Hybrid-CBCF.")
 
-# =============================================================================================== 10. Bóc tách
 s = slide("Đặc trưng nào đóng góp nhiều nhất?", "Chương 4 · Thực nghiệm",
           "Khoảng 40 giây. Trả lời câu hỏi 2. Phân tích bóc tách tắt từng nhóm đặc trưng (seed 42). H&M trước, bấm để "
           "hiện Amazon Beauty. Bỏ đặc trưng thời gian làm NDCG@10 giảm mạnh nhất trên cả hai bộ. Nếu hội đồng hỏi: "
@@ -909,7 +869,7 @@ for k, (p, ten, x, w, xt) in enumerate([("v", "H&M", 4.25, 4.75, 6.55), ("a", "A
     t_ = text(s, xt, 1.95, 3.3, 0.35, [ten], size=16, bold=True, color=NAVY)
     data = [(lab, so(M[f"{p}abl-{key}-NDCG10"])) for key, lab in BIEN_THE]
     ch_ = bieu_do(s, data, x, 2.3, w, 3.65, f"Biểu đồ bóc tách {ten}", co=12, max_ty=1.32, dao=True)
-    if k:  # tên biến thể đã ghi ở biểu đồ bên trái, cùng thứ tự
+    if k:
         ch_.chart.category_axis.tick_label_position = XL_TICK_LABEL_POSITION.NONE
     bd_.append([t_, ch_])
 bam(s, zoom=[the_hm], lau=[bd_[0]], auto=True)
@@ -917,7 +877,6 @@ bam(s, zoom=[the_am], lau=[bd_[1]])
 bam(s, vao=[nhan_xet(s, "Nhận xét", "Đặc trưng thời gian đóng góp nhiều nhất: bỏ đi làm NDCG@10 giảm mạnh nhất "
                                     "trên cả hai bộ dữ liệu.", size=15)])
 
-# =============================================================================================== 11. Hợp nhất
 s = slide("Hợp nhất sớm và hợp nhất muộn", "Chương 4 · Thực nghiệm",
           "Khoảng 1 phút. Trả lời câu hỏi 3. Hình: hợp nhất sớm ghép hai nhánh trong một mạng, học chung; hợp nhất muộn "
           "huấn luyện hai mạng riêng rồi trộn điểm. Bảng: NeuMF-F chỉ một mạng nên thời gian huấn luyện thấp hơn và độ "
@@ -925,7 +884,7 @@ s = slide("Hợp nhất sớm và hợp nhất muộn", "Chương 4 · Thực ng
           "là thời gian huấn luyện. Nhóm chọn hợp nhất sớm cho mô hình đề xuất vì đúng tên đề tài: một mô hình lai duy "
           "nhất, MF và DNN học chung; LateFusion-F dùng lại chính hai nhánh có đặc trưng. Bấm 2: ý nghĩa của kết quả. "
           "Bấm 3: nhận xét.")
-so_do = [hinh(s, "hinh_hop_nhat", L, 1.95, 4.15 / 434)]  # hình 2.2 của báo cáo, cao 4,15 inch
+so_do = [hinh(s, "hinh_hop_nhat", L, 1.95, 4.15 / 434)]
 rows = [("", "NeuMF-F", "LateFusion-F"),
         ("Phút huấn luyện · H&M", M["vbey-NeuMFF-time"], M["vbey-LateF-time"]),
         ("Phút huấn luyện · Amazon", M["abey-NeuMFF-time"], M["abey-LateF-time"]),
@@ -933,7 +892,7 @@ rows = [("", "NeuMF-F", "LateFusion-F"),
         ("Độ phủ top-10 · Amazon", M["abey-NeuMFF-cov"], M["abey-LateF-cov"]),
         ("NDCG@10 · H&M", M["vres-NeuMFF-NDCG10"], M["vres-LateF-NDCG10"]),
         ("NDCG@10 · Amazon", M["ares-NeuMFF-NDCG10"], M["ares-LateF-NDCG10"])]
-XB = 7.95  # bảng nằm bên phải hình
+XB = 7.95
 gf = s.shapes.add_table(len(rows), 3, Inches(XB), Inches(1.98), Inches(R - XB), Inches(0.46 * len(rows)))
 gf.name = "Bảng so sánh"
 tbl = gf.table
@@ -975,13 +934,12 @@ nx3 = nhan_xet(s, "Nhận xét", "Giá trị của đặc trưng rõ trên cả 
 bam(s, ra=[so_do, gf, ghi, nx1], zoom=y_nghia, nhip=150)
 bam(s, vao=[nx3])
 
-# =============================================================================================== 12. Demo: kiến trúc
 s = slide("Demo: kiến trúc hệ thống", "Chương 3 · Demo",
           "Khoảng 45 giây. Kiến trúc ba tầng (cùng hình 3.6 của báo cáo), bấm để đọc từng tầng: (1) giao diện web ba "
           "màn hình, chỉ gọi API; (2) API suy luận FastAPI: xếp hạng mọi ứng viên của khách bằng NeuMF-F và mô hình "
           "đối chứng được chọn, khách mới nhận danh sách bán chạy; (3) tầng mô hình và dữ liệu nạp một lần khi khởi "
           "động. Bấm 4: nhận xét.", blob=(-2.6, 4.4, 6.0, 6.1))
-K12 = CW / 1254  # bản nằm ngang của hình kiến trúc demo
+K12 = CW / 1254
 h_demo = hinh(s, "hinh_demo_ngang", L, 1.95, K12)
 the_tang = []
 for k, (a, box) in enumerate([
@@ -998,7 +956,6 @@ bam(s, ra=the_tang[0], zoom=[the_tang[1]])
 bam(s, ra=the_tang[1], zoom=[the_tang[2]])
 bam(s, ra=the_tang[2], vao=[nx])
 
-# =============================================================================================== 13. Demo: giao diện
 s = slide("Demo: giao diện ứng dụng", "Chương 3 · Demo",
           "Khoảng 1 phút. Mỗi lần bấm một màn hình. (1) Khuyến nghị sản phẩm: chọn khách, NeuMF-F bên trái, mô hình đối "
           "chứng bên phải, dòng xanh là món khách thật sự mua sau mốc kiểm thử. (2) Khách mới chưa có lịch sử: nhận "
@@ -1014,7 +971,7 @@ man = [(cat_anh("cua_hang.png", "demo_v2.png", (0, 1232, 2428, 2360)), "Khuyến
         "NeuMF-F với từng đối chứng: NDCG@10 và chênh lệch"),
        (cat_anh("xep_hang.png", "demo_v2_results.png", (0, 805, 1280, 1332)), "Xếp hạng và bóc tách",
         "NDCG@10 của 15 mô hình; mức giảm khi bỏ từng nhóm đặc trưng")]
-XA, WA, HA = L, 8.75, 4.85  # khung ảnh cao gần hết vùng nội dung (slide này không có thanh nhận xét)
+XA, WA, HA = L, 8.75, 4.85
 khung_anh = the(s, XA, 1.95, WA, HA, fill=WHITE, name="Khung ảnh demo")
 anh_ = [anh_vua(s, p, XA + 0.12, 2.07, WA - 0.24, HA - 0.24, f"Ảnh demo {a}") for p, a, _ in man]
 XD = XA + WA + 0.2
@@ -1030,7 +987,6 @@ bam(s, zoom=[khung_anh, [anh_[0], nen_chon[0]], *ds_man], auto=True, nhip=110)
 for k in (1, 2, 3):
     bam(s, ra=[anh_[k - 1], nen_chon[k - 1]], zoom=[[anh_[k], nen_chon[k]]])
 
-# =============================================================================================== 14. Kết luận
 s = slide("Kết luận", "Chương 5 · Kết luận",
           "Khoảng 1 phút. Pha 1: trả lời lần lượt ba câu hỏi nghiên cứu (mỗi lần bấm một câu). Bấm 4: đóng góp, phạm vi "
           "nhóm đã chọn và hướng phát triển, theo chương 5 của báo cáo.")
@@ -1072,7 +1028,6 @@ bam(s, zoom=[hang[1]])
 bam(s, zoom=[hang[2]])
 bam(s, ra=hang, zoom=cot, nhip=160)
 
-# =============================================================================================== 15. Cảm ơn
 s = slide("", "Chương 5 · Kết luận", "Cảm ơn hội đồng, mời đặt câu hỏi.", blob=(-2.2, -1.6, 6.0, 6.1))
 s.shapes.title.text_frame.text = ""
 hinh = anh_vua(s, CAM_ON, 0.25, 1.55, 4.9, 4.7, "Minh hoạ cảm ơn")
@@ -1082,7 +1037,6 @@ loi = [text(s, 5.6, 2.15, 7.3, 2.0, [[("Cảm ơn hội đồng", {"color": INK}
        text(s, 5.6, 5.1, 7.3, 0.5, ["Lê Minh Lý · Sử Thị Yến Linh   |   GVHD: TS. Hồ Thị Linh"], size=18, color=INK)]
 bam(s, zoom=[hinh, *loi], auto=True, nhip=150)
 
-# ----------------------------------------------------------------------------------------------- số trang, hiệu ứng
 assert len(SLIDES) == 15, len(SLIDES)
 for i, (s, page) in enumerate(SLIDES, 1):
     if page is not None:

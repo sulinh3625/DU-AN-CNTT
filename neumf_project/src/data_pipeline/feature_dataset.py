@@ -1,10 +1,4 @@
-"""Dữ liệu huấn luyện cho mô hình có đặc trưng (NeuMF-F, giao thức v2).
-
-Mỗi cặp dương (u, i) có ngày mua đầu t. Mẫu âm được lấy đều trong các sản phẩm của tập huấn luyện ĐÃ ra mắt trước hoặc
-trong ngày t (sản phẩm chưa bán lần nào trước t không thể là mẫu âm của lượt mua ở t), trừ sản phẩm u đã mua; lấy lại
-mỗi epoch. Mỗi mẫu mang ngày t để mô hình tính đặc trưng thời gian của item tại t, và đặc trưng thời gian của u tính từ
-các cặp TRƯỚC t — mô hình không thấy thông tin sau thời điểm của từng lượt mua.
-"""
+"""Dữ liệu huấn luyện cho mô hình có đặc trưng (NeuMF-F, giao thức v2)."""
 from __future__ import annotations
 
 import numpy as np

@@ -8,11 +8,7 @@ from .base import DatasetAdapter
 
 
 class HMAdapter(DatasetAdapter):
-    """Adapter H&M Personalized Fashion Recommendations.
-
-    Không chấp nhận .xlsx làm raw source vì Excel cắt tại 1,048,576 dòng,
-    trong khi transactions_train.csv gốc lớn hơn rất nhiều.
-    """
+    """Adapter H&M Personalized Fashion Recommendations."""
 
     def __init__(self, path: Path, encoding: str = "utf-8"):
         self.path = Path(path)

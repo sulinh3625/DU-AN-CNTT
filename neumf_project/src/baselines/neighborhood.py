@@ -1,17 +1,4 @@
-"""Lọc cộng tác dựa trên láng giềng (memory-based) cho phản hồi ẩn nhị phân: ItemKNN và UserKNN.
-
-Độ tương đồng cosine trên vector mua nhị phân, có hệ số co (shrink):
-
-    sim(a, b) = |I_a ∩ I_b| / (sqrt(|I_a| · |I_b|) + shrink)
-
-Mỗi hàng chỉ giữ k láng giềng gần nhất (top-K) và lưu dạng ma trận thưa, nên chạy được với khoảng 10.000 item
-(bản cũ dùng ma trận dày n_items × n_items và chấm từng cặp, phải chặn ở 5.000 item).
-
-- ItemKNN (Sarwar et al., 2001): điểm của item j cho user u = tổng sim(j, i) trên các item i mà u đã mua và
-  thuộc top-K láng giềng của j.
-- UserKNN: điểm của item j cho user u = tổng sim(u, v) trên các user v thuộc top-K láng giềng của u đã mua j.
-  `neighbors()` trả về các láng giềng kèm số item mua chung (dùng để giải thích "Top-K user tương đồng").
-"""
+"""Lọc cộng tác dựa trên láng giềng (memory-based) cho phản hồi ẩn nhị phân: ItemKNN và UserKNN."""
 from __future__ import annotations
 
 import numpy as np
@@ -23,15 +10,12 @@ def interaction_matrix(train_df, n_users: int, n_items: int) -> csr_matrix:
     rows = train_df["user"].to_numpy(dtype=np.int64)
     cols = train_df["item"].to_numpy(dtype=np.int64)
     X = csr_matrix((np.ones(len(rows), dtype=np.float32), (rows, cols)), shape=(n_users, n_items))
-    X.data[:] = 1.0  # cặp trùng (nếu có) vẫn chỉ là 1
+    X.data[:] = 1.0
     return X
 
 
 def topk_cosine(M: csr_matrix, k: int, shrink: float = 0.0, block: int = 1024) -> csr_matrix:
-    """Ma trận n × n giữ top-k láng giềng cosine (sim > 0) của mỗi hàng của M, bỏ chính nó.
-
-    Tính theo khối hàng (block × n dày) để không phải dựng toàn bộ ma trận tương đồng.
-    """
+    """Ma trận n × n giữ top-k láng giềng cosine (sim > 0) của mỗi hàng của M, bỏ chính nó."""
     M = M.tocsr().astype(np.float32)
     n = M.shape[0]
     k = int(min(k, n - 1))
@@ -40,11 +24,11 @@ def topk_cosine(M: csr_matrix, k: int, shrink: float = 0.0, block: int = 1024) -
     rows, cols, vals = [], [], []
     for start in range(0, n, block):
         stop = min(start + block, n)
-        co = (M[start:stop] @ MT).toarray()                       # số phần tử chung
+        co = (M[start:stop] @ MT).toarray()
         denom = norms[start:stop, None] * norms[None, :] + np.float32(shrink)
         sim = np.divide(co, denom, out=np.zeros_like(co), where=denom > 0)
-        sim[np.arange(stop - start), np.arange(start, stop)] = 0.0  # bỏ chính nó
-        idx = np.argsort(-sim, axis=1, kind="stable")[:, :k]  # tất định: hoà điểm thì lấy chỉ số nhỏ hơn
+        sim[np.arange(stop - start), np.arange(start, stop)] = 0.0
+        idx = np.argsort(-sim, axis=1, kind="stable")[:, :k]
         top = np.take_along_axis(sim, idx, axis=1)
         keep = top > 0
         rows.append(np.repeat(np.arange(start, stop), k).reshape(-1, k)[keep])
@@ -59,8 +43,8 @@ class ItemKNNBaseline:
     def __init__(self, train_df, n_users: int, n_items: int, k: int = 100, shrink: float = 0.0):
         self.k, self.shrink = int(k), float(shrink)
         self.X = interaction_matrix(train_df, n_users, n_items)
-        S = topk_cosine(self.X.T.tocsr(), self.k, self.shrink)  # hàng j: top-k item giống j
-        self.ST = S.T.tocsr()                                     # hàng i: sim(j, i) với mọi j nhận i làm láng giềng
+        S = topk_cosine(self.X.T.tocsr(), self.k, self.shrink)
+        self.ST = S.T.tocsr()
 
     def _items_of(self, user: int) -> np.ndarray:
         u = int(user)
@@ -85,7 +69,7 @@ class UserKNNBaseline:
     def __init__(self, train_df, n_users: int, n_items: int, k: int = 100, shrink: float = 0.0):
         self.k, self.shrink = int(k), float(shrink)
         self.X = interaction_matrix(train_df, n_users, n_items)
-        self.T = topk_cosine(self.X, self.k, self.shrink)          # hàng u: top-k user giống u
+        self.T = topk_cosine(self.X, self.k, self.shrink)
 
     def score_items(self, user: int, items) -> np.ndarray:
         scores = np.asarray((self.T[int(user)] @ self.X).todense(), dtype=np.float64).ravel()
@@ -99,7 +83,7 @@ class UserKNNBaseline:
     def neighbors(self, user: int, top: int = 10) -> list[dict]:
         """Các user tương đồng nhất của `user`: mã user, độ tương đồng, số item mua chung."""
         row = self.T[int(user)]
-        order = np.lexsort((row.indices, -row.data))[:top]           # sim giảm dần, hoà thì theo mã user
+        order = np.lexsort((row.indices, -row.data))[:top]
         mine = set(self.X.indices[self.X.indptr[int(user)]:self.X.indptr[int(user) + 1]].tolist())
         out = []
         for v, s in zip(row.indices[order], row.data[order]):

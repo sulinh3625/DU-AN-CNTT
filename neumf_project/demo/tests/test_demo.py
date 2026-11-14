@@ -1,7 +1,4 @@
-"""Chạy từ neumf_project/:  python -m pytest demo/tests -q
-
-Test có fixture vctx nạp checkpoint seed 42 của đánh giá cuối (outputs/v2/final/) và dữ liệu thật; tự bỏ qua nếu chưa có.
-"""
+"""Chạy từ neumf_project/: python -m pytest demo/tests -q"""
 from __future__ import annotations
 
 import json
@@ -16,10 +13,6 @@ from demo.backend.data_context import (SEED, V2_DIR, DataContext, product_table,
 from demo.backend.routes import filter_users, user_position, user_rows
 
 TOL = 1e-6
-# Mô hình không đọc tệp đặc trưng văn bản (data/processed/, mỗi máy tự dựng, không nằm trong git): hạng tính lại phải trùng
-# hạng đã lưu ở mọi máy, kể cả checkpoint tạo trên GPU chấm lại trên CPU. Mô hình đọc tệp này (bốn mô hình có đặc trưng,
-# Content, Hybrid-CBCF qua Content) chỉ trùng khi tệp giống máy đã chạy; tệp dựng bằng phiên bản thư viện khác cho vector
-# văn bản khác, khi đó demo phải báo lệch và trả đúng số đã lưu.
 TEXT_FREE = {"NeuMF", "GMF", "MLP", "BPR-MF", "UserKNN", "ItemKNN", "MostPopular", "MostPopular-Recent"}
 V2_KEY = {"NeuMF-F": "neumf_f", "GMF-F": "gmf_f", "MLP-F": "mlp_f", "NeuMF": "neumf", "GMF": "gmf", "MLP": "mlp",
           "LateFusion-F": "late_f", "BPR-MF": "bpr", "UserKNN": "userknn", "ItemKNN": "itemknn",
@@ -36,14 +29,13 @@ def vctx():
     return DataContext(load_customers=False)
 
 
-# ------------------------------------------------------------- khớp đánh giá cuối
 def test_metrics_match_per_user_file(vctx):
     """Demo đối chiếu với outputs/v2/final/seed42/per_user.csv.gz (số của Chương 4) và, khi đã chấm bổ sung,
-    bosung/per_user.csv.gz của mô hình lai truyền thống: số đã lưu trả kèm luôn đúng; hạng tính lại trùng số đã lưu (mô
-    hình trong TEXT_FREE thì bắt buộc), hoặc demo báo lệch kèm lý do."""
+    bosung/per_user.csv.gz của mô hình lai truyền thống: số đã lưu trả kèm luôn đúng; hạng tính lại trùng số đã lưu
+    (mô hình trong TEXT_FREE thì bắt buộc), hoặc demo báo lệch kèm lý do."""
     per = pd.read_csv(V2_DIR / f"seed{SEED}" / "per_user.csv.gz")
     bs = V2_DIR / "bosung" / "per_user.csv.gz"
-    if bs.exists():  # scripts/25_bosung.py: mô hình tất định, một bản cho mỗi seed
+    if bs.exists():
         b = pd.read_csv(bs)
         per = pd.concat([per, b[b["seed"] == SEED]], ignore_index=True)
     per = per.set_index(["model", "user"])
@@ -80,7 +72,7 @@ def test_new_customer_gets_popular_list_instead_of_error(vctx, monkeypatch):
     hist = routes.history(cid, dataset="hm")
     assert hist["is_new"] and hist["items"] == [] and hist["profile"]["customer_id"] == cid
     assert routes.neighbors(cid, dataset="hm")["neighbors"] == []
-    assert vctx.k_values == [10, 15, 20]  # như báo cáo: K = 10, 15, 20
+    assert vctx.k_values == [10, 15, 20]
 
 
 def test_customer_without_targets_gets_model_recommendations(vctx, monkeypatch):
@@ -130,11 +122,11 @@ def test_neighbors_are_sorted_and_counted(vctx):
 
 
 def test_similar_items_follow_itemknn(vctx):
-    """Sản phẩm tương tự của thẻ chi tiết = láng giềng ItemKNN: độ tương đồng giảm dần, khớp công thức cosine có hệ số co,
-    không gồm chính sản phẩm; sản phẩm H&M có mô tả gốc."""
+    """Sản phẩm tương tự của thẻ chi tiết = láng giềng ItemKNN: độ tương đồng giảm dần, khớp công thức cosine có hệ số
+    co, không gồm chính sản phẩm; sản phẩm H&M có mô tả gốc."""
     knn = vctx.scorers["ItemKNN"].fn
     X = knn.X.tocsc()
-    i = int(np.argmax(vctx.train_item_counts))  # sản phẩm bán chạy nhất: chắc chắn có láng giềng
+    i = int(np.argmax(vctx.train_item_counts))
     rows = vctx.similar_items(i, 6)
     assert len(rows) == 6 and i not in {r["item_idx"] for r in rows}
     sims = [r["similarity"] for r in rows]
@@ -158,9 +150,8 @@ def test_dashboard_reads_result_files(vctx):
     d = metrics_io.dashboard(vctx)
     assert d["summary"]["status"] == "ok" and d["significance"]["status"] == "ok"
     assert {"NeuMF-F", "NeuMF", "UserKNN"} <= {r["model"] for r in d["summary"]["data"]}
-    assert len(d["significance"]["data"]) == 10  # họ đăng ký trước, không trộn họ bổ sung
+    assert len(d["significance"]["data"]) == 10
     assert d["stats"]["data"]["n_test_users"] == len(vctx.target_users)
-    # Mô hình lai truyền thống chỉ hiện khi tập kiểm thử đã được chấm cho nó theo kế hoạch bổ sung (25_bosung.py)
     scored = (V2_DIR / "bosung" / "results.json").exists()
     assert ("Hybrid-CBCF" in vctx.available_models) == scored
     assert (d["significance_bs"] is not None) == (V2_DIR / "bosung" / "summary.csv").exists()
@@ -169,8 +160,8 @@ def test_dashboard_reads_result_files(vctx):
 
 
 def test_results_from_other_data_are_refused(tmp_path, monkeypatch):
-    """Kết quả tạo từ dữ liệu khác file đã lọc hiện tại (thiếu / lệch data_md5) không được nạp: demo không dựng tập
-    kiểm thử của mẫu kiểm định cho một kết quả cũ."""
+    """Kết quả tạo từ dữ liệu khác file đã lọc hiện tại (thiếu / lệch data_md5) không được nạp: demo không dựng tập kiểm
+    thử của mẫu kiểm định cho một kết quả cũ."""
     V = data_context.V
     (tmp_path / "seed42").mkdir()
     (tmp_path / "seed42" / "results.json").write_text(json.dumps({"evaluated_on": "test"}), encoding="utf-8")
@@ -181,19 +172,17 @@ def test_results_from_other_data_are_refused(tmp_path, monkeypatch):
         assert (v2_data_mismatch(tmp_path, 42) is None) == usable, data_md5
 
 
-# ------------------------------------------------------------- sản phẩm theo product_code
 def test_product_table_uses_first_variant_and_counts_colours():
     arts = pd.DataFrame({"article_id": ["0108775051", "0108775015", "0110065001"],
                          "product_code": [108775, 108775, 110065],
                          "prod_name": ["Strap top (2)", "Strap top", "OP T-shirt"],
                          "product_type_name": ["Vest top", "Vest top", "Bra"]})
     df = product_table(arts, np.array([110065, 108775, 999999]))
-    assert df["article_id"].tolist() == ["0110065001", "0108775015", "Unknown"]  # biến thể có article_id nhỏ nhất
+    assert df["article_id"].tolist() == ["0110065001", "0108775015", "Unknown"]
     assert df["prod_name"].tolist() == ["OP T-shirt", "Strap top", "Unknown"]
     assert df["n_colours"].tolist() == [1, 2, 0]
 
 
-# ------------------------------------------------------------- danh sách chọn khách (Admin)
 def _users() -> pd.DataFrame:
     """5 khách, khách gh05 không có sản phẩm đích; mua nhiều nhất: ab01 đồ nữ 2/3, bf04 đồ nữ 2/4."""
     days = (1, 5, 3, 2, 2, 9, 1, 2, 3, 4, 1)
@@ -216,21 +205,21 @@ def test_user_table_counts_area_age_and_buckets():
 
 def test_filter_users_search_sort_and_position():
     df = _users()
-    assert filter_users(df, " B")["customer_id"].tolist() == ["bf04", "ab01", "ab02"]  # khớp ở đầu xếp trước
+    assert filter_users(df, " B")["customer_id"].tolist() == ["bf04", "ab01", "ab02"]
     assert filter_users(df, sort="train_asc")["customer_id"].tolist() == ["cd03", "ab02", "ab01", "bf04"]
     assert filter_users(df, bucket="low", sort="id")["customer_id"].tolist() == ["ab02", "cd03"]
     assert filter_users(df, area="Ladieswear")["customer_id"].tolist() == ["bf04", "ab01"]
-    full = filter_users(df)  # mua nhiều nhất trước: bf04, ab01, ab02, cd03
+    full = filter_users(df)
     pos = user_position(full, "ab01")
     assert (pos["index"], pos["total"]) == (1, 4)
     assert (pos["prev"]["customer_id"], pos["next"]["customer_id"]) == ("bf04", "ab02")
     assert user_position(full, "bf04")["prev"] is None and user_position(full, "cd03")["next"] is None
-    out = user_position(filter_users(df, bucket="high"), "ab01")  # ngoài bộ lọc: "sau" = khách đầu danh sách
+    out = user_position(filter_users(df, bucket="high"), "ab01")
     assert out["index"] is None and out["prev"] is None and out["next"]["customer_id"] == "bf04"
-    ranks = pd.Series({"ab01": 3, "ab02": 25, "cd03": 10, "bf04": 11})  # hạng món đích tốt nhất của một mô hình
+    ranks = pd.Series({"ab01": 3, "ab02": 25, "cd03": 10, "bf04": 11})
     assert filter_users(df, best_rank=ranks, hit="hit", k=10, sort="rank")["customer_id"].tolist() == ["ab01", "cd03"]
     assert filter_users(df, best_rank=ranks, hit="miss", k=20)["customer_id"].tolist() == ["ab02"]
-    assert filter_users(df, best_rank=ranks)["best_rank"].tolist() == [11, 3, 25, 10]  # không lọc: chỉ thêm cột
+    assert filter_users(df, best_rank=ranks)["best_rank"].tolist() == [11, 3, 25, 10]
 
 
 def test_short_code_finds_customer():
@@ -238,10 +227,9 @@ def test_short_code_finds_customer():
     df = _users()
     assert df["code"].tolist() == ["KH0001", "KH0002", "KH0003", "KH0004"]
     assert filter_users(df, "kh0003")["customer_id"].tolist() == ["cd03"]
-    assert user_position(filter_users(df), "kh0002")["index"] == 2  # thứ tự mua nhiều nhất: bf04, ab01, ab02, cd03
+    assert user_position(filter_users(df), "kh0002")["index"] == 2
 
 
-# ------------------------------------------------------------- Amazon Beauty (dữ liệu đối chứng)
 def test_amazon_table_maps_metadata_to_item_columns():
     items = pd.DataFrame({"asin": ["B01", "B02", "B03"], "title": ["Lip balm", None, "Serum"],
                           "brand": ["Acme", None, ""], "category_1": ["Makeup", "Skin Care", None],
@@ -250,13 +238,13 @@ def test_amazon_table_maps_metadata_to_item_columns():
                          index=pd.Index([0, 1, 2], name="item"))
     df = data_context.amazon_table(items, np.array([2, 0, 1]))
     assert df["article_id"].tolist() == ["B03", "B01", "B02"]
-    assert df["prod_name"].tolist() == ["Serum", "Lip balm", "B02"]  # thiếu tên -> asin
-    assert df["product_type_name"].tolist() == ["Beauty", "Lip Balm", "Face"]  # danh mục sâu nhất có giá trị
-    assert df["index_group_name"].tolist() == ["Khác", "Makeup", "Skin Care"]  # khu vực = danh mục cấp 1
+    assert df["prod_name"].tolist() == ["Serum", "Lip balm", "B02"]
+    assert df["product_type_name"].tolist() == ["Beauty", "Lip Balm", "Face"]
+    assert df["index_group_name"].tolist() == ["Khác", "Makeup", "Skin Care"]
     assert df["subtitle"].tolist() == ["Beauty · $20.00", "Acme · Lip Balm · $3.50", "Face"]
-    assert df["image_src"].tolist() == ["", "http://x/1.jpg", ""]  # link gốc chỉ để tải về
+    assert df["image_src"].tolist() == ["", "http://x/1.jpg", ""]
     assert df["image_url"].tolist() == ["/api/image/B03?dataset=amazon", "/api/image/B01?dataset=amazon",
-                                        "/api/image/B02?dataset=amazon"]  # demo luôn lấy ảnh từ máy chủ
+                                        "/api/image/B02?dataset=amazon"]
 
 
 def test_dataset_without_final_results_reports_command_not_training(tmp_path, monkeypatch):
@@ -294,7 +282,6 @@ def test_showcase_users_hit_for_a_and_miss_for_b(vctx, monkeypatch):
         assert ev["rank"] == want and ev["final"]["rank"] == want
 
 
-# ------------------------------------------------------------- trang Tổng quan / Kết quả đánh giá
 REPORT_TABLES = data_context.PROJECT_ROOT.parent / "Report DACNTT" / "content" / "tables"
 
 
@@ -318,8 +305,8 @@ def _macros(path):
 @pytest.mark.parametrize("dataset,prefix,macro_file", [("hm", "v", "v2/results_v2_macros.tex"),
                                                         ("amazon", "a", "amazon/results_amazon_macros.tex")])
 def test_results_page_matches_report_macros(dataset, prefix, macro_file):
-    """Mọi số của /api/results trùng macro số liệu trong báo cáo (cùng định dạng): NDCG@10, HR@10 từng mô hình,
-    chênh lệch của họ 10 so sánh, thay đổi của bóc tách."""
+    """Mọi số của /api/results trùng macro số liệu trong báo cáo (cùng định dạng): NDCG@10, HR@10 từng mô hình, chênh
+    lệch của họ 10 so sánh, thay đổi của bóc tách."""
     from types import SimpleNamespace
 
     from demo.backend import overview

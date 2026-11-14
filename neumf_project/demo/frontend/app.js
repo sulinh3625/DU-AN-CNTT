@@ -1,5 +1,4 @@
 const API = "/api";
-// Bộ dữ liệu đang xem (?ds=amazon), gửi kèm mọi lời gọi API; đổi bộ dữ liệu = tải lại trang với ?ds= mới.
 const DS = new URLSearchParams(location.search).get("ds") === "amazon" ? "amazon" : "hm";
 document.documentElement.dataset.ds = DS;  // CSS: nền khung ảnh theo nền ảnh của bộ dữ liệu
 const $ = (id) => document.getElementById(id);
@@ -8,9 +7,7 @@ const fmt = (v, d = 4) => (v == null || Number.isNaN(Number(v)) ? "—" : Number
 const num = (v) => Number(v).toLocaleString("vi-VN");
 const SHOW = { "MostPopular": "Most Popular" };
 const show = (m) => SHOW[m] || m;
-// Màu tên mô hình: NeuMF-F (mô hình đề xuất) màu chính, các mô hình khác màu chữ thường — giống trang Kết quả đánh giá.
 const color = (m) => (m === "NeuMF-F" ? "var(--accent)" : "var(--ink)");
-// Mô hình chính của cửa hàng: luôn là NeuMF-F (bản chạy thử thiếu NeuMF-F thì lấy mô hình đầu tiên).
 const mainModel = () => (CTX.models.includes("NeuMF-F") ? "NeuMF-F" : CTX.models[0]);
 
 async function api(path, opts) {
@@ -25,7 +22,6 @@ const inited = {};
 let charts = [];
 
 /* ------------------------------------------------------------ routing */
-// Cửa hàng (trang mặc định) · Kết quả đánh giá (có đúng hướng không) · Giới thiệu đề tài · Bảng số liệu (mở từ trang kết quả)
 const VIEWS = ["shop", "results", "overview", "dashboard"];
 function currentView() {
   const v = location.hash.replace(/^#\/?/, "");
@@ -45,7 +41,6 @@ function route() {
 }
 window.addEventListener("hashchange", route);
 
-// Thanh chọn bộ dữ liệu: liên kết ?ds=..., bộ chưa có kết quả đánh giá cuối ghi rõ lý do (di chuột để xem lệnh cần chạy).
 async function renderDatasets() {
   try {
     const list = await api("/datasets");
@@ -56,7 +51,6 @@ async function renderDatasets() {
 }
 
 /* ------------------------------------------------------------ sáng / tối */
-// data-theme trên <html> đã đặt trong <head>; nút đổi chế độ lưu lựa chọn và vẽ lại biểu đồ theo màu mới.
 const cssVar = (name) => getComputedStyle(document.documentElement).getPropertyValue(name).trim();
 function chartTheme() {
   if (!window.Chart) return;
@@ -91,7 +85,6 @@ async function init() {
 }
 
 /* ------------------------------------------------------------ shared UI */
-// Ô sản phẩm: ảnh thật đã lưu trên máy chủ demo nếu có (H&M: ảnh đã chép; Amazon: ảnh đã tải về), không thì ô màu theo nhóm hàng.
 const TYPE_VI = { "Trousers": "Quần dài", "Pyjama set": "Bộ đồ ngủ", "Sweater": "Áo len", "Underwear Tights": "Quần tất",
   "Bra": "Áo ngực", "Underwear bottom": "Quần lót", "Leggings/Tights": "Quần legging", "T-shirt": "Áo thun", "Top": "Áo",
   "Shorts": "Quần short", "Vest top": "Áo ba lỗ", "Swimwear bottom": "Quần bơi", "Swimwear top": "Áo bơi", "Skirt": "Chân váy",
@@ -122,32 +115,25 @@ const kOptions = (sel) => {
 };
 
 /* ------------------------------------------------------------ cửa hàng: chọn khách */
-// Tham khảo: thanh khách + bảng chọn mở bằng Ctrl K (kiểu bảng lệnh của Linear / Vercel), danh sách có ô lọc, tab
-// nhóm và avatar (SelectPanel của GitHub Primer, resource index của Shopify Polaris).
 const ad = { user: null, prev: null, next: null, facets: null, seq: 0 };
 const pk = { q: "", bucket: "", area: "", hit: "", sort: "train_desc", items: [], total: 0, view: [], active: -1,
   loading: false, seq: 0, timer: null, loadedQ: null };
 const BUCKET_SHORT = { low: "Ít giao dịch", mid: "Trung bình", high: "Nhiều giao dịch" };
 const AREA_VI = { "Ladieswear": "Đồ nữ", "Menswear": "Đồ nam", "Divided": "Divided", "Baby/Children": "Trẻ em", "Sport": "Thể thao",
-  // Amazon Beauty: danh mục cấp 1
   "Skin Care": "Chăm sóc da", "Makeup": "Trang điểm", "Hair Care": "Chăm sóc tóc", "Fragrance": "Nước hoa",
   "Tools & Accessories": "Dụng cụ & phụ kiện", "Bath & Body": "Tắm & cơ thể" };
 const areaLabel = (a) => AREA_VI[a] || a;
 const SORT_LABELS = { train_desc: "Mua nhiều nhất", train_asc: "Mua ít nhất", targets_desc: "Mua sau mốc nhiều nhất",
   rank: "Khuyến nghị đúng sớm nhất", id: "Theo mã khách" };
-// Lọc / sắp theo kết quả khuyến nghị cần chấm mọi khách với mô hình đang chọn (lần đầu mỗi mô hình mất vài giây).
 const needsRanks = () => Boolean(pk.hit) || pk.sort === "rank";
 const COPY_ICON = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="9" y="9" width="12" height="12" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h10"/></svg>';
 
-// Avatar: màu cố định theo customer_id (băm chuỗi), chữ là hai số cuối của mã ngắn — không hiện mã khách dài lên demo.
 const hue = (cid) => [...cid].reduce((h, ch) => (h * 31 + ch.charCodeAt(0)) % 360, 7);
 const avatar = (cid, cls = "", code = "") => `<span class="avatar ${cls}" style="--h:${hue(cid)}" aria-hidden="true">${esc(code ? code.slice(-2) : "KH")}</span>`;
-// Dòng mã trong danh sách chọn khách: chỉ mã ngắn; mã dài chỉ hiện khi đang tìm theo chính mã dài (để thấy chỗ khớp).
 const pickId = (r, q) => {
   const byLong = q && !(r.code || "").toLowerCase().includes(q.toLowerCase()) && r.customer_id.toLowerCase().includes(q.toLowerCase());
   return `<b>${esc(r.code || "")}</b>${byLong ? ` · ${idHtml(r.customer_id, q)}` : ""}`;
 };
-// customer_id dài: hiện đầu…cuối; khi đang tìm thì hiện đoạn quanh chỗ khớp và tô đậm phần khớp.
 function idHtml(cid, q = "") {
   const p = q ? cid.toLowerCase().indexOf(q.toLowerCase()) : -1;
   if (p < 0) return `${esc(cid.slice(0, 12))}…${esc(cid.slice(-6))}`;
@@ -165,7 +151,6 @@ const filterParams = (extra = {}) => {
   return p;
 };
 
-// Khách xem gần đây (theo từng chế độ / run), chỉ lưu trong trình duyệt.
 const recentKey = () => `demo.recent.${CTX.run_tag}`;
 function recentUsers() {
   try { return JSON.parse(localStorage.getItem(recentKey())) || []; } catch { return []; }
@@ -179,7 +164,6 @@ async function initAdmin() {
   inited.admin = true;
   const b = $("ad-model-b");
   $("ad-main").textContent = show(mainModel());
-  // Ô so sánh chỉ liệt kê các mô hình khác NeuMF-F; "Không so sánh" chỉ hiện danh sách của NeuMF-F.
   const others = CTX.models.filter((m) => m !== mainModel());
   b.innerHTML = others.map((m) => `<option value="${esc(m)}">${esc(show(m))}</option>`).join("")
     + '<option value="">Không so sánh</option>';
@@ -217,10 +201,8 @@ async function initAdmin() {
     try { selectUser((await api(`/users/random?${filterParams()}`)).customer_id); } catch (e) { showAdminError(e); }
   });
   $("cust-showcase").addEventListener("click", showcase);
-  // Khách mới: một mã chưa có trong dữ liệu đã học -> hệ thống khuyến nghị sản phẩm bán chạy (không báo lỗi).
   $("cust-new").addEventListener("click", () => selectUser(`KHACHMOI${String(Date.now()).slice(-6)}`));
   $("sh-reveal").addEventListener("click", () => { ad.revealed = !ad.revealed; renderShop(); });
-  // Bấm thẻ sản phẩm ở bất kỳ đâu trong cửa hàng hoặc trong thẻ chi tiết -> mở thẻ chi tiết của sản phẩm đó.
   const onCard = (e) => { const c = e.target.closest(".pcard, .prow"); if (c) openProduct(Number(c.dataset.item)); };
   $("ad-grid").addEventListener("click", onCard);
   $("pd-body").addEventListener("click", onCard);
@@ -235,18 +217,15 @@ async function initAdmin() {
     renderFilters();
   } catch (e) { showAdminError(e); }
 
-  // Mở thẳng một khách (dùng khi chụp ảnh minh hoạ): ?user=<customer_id>&b=<mô hình đối chứng, để trống = không so sánh>&k=<K>
   const params = new URLSearchParams(location.search);
   if (params.has("b") && (params.get("b") === "" || others.includes(params.get("b")))) b.value = params.get("b");
   if (CTX.k_values.includes(Number(params.get("k")))) $("ad-k").value = params.get("k");
   if (params.get("user")) {
     const loaded = selectUser(params.get("user"));
-    // Dùng khi chụp ảnh minh hoạ: &reveal=1 lật sẵn đáp án, &item=<chỉ số sản phẩm> mở sẵn thẻ chi tiết.
     if (params.get("reveal") === "1") ad.revealed = true;
     if (params.get("item")) loaded.then(() => openProduct(Number(params.get("item"))));
     return;
   }
-  // Mở trang lần đầu: hiện ngay khách ví dụ (NeuMF-F khuyến nghị đúng, NeuMF chỉ dùng mã khuyến nghị sai), so sánh hai mô hình.
   try {
     const ex = await api("/example");
     if (ad.user) return;  // người xem đã tự chọn khách trong lúc chờ
@@ -256,8 +235,6 @@ async function initAdmin() {
   } catch { /* chưa tìm được ví dụ: để trống, người xem tự chọn khách */ }
 }
 
-// Xem ví dụ: khách có món đích nằm trong top-K của NeuMF-F nhưng không nằm trong top-K của mô hình đối chứng (hạng trùng số
-// đã lưu ở đánh giá cuối). Đang để "Không so sánh" thì so với NeuMF. Lần đầu với mỗi mô hình phải chấm mọi khách (vài giây).
 async function showcase() {
   const btn = $("cust-showcase"), label = btn.textContent;
   const [a, k] = [mainModel(), $("ad-k").value];
@@ -277,7 +254,6 @@ async function showcase() {
   }
 }
 
-// Ctrl K: mở / đóng bảng chọn; "/": mở; ← →: khách trước / sau (khi không gõ trong ô nhập).
 function onAdminKey(e) {
   if ($("view-shop").classList.contains("hidden") || $("product").open) return;
   const dlg = $("picker");
@@ -387,7 +363,6 @@ function renderPicker(keepActive = false) {
   const empty = pk.q
     ? `Không có khách nào có mã chứa “${esc(pk.q)}”${filtered ? " trong bộ lọc đang chọn" : ""}.`
     : "Không có khách nào trong bộ lọc đang chọn.";
-  // Mã gõ vào không có trong danh sách (khách mới, hoặc khách không có sản phẩm đích): vẫn xem được khuyến nghị cho mã đó.
   const anyId = pk.q ? `<button type="button" class="btn" id="pk-any">Xem khuyến nghị cho mã “${esc(pk.q)}”</button>
       <div class="note">Khách chưa có trong dữ liệu đã học nhận danh sách sản phẩm phổ biến; khách đã có lịch sử nhận khuyến nghị của mô hình.</div>` : "";
   $("pk-list").innerHTML = (recent.length ? head("Xem gần đây") + recent.map(opt).join("") : "")
@@ -399,7 +374,6 @@ function renderPicker(keepActive = false) {
   paintActive(!keepActive);
 }
 
-// Hạng tốt nhất của món đích theo mô hình đang chọn: trong top-K = khuyến nghị trúng.
 function rankBadge(rank) {
   const hit = rank <= Number($("ad-k").value);
   return `<span class="badge ${hit ? "hit" : "miss"}" title="Món đích xếp cao nhất: hạng ${num(rank)}">${hit ? `Trúng · #${rank}` : `Hạng ${num(rank)}`}</span>`;
@@ -434,7 +408,6 @@ function selectUser(cid, caseNote = null) {
   return loaded;
 }
 
-// Vị trí của khách trong danh sách đang lọc + khách liền trước / liền sau cho nút ‹ ›.
 async function loadPosition() {
   const cid = ad.user;
   try {
@@ -522,7 +495,6 @@ async function loadAdmin() {
       ...models.map((m) => api(`/users/${uid}/recommend?model=${encodeURIComponent(m)}&k=${k}`)),
     ]);
     if (seq !== ad.seq) return;
-    // gõ mã ngắn KH0012: đổi về customer_id đầy đủ để danh sách, nút ‹ › và URL dùng cùng một mã
     if (!hist.is_new && hist.profile.customer_id !== ad.user) { ad.user = hist.profile.customer_id; syncUrl(); }
     if (!hist.is_new) rememberUser(hist.profile);
     renderCustomer(hist);
@@ -545,7 +517,6 @@ async function loadAdmin() {
 }
 
 /* ------------------------------------------------------------ cửa hàng: thẻ sản phẩm */
-// Thẻ sản phẩm dùng chung (đã mua, khuyến nghị, món khách mua sau đó, sản phẩm tương tự); bấm để mở thẻ chi tiết.
 const typeOf = (it) => (DS === "hm" ? typeVi(it.product_type_name) : it.product_type_name);
 const GROUP_VI = { "Garment Upper body": "Áo", "Garment Lower body": "Quần, váy", "Garment Full body": "Đồ liền thân",
   "Underwear": "Đồ lót", "Swimwear": "Đồ bơi", "Nightwear": "Đồ ngủ", "Socks & Tights": "Tất", "Accessories": "Phụ kiện",
@@ -557,7 +528,6 @@ function pcard(it, { rank = null, hit = false, extra = "" } = {}) {
     <span class="pname">${esc(it.prod_name)}</span><span class="pmeta">${esc(sub)}</span>${extra}</button>`;
 }
 
-// Dòng sản phẩm trong cột so sánh: thứ hạng, ảnh nhỏ, tên và loại hàng.
 function prow(it, hit) {
   return `<button type="button" class="prow ${hit ? "hit" : ""}" data-item="${it.item_idx}" title="${esc(it.prod_name)}">
     <span class="r num">${it.rank}</span><span class="pth">${media(it)}</span>
@@ -576,7 +546,6 @@ function renderHistory(hist) {
     .map((it) => pcard(it, { extra: `<span class="pdate">mua ${esc(vnDate(it.t_dat))}</span>` })).join("");
 }
 
-// Kết luận ngắn cho từng mô hình sau khi lật đáp án.
 function verdict(r) {
   if (!r.evaluation) return "";
   const nHit = r.items.filter((it) => it.is_target).length;
@@ -595,7 +564,6 @@ function renderShop() {
   btn.textContent = ad.revealed ? "Ẩn đáp án" : `Xem khách đã mua gì sau ${date}`;
   const head = (r, i) => `<div class="recs-head"><b class="mc" style="--mc:${color(r.model)}">${esc(fallback ? "Khuyến nghị phổ biến" : show(r.model))}</b>
       ${fallback ? "" : `<span class="pill">${i ? "mô hình đối chứng" : "mô hình đề xuất"}</span>`}${ad.revealed ? verdict(r) : ""}</div>`;
-  // Một mô hình: lưới thẻ sản phẩm. Hai mô hình: hai cột đặt cạnh nhau, NeuMF-F bên trái, cùng thứ hạng cùng hàng.
   $("sh-recs").innerHTML = recs.length === 1
     ? `<div class="recs-row">${head(recs[0], 0)}<div class="pgrid">${recs[0].items.map((it) =>
         pcard(it, { rank: it.rank, hit: ad.revealed && it.is_target })).join("")}</div></div>`
@@ -605,7 +573,6 @@ function renderShop() {
   renderNeighbors();
 }
 
-// Đáp án: những món khách thật sự mua sau ngày dự đoán, kèm vị trí của từng món trong danh sách của từng mô hình.
 function renderAnswer() {
   const box = $("sh-answer"), recs = ad.recs;
   if (!ad.revealed || !recs[0].evaluation) { box.classList.add("hidden"); return; }
@@ -619,8 +586,6 @@ function renderAnswer() {
   box.classList.remove("hidden");
 }
 
-// Khách có gu giống (UserKNN): 5 khách gần nhất, món mua chung; sau khi lật đáp án, đánh dấu khách đã mua món mà khách
-// đang xem sẽ mua — đây là cách lọc cộng tác chọn ra khuyến nghị.
 async function loadNeighbors(uid, seq) {
   const card = $("sh-nb-card");
   ad.nb = null;
@@ -645,7 +610,6 @@ function renderNeighbors() {
     </div></div>`).join("");
 }
 
-// Thẻ chi tiết sản phẩm: thông tin, mô tả, vị trí trong khuyến nghị của khách đang xem, sản phẩm tương tự theo ItemKNN.
 async function openProduct(item) {
   const dlg = $("product");
   if (!dlg.open) dlg.showModal();
@@ -707,8 +671,6 @@ function simpleTable(rows, cols) {
     `<tr><td>${esc(show(r.model))}</td>${cols.map(([key, , f]) => `<td>${f(r[key])}</td>`).join("")}</tr>`).join("")}</table></div>`;
 }
 
-// Đánh giá theo K: NDCG@10 / @15 / @20 của từng mô hình (cột nhóm, một sắc xanh nhạt -> đậm theo K) + bảng mọi chỉ
-// số @K có trong file kết quả (by_k.csv: tính lại từ hạng đã lưu của đánh giá cuối).
 const BY_K = [10, 15, 20];
 const K_SHADES = ["#8fb0dc", "#4f7fc0", "#1f4785"];
 function byKCard(block, note) {
@@ -786,8 +748,6 @@ async function loadDashboard() {
 }
 
 /* ------------------------------------------------------------ tổng quan & kết quả đánh giá */
-// Số liệu từ /api/results (file kết quả của lần đánh giá cuối, cùng nguồn với báo cáo) và /api/example (một khách thật mà
-// NeuMF-F khuyến nghị trúng còn NeuMF trượt, hạng trùng số đã lưu). Không có số gõ tay ở đây.
 let RESULTS = null;
 const vi = (x, d) => Number(x).toLocaleString("vi-VN", { minimumFractionDigits: d, maximumFractionDigits: d });
 const signedPct = (x) => (x > 0 ? "+" : "") + vi(100 * x, 1) + "%";
@@ -863,7 +823,6 @@ async function renderExample(ex) {
   $("ov-outcome").classList.remove("hidden");
 }
 
-// ---- Kết quả đánh giá
 const VERDICT_PILL = { A: '<span class="pill good">NeuMF-F tốt hơn</span>', B: '<span class="pill bad">NeuMF-F kém hơn</span>', "=": '<span class="pill grey">ngang nhau</span>' };
 
 async function loadResults() {
@@ -880,7 +839,6 @@ function renderResults(R) {
 
   const me = byKey.neumf_f;
   const max = R.models[0].ndcg10;
-  // NeuMF-F so với từng mô hình: NDCG@10 hai bên, chênh lệch tương đối và kết luận kiểm định đã lưu.
   const order = R.models.map((m) => m.key);
   const pairs = R.pairs.filter((p) => p.a === "neumf_f" && byKey[p.b]).sort((x, y) => order.indexOf(x.b) - order.indexOf(y.b));
   const cmp = pairs.map((p) => `<div class="pr">

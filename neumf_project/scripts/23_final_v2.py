@@ -52,7 +52,7 @@ from src.utils.io import ensure_dir, log_test_access, prereg_committed
 
 MODELS = ["random", "popularity", "recent_pop", "content", "itemknn", "userknn", "bpr",
           "gmf", "mlp", "neumf", "gmf_f", "mlp_f", "neumf_f", "late_f"]
-STATIC = ("popularity", "recent_pop", "content", "itemknn", "userknn")  # tất định: khớp một lần, dùng cho mọi seed
+STATIC = ("popularity", "recent_pop", "content", "itemknn", "userknn")
 NEURAL = V.TORCH_ID + V.TORCH_FEAT
 TUNED = [m for m in MODELS if m != "random"]
 ABLATION_SEED = TOPK_SEED = 42
@@ -60,7 +60,6 @@ PER_USER_COLS = ["user", "n_candidates", "n_positives", "ranks", "NDCG@10", "Rec
                  "NDCG@5", "NDCG@20"]
 PREREG = V.PROJECT_ROOT / V.CFG.get("prereg", "audit/PREREG_v2.md")
 TEST_LOG = V.PROJECT_ROOT / "audit" / "test_access_log.csv"
-# H&M: "v2_final_seed<N>" là lần mở khối 1 (hm500k_b, 04/10/2026) — mẫu khác, không tính
 RUN_TAG = V.CFG.get("run_tag", "v2_kiemdinh_seed")
 
 
@@ -98,7 +97,7 @@ def machine_info(dev) -> dict:
 def dirty_files() -> list[str]:
     """File đã theo dõi đang bị sửa/xoá mà chưa commit, trừ outputs/ và audit/test_access_log.csv của dự án (do chính
     đánh giá cuối ghi ra) — mã nguồn, cấu hình, kế hoạch, báo cáo đều phải sạch."""
-    prefix = git("rev-parse", "--show-prefix").strip()  # vd. "neumf_project/"
+    prefix = git("rev-parse", "--show-prefix").strip()
     allowed = (prefix + "outputs/", prefix + "audit/test_access_log.csv")
     out = []
     for line in git("status", "--porcelain", "--untracked-files=no").splitlines():
@@ -165,7 +164,7 @@ def foreign_results(root: Path, data_md5: str) -> list[str]:
 def ablations(p: dict) -> list[str]:
     """Biến thể ablation khác NeuMF-F (cấu hình p): bỏ biến thể không tắt gì, vd. "bỏ ID ngẫu nhiên" khi cấu hình chọn
     đã có id_dropout = 0 — chạy nó chỉ ra lại đúng NeuMF-F."""
-    base = {"id_dropout": p.get("id_dropout", 0.0)}  # các cờ use_* của NeuMF-F đều bật
+    base = {"id_dropout": p.get("id_dropout", 0.0)}
     return [k for k, flags in V.ABLATIONS.items() if any(base.get(f, True) != v for f, v in flags.items())]
 
 
@@ -188,7 +187,7 @@ class Runner:
             return self.best[model]["params"]
         if not self.args.dry_run:
             raise SystemExit(f"Thiếu cấu hình của {model} trong {V.BEST_CONFIGS}")
-        return dict(V.DEFAULTS.get(model, {}))  # chạy thử khi tinh chỉnh chưa xong
+        return dict(V.DEFAULTS.get(model, {}))
 
     def evaluate(self, scorer, want_top: bool):
         per, top = [], ({} if want_top else None)
@@ -197,7 +196,7 @@ class Runner:
         return dict(res=res, per=per, top=top, eval_time_s=time.perf_counter() - t0)
 
     def static_scores(self, model: str) -> dict:
-        if model not in self.static:  # tất định -> tính một lần cho mọi seed của lần chạy này
+        if model not in self.static:
             t0 = time.perf_counter()
             scorer = V.score_fn(model, self.params(model), self.D, self.ev)
             fit_s = time.perf_counter() - t0
@@ -212,7 +211,7 @@ class Runner:
             tag = f"{RUN_TAG}{seed}" + ("_rerun" if seed in opened_seeds() else "")
             names = [V.DISPLAY[m] for m in models] + [V.ABLATION_DISPLAY[k] for k in abl]
             log_test_access(TEST_LOG, tag, self.prov, names, a.reason)
-            if a.mirror_log:  # bản sao nhật ký ngoài máy chạy (vd. Google Drive) phòng máy ảo bị ngắt
+            if a.mirror_log:
                 log_test_access(Path(a.mirror_log), tag, self.prov, names, a.reason)
         out = ensure_dir(self.root / f"seed{seed}")
         want_top = seed == TOPK_SEED
@@ -241,7 +240,7 @@ class Runner:
             net, h_ref, m_ref = V.fit_torch(key, p, self.D, self.ev, None, e, e, seed, self.dev)
             hist.extend({"model": key, "phase": "select", **h} for h in h_sel)
             hist.extend({"model": key, "phase": "refit", **h} for h in h_ref)
-            if want_top and key in NEURAL:  # checkpoint của seed 42 cho demo và phân tích lại
+            if want_top and key in NEURAL:
                 torch.save({k: v.cpu() for k, v in net.state_dict().items()}, out / f"{key}.pt")
             return net, dict(best_epoch=e, select_val_ndcg10=m_sel["best_metric"],
                              select_time_s=round(m_sel["train_time_s"], 1), refit_time_s=round(m_ref["train_time_s"], 1),
@@ -257,7 +256,7 @@ class Runner:
                 t0 = time.perf_counter()
                 bpr = V.score_fn("bpr", self.params("bpr"), self.D, self.ev, seed=seed)
                 fit_s = round(time.perf_counter() - t0, 1)
-                if want_top:  # checkpoint của seed 42 cho demo (MaskedScoreFn bọc BPRMFBaseline ở thuộc tính fn)
+                if want_top:
                     bpr.fn.save(out / "bpr.npz")
                 score(m, bpr, fit_time_s=fit_s)
             elif m in NEURAL:
@@ -269,7 +268,7 @@ class Runner:
                 if missing:
                     raise SystemExit(f"late_f cần {missing} trong cùng lần chạy")
                 score(m, V.late_fusion(nets, self.params("late_f")["w"]), w=self.params("late_f")["w"])
-        for key in abl:  # cùng siêu tham số với NeuMF-F, tắt một thành phần
+        for key in abl:
             net, info = select_refit(key, self.params("neumf_f"))
             score(key, V.torch_scorer(key, net, self.ev, self.D, self.dev), **info)
 

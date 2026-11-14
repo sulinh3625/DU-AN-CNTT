@@ -50,7 +50,7 @@ def export(sample_csv, out, test_start: str, k_core: int, dataset: str = "hm", d
     return dict(
         md5=md5, rows=len(pairs), customers=int(core["user_id"].nunique()), products=int(core["item_id"].nunique()),
         kcore_pairs=len(core), k_core=k_core, test_start=test_start,
-        before_test_start=dict(  # trước k-core; trước / sau khi gộp màu theo product_code (Amazon: không gộp)
+        before_test_start=dict(
             articles=int(pre["item_raw"].nunique()), products=len(np.unique(item_map(pre["item_raw"]))),
             article_pairs=len(pre[["user_raw", "item_raw"]].drop_duplicates()),
             product_pairs=int((pairs["first_day"] < to_day(np.datetime64(test_start), day0)).sum())))
@@ -73,7 +73,7 @@ def main():
     done = set()
     for sample in [args.sample] if args.sample else V.CFG["samples"]:
         name = V.data_name(sample)
-        if name in done:  # Amazon: mẫu phát triển và mẫu kiểm định là cùng một file
+        if name in done:
             continue
         done.add(name)
         out = V.DATA_DIR / f"{name}.csv.gz"
@@ -84,7 +84,7 @@ def main():
         old = manifest.get(name, {})
         if old.get("git_dirty") is False and {**old, "git_commit": entry["git_commit"],
                                               "git_dirty": entry["git_dirty"]} == entry:
-            entry = old  # chỉ khác commit: cùng file, cùng số liệu -> giữ mục cũ, chạy lại không làm đổi manifest
+            entry = old
         manifest[name] = entry
         write_json(V.MANIFEST, manifest)
         b = entry["before_test_start"]

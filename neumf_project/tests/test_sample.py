@@ -47,16 +47,16 @@ def test_blocks_are_consecutive_disjoint_and_just_large_enough():
     blocks = [sample_hm.select_buckets(counts, target, block=b) for b in range(3)]
     assert blocks[0][0] == 0
     for (s0, n0), (s1, _) in zip(blocks, blocks[1:]):
-        assert s0 + n0 == s1  # khối sau bắt đầu ngay sau khối trước: liên tiếp, không giao nhau
+        assert s0 + n0 == s1
     for s, n in blocks:
         assert counts[s:s + n].sum() >= target
-        assert counts[s:s + n - 1].sum() < target  # bỏ bucket cuối thì thiếu: vừa đủ
+        assert counts[s:s + n - 1].sum() < target
 
 
 def test_last_block_may_hit_end_then_runs_out():
     counts = np.full(5, 5)
     blocks = [sample_hm.select_buckets(counts, 10, block=b) for b in range(3)]
-    assert blocks == [(0, 2), (2, 2), (4, 1)]  # khối 2 chạm cuối mảng: chỉ còn 5 dòng < 10
+    assert blocks == [(0, 2), (2, 2), (4, 1)]
     with pytest.raises(SystemExit, match="Hết bucket"):
         sample_hm.select_buckets(counts, 10, block=3)
     with pytest.raises(SystemExit):

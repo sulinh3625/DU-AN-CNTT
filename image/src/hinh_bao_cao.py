@@ -1,14 +1,4 @@
-"""Chín hình sơ đồ của báo cáo DACNTT, vẽ lại cho trực quan (11/11/2026), thay các hình bc_* cũ.
-
-Lối vẽ học từ sơ đồ khóa luận của nhóm (Report KLTN/so_do/gen2.py) và kiểu sơ đồ kiến trúc tác tử AI, nhưng mỗi hình
-chỉ nói một việc: thẻ bo góc có biểu tượng ô màu (bieu_tuong.py), số thứ tự ở góc thẻ, vùng nền nhạt gom các khối cùng
-nhóm, một hướng đọc, không đường nào cắt hình hay cắt nhau. Màu chỉ để phân loại, giống lời văn báo cáo: xám là dữ liệu,
-xanh là bước xử lý và nhánh GMF, tím là nhánh MLP, cam là bước chính và phép hợp nhất, xanh lá là kết quả.
-
-Chạy (từ image/src, cần mạng để nạp trình xem draw.io):  python hinh_bao_cao.py
--> ../hinh_bao_cao.drawio (mỗi hình một trang, sửa tay được), ../hinh_*.png, và PDF vector chép vào
-   Report DACNTT/media/figures/so_do/hinh_*.pdf mà các chương C1–C3 đang dùng.
-"""
+"""Chín hình sơ đồ của báo cáo DACNTT, vẽ lại cho trực quan (11/11/2026), thay các hình bc_* cũ."""
 import re
 import xml.etree.ElementTree as ET
 from pathlib import Path
@@ -24,7 +14,7 @@ OUT = IMAGE / "hinh_bao_cao.drawio"
 
 F = "fontFamily=Segoe UI;"
 CHU, PHU, DUONG, BLUE = "#111827", "#4B5563", "#1F3A5F", "#1E6FC2"
-MAU = {  # nền, viền của thẻ
+MAU = {
     "trang": ("#FFFFFF", "#B8C7D9"), "xam": ("#F6F8FB", "#7A8CA5"), "xanh": ("#FFFFFF", "#1E6FC2"),
     "tim": ("#FFFFFF", "#6A4C93"), "cam": ("#FFF8F1", "#E07B24"), "la": ("#F3FAF4", "#2E7D32"),
     "navy": ("#1F3A5F", "#1F3A5F"),
@@ -34,9 +24,8 @@ DAM = {"xam": "#64748B", "xanh": "#1E6FC2", "tim": "#6A4C93", "cam": "#E07B24", 
        "trang": "#1E6FC2"}
 O_NEN = {"xanh": ("#CFE0FA", "#1E6FC2"), "tim": ("#E2D8F2", "#6A4C93"), "cam": ("#FDD9B5", "#E07B24"),
          "la": ("#D3EDD8", "#2E7D32"), "xam": ("#FFFFFF", "#7A8CA5")}
-O_BT = {"trang": "xanh", "navy": "xanh"}  # thẻ trắng và thẻ navy dùng biểu tượng xanh
+O_BT = {"trang": "xanh", "navy": "xanh"}
 
-# ---------------------------------------------------------------------------------------------- macro số liệu
 BS = chr(92)
 _MACRO = re.compile(re.escape(BS + "csname ") + r"(\S+?)" + re.escape(BS + "endcsname{") + r"(.*)}")
 M = {k: v.replace("{,}", ",") for f in ("v2/results_v2_macros.tex", "amazon/results_amazon_macros.tex")
@@ -69,7 +58,6 @@ class Trang:
         self.geo[cid] = (x, y, w, h)
         return cid
 
-    # ---- hình cơ bản
     def chu(self, x, y, w, h, label, co=13, mau=CHU, them=""):
         return self.v(x, y, w, h, label, F + "text;html=1;whiteSpace=wrap;strokeColor=none;fillColor=none;"
                       f"align=center;verticalAlign=middle;fontSize={co};fontColor={mau};{them}")
@@ -97,7 +85,7 @@ class Trang:
                       f"spacingTop={o + 12};spacing=8;align=center;verticalAlign=top;fillColor={nen};"
                       f"strokeColor={vien};strokeWidth={vien_(mau)};fontSize={co};fontColor={CHU};")
 
-    def so(self, x, y, n, mau="navy"):
+    def so(self, x, y, n):
         return self.v(x, y, 26, 26, f"<b>{n}</b>", F + f"ellipse;html=1;fillColor={BLUE};strokeColor=#FFFFFF;"
                       "strokeWidth=2;fontColor=#FFFFFF;fontSize=13;")
 
@@ -110,8 +98,8 @@ class Trang:
                       f"fontColor={DUONG};")
 
     def vec(self, x, y, n, mau, dam=None, o=16, chuyen=None):
-        """Vector vẽ thành dãy ô (quy ước bài báo NCF); dam: chỉ số ô tô đậm của vector one-hot;
-        chuyen: màu chuyển sang ở mỗi ô (vector lai = nhúng ID + đặc trưng). Trả về khung bao để nối cạnh."""
+        """Vector vẽ thành dãy ô (quy ước bài báo NCF); dam: chỉ số ô tô đậm của vector one-hot; chuyen: màu chuyển sang
+        ở mỗi ô (vector lai = nhúng ID + đặc trưng)."""
         mau = mau if isinstance(mau, list) else [mau] * n
         for k in range(n):
             nen, vien = O_NEN[mau[k]]
@@ -165,7 +153,6 @@ class Trang:
         return d
 
 
-# ============================================================================================== C1: các bước
 def cac_buoc():
     """Bốn bước xếp dọc, mỗi bước một hàng (đọc dễ hơn bốn thẻ ngang khi thu vào khổ giấy)."""
     t = Trang("Các bước thực hiện đề tài")
@@ -175,7 +162,7 @@ def cac_buoc():
             ("scale", "Đánh giá", "đăng ký trước, 5 seed, Wilcoxon, bootstrap, hiệu chỉnh Holm")]
     ids = []
     for k, (ic, a, b) in enumerate(buoc):
-        y = 12 + k * 110  # khe 44 giữa hai thẻ cho mũi tên đủ dài
+        y = 12 + k * 110
         ids.append(t.the(30, y, 560, 66, ic, a, b, "trang", o=38, co=15.5))
         t.so(17, y - 11, k + 1)
     for k in range(3):
@@ -184,7 +171,6 @@ def cac_buoc():
     return t
 
 
-# ============================================================================================== C2: NeuMF, NeuMF-F
 def so_canh(n, mau="navy"):
     """Nhãn số thứ tự đặt trên mũi tên, cùng màu với mũi tên."""
     return (f"<span style='background:{DAM[mau]};color:#fff;border-radius:10px;padding:1px 7px;font-weight:bold;"
@@ -192,19 +178,15 @@ def so_canh(n, mau="navy"):
 
 
 def _neumf(t, dac_trung):
-    """NeuMF (C2) hoặc NeuMF-F (C3) đọc từ trên xuống, theo lối sơ đồ actor–critic của khóa luận: thẻ trắng viền rõ,
-    số thứ tự trên mũi tên, khối hợp nhất nền navy, vòng cập nhật nét đứt xanh lá ở lề phải.
-    Hai nhánh đặt cạnh nhau (GMF trái, MLP phải) nên mọi mũi tên đi thẳng xuống, không cắt nhau.
-    Năm hàng cách nhau đủ xa để mỗi mũi tên (kể cả đoạn cuối của mũi tên gấp khúc) dài khoảng 40 đơn vị trở lên."""
+    """NeuMF (C2) hoặc NeuMF-F (C3) đọc từ trên xuống, theo lối sơ đồ actor–critic của khóa luận: thẻ trắng viền rõ, số
+    thứ tự trên mũi tên, khối hợp nhất nền navy, vòng cập nhật nét đứt xanh lá ở lề phải."""
     XL, XR = 185, 515
-    Y1, Y2, Y3, Y4, Y5 = 10, 122, 290, 462, 632  # đỉnh của năm hàng
+    Y1, Y2, Y3, Y4, Y5 = 10, 122, 290, 462, 632
     hau_to = "-F" if dac_trung else ""
-    # hàng 1: đầu vào
     sub_u = "mã ID + đặc trưng khách" if dac_trung else "mã hoá one-hot"
     sub_i = "mã ID + đặc trưng sản phẩm" if dac_trung else "mã hoá one-hot"
     u = t.the(40, Y1, 290, 60, "users", "Khách hàng u", sub_u, "xam", o=34, co=14.5)
     i = t.the(370, Y1, 290, 60, "shirt", "Sản phẩm i", sub_i, "xam", o=34, co=14.5)
-    # hàng 2: lớp nhúng / lớp biểu diễn lai (cao 112)
     k2 = t.hop(40, Y2, 620, 112, "cam" if dac_trung else "trang")
     d2 = Y2 - 112
     t.chu(56, 118 + d2, 300, 26, "<b>" + ("Lớp biểu diễn lai" if dac_trung else "Lớp nhúng") + "</b>", 14.5, DUONG,
@@ -231,14 +213,13 @@ def _neumf(t, dac_trung):
         t.chu(56, 194 + d2, 588, 22, "mỗi nhánh có bảng nhúng riêng, cùng số chiều d", 12.5, PHU)
     t.noi(u, k2, (290, Y1 + 60), (290, Y2), so_canh(1), DUONG)
     t.noi(i, k2, (420, Y1 + 60), (420, Y2), so_canh(1), DUONG)
-    # hàng 3: hai nhánh (cao 92)
     d3 = Y3 - 268
     g = t.hop(40, Y3, 290, 92, "xanh")
     t.phep(84, 314 + d3, "⊙", "xanh", d=44)
     t.chu(118, 274 + d3, 206, 80, nhan(f"Nhánh GMF{hau_to}", "nhân từng phần tử<br>" + tren("p", "G", "u") + " ⊙ "
                                        + tren("q", "G", "i"), 14.5), 14.5, CHU, them="align=left;")
     m = t.hop(370, Y3, 290, 92, "tim")
-    for k, bw in enumerate((52, 38, 24)):  # tháp ba lớp ẩn thu hẹp dần
+    for k, bw in enumerate((52, 38, 24)):
         t.v(412 - bw / 2, 288 + d3 + k * 18, bw, 12, "", f"rounded=1;arcSize=40;html=1;fillColor={DAM['tim']};"
             "strokeColor=none;")
     t.chu(448, 274 + d3, 208, 80, nhan(f"Nhánh MLP{hau_to}", "nối [" + tren("p", "M", "u") + " ; " +
@@ -247,7 +228,6 @@ def _neumf(t, dac_trung):
           CHU, them="align=left;")
     t.noi(k2, g, (XL, Y2 + 112), (XL, Y3), so_canh(2, "xanh"), DAM["xanh"])
     t.noi(k2, m, (XR, Y2 + 112), (XR, Y3), so_canh(2, "tim"), DAM["tim"])
-    # hàng 4: hợp nhất sớm và lớp dự đoán, nền navy (cao 96); mũi tên trắng bên trong dài 36–38
     hn_k = t.hop(160, Y4, 380, 96, "navy")
     t.chu(176, Y4 + 4, 340, 26, "<b>Hợp nhất sớm, lớp dự đoán</b>", 14.5, "#FFFFFF", them="align=left;")
     hn = t.vec(178, Y4 + 40, 6, ["xanh"] * 4 + ["tim"] * 2)
@@ -258,14 +238,13 @@ def _neumf(t, dac_trung):
             f"fillColor=#FFFFFF;strokeColor=#86D49A;strokeWidth=2.5;fontSize=14;fontColor={CHU};")
     t.noi(hn, sg, (274, Y4 + 48), (310, Y4 + 48), mau="#FFFFFF")
     t.noi(sg, y, (344, Y4 + 48), (382, Y4 + 48), mau="#FFFFFF")
-    yb = (Y3 + 92 + Y4) / 2 - 20  # chỗ gấp của mũi tên 3, để đoạn cuối dài khoảng 64
+    yb = (Y3 + 92 + Y4) / 2 - 20
     t.noi(g, hn_k, (XL, Y3 + 92), (300, Y4), so_canh(3, "xanh") + " " + tren("φ", "G"), DAM["xanh"],
           pts=[(XL, yb), (300, yb)])
     t.noi(m, hn_k, (XR, Y3 + 92), (400, Y4), so_canh(3, "tim") + " " + tren("φ", "M"), DAM["tim"],
           pts=[(XR, yb), (400, yb)])
     if not dac_trung:
         return t
-    # hàng 5: đầu ra; vòng cập nhật trọng số đi ngoài lề phải
     kn = t.the(40, Y5, 290, 60, "list-numbers", "Khi khuyến nghị", "xếp hạng ứng viên, lấy Top-K", "la", o=34,
                co=14.5)
     hl = t.the(370, Y5, 290, 60, "settings", "Khi huấn luyện", "BCE, mỗi cặp dương lấy 8 mẫu âm", "xanh", o=34,
@@ -274,24 +253,21 @@ def _neumf(t, dac_trung):
     t.noi(hn_k, kn, (260, Y4 + 96), (XL, Y5), so_canh(4), DUONG, pts=[(260, yb), (XL, yb)])
     t.noi(hn_k, hl, (440, Y4 + 96), (XR, Y5), so_canh(4), DUONG, pts=[(440, yb), (XR, yb)])
     t.noi(hl, k2, (660, Y5 + 30), (660, Y2 + 56), "", DAM["la"], pts=[(704, Y5 + 30), (704, Y2 + 56)], net_dut=True)
-    t.v(712, Y5 + 30, 1, 1, "", "html=1;fillColor=none;strokeColor=none;")  # nới khung bao cho vòng cập nhật
+    t.v(712, Y5 + 30, 1, 1, "", "html=1;fillColor=none;strokeColor=none;")
     t.chu(552, Y3 + 104, 144, 26, so_canh(5, "la") + f" <span style='color:{DAM['la']}'>cập nhật trọng số</span>",
           12.5, them="align=right;")
     return t
 
 
 def _neumf_ngang(t, dac_trung):
-    """Bản nằm ngang của hình NeuMF/NeuMF-F cho slide (khổ 16:9): cùng thẻ, cùng màu, cùng số thứ tự với hình dọc
-    của báo cáo, đọc từ trái sang phải; GMF hàng trên, MLP hàng dưới nên mọi mũi tên nằm ngang, không cắt nhau.
-    Hai bản có cùng toạ độ để trên slide hình NeuMF đổi thành NeuMF-F tại chỗ."""
-    YG, YM = 95, 285  # tâm hàng GMF, hàng MLP
+    """Bản nằm ngang của hình NeuMF/NeuMF-F cho slide (khổ 16:9): cùng thẻ, cùng màu, cùng số thứ tự với hình dọc của
+    báo cáo, đọc từ trái sang phải; GMF hàng trên, MLP hàng dưới nên mọi mũi tên nằm ngang, không cắt nhau."""
+    YG, YM = 95, 285
     hau_to = "-F" if dac_trung else ""
     co = 17
-    # cột 1: đầu vào
     sub_u = "mã ID + đặc trưng" if dac_trung else "mã hoá one-hot"
     u = t.the(0, YG - 36, 220, 72, "users", "Khách hàng u", sub_u, "xam", o=38, co=co)
     i = t.the(0, YM - 36, 220, 72, "shirt", "Sản phẩm i", sub_u, "xam", o=38, co=co)
-    # cột 2: lớp nhúng / lớp biểu diễn lai
     k2 = t.hop(280, 30, 330, 320, "cam" if dac_trung else "trang")
     t.chu(296, 40, 300, 30, "<b>" + ("Lớp biểu diễn lai" if dac_trung else "Lớp nhúng") + "</b>", co, DUONG,
           them="align=left;")
@@ -314,12 +290,11 @@ def _neumf_ngang(t, dac_trung):
         t.chu(381, 310, 128, 22, "cho MLP", 14, DAM["tim"])
     t.noi(u, k2, (220, YG), (280, YG), so_canh(1), DUONG)
     t.noi(i, k2, (220, YM), (280, YM), so_canh(1), DUONG)
-    # cột 3: hai nhánh
     g = t.hop(680, YG - 60, 300, 120, "xanh")
     t.phep(726, YG, "⊙", "xanh", d=48)
     t.chu(762, YG - 54, 212, 108, nhan(f"Nhánh GMF{hau_to}", "nhân từng phần tử", co), co, CHU, them="align=left;")
     m = t.hop(680, YM - 60, 300, 120, "tim")
-    for k, bw in enumerate((56, 40, 24)):  # tháp ba lớp ẩn thu hẹp dần
+    for k, bw in enumerate((56, 40, 24)):
         t.v(726 - bw / 2, YM - 28 + k * 20, bw, 14, "", f"rounded=1;arcSize=40;html=1;fillColor={DAM['tim']};"
             "strokeColor=none;")
     t.chu(762, YM - 54, 212, 108, nhan(f"Nhánh MLP{hau_to}", "nối, 3 lớp ẩn ReLU<br>" +
@@ -327,7 +302,6 @@ def _neumf_ngang(t, dac_trung):
           them="align=left;")
     t.noi(k2, g, (610, YG), (680, YG), so_canh(2, "xanh"), DAM["xanh"])
     t.noi(k2, m, (610, YM), (680, YM), so_canh(2, "tim"), DAM["tim"])
-    # cột 4: hợp nhất sớm và lớp dự đoán, nền navy
     hn_k = t.hop(1050, 100, 300, 200, "navy")
     t.chu(1066, 108, 270, 30, "<b>Hợp nhất sớm,<br>lớp dự đoán</b>", co, "#FFFFFF", them="align=left;")
     hn = t.vec(1070, 170, 6, ["xanh"] * 4 + ["tim"] * 2, o=22)
@@ -341,9 +315,8 @@ def _neumf_ngang(t, dac_trung):
     t.noi(g, hn_k, (980, YG), (1050, 150), so_canh(3, "xanh"), DAM["xanh"], pts=[(1015, YG), (1015, 150)])
     t.noi(m, hn_k, (980, YM), (1050, 230), so_canh(3, "tim"), DAM["tim"], pts=[(1015, YM), (1015, 230)])
     if not dac_trung:
-        t.v(1640, 340, 1, 1, "", "html=1;fillColor=none;strokeColor=none;")  # cùng khung bao với bản NeuMF-F
+        t.v(1640, 340, 1, 1, "", "html=1;fillColor=none;strokeColor=none;")
         return t
-    # cột 5: đầu ra; vòng cập nhật trọng số đi dưới đáy hình
     kn = t.the(1420, YG - 40, 240, 80, "list-numbers", "Khi khuyến nghị", "xếp hạng, lấy Top-K", "la", o=38, co=co)
     hl = t.the(1420, YM - 40, 240, 80, "settings", "Khi huấn luyện", "BCE, 8 mẫu âm / cặp", "xanh", o=38, co=co)
     t.noi(hn_k, kn, (1350, 150), (1420, YG), so_canh(4), DUONG, pts=[(1385, 150), (1385, YG)])
@@ -411,10 +384,9 @@ def hop_nhat():
     return t
 
 
-# ============================================================================================== C3
 def duong_ong():
     t = Trang("Đường ống huấn luyện và đánh giá mô hình")
-    ys = [4, 110, 216, 322, 452]  # khe 44; trước bước cuối khe 68 để đặt vạch mốc τ
+    ys = [4, 110, 216, 322, 452]
     the_ = [t.the(110, ys[0], 330, 62, "database", "Dữ liệu H&amp;M", "giao dịch, sản phẩm, khách hàng", "xam"),
             t.the(110, ys[1], 330, 62, "filter", "Tiền xử lý", "gộp màu, lọc 10-core", "trang"),
             t.the(110, ys[2], 330, 62, "adjustments-horizontal", "Xây dựng đặc trưng", "tính tại mốc τ", "trang"),
@@ -424,7 +396,6 @@ def duong_ong():
         t.so(99, ys[k] - 10, k)
     for k in range(4):
         t.noi(the_[k], the_[k + 1], (275, ys[k] + 62), (275, ys[k + 1]))
-    # vạch mốc τ: phía trên chỉ dùng dữ liệu trước τ, phía dưới là giai đoạn được khuyến nghị
     yt = (ys[3] + 62 + ys[4]) / 2
     t.v(4, yt - 1, 446, 2, "", f"html=1;fillColor=none;strokeColor={DAM['cam']};strokeWidth=2;dashed=1;dashPattern=8 4;")
     t.chu(4, yt - 30, 100, 28, "<b>trước τ</b> ↑", 12.5, DAM["xanh"], them="align=left;")
@@ -444,14 +415,13 @@ def xu_ly_du_lieu():
             ("calendar-time", "Chia theo thời gian", "giai đoạn xác thực, giai đoạn kiểm thử")]
     ids = [src]
     for k, (ic, a, b) in enumerate(buoc):
-        y = 108 + k * 102  # khe 44 giữa hai thẻ
+        y = 108 + k * 102
         ids.append(t.the(100, y, 350, 58, ic, a, b, "trang"))
-        t.so(90, y - 9, k + 1, "xanh")
+        t.so(90, y - 9, k + 1)
         g = t.geo[ids[k]]
         t.noi(ids[k], ids[k + 1], (275, g[1] + g[3]), (275, y))
     dm = t.the(510, 210, 210, 58, "file-text", "Danh mục sản phẩm", "loại, màu, mẫu thiết kế", "xam")
     t.noi(dm, ids[2], (510, 239), (450, 239))
-    # hai đầu ra đối xứng qua trục giữa của cột bước (x = 275), mũi tên đi thẳng xuống giữa mỗi thẻ
     a = t.the(40, 516, 225, 76, "users", "Mẫu phát triển", f"{M['vdata-A-nusers']} khách<br>"
               f"{M['vdata-A-nitems']} sản phẩm", "la", co=14)
     b = t.the(285, 516, 225, 76, "users", "Mẫu kiểm định", f"{M['vdata-B-nusers']} khách<br>"
@@ -462,8 +432,7 @@ def xu_ly_du_lieu():
 
 
 def chia_thoi_gian():
-    """Hai giai đoạn trên một trục thời gian. Không vẽ vạch dọc xuyên qua các thanh: mốc τ ghi ngay dưới ngày trên trục,
-    ranh giới hai giai đoạn đã thấy ở mép các thanh."""
+    """Hai giai đoạn trên một trục thời gian."""
     t = Trang("Chia dữ liệu theo thời gian")
     X0, XV, XT, XE = 230, 540, 660, 840
     t.the(4, 26, 210, 52, "settings", "Giai đoạn xác thực", "chọn cấu hình", "trang", o=28, co=13.5, o_mau="la")
@@ -477,7 +446,6 @@ def chia_thoi_gian():
     thanh(X0, XT, 100, "huấn luyện lại<br><span style='font-size:11.5px;color:#5B6577'>gồm cả 4 tuần xác thực</span>",
           "#DCE8FF", MAU["xanh"][1])
     thanh(XT, XE, 100, "<b>kiểm thử</b><br>8 tuần", "#FFE1C7", MAU["cam"][1])
-    # trục thời gian: một thanh mảnh và một đầu mũi tên tam giác (không dùng cạnh nối nên không có móc ở đầu trục)
     YA = 168
     t.v(X0, YA - 1, XE + 24 - X0, 2, "", f"html=1;fillColor={PHU};strokeColor=none;")
     t.v(XE + 22, YA - 6, 11, 12, "", f"triangle;direction=east;html=1;fillColor={PHU};strokeColor=none;")
@@ -579,7 +547,7 @@ def _du_lieu_ngang(t, nguon, buoc, ra, danh_muc=None):
         x2 = 2 * (W_ + GAP)
         dm = t.the(x2, YC + H_ / 2 + 44, W_, 64, "file-text", danh_muc[0], danh_muc[1], "xam", o=30, co=15)
         t.noi(dm, ids[2], (x2 + W_ / 2, YC + H_ / 2 + 44), (x2 + W_ / 2, YC + H_ / 2))
-    t.v(xo + 250, YC + H_ / 2 + 108, 1, 1, "", "html=1;fillColor=none;strokeColor=none;")  # cùng khung bao cho hai bản
+    t.v(xo + 250, YC + H_ / 2 + 108, 1, 1, "", "html=1;fillColor=none;strokeColor=none;")
     return t
 
 
@@ -629,7 +597,6 @@ def demo_ngang():
     return t
 
 
-
 HINH_SLIDE = [("hinh_neumf_ngang", neumf_ngang), ("hinh_neumf_f_ngang", neumf_f_ngang),
               ("hinh_du_lieu_hm_ngang", du_lieu_hm_ngang),
               ("hinh_du_lieu_amazon_ngang", du_lieu_amazon_ngang),
@@ -646,7 +613,7 @@ def _ghi(ds, path):
 
 if __name__ == "__main__":
     import sys
-    chon = sys.argv[1:]  # chỉ xuất PNG của các hình có tên trong danh sách (để sửa nhanh); không có thì xuất hết
+    chon = sys.argv[1:]
     tat_ca = HINH + HINH_SLIDE
     _ghi(tat_ca, OUT)
     print("ok", OUT)
@@ -659,6 +626,6 @@ if __name__ == "__main__":
         xuat(tam, IMAGE, [n for n, _ in HINH], PDF_DIR)
         _ghi(HINH_SLIDE, tam)
         xuat(tam, IMAGE, [n for n, _ in HINH_SLIDE])
-        _ghi([h for h in HINH if h[0] == "hinh_kien_truc_neumf_f"], tam)  # cho poster, nét hơn
+        _ghi([h for h in HINH if h[0] == "hinh_kien_truc_neumf_f"], tam)
         xuat(tam, REPORT / "poster" / "media", ["poster_mo_hinh"], scale=4)
     tam.unlink()

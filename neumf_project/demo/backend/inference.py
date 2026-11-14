@@ -13,8 +13,6 @@ SCORE_KIND = {"MostPopular": "lượt mua train", "BPR-MF": "điểm", "ItemKNN"
               "LateFusion-F": "điểm trộn", "MostPopular-Recent": "giao dịch gần đây", "Content": "cosine",
               "Hybrid-CBCF": "điểm lai"}
 METRIC_NAMES = ("HR", "NDCG", "Recall", "Precision")
-# Hạng tính lại lệch hạng đã lưu: tệp đặc trưng văn bản (TF-IDF + SVD trong data/processed/) dựng lại bằng phiên bản thư
-# viện khác máy đã chạy đánh giá cuối, nên vector văn bản khác (demo/README.md mục 4).
 MISMATCH_NOTE = ("Thứ hạng trên máy này lệch với số đã lưu do tệp đặc trưng văn bản được dựng lại trên máy khác. "
                  "Số trong báo cáo là số đã lưu.")
 
@@ -37,11 +35,7 @@ def final_result(ctx, model_name: str, u: int, live_ranks: list[int]) -> dict | 
 
 @torch.no_grad()
 def score_items(ctx, model_name: str, users: np.ndarray) -> np.ndarray:
-    """Điểm của mọi item cho từng user (chỉ mạng PyTorch), shape (len(users), n_items).
-
-    Trả logit float32 (giống evaluate_torch_model); không qua sigmoid vì sigmoid float32 bão hoà tạo tie giả
-    và làm lệch rank.
-    """
+    """Điểm của mọi item cho từng user (chỉ mạng PyTorch), shape (len(users), n_items)."""
     users = np.asarray(users, dtype=np.int64)
     n_items = ctx.n_items
     model = ctx.models[model_name]
@@ -63,9 +57,7 @@ def eval_record(ctx, u: int) -> EvalRecord:
 
 
 def candidate_scores(ctx, model_name: str, u: int, record, all_items_row=None) -> np.ndarray:
-    """Điểm trên record.candidates. Mô hình không phải mạng PyTorch chấm thẳng trên candidates (đúng như lúc chấm —
-    late fusion chuẩn hoá min-max trên chính tập này). all_items_row: hàng điểm mọi item
-    của mạng PyTorch đã tính sẵn theo lô."""
+    """Điểm trên record.candidates."""
     scorer = ctx.scorers.get(model_name)
     if scorer is not None:
         return np.asarray(scorer.score_items(u, record.candidates), dtype=np.float64)
@@ -94,8 +86,8 @@ def rank_from_scores(ctx, u: int, scores: np.ndarray, top_k: int, record) -> dic
 
 
 def best_ranks(ctx, model_name: str, users=None, chunk: int = 256) -> dict[int, int]:
-    """Hạng tốt nhất của các sản phẩm đích (đúng evaluation.rank của recommend) cho từng khách có sản phẩm đích — để
-    lọc khách mà mô hình gợi ý trúng. Mạng PyTorch chấm mọi item theo lô khách rồi lấy hàng của từng khách."""
+    """Hạng tốt nhất của các sản phẩm đích (đúng evaluation.rank của recommend) cho từng khách có sản phẩm đích — để lọc
+    khách mà mô hình gợi ý trúng."""
     users = ctx.target_users if users is None else np.asarray(users, dtype=np.int64)
     neural = model_name not in ctx.scorers
     out = {}
@@ -110,8 +102,7 @@ def best_ranks(ctx, model_name: str, users=None, chunk: int = 256) -> dict[int, 
 
 
 def recommend(ctx, model_name: str, u: int, k: int) -> dict:
-    """Top-K của mô hình cho khách u đã có trong dữ liệu đã học. Khách không mua món mới nào trong giai đoạn đánh giá
-    vẫn nhận gợi ý của mô hình; khi đó không có sản phẩm đích nên evaluation = None."""
+    """Top-K của mô hình cho khách u đã có trong dữ liệu đã học."""
     record = eval_record(ctx, u)
     res = rank_from_scores(ctx, u, candidate_scores(ctx, model_name, u, record), k, record)
     targets = set(int(i) for i in record.positives)

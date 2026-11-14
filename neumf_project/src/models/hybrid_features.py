@@ -1,15 +1,4 @@
-"""Mô hình lai MF + DNN có đặc trưng (NeuMF-F) và các thành phần cho giao thức v2 (audit/PREREG_v2.md).
-
-NeuMF-F giữ cấu trúc hai nhánh của NeuMF (He et al., 2017) — nhánh GMF (tích từng phần tử, tuyến tính) và nhánh MLP
-(phi tuyến) hợp nhất ở lớp dự đoán chung (Early Fusion) — nhưng vector user/item của mỗi nhánh là
-    embedding ID  +  phép chiếu tuyến tính của đặc trưng:
-  - item: 11 thuộc tính danh mục (embedding), vector mô tả văn bản, đặc trưng thời gian tại ngày t (doanh số toàn H&M
-    trong 7/28/91 ngày trước t, tuổi sản phẩm, cờ chưa từng bán);
-  - user: 5 thuộc tính tĩnh (embedding) và đặc trưng thời gian (khoảng cách tới lần mua gần nhất, số cặp đã mua).
-Item có chỉ số >= n_id_items không có embedding ID, chỉ dùng đặc trưng (với dữ liệu hiện tại mọi sản phẩm đều có ID);
-khi huấn luyện, ID của item bị bỏ ngẫu nhiên với xác suất id_dropout để mô hình học được cách chấm khi thiếu ID.
-Các cờ use_* tắt từng nhánh/nhóm đặc trưng cho ablation (GMF-F, MLP-F, bỏ văn bản, ...).
-"""
+"""Mô hình lai MF + DNN có đặc trưng (NeuMF-F) và các thành phần cho giao thức v2 (audit/PREREG_v2.md)."""
 from __future__ import annotations
 
 import numpy as np
@@ -38,7 +27,7 @@ class NeuMFF(nn.Module):
         self.use_attr, self.use_text, self.use_time, self.use_user = use_attr, use_text, use_time, use_user
 
         def id_emb(n, d):
-            return nn.Embedding(n + 1, d, padding_idx=n)  # hàng cuối = "không có ID" (vector 0, không được cập nhật)
+            return nn.Embedding(n + 1, d, padding_idx=n)
 
         self.item_attr = nn.ModuleList(nn.Embedding(c, cat_dim) for c in item_cards) if use_attr else None
         self.user_attr = nn.ModuleList(nn.Embedding(c, cat_dim) for c in user_cards) if use_user else None
@@ -78,7 +67,6 @@ class NeuMFF(nn.Module):
                 if m.bias is not None:
                     nn.init.zeros_(m.bias)
 
-    # ------------------------------------------------------------ dữ liệu ngoài
     def attach(self, item_cats, item_text, item_cum, item_first_day, user_cats=None):
         """Gắn bảng đặc trưng (không lưu trong state_dict — dựng lại từ cache khi nạp mô hình)."""
         dev = self.output_layer.weight.device
@@ -109,10 +97,9 @@ class NeuMFF(nn.Module):
         return self
 
     def train(self, mode: bool = True):
-        self._cache = None  # trọng số sắp đổi -> bỏ vector đã tính sẵn cho đánh giá
+        self._cache = None
         return super().train(mode)
 
-    # ------------------------------------------------------------- đặc trưng
     def item_time(self, items, day):
         cum = self.item_cum
         last = cum.shape[1] - 1
@@ -142,7 +129,7 @@ class NeuMFF(nn.Module):
         parts = [emb(cats[..., k]) for k, emb in enumerate(self.user_attr)]
         if self.use_time:
             parts.append(utime)
-        return torch.cat(parts, dim=-1) if parts else None  # không có thuộc tính khách (Amazon) và tắt thời gian
+        return torch.cat(parts, dim=-1) if parts else None
 
     def _vectors(self, br, users, items, has_id, fi, fu):
         id_idx = torch.where(has_id, items, torch.full_like(items, self.n_id))
@@ -162,9 +149,8 @@ class NeuMFF(nn.Module):
             out.append(self.tower(torch.cat([pm, qm], dim=-1)))
         return self.output_layer(torch.cat(out, dim=-1)).squeeze(-1)
 
-    # ---------------------------------------------------------------- forward
     def forward(self, users, items, day=None, utime=None):
-        if day is None:  # đánh giá tại mốc cắt của giai đoạn (set_stage)
+        if day is None:
             return self._forward_eval(users, items)
         has_id = items < self.n_id
         if self.training and self.id_dropout > 0:
@@ -207,9 +193,8 @@ class NeuMFF(nn.Module):
 
 
 class MaskedScorer(nn.Module):
-    """Bọc mô hình PyTorch chỉ dùng ID: item không có dữ liệu huấn luyện của giai đoạn (scoreable = False) nhận điểm -inf,
-    tức bị xếp cuối (thứ tự giữa chúng do khoá phá hoà quyết định). Chỉ số item vượt bảng embedding của mô hình được kẹp
-    về 0 trước khi gọi mô hình (điểm đó bị thay bằng -inf)."""
+    """Bọc mô hình PyTorch chỉ dùng ID: item không có dữ liệu huấn luyện của giai đoạn (scoreable = False) nhận điểm
+    -inf, tức bị xếp cuối (thứ tự giữa chúng do khoá phá hoà quyết định)."""
 
     def __init__(self, model: nn.Module, scoreable, n_model_items: int):
         super().__init__()
@@ -241,8 +226,7 @@ class MaskedScoreFn:
 
 
 class RecentPopularity:
-    """Most Popular theo thời gian: số giao dịch của sản phẩm trên toàn H&M trong `window` ngày trước mốc cắt.
-    Sản phẩm mới có doanh số 0 -> xếp sau mọi sản phẩm đã bán."""
+    """Most Popular theo thời gian: số giao dịch của sản phẩm trên toàn H&M trong `window` ngày trước mốc cắt."""
 
     def __init__(self, item_cum: np.ndarray, cutoff: int, window: int):
         cum = np.asarray(item_cum)
@@ -257,16 +241,13 @@ class RecentPopularity:
     __call__ = score
 
 
-# Không có màu: sau khi gộp mọi màu của một mẫu (features.group_by_product), cột màu là hằng số.
 CONTENT_ONEHOT = {"product_group_name": 1, "index_group_no": 8, "garment_group_no": 10}
 
 
 class ContentProfile:
     """Gợi ý theo nội dung (không dùng ID, không cần lấy mẫu âm): vector sản phẩm = [vector văn bản ; one-hot nhóm sản
     phẩm, nhóm chỉ mục, nhóm may mặc], chuẩn hoá L2; hồ sơ user = trung bình (có trọng số theo độ mới nếu đặt
-    half_life ngày) vector các sản phẩm đã mua trong tập huấn luyện; điểm = cosine. Chấm được cả sản phẩm mới.
-    onehot_cols: chỉ số cột thuộc tính lấy one-hot (mặc định của H&M: CONTENT_ONEHOT; Amazon: content_onehot trong
-    configs/amazon.yaml)."""
+    half_life ngày) vector các sản phẩm đã mua trong tập huấn luyện; điểm = cosine."""
 
     def __init__(self, item_text, item_cats, item_cards, train_df, n_users: int, cutoff: int,
                  half_life: float | None = None, onehot_cols=None):
@@ -276,7 +257,7 @@ class ContentProfile:
             card = int(item_cards[col_idx])
             oh = np.zeros((len(item_text), card), dtype=np.float32)
             oh[np.arange(len(item_text)), np.asarray(item_cats)[:, col_idx]] = 1.0
-            oh[:, 0] = 0.0  # "không biết" không mang thông tin
+            oh[:, 0] = 0.0
             parts.append(oh / np.sqrt(len(cols)))
         x = np.concatenate(parts, axis=1)
         self.X = x / np.maximum(np.linalg.norm(x, axis=1, keepdims=True), 1e-12)

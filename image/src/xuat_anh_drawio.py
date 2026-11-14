@@ -1,12 +1,4 @@
-"""Xuất từng trang của một file .drawio ra PNG (và PDF nếu cần) khi máy không cài draw.io desktop.
-
-Cách làm: dựng một trang HTML nạp trình xem chính thức của draw.io (viewer-static.min.js, cần mạng), rồi dùng Microsoft
-Edge chạy ngầm (có sẵn trên Windows) để chụp PNG hoặc in PDF. PDF giữ dạng vector, dùng cho báo cáo LaTeX.
-Khổ ảnh lấy theo khung bao các hình của từng trang, cộng lề VIEN điểm ảnh mỗi bên.
-
-Chạy: python xuat_anh_drawio.py <file.drawio> <thư_mục_png> [tên_1 tên_2 ...]
-Không có tên thì ảnh đặt theo số trang: trang_1.png, trang_2.png, ...
-"""
+"""Xuất từng trang của một file .drawio ra PNG (và PDF nếu cần) khi máy không cài draw.io desktop."""
 import html
 import json
 import subprocess
@@ -17,8 +9,8 @@ from pathlib import Path
 
 EDGE = Path("C:/Program Files (x86)/Microsoft/Edge/Application/msedge.exe")
 VIEWER = "https://viewer.diagrams.net/js/viewer-static.min.js"
-SCALE = 2   # hệ số điểm ảnh của PNG
-VIEN = 6    # lề quanh hình
+SCALE = 2
+VIEN = 6
 
 
 def _khung(d) -> tuple[int, int]:

@@ -1,5 +1,5 @@
-"""Dữ liệu đối chứng Amazon Beauty (configs/amazon.yaml, audit/PREREG_amazon.md): adapter, đặc trưng, ngày tính từ
-day0 của cấu hình, dữ liệu không có thông tin khách, lệnh amazon-* của run.py — trên file giả nhỏ."""
+"""Dữ liệu đối chứng Amazon Beauty (configs/amazon.yaml, audit/PREREG_amazon.md): adapter, đặc trưng, ngày tính từ day0
+của cấu hình, dữ liệu không có thông tin khách, lệnh amazon-* của run.py — trên file giả nhỏ."""
 from __future__ import annotations
 
 import gzip
@@ -53,7 +53,7 @@ def _write(tmp_path: Path) -> tuple[Path, Path]:
               "price": 120.0},
              {"asin": "B0C", "title": "Shampoo beauty product care", "categories": [["Beauty", "Hair Care"]], "brand": "Acme"},
              {"asin": "B0E", "title": "Lipstick pink beauty product care", "categories": [["Beauty", "Makeup", "Lips", "Lipstick"]]}]
-    with gzip.open(meta, "wt", encoding="utf-8") as f:  # dict Python (nháy đơn) như file gốc; B0D không có metadata
+    with gzip.open(meta, "wt", encoding="utf-8") as f:
         f.writelines(repr(m) + "\n" for m in metas)
     return reviews, meta
 
@@ -62,7 +62,7 @@ def test_adapter_codes_asins_in_sorted_order(tmp_path):
     reviews, _ = _write(tmp_path)
     ev = AmazonAdapter(reviews).load_events()
     assert list(ev.columns) == ["user_raw", "item_raw", "timestamp", "value_raw", "source_order"]
-    first = ev.iloc[0]  # U0 – B0D: asin thứ 4 theo thứ tự từ điển (A, B, C, D, E)
+    first = ev.iloc[0]
     assert (first["user_raw"], first["item_raw"], str(first["timestamp"].date())) == ("U0", 3, "2010-01-10")
     assert sorted(ev["item_raw"].unique()) == [0, 1, 2, 3, 4]
 
@@ -71,14 +71,14 @@ def test_features_catalog_and_daily_reviews(tmp_path):
     reviews, meta = _write(tmp_path)
     cat, ds, info = build_features(reviews, meta, DAY0, text_dim=2)
     assert info["asin"].tolist() == ["B0A", "B0B", "B0C", "B0D", "B0E"] and cat.article_ids.tolist() == [0, 1, 2, 3, 4]
-    assert info.loc[1, ["category_1", "category_2"]].tolist() == ["Skin Care", "Face"]  # đường danh mục bắt đầu bằng Beauty
-    assert info.loc[3, "title"] == "" and cat.cats[3].tolist() == [0, 0, 0, 0, 0]  # không có metadata -> không biết
-    assert cat.cats[:, 4].tolist() == [2, 8, 0, 0, 0]  # giá 7,5 -> nhóm 5–10; 120 -> >= 100; thiếu -> 0
-    assert cat.cats[0, 0] == cat.cats[2, 0] > 0 and cat.cats[1, 0] == 0  # cùng thương hiệu Acme; B0B thiếu
+    assert info.loc[1, ["category_1", "category_2"]].tolist() == ["Skin Care", "Face"]
+    assert info.loc[3, "title"] == "" and cat.cats[3].tolist() == [0, 0, 0, 0, 0]
+    assert cat.cats[:, 4].tolist() == [2, 8, 0, 0, 0]
+    assert cat.cats[0, 0] == cat.cats[2, 0] > 0 and cat.cats[1, 0] == 0
     assert cat.text.shape == (5, 2)
     assert ds.counts.sum() == 30 and ds.n_days == int(to_day(np.datetime64("2010-04-05"), DAY0)) + 1
     assert ds.counts[4, int(to_day(np.datetime64("2010-03-05"), DAY0))] == 3
-    assert ds.first_day[0] == int(to_day(np.datetime64("2010-01-11"), DAY0))  # B0A: U0 đánh giá ngày 11/01
+    assert ds.first_day[0] == int(to_day(np.datetime64("2010-01-11"), DAY0))
     with pytest.raises(ValueError, match="day0"):
         build_features(reviews, meta, "2010-02-01", text_dim=2)
     assert category_path({}) == ["", "", ""]
@@ -100,16 +100,15 @@ def test_load_data_amazon_config_without_customers(tmp_path):
     assert (D.n_users, D.user_cats.shape, D.user_cards) == (6, (6, 0), [])
     assert D.meta["day0"] == DAY0 and D.meta["dataset"] == "amazon" and D.meta["content_onehot"] == [1, 2]
     assert D.val.cutoff == int(to_day(np.datetime64(VAL), DAY0))
-    assert len(D.val.targets) == 0  # B0E chưa có cặp nào trước VAL: không là ứng viên, không là đáp án
+    assert len(D.val.targets) == 0
     assert len(D.test.targets) == 3 and set(D.test.targets["user"]) == {3, 4, 5}
-    # NeuMF-F không có thuộc tính khách: nhánh user chỉ còn đặc trưng thời gian; tắt thời gian thì không còn gì
     for flags in ({}, {"use_time": False}, {"use_user": False}):
         net = NeuMFF(D.n_users, D.n_id_items, D.item_cards, D.user_cards, D.item_text.shape[1], 8, 8,
                      **flags).attach(D.item_cats, D.item_text, D.item_cum, D.item_first_day, D.user_cats)
         out = net(torch.tensor([0, 1]), torch.tensor([0, 1]), torch.tensor([60, 61]), torch.zeros(2, 2))
         assert out.shape == (2,) and torch.isfinite(out).all()
     cp = V.score_fn("content", {"half_life": None}, D, D.test)
-    assert cp.X.shape == (D.n_items, 2 + D.item_cards[1] + D.item_cards[2])  # one-hot danh mục cấp 1, cấp 2
+    assert cp.X.shape == (D.n_items, 2 + D.item_cards[1] + D.item_cards[2])
 
 
 def test_amazon_config_uses_hm_configs_without_tuning():
@@ -129,7 +128,7 @@ def test_content_profile_uses_given_onehot_columns():
     cp = ContentProfile(text, cats, [3, 3], train, n_users=1, cutoff=2, onehot_cols=[1])
     assert cp.X.shape == (3, 6)
     s = cp.score_items(0, [1, 2])
-    assert s[1] > s[0]  # sản phẩm 2 cùng giá trị cột 1 với sản phẩm đã mua
+    assert s[1] > s[0]
 
 
 def test_run_amazon_commands_use_amazon_config(monkeypatch):
@@ -137,7 +136,7 @@ def test_run_amazon_commands_use_amazon_config(monkeypatch):
     assert run.cmd_amazon_data(ns()) == [["scripts/21_build_features.py"], ["scripts/02_prepare_data.py"]]
     assert run.cmd_v2_dry_run(ns(max_epochs=1, seeds=[42], command="amazon-dry-run"))[-1] == [
         "scripts/24_report_v2.py", "--final-dir", "outputs/amazon/dry_run", "--report-dir", ""]
-    assert "amazon-tune" not in run.COMMANDS  # Amazon không tinh chỉnh (PREREG_amazon mục 4)
+    assert "amazon-tune" not in run.COMMANDS
     got = {}
     monkeypatch.setattr(run, "run_steps", lambda name, steps, config=None: got.setdefault(name, config) and 0)
     for cmd, cfg in (("amazon-report", "configs/amazon.yaml"), ("v2-report", "configs/v2.yaml")):
