@@ -129,8 +129,8 @@ chấm được khách này.
 ### 2.3 Việc còn lại
 
 Đã xong ngày 13/10: chấm tập kiểm thử cho Hybrid-CBCF (H&M và Amazon) và viết nhận xét theo kết quả; viết lại văn phong
-báo cáo (mục 10.4). Đã xong ngày 23–29/10: sửa theo góp ý buổi họp 23/10 (mục 2.1); `pipeline_neumf_5trang.drawio` vẽ
-lại gọn, sinh từ `image/src/so_do_bao_cao.py` cùng các hình của báo cáo.
+báo cáo (mục 10.4). Đã xong ngày 23–29/10: sửa theo góp ý buổi họp 23/10 (mục 2.1); vẽ lại gọn các sơ đồ của
+báo cáo; từ 11/11 các hình sơ đồ sinh bằng `image/src/hinh_bao_cao.py` (bộ sơ đồ cũ đã xóa ngày 14/11).
 
 1. **Hỏi khoa về báo cáo giữa kỳ**: hạn nghe được khoảng 25/10, không nộp bị trừ 1 điểm; nộp ở mục nộp bài (không phải
    mục báo cáo tiến độ hàng tuần), hệ thống đang đổi giao diện. Báo cáo cuối nộp tháng 11.
