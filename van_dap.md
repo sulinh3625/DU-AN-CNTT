@@ -222,7 +222,7 @@ muốn gợi ý tốt hơn thì nên ưu tiên cập nhật doanh số theo th�
 hơn. Demo cho thấy hệ thống chạy được như một cửa hàng thật. Mở: mục 1.4.2, 5.2.
 
 **5.1.3 "Vì sao chọn NeuMF mà không chọn mô hình mới hơn (Transformer, đồ thị)?"**
-Ba lý do (mục 2.4.3): H&M chỉ ghi ngày mua, không có phiên, nên mô hình chuỗi khó dùng; dữ liệu có sẵn thuộc tính và
+Ba lý do (mục 2.4.2): H&M chỉ ghi ngày mua, không có phiên, nên mô hình chuỗi khó dùng; dữ liệu có sẵn thuộc tính và
 mô tả sản phẩm, hợp với cách "vector ID + đặc trưng"; cấu trúc hai nhánh tường minh cho phép tách đóng góp của từng phần
 bằng so sánh trực tiếp. Các hướng mới là hướng phát triển (mục 5.4).
 

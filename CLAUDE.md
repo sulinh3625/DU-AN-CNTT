@@ -10,7 +10,9 @@ Trả lời bằng tiếng Việt có dấu. Bối cảnh và số liệu: `READ
   `demo/scripts/download_amazon_images.py`, H&M tải bằng
   `demo/scripts/download_hm_images.py` (Kaggle API) hoặc chép bằng `demo/scripts/copy_images.py` (cần `HM_IMAGES_DIR`)
 - Hình sơ đồ báo cáo: `cd image/src && python hinh_bao_cao.py` (không cần draw.io desktop, cần mạng)
-- Báo cáo: `Report DACNTT/compile.bat` (MiKTeX XeLaTeX + biber)
+- Báo cáo: `Report DACNTT/compile.bat` (MiKTeX XeLaTeX + biber). Bản nộp gồm `main.pdf` và bản Word
+  `BaoCao_DACNTT.docx` (`powershell -File "Report DACNTT/xuat_word.ps1"`, cần tắt hộp thoại chuyển PDF của Word một
+  lần, xem đầu script). Sửa báo cáo thì cập nhật cả hai bản.
 
 ## Ranh giới
 - Không push, không tạo hay đổi nhánh; chỉ commit cục bộ trên `main` khi được yêu cầu.

@@ -59,7 +59,7 @@ Quy ước đọc:
 
 ---
 
-## 2. Tiến độ (12/11/2026)
+## 2. Tiến độ (15/11/2026)
 
 ### 2.1 Tình hình
 
@@ -71,7 +71,8 @@ Quy ước đọc:
 | Mô hình lai truyền thống (bổ sung) | Xong 13/10: mã, kế hoạch `PREREG_bosung.md`, tinh chỉnh trên tập xác thực, chấm tập kiểm thử một lần trên H&M và một lần trên Amazon (commit `fcf33f3`); kết quả ở mục 3.7 và 4.6 |
 | Báo cáo | `main.pdf` 98 trang (rút gọn 12/11 theo skill định dạng: bớt ảnh demo trùng ý, hình hội tụ, hình Amazon trùng bảng, bảng API, câu rào đón), biên dịch không lỗi, không còn hộp tràn trang; mục 4.5 mới (Bảng 4.20) chỉ ra phần cải thiện đến từ đặc trưng, không từ tinh chỉnh, dữ liệu hay dao động ngẫu nhiên; 9 sơ đồ vẽ lại bằng `image/src/hinh_bao_cao.py` với một quy tắc màu chung; baseline trình bày theo ba nhóm; có kết quả Hybrid-CBCF; tóm tắt Việt, Anh có đoạn kết quả (nêu rõ LateFusion-F cao nhất), mỗi bản một trang; `check-report`: 75/75 câu nhận xét khớp số liệu, đủ mọi macro, bảng, hình |
 | Demo | Luôn có gợi ý (khách mới nhận danh sách phổ biến); chọn được K = 10, 15, 20; ảnh Amazon lưu trên máy (`demo/static/images/amazon/`); ảnh H&M tải ngày 07/11 (6.728/6.749 sản phẩm, `demo/scripts/download_hm_images.py`); ảnh demo trong báo cáo (Hình 3.7, 3.8) chụp lại có ảnh thật |
-| Kiểm thử | `tests/` 110/110 qua; `demo/tests` 21/21 qua (12/11); demo đối chiếu từng kết quả với số đã lưu (mục 10.3) |
+| Bản nộp (15/11) | Đã commit bản 12/11 (`5d75321`) và bản dọn repo 14/11 (`1780b56`: bỏ comment, xoá ảnh/biểu tượng/sơ đồ cũ không dùng, hai zip công cụ vẽ). Ngày 15/11 dựng lại `main.pdf`, `Slide_DACNTT.pptx`, `Poster_DACNTT.pptx/.pdf` từ code sau khi dọn; khôi phục khuôn `poster/Poster.pptx` (bị xoá trên máy, `build_poster.py` cần); xoá `texput.log` |
+| Kiểm thử | `tests/` 110/110 qua; `demo/tests` 21/21 qua (15/11); demo đối chiếu từng kết quả với số đã lưu (mục 10.3) |
 | Rà soát 06/11 | Code: test và biên dịch toàn bộ mã Python qua; demo chạy thật trên cả hai bộ (mọi trang, khách mới, K sai, mô hình sai, đường dẫn ảnh lạ), không lỗi console, trung vị khoảng 7 ms mỗi lần gợi ý. Đã sửa: hình kết quả đánh dấu Hybrid-CBCF bằng * như bảng (trước là †); Hình 3.2 dùng [H]; bỏ "khởi đầu lạnh" còn sót ở mục 2.1.4; Bảng 2.1 thêm kết quả của đề tài; Chương 5 nêu LateFusion-F cao nhất; `main.pdf` biên dịch lại với hình mới; README demo bỏ Docker đã xoá |
 | Góp ý buổi họp 23/10 | Xong 8/9 việc của báo cáo và demo (bảng dưới); còn việc nộp báo cáo giữa kỳ (mục 2.3) |
 
@@ -961,7 +962,7 @@ hoặc bằng chứng; **Một phần** = làm được một phần, phần cò
 | 13 | Late fusion | **Đạt** | LateFusion-F; so sánh #4: trên H&M cao hơn NeuMF-F 2,2% nhưng **không khác biệt có ý nghĩa**; trên Amazon **tốt hơn có ý nghĩa** (NeuMF-F thấp hơn 12,5%) | — |
 | 14 | Baseline; lai có hơn trước khi lai | **Đạt** | Trên H&M, NeuMF-F hơn NeuMF, MLP-F, BPR-MF, ItemKNN, UserKNN, MostPopular-Recent, Content; ngang GMF-F. Trên Amazon hơn NeuMF và cả năm baseline. Phân tích bổ sung: NeuMF-F hơn mô hình lai truyền thống Hybrid-CBCF trên cả hai bộ (+25,8%, +23,0%) | Baseline đã trình bày theo ba nhóm; chờ cô xác nhận cách xếp |
 | 15 | Sơ đồ kiến trúc | **Đạt** | Hình 2.1 (NeuMF) và 3.4 (NeuMF-F) vẽ lại theo góp ý 04/10 và 23/10; Hình 3.1 (đường ống), 3.2 (xử lý dữ liệu), 3.3 (chia theo thời gian), 3.5 (quy trình đánh giá); Hình 2.2 (hai cách hợp nhất), 3.6 (kiến trúc demo); ảnh demo Hình 3.7–3.8; bộ sơ đồ cho slide ở `image/` | — |
-| 16 | Mô hình "variational" | **Chưa** | Lý thuyết Mult-VAE ở báo cáo mục 2.4.4; hướng phát triển ở báo cáo mục 5.3 | Buổi họp 04/10 không nêu lại. Tập kiểm thử đã mở, nên nếu cô yêu cầu thì chỉ thêm được dưới dạng **thăm dò sau kiểm thử**, ghi lệch kế hoạch, không đưa vào họ 10 so sánh |
+| 16 | Mô hình "variational" | **Chưa** | Không đưa vào báo cáo (phạm vi chốt 20/10, báo cáo rút gọn còn 98 trang) | Buổi họp 04/10 không nêu lại. Tập kiểm thử đã mở, nên nếu cô yêu cầu thì chỉ thêm được dưới dạng **thăm dò sau kiểm thử**, ghi lệch kế hoạch, không đưa vào họ 10 so sánh |
 | 17 | Lộ trình 10 bước | **Đạt** | Bước 1–10 đều có kết quả, kể cả phần thảo luận Chương 4 | — |
 
 **Tổng: 14/17 Đạt, 2/17 Một phần, 1/17 Chưa.**
