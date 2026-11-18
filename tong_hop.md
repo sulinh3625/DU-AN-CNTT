@@ -59,7 +59,7 @@ Quy ước đọc:
 
 ---
 
-## 2. Tiến độ (15/11/2026)
+## 2. Tiến độ (18/11/2026)
 
 ### 2.1 Tình hình
 
@@ -72,7 +72,8 @@ Quy ước đọc:
 | Báo cáo | `main.pdf` 98 trang (rút gọn 12/11 theo skill định dạng: bớt ảnh demo trùng ý, hình hội tụ, hình Amazon trùng bảng, bảng API, câu rào đón), biên dịch không lỗi, không còn hộp tràn trang; mục 4.5 mới (Bảng 4.20) chỉ ra phần cải thiện đến từ đặc trưng, không từ tinh chỉnh, dữ liệu hay dao động ngẫu nhiên; 9 sơ đồ vẽ lại bằng `image/src/hinh_bao_cao.py` với một quy tắc màu chung; baseline trình bày theo ba nhóm; có kết quả Hybrid-CBCF; tóm tắt Việt, Anh có đoạn kết quả (nêu rõ LateFusion-F cao nhất), mỗi bản một trang; `check-report`: 75/75 câu nhận xét khớp số liệu, đủ mọi macro, bảng, hình |
 | Demo | Luôn có gợi ý (khách mới nhận danh sách phổ biến); chọn được K = 10, 15, 20; ảnh Amazon lưu trên máy (`demo/static/images/amazon/`); ảnh H&M tải ngày 07/11 (6.728/6.749 sản phẩm, `demo/scripts/download_hm_images.py`); ảnh demo trong báo cáo (Hình 3.7, 3.8) chụp lại có ảnh thật |
 | Bản nộp (15/11) | Đã commit bản 12/11 (`5d75321`) và bản dọn repo 14/11 (`1780b56`: bỏ comment, xoá ảnh/biểu tượng/sơ đồ cũ không dùng, hai zip công cụ vẽ). Ngày 15/11 dựng lại `main.pdf`, `Slide_DACNTT.pptx`, `Poster_DACNTT.pptx/.pdf` từ code sau khi dọn; khôi phục khuôn `poster/Poster.pptx` (bị xoá trên máy, `build_poster.py` cần); xoá `texput.log` |
-| Kiểm thử | `tests/` 110/110 qua; `demo/tests` 21/21 qua (15/11); demo đối chiếu từng kết quả với số đã lưu (mục 10.3) |
+| Bản sửa 18/11 | Commit `ad9eef8`: C2–C5 sửa câu chữ cho bớt lặp từ (không đổi số mục, bảng, hình, số liệu); thêm phiếu theo dõi tiến độ (`Report DACNTT/phieu_tien_do/`). Tối 18/11, sau khi rà như hội đồng: sửa mật độ ma trận ở mục 1.1.1 (0,02% theo mã sản phẩm, 0,04% theo mẫu thiết kế, tính lại từ tệp giao dịch gốc); C4 nói rõ kết luận "tốt hơn cả năm mô hình đối chứng" trên Amazon không dựa vào BPR-MF; bỏ mọi chỗ dẫn "Mục X.Y", "Công thức (…)", bảng hoặc thuật toán ở xa trong thân bài (chỉ giữ câu giới thiệu bảng, hình, thuật toán đặt ngay sau); tóm tắt vẫn không có số liệu; tài liệu tham khảo 24 nguồn đều được dẫn và đã đối chiếu (12 DOI qua Crossref, PDF gốc NCF và Rendle 2020 cho Bảng 2.1, luận án TS. Hồ Thị Linh trong `tai_lieu/`, BibTeX chính thức NeurIPS cho DropoutNet và PyTorch nên bỏ số trang không có trong bản ghi), xoá 6 mục thừa không được dẫn trong `references.bib`. Lượt rà cuối 18/11: thân bài không còn câu nhắc bảng, hình, thuật toán, mục (người xem tự xem bảng, hình đặt sau đoạn văn tương ứng), gọn các câu dài; phần demo thêm số đo hiệu năng đo thật (Bảng 3.7, script `demo/scripts/benchmark_demo.py`) và hai hình (thẻ sản phẩm kèm khách có gu giống; khách mới), bảng điểm cuối API chuyển thành đoạn văn; con số "trung vị 10 ms" cũ không có nguồn đã thay bằng số đo; 99 trang, `check-report` 75/75. Bản final (chuẩn bị nộp, ghi ngày 01/12/2026 ở Lời cảm ơn và trang cam đoan): Turnitin trên bản 16/11 (`baocao.pdf`) cho chỉ số trùng 11%, chủ yếu ở trang bìa, trang cam đoan theo mẫu, mục lục, danh mục viết tắt, tài liệu tham khảo và cụm thuật ngữ; Lời cảm ơn viết lại cho cụ thể (bỏ các câu sáo), phần thân giữ nguyên. Bản nộp gồm hai tệp, giữ cả hai: `main.pdf` (99 trang) và bản Word `BaoCaoWordDA.docx` (bản hiện có là 15/11, cần xuất lại từ `main.pdf` 18/11). `baocao.pdf` là bản PDF 16/11, chưa có phần sửa 18/11 |
+| Kiểm thử | `tests/` 110/110 qua; `demo/tests` 21/21 qua (18/11); `check-report` khớp (18/11); demo đối chiếu từng kết quả với số đã lưu (mục 10.3) |
 | Rà soát 06/11 | Code: test và biên dịch toàn bộ mã Python qua; demo chạy thật trên cả hai bộ (mọi trang, khách mới, K sai, mô hình sai, đường dẫn ảnh lạ), không lỗi console, trung vị khoảng 7 ms mỗi lần gợi ý. Đã sửa: hình kết quả đánh dấu Hybrid-CBCF bằng * như bảng (trước là †); Hình 3.2 dùng [H]; bỏ "khởi đầu lạnh" còn sót ở mục 2.1.4; Bảng 2.1 thêm kết quả của đề tài; Chương 5 nêu LateFusion-F cao nhất; `main.pdf` biên dịch lại với hình mới; README demo bỏ Docker đã xoá |
 | Góp ý buổi họp 23/10 | Xong 8/9 việc của báo cáo và demo (bảng dưới); còn việc nộp báo cáo giữa kỳ (mục 2.3) |
 
@@ -169,10 +170,10 @@ báo cáo; từ 11/11 các hình sơ đồ sinh bằng `image/src/hinh_bao_cao.p
 | Kiểm định, bảng, hình, macro (kể cả theo K) | 100% | Đã commit |
 | Mô hình lai truyền thống (bổ sung) | 100% | Mã, kế hoạch, tinh chỉnh, chấm tập kiểm thử H&M và Amazon, nhận xét trong báo cáo |
 | Code và kiểm thử | 100% | 110/110 test; demo 21/21 (mục 10.3) |
-| Demo | 100% | Luôn có gợi ý; 2 ảnh trong báo cáo (Hình 3.7, 3.8); có ảnh sản phẩm thật cho cả H&M và Amazon |
+| Demo | 100% | Luôn có gợi ý; 4 ảnh trong báo cáo (Hình 3.7–3.10) và Bảng 3.7 số đo demo (`demo/scripts/benchmark_demo.py`, kết quả `outputs/demo/benchmark.json`); có ảnh sản phẩm thật cho cả H&M và Amazon |
 | Báo cáo | 100% (bản nộp 12/11) | `main.pdf` 98 trang; đủ kết quả, kể cả Hybrid-CBCF; sửa theo góp ý 23/10; trình bày lựa chọn của nhóm theo tên đề tài; rút gọn theo skill định dạng; kiểm văn phong 0 cảnh báo; `check-report` khớp. Nếu cô trả lời 5 câu hỏi khác đề xuất của nhóm thì sửa theo |
 | Slide, poster | 100% (bản nộp 12/11) | `Slide_DACNTT.pptx` 15 trang, `Poster_DACNTT.pdf`, cùng sơ đồ, màu và cách trình bày với báo cáo |
-| Chuẩn bị bảo vệ | Một phần | `van_dap.md` viết lại cho hội đồng (20/10), thêm câu 5.4.6 về nguồn gốc cải thiện (12/11); còn luyện vấn đáp và gửi cô checkpoint |
+| Chuẩn bị bảo vệ | Một phần | `van_dap.md` viết lại cho hội đồng (20/10), thêm câu 5.4.6 về nguồn gốc cải thiện (12/11), thêm Phần 0 "10 câu dễ bị hỏi nhất" có trả lời ngắn và câu hỏi nối tiếp (18/11); còn luyện thuyết trình, vấn đáp và gửi cô checkpoint |
 
 ---
 
@@ -841,7 +842,7 @@ Lệnh chạy chi tiết: `neumf_project/README.md` mục 3.
   cạnh Hybrid-CBCF) khi đã có kết quả chấm bổ sung (`outputs/*/final/bosung/results.json`, đã có cho cả hai bộ); nếu
   thiếu, demo ẩn nó kèm lệnh cần chạy, để không chấm tập kiểm thử ngoài kế hoạch. Dashboard đọc bảng `bosung/` (14 mô
   hình + Hybrid-CBCF, dấu *) và có thẻ kiểm định họ bổ sung B1–B2.
-- Ảnh trong báo cáo: Hình 3.7 (cửa hàng, so sánh NeuMF-F và NeuMF), Hình 3.8 (màn hình kết quả).
+- Ảnh trong báo cáo: Hình 3.7 (cửa hàng, so sánh NeuMF-F và NeuMF), Hình 3.8 (thẻ sản phẩm và khách có gu giống), Hình 3.9 (khách mới), Hình 3.10 (màn hình kết quả); Bảng 3.7 số đo demo.
 
 ### 10.3 Kiểm thử
 
@@ -881,7 +882,7 @@ Số mục, bảng, hình và thuật toán trong bảng này là số của bá
 |---|---|
 | Chương 1 | Mục tiêu và phạm vi có thêm kiểm chứng Amazon và cách xử lý khách mới; bố cục theo các mục mới |
 | Chương 2 | Hình 2.1 (NeuMF) vẽ lại với kích thước ma trận; mục 2.6 và Bảng 2.1 ba nghiên cứu nền tảng (hàng của đề tài có kết quả NDCG@10, 06/11); đoạn cold start cập nhật |
-| Chương 3 | Hình 3.1 đường ống, Hình 3.2 xử lý dữ liệu, Hình 3.3 chia theo thời gian, Hình 3.4 NeuMF-F, Hình 3.5 quy trình đánh giá; Thuật toán 3.1–3.7 (3.6: chọn cách kết hợp của mô hình lai truyền thống); mục 3.7 nguyên tắc đánh giá; mục 3.8 suy luận Top-K và khách mới; mục 3.9 demo (Hình 3.6 kiến trúc, Hình 3.7–3.8 ảnh demo) |
+| Chương 3 | Hình 3.1 đường ống, Hình 3.2 xử lý dữ liệu, Hình 3.3 chia theo thời gian, Hình 3.4 NeuMF-F, Hình 3.5 quy trình đánh giá; Thuật toán 3.1–3.7 (3.6: chọn cách kết hợp của mô hình lai truyền thống); mục 3.7 nguyên tắc đánh giá; mục 3.8 suy luận Top-K và khách mới; mục 3.9 demo (Hình 3.6 kiến trúc, Hình 3.7–3.10 ảnh demo) |
 | Chương 4 | 4.1 thiết lập thực nghiệm (Bảng 4.1 điều kiện chung); 4.2 tinh chỉnh (Bảng 4.2–4.3); 4.3 đánh giá cuối H&M (Bảng 4.4–4.10, Hình 4.1–4.4; theo K: Bảng 4.5–4.6; Hybrid-CBCF: mục 4.3.4, Bảng 4.8); 4.4 kiểm chứng Amazon (Bảng 4.11–4.19); 4.5 nguồn gốc của phần cải thiện (Bảng 4.20, bảy yếu tố đã loại trừ); 4.6 phạm vi của kết luận; 4.7 thảo luận và trả lời ba câu hỏi nghiên cứu. Mọi số qua macro tự sinh |
 | Chương 5, tóm tắt Việt/Anh | Chương 5: kết quả đạt được (Bảng 5.1), kết luận (LateFusion-F có NDCG@10 trung bình cao nhất trên cả hai bộ), hạn chế và hướng phát triển. Tóm tắt Việt, Anh có đoạn kết quả, mỗi bản một trang. Không có phụ lục: kế hoạch đăng ký trước, nhật ký mở tập kiểm thử và mã nguồn được trích như tài liệu tham khảo; hướng dẫn chạy mã nguồn ở README |
 | Kiểm tra | `python run.py check-report`: 75/75 câu nhận xét khớp số liệu; không còn số chép tay cũ trong tài liệu md; đủ mọi macro, bảng, hình |

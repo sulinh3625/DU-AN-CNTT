@@ -1,0 +1,66 @@
+{
+ "date": "2026-11-18 23:20",
+ "cpu": "11th Gen Intel(R) Core(TM) i5-1135G7 @ 2.40GHz",
+ "python": "3.13.3",
+ "n_users": 300,
+ "seed": 2026,
+ "note": "TestClient của FastAPI, đo cả xử lý API và đóng gói JSON",
+ "hm": {
+  "load_s": 15.2,
+  "n_items": 6749,
+  "n_eval_users": 3165,
+  "models": [
+   "NeuMF-F",
+   "LateFusion-F",
+   "GMF-F",
+   "MLP-F",
+   "NeuMF",
+   "GMF",
+   "MLP",
+   "BPR-MF",
+   "Hybrid-CBCF",
+   "UserKNN",
+   "ItemKNN",
+   "MostPopular-Recent",
+   "Content",
+   "MostPopular"
+  ],
+  "recommend_top10_ms": {
+   "median": 16.1,
+   "p95": 19.0
+  },
+  "similar_items_ms_median": 4.0,
+  "neighbors_ms_median": 5.5,
+  "new_customer_ms_median": 5.0,
+  "items_with_image": 6728
+ },
+ "amazon": {
+  "load_s": 4.6,
+  "n_items": 6069,
+  "n_eval_users": 2644,
+  "models": [
+   "NeuMF-F",
+   "LateFusion-F",
+   "GMF-F",
+   "MLP-F",
+   "NeuMF",
+   "GMF",
+   "MLP",
+   "BPR-MF",
+   "Hybrid-CBCF",
+   "UserKNN",
+   "ItemKNN",
+   "MostPopular-Recent",
+   "Content",
+   "MostPopular"
+  ],
+  "recommend_top10_ms": {
+   "median": 11.3,
+   "p95": 15.2
+  },
+  "similar_items_ms_median": 4.1,
+  "neighbors_ms_median": 5.1,
+  "new_customer_ms_median": 4.9,
+  "items_with_image": 6058
+ }
+}

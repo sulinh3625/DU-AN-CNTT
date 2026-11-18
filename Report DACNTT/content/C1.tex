@@ -11,7 +11,7 @@ Trong bán lẻ trực tuyến, hệ thống khuyến nghị (\textit{recommende
 
 Dữ liệu này có hai đặc điểm gây khó cho hệ thống khuyến nghị:
 \begin{itemize}
-    \item Ma trận tương tác giữa khách hàng và sản phẩm rất thưa. Mỗi khách chỉ mua vài chục trong số hàng chục nghìn sản phẩm, nên mật độ của ma trận chỉ khoảng 0,03--0,05\%.
+    \item Ma trận tương tác giữa khách hàng và sản phẩm rất thưa. Mỗi khách chỉ mua vài chục trong số hàng chục nghìn sản phẩm, nên mật độ của ma trận chỉ khoảng 0,02\%, và khoảng 0,04\% khi gộp các màu của cùng một mẫu thiết kế.
     \item Nhu cầu thời trang thay đổi nhanh theo mùa và theo xu hướng. Sản phẩm bán chạy trong vài tuần gần đây chưa chắc là sản phẩm bán nhiều nhất trong hai năm.
 \end{itemize}
 
@@ -101,7 +101,7 @@ Phạm vi dữ liệu và thực nghiệm như sau:
 \section{Phương pháp nghiên cứu}
 \label{sec:phuongphap}
 
-Đề tài được thực hiện qua bốn bước, được tóm tắt trong Hình~\ref{fig:cac_buoc}:
+Đề tài được thực hiện qua bốn bước:
 \begin{itemize}
     \item Nghiên cứu tài liệu về lọc cộng tác, nhân tử hoá ma trận, kiến trúc NeuMF và mô hình lai dựa trên đặc trưng.
     \item Xử lý dữ liệu: lấy mẫu theo khách hàng, lọc bỏ khách và sản phẩm có quá ít lượt mua (lọc $k$-core), chia dữ liệu theo thời gian và tính đặc trưng.

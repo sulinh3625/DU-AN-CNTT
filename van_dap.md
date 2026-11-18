@@ -1,11 +1,12 @@
 # Chuẩn bị bảo vệ trước hội đồng — Mô hình gợi ý lai NeuMF-F
 
 Tài liệu này để cả nhóm nắm toàn bộ đề tài và trả lời thống nhất trước hội đồng. Số mục, số bảng, số hình ghi theo
-bản báo cáo hiện tại (98 trang, cập nhật 12/11/2026). Mọi số liệu ở đây khớp với báo cáo (kiểm bằng
-`python run.py check-report`).
+bản báo cáo hiện tại (99 trang, cập nhật 18/11/2026; phần demo có thêm Bảng 3.7 số đo, Hình 3.8–3.9, hình kết quả demo nay là Hình 3.10, bảng điểm cuối API được thay bằng đoạn văn; thân bài không còn câu nhắc bảng, hình, mục). Mọi số
+liệu ở đây khớp với báo cáo (kiểm bằng `python run.py check-report`).
 
 | Cần gì | Đọc phần |
 |---|---|
+| **10 câu dễ bị hỏi nhất — học trước** | **Phần 0** |
 | Mở đầu phần trình bày (3 phút) | Phần 1 |
 | Hiểu toàn bộ đề tài theo từng chương | Phần 2 |
 | Số liệu phải thuộc | Phần 3 |
@@ -14,6 +15,143 @@ bản báo cáo hiện tại (98 trang, cập nhật 12/11/2026). Mọi số li�
 | Câu không được nói | Phần 6 |
 | Kịch bản chạy demo | Phần 7 |
 | Tra nhanh chương, mục, bảng, hình | Phần 8 |
+
+---
+
+## Phần 0. 10 câu dễ bị hỏi nhất (sàng lọc 18/11/2026)
+
+Chọn từ Phần 5 theo hai tiêu chí: hội đồng dễ hỏi (đụng tên đề tài, kết quả chính, độ tin cậy) và trả lời sai thì mất
+điểm nặng. Mỗi câu có ý trả lời trong khoảng 30 giây, câu hỏi nối tiếp hay gặp và chỗ mở trong báo cáo. Học thuộc phần
+"Trả lời ngắn"; phần chi tiết đọc ở câu tương ứng của Phần 5.
+
+| # | Câu hỏi | Vì sao dễ bị hỏi | Chi tiết |
+|---|---|---|---|
+| 1 | LateFusion-F cao nhất, sao mô hình đề xuất lại là NeuMF-F? | Kết quả bất lợi nằm ngay trong bảng | 5.4.1 |
+| 2 | Đóng góp mới là gì, NeuMF có từ 2017? | Câu mở đầu quen thuộc | 5.1.1 |
+| 3 | Có thật là mô hình lai không, MF đóng vai trò gì? | Tên đề tài | 5.2.1, 5.2.2 |
+| 4 | Cải thiện do đặc trưng hay do học sâu? Sao ghép hai nhánh không hơn GMF-F? | GMF-F ngang NeuMF-F | 5.2.4, 5.4.2, 5.4.6 |
+| 5 | Có rò rỉ dữ liệu không, sao không chia leave-one-out? | Lỗi phổ biến của đề tài gợi ý | 5.3.1, 5.3.2 |
+| 6 | NDCG chỉ khoảng 0,04 có thấp không, tính thế nào? | Số nhìn nhỏ; hay bị bắt tính tay | 5.3.4, 5.3.5 |
+| 7 | So sánh có công bằng không (6 cấu hình, Amazon dùng siêu tham số H&M)? | Nghi ngờ thiên vị mô hình đề xuất | 5.3.3, 5.5.1 |
+| 8 | Cold start xử lý thế nào? | Điểm yếu kinh điển của lọc cộng tác | 5.2.3 |
+| 9 | Sao chọn NeuMF mà không chọn Transformer, mạng đồ thị? | Hội đồng quan tâm mô hình mới | 5.1.3 |
+| 10 | Ý nghĩa thực tiễn, triển khai trên dữ liệu thật được không (mới lấy mẫu khoảng 1,6% khách)? | Câu kết thường gặp | 5.1.2, 5.3.10, 5.1.4 |
+
+**Câu 1. LateFusion-F cao nhất, sao mô hình đề xuất lại là NeuMF-F?** (câu quan trọng nhất)
+- Trả lời ngắn: tên đề tài là xây dựng **một** mô hình lai kết hợp MF và DNN. NeuMF-F là một mạng, hai nhánh học chung.
+  LateFusion-F là hai mô hình huấn luyện riêng rồi trộn điểm, đưa vào để đo ảnh hưởng của cách hợp nhất. Mô hình đề
+  xuất được cố định trước khi mở tập kiểm thử; đổi sau khi xem kết quả là chọn mô hình trên tập kiểm thử.
+- Ý chốt: LateFusion-F dùng chính hai nhánh có đặc trưng của NeuMF-F, nên nó thắng cũng xác nhận phát hiện chính —
+  biểu diễn có đặc trưng là yếu tố quyết định. Trên H&M hai cách tương đương (−2,2%, p Holm 0,735); trên Amazon hợp nhất
+  muộn tốt hơn (NeuMF-F −12,5%).
+- Hỏi nối tiếp: "Vậy nên triển khai mô hình nào?" → chọn theo dữ liệu: NeuMF-F huấn luyện một mạng; LateFusion-F tốn gần
+  gấp đôi nhưng ổn định hơn. Mở: mục 4.3.3, 4.4.3, 4.7.
+- Không nói: "NeuMF-F tốt nhất", "NeuMF-F không thua mô hình nào" (sai trên Amazon).
+
+**Câu 2. Đóng góp mới là gì, NeuMF đã có từ 2017?**
+- Trả lời ngắn: NeuMF gốc chỉ học từ mã ID. Đề tài đưa đặc trưng sản phẩm, khách hàng, thời gian vào **cả hai nhánh**,
+  tính theo thời điểm nên không dùng thông tin tương lai; chứng minh mô hình vượt có ý nghĩa các đối chứng được tinh chỉnh
+  đầy đủ trên hai lĩnh vực; và chỉ ra phần cải thiện đến từ đặc trưng, nhất là đặc trưng thời gian.
+- Số nói được ngay: hơn NeuMF chỉ ID +43,8% (H&M), +65,7% (Amazon); hơn UserKNN (đối chứng mạnh nhất) +28,5% trên H&M.
+- Mở: mục 2.7, 5.1 (Bảng 5.1).
+
+**Câu 3. Có thật là mô hình lai không, MF đóng vai trò gì?**
+- Trả lời ngắn: lai ở hai mức. (1) Lai MF (nhánh GMF-F, tuyến tính) với DNN (nhánh MLP-F, phi tuyến), hai nhánh nối lại
+  qua một lớp dự đoán chung (hợp nhất sớm). (2) Lai thông tin cộng tác (vector ID) với thông tin nội dung, ngữ cảnh (đặc
+  trưng): vector của mỗi khách, mỗi sản phẩm là **tổng** vector ID và phép chiếu đặc trưng.
+- MF: ma trận khách × sản phẩm rất thưa (khoảng 0,45%); MF nén thành hai bảng vector để suy ra điểm cho ô chưa có dữ liệu.
+- Hỏi nối tiếp: "Chỉ vào hình giải thích kích thước" → Hình 3.4: d = 32, đặc trưng sản phẩm 157 chiều, khách 42 chiều,
+  tháp 64 → 32 → 16 → 8, vector hợp nhất 40 chiều; σ ở lớp dự đoán, huấn luyện bằng BCE với mẫu âm.
+
+**Câu 4. Cải thiện do đặc trưng hay do học sâu? Sao ghép hai nhánh không hơn GMF-F đứng riêng?**
+- Trả lời ngắn: đúng là chủ yếu do đặc trưng — đó là phát hiện của đề tài, không phải điểm yếu. Hai cách đo độc lập cùng
+  chỉ về đặc trưng: thêm đặc trưng vào cùng kiến trúc (NeuMF-F so với NeuMF chỉ ID) và tắt đặc trưng thời gian (NDCG@10
+  giảm 42,3% H&M, 31,6% Amazon). GMF-F ngang NeuMF-F (+2,6% H&M, −0,6% Amazon): nhánh MF có đặc trưng là phần cốt lõi.
+- Ý chốt: nên đầu tư vào dữ liệu đặc trưng trước khi làm mạng sâu hơn.
+- Hỏi nối tiếp: "Sao không so với Factorization Machines cùng đặc trưng?" → thừa nhận là hạn chế, đã ghi ở mục 5.3, 5.4;
+  nhánh GMF-F có đặc trưng về bản chất gần FM. Mở: mục 4.5 (Bảng 4.20).
+
+**Câu 5. Có rò rỉ dữ liệu không, sao không chia leave-one-out như bài NCF?**
+- Trả lời ngắn: không rò rỉ. Chia theo một mốc thời gian chung (huấn luyện trước 01/07/2020, xác thực 4 tuần, kiểm thử
+  8 tuần); lọc k-core chỉ trên dữ liệu trước mốc kiểm thử; đặc trưng tại ngày t chỉ dùng dữ liệu đến ngày t−1; mẫu kiểm
+  định là khách hàng khác hẳn mẫu phát triển; có kiểm thử tự động cho các điều này.
+- Leave-one-out lọt tương lai: trên mẫu phát triển, trung bình 11,2% tương tác huấn luyện xảy ra sau ngày của món kiểm thử.
+- Mở: mục 3.2.4, Hình 3.3.
+
+**Câu 6. NDCG chỉ khoảng 0,04 có thấp không? Tính NDCG thế nào?**
+- Trả lời ngắn: bài toán khó hơn bài NCF nhiều — xếp hạng **toàn bộ** khoảng 6,7 nghìn ứng viên (không phải 100), mỗi
+  khách chỉ khoảng 3 món đúng, chỉ tính món chưa từng mua, dự đoán cho 8 tuần tới. Không so số với bài báo được; điều cần
+  xem là chênh lệch giữa các mô hình có ý nghĩa thống kê. Random chỉ đạt 0,00098, NeuMF-F 0,04003 (gấp khoảng 40 lần).
+- Tính tay (thuộc ví dụ): 3 món đúng ở hạng 2, 7, 40; K = 10. DCG = 1/log₂3 + 1/log₂8 = 0,631 + 0,333 = 0,964;
+  IDCG = 1 + 0,631 + 0,5 = 2,131; NDCG@10 ≈ 0,453. HR@10 = 1; Precision@10 = 0,2; Recall@10 ≈ 0,667.
+- Mở: mục 2.5.
+
+**Câu 7. So sánh có công bằng không?**
+- Trả lời ngắn: mọi mô hình, kể cả NeuMF-F, có **cùng** ngân sách 6 cấu hình, cùng tập xác thực, cùng tập ứng viên, cùng
+  5 seed, cùng mã đánh giá (Bảng 4.1). Kết luận "tốt hơn" cần đủ ba điều kiện: p Holm < 0,05, khoảng tin cậy bootstrap
+  không chứa 0, chênh lệch ≥ 5%. Kế hoạch và họ 10 so sánh cố định trước khi mở tập kiểm thử.
+- Amazon dùng siêu tham số của H&M là chủ ý: kiểm tra kết luận có giữ khi đổi dữ liệu mà không chỉnh theo dữ liệu mới;
+  chỉ số epoch chọn trên tập xác thực Amazon. Hai so sánh có BPR-MF trên Amazon không dùng làm bằng chứng.
+- Hỏi nối tiếp: "Sao kiểm định theo khách mà không theo seed?" → với 5 seed, p nhỏ nhất của Wilcoxon là 0,0625, không
+  bao giờ dưới 0,05 (câu 5.3.8). Mở: mục 3.7, 4.1.
+
+**Câu 8. Cold start xử lý thế nào?**
+- Trả lời ngắn: khách mới (chưa có trong dữ liệu) nhận danh sách sản phẩm phổ biến, nên hệ thống luôn có gợi ý; demo
+  minh hoạ được (Thuật toán 3.7). Sản phẩm mới nằm ngoài phạm vi đánh giá định lượng: khảo sát ban đầu cho NDCG@10 dưới
+  0,002 ở mọi mô hình, quá nhỏ để so sánh. Đây là hướng phát triển: NeuMF-F chấm được sản phẩm chỉ từ đặc trưng.
+- Không nói: "đề tài giải quyết cold start sản phẩm", "nhờ bỏ ID ngẫu nhiên" (cấu hình cuối có ρ = 0).
+- Mở: mục 2.1.4, 3.8.
+
+**Câu 9. Sao chọn NeuMF mà không chọn Transformer, mạng đồ thị?**
+- Trả lời ngắn: H&M chỉ ghi ngày mua, không có phiên nên mô hình chuỗi khó dùng; dữ liệu có sẵn thuộc tính, mô tả, doanh
+  số nên hợp cách "vector ID + đặc trưng"; cấu trúc hai nhánh tường minh cho phép tách đóng góp từng phần bằng so sánh
+  trực tiếp — đúng mục tiêu trả lời ba câu hỏi nghiên cứu. Mô hình mới là hướng phát triển, dùng lại được nguyên quy trình
+  đánh giá.
+- Mở: mục 2.4.2, 5.4.
+
+**Câu 10. Ý nghĩa thực tiễn? Triển khai trên dữ liệu thật được không khi mới lấy mẫu khoảng 1,6% khách?**
+- Trả lời ngắn: mô hình chỉ dùng dữ liệu bán lẻ doanh nghiệp đã có (giao dịch, danh mục, hội viên, doanh số theo ngày).
+  Bài học: cập nhật doanh số theo thời gian và lịch sử mua đem lại nhiều hơn làm mạng phức tạp. Lấy mẫu vì xếp hạng toàn
+  bộ trên dữ liệu đầy đủ là hàng chục tỷ cặp mỗi mô hình; mẫu lấy theo khách bằng hàm băm, giữ trọn lịch sử 2 năm.
+- Triển khai lớn: hai bước — hai tháp + tìm lân cận gần đúng lọc vài trăm ứng viên, NeuMF-F xếp hạng lại; huấn luyện lại
+  hằng tuần; đo bằng thử nghiệm A/B. Đo trên laptop chỉ dùng CPU (i5-1135G7): một danh sách Top-10 của NeuMF-F trả về trong trung vị 16,1 ms (H&M) và 11,3 ms (Amazon), 95% yêu cầu dưới 20 ms (báo cáo Bảng 3.7).
+- Mở: mục 1.4.2, 5.2, 5.4.
+
+Cách trả lời câu khó: **thừa nhận ngắn → nêu lý do hoặc thiết kế đã xử lý → quay về điểm mạnh.** Không cãi, không vòng vo.
+
+### 0.1 Bốn điểm yếu hội đồng có thể xoáy sâu (đánh giá 18/11/2026)
+
+Bốn điểm dưới đây là giới hạn thật của thực nghiệm, không sửa được bằng câu chữ và không chạy lại được, vì tập kiểm thử
+đã mở. Cách xử lý là chuẩn bị câu trả lời có số liệu.
+
+**(a) "Nhánh DNN không thêm gì: NeuMF-F ngang GMF-F. Vậy 'kết hợp MF và DNN' ở tên đề tài có ý nghĩa gì?"**
+Thừa nhận: ở quy mô này, nhánh MLP-F chưa thêm được khác biệt có ý nghĩa so với GMF-F (+2,6% H&M, −0,6% Amazon). Lý do và
+điểm mạnh: (1) NeuMF-F hơn nhánh MLP-F +15,0% trên H&M, tức ghép hai nhánh không làm mất phần mạnh của nhánh MF; (2) câu
+hỏi nghiên cứu 3 được đặt ra chính để đo điều này, và kết quả "biểu diễn có đặc trưng quan trọng hơn cách ghép" là một
+phát hiện, khớp với Rendle (2020); (3) trên H&M, độ phủ top-10 của NeuMF-F cao nhất trong các mạng nơ-ron (mục 4.3.6).
+Không nói "DNN giúp tăng độ chính xác".
+
+**(b) "Bóc tách chỉ chạy một seed, sao dám nói đặc trưng thời gian quan trọng nhất?"**
+Thừa nhận: bóc tách dùng seed 42 và báo cáo ghi rõ là phân tích mô tả, không qua kiểm định đa so sánh (mục 4.3.5). Nhưng
+mức giảm khi bỏ đặc trưng thời gian (NDCG@10 từ 0,04137 xuống 0,02386, −42,3%) lớn gấp khoảng 12 lần độ lệch chuẩn giữa 5
+seed của NeuMF-F (0,00147), khoảng tin cậy bootstrap theo khách không chứa 0, và kết quả lặp lại trên Amazon (−31,6%).
+Với thuộc tính và văn bản trên H&M, báo cáo đã nói chưa khẳng định được.
+
+**(c) "NeuMF-F hơn NeuMF có phải chỉ vì nhiều tham số hơn?"**
+Không. Khi tinh chỉnh với cùng ngân sách, NeuMF chỉ dùng ID **chọn d = 64**, còn NeuMF-F **chọn d = 32** (Bảng 4.2).
+Mô hình có vector nhúng nhỏ hơn mà vẫn hơn +43,8%. Ước tính trên mẫu kiểm định (7.994 khách, 6.749 sản phẩm): bảng nhúng
+ID của NeuMF-F khoảng 0,94 triệu tham số, phép chiếu đặc trưng thêm khoảng 13 nghìn ((157 + 42) × 32 × 2 nhánh); NeuMF
+với d = 64 có khoảng 1,9 triệu tham số nhúng, gấp đôi. Thêm nữa, các biến thể bóc tách giữ nguyên kiến trúc, chỉ tắt thông tin, mà vẫn giảm mạnh.
+
+**(d) "Không có đối chứng dùng cùng đặc trưng mà không phải mạng nơ-ron (FM, LightFM)?"**
+Thừa nhận, đã ghi ở hạn chế và hướng phát triển (mục 5.3, 5.4). Phạm vi đề tài là họ NeuMF. Đối chứng ngoài mạng nơ-ron
+có dùng thông tin nội dung là Content và Hybrid-CBCF, và NeuMF-F tốt hơn có ý nghĩa cả hai, trên cả hai bộ dữ liệu. Nhánh
+GMF-F có đặc trưng về bản chất gần với FM.
+
+Ngoài ra, báo cáo bản 18/11 đã sửa ba chỗ hội đồng có thể bắt lỗi: mật độ ma trận ở mục 1.1.1 (0,02% theo mã sản phẩm,
+0,04% theo mẫu thiết kế, tính lại từ tệp giao dịch gốc); câu "tốt hơn cả năm mô hình đối chứng trên Amazon" nay nói rõ
+không dựa vào BPR-MF (bỏ so sánh đó ra, chênh nhỏ nhất vẫn +30,8% với UserKNN). Thân bài không còn dẫn "Mục X.Y" hay
+"Công thức (…)"; tóm tắt giữ quy tắc không nêu số liệu.
 
 ---
 
@@ -344,7 +482,7 @@ chuẩn.
 **5.3.9 "Vì sao thêm ngưỡng 5%?"**
 Để loại khác biệt có ý nghĩa thống kê nhưng quá nhỏ về thực tiễn. Bỏ ngưỡng này thì không kết luận nào thay đổi.
 
-**5.3.10 "Vì sao lấy mẫu 1,5% khách, k = 10?"**
+**5.3.10 "Vì sao lấy mẫu khoảng 1,6% khách, k = 10?"**
 Xếp hạng toàn bộ trên dữ liệu đầy đủ (633 nghìn khách × 80 nghìn sản phẩm với k = 10) là hàng chục tỷ cặp cho mỗi mô
 hình. Với k = 5 trên mẫu phát triển, ước tính cần khoảng 10,7 GB bộ nhớ. Lấy mẫu theo khách bằng hàm băm giữ trọn lịch sử
 và cho hai mẫu tương đương nhau (Bảng 3.3). Mở rộng quy mô là hướng phát triển.
@@ -488,7 +626,7 @@ Lưu ý:
 |---|---|---|
 | 1. Tổng quan | 1.1 bối cảnh (1.1.3 ba câu hỏi nghiên cứu); 1.2 mục tiêu, phạm vi; 1.3 phương pháp; 1.4 ý nghĩa; 1.5 bố cục | Hình 1.1 các bước thực hiện |
 | 2. Cơ sở lý thuyết | 2.1 hệ gợi ý; 2.2 MF, BPR; 2.3 NCF, hợp nhất; 2.4 mô hình lai dựa trên đặc trưng; 2.5 độ đo; 2.6 ba nghiên cứu nền tảng; 2.7 khoảng trống | Hình 2.1 NeuMF, Hình 2.2 hợp nhất; Bảng 2.1 |
-| 3. Phương pháp | 3.1 đường ống; 3.2 dữ liệu; 3.3 NeuMF-F; 3.4 đối chứng; 3.5 lấy mẫu âm, BCE; 3.6 tinh chỉnh; 3.7 đánh giá (khảo sát ban đầu, sáu nguyên tắc); 3.8 suy luận, khách mới; 3.9 demo | Hình 3.1 đường ống, 3.2 xử lý dữ liệu, 3.3 chia theo thời gian, 3.4 NeuMF-F, 3.5 tinh chỉnh và đánh giá cuối, 3.6 kiến trúc demo, 3.7–3.8 giao diện demo; Bảng 3.1–3.7; Thuật toán 3.1–3.7 |
+| 3. Phương pháp | 3.1 đường ống; 3.2 dữ liệu; 3.3 NeuMF-F; 3.4 đối chứng; 3.5 lấy mẫu âm, BCE; 3.6 tinh chỉnh; 3.7 đánh giá (khảo sát ban đầu, sáu nguyên tắc); 3.8 suy luận, khách mới; 3.9 demo | Hình 3.1 đường ống, 3.2 xử lý dữ liệu, 3.3 chia theo thời gian, 3.4 NeuMF-F, 3.5 tinh chỉnh và đánh giá cuối, 3.6 kiến trúc demo, 3.7–3.10 giao diện demo (cửa hàng, thẻ sản phẩm và khách có gu giống, khách mới, kết quả); Bảng 3.1–3.7 (3.7: số đo demo); Thuật toán 3.1–3.7 |
 | 4. Thực nghiệm | 4.1 thiết lập thực nghiệm; 4.2 tinh chỉnh; 4.3 kết quả H&M (4.3.1 chính, 4.3.2 theo K, 4.3.3 kiểm định, 4.3.4 Hybrid-CBCF, 4.3.5 bóc tách, 4.3.6 độ phủ, 4.3.7 độ ổn định giữa hai mẫu); 4.4 Amazon; 4.5 nguồn gốc của phần cải thiện; 4.6 phạm vi; 4.7 trả lời ba câu hỏi nghiên cứu | Bảng 4.1 điều kiện chung, 4.2–4.10 (H&M), 4.11–4.19 (Amazon), 4.20 các yếu tố đã loại trừ; Hình 4.1–4.4 (H&M) |
 | 5. Kết luận | 5.1 kết quả đạt được; 5.2 kết luận; 5.3 hạn chế; 5.4 hướng phát triển | Bảng 5.1 mức độ hoàn thành mục tiêu |
 
