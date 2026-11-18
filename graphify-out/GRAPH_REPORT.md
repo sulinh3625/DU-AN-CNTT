@@ -1,17 +1,17 @@
-# Graph Report - DU-AN-CNTT  (2026-11-14)
+# Graph Report - DU-AN-CNTT  (2026-11-18)
 
 ## Corpus Check
-- 107 files · ~605,672 words
+- 108 files · ~605,962 words
 - Verdict: corpus is large enough that graph structure adds value.
-- Unclassified: 113 file(s) not represented in the graph (top: .tex 36, .csv 31, .gz 20)
+- Unclassified: 116 file(s) not represented in the graph (top: .tex 37, .csv 31, .gz 20)
 
 ## Summary
-- 2300 nodes · 5496 edges · 107 communities (88 shown, 19 thin omitted)
+- 2301 nodes · 5496 edges · 108 communities (88 shown, 20 thin omitted)
 - Extraction: 96% EXTRACTED · 4% INFERRED · 0% AMBIGUOUS · INFERRED: 225 edges (avg confidence: 0.87)
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `5d753211`
+- Built from commit: `ef8f99cb`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
@@ -145,7 +145,7 @@
 ## Import Cycles
 - None detected.
 
-## Communities (107 total, 19 thin omitted)
+## Communities (108 total, 20 thin omitted)
 
 ### Community 0 - "torch"
 Cohesion: 0.09
@@ -437,7 +437,7 @@ Nodes (23): base_key(), build_torch(), configs_for(), data_name(), device(), eva
 
 ### Community 84 - "2. Tiến độ (12/11/2026)"
 Cohesion: 0.40
-Nodes (5): 2.1 Tình hình, 2.2 Đối chiếu 21 yêu cầu của buổi họp 04/10/2026, 2.3 Việc còn lại, 2.4 Mức độ hoàn thành theo hạng mục, 2. Tiến độ (12/11/2026)
+Nodes (5): 2.1 Tình hình, 2.2 Đối chiếu 21 yêu cầu của buổi họp 04/10/2026, 2.3 Việc còn lại, 2.4 Mức độ hoàn thành theo hạng mục, 2. Tiến độ (15/11/2026)
 
 ### Community 85 - "13. Lịch sử phát triển"
 Cohesion: 0.40
@@ -500,22 +500,22 @@ Cohesion: 0.31
 Nodes (3): amazon_image_path(), fetch(), main()
 
 ## Knowledge Gaps
-- **19 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
+- **20 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
 
 ## Suggested Questions
 _Questions this graph is uniquely positioned to answer:_
 
 - **Why does `7. Cấu trúc mã và API` connect `.getProps` to `.get`, `test_demo.py`, `o`, `Demo web — shop thời trang H&M (kèm Amazon Beauty)`?**
-  _High betweenness centrality (0.392) - this node is a cross-community bridge._
+  _High betweenness centrality (0.389) - this node is a cross-community bridge._
 - **Are the 14 inferred relationships involving `s()` (e.g. with `ho()` and `ii()`) actually correct?**
   _`s()` has 14 INFERRED edges - model-reasoned connections that need verification._
 - **Should `torch` be split into smaller, more focused modules?**
   _Cohesion score 0.09090909090909091 - nodes in this community are weakly interconnected._
 - **Why does `test_results_page_matches_report_macros()` connect `test_demo.py` to `.getProps`?**
-  _High betweenness centrality (0.367) - this node is a cross-community bridge._
+  _High betweenness centrality (0.362) - this node is a cross-community bridge._
 - **Should `app.js` be split into smaller, more focused modules?**
   _Cohesion score 0.06600877192982456 - nodes in this community are weakly interconnected._
 - **Why does `a()` connect `o` to `i`, `n`, `eo`, `no`, `.getParsed`, `u`, `.getProps`, `e`, `rs`, `.get`, `chart.umd.min.js`, `Si`?**
-  _High betweenness centrality (0.172) - this node is a cross-community bridge._
+  _High betweenness centrality (0.161) - this node is a cross-community bridge._
 - **Should `build_poster.py` be split into smaller, more focused modules?**
   _Cohesion score 0.09116809116809117 - nodes in this community are weakly interconnected._

@@ -326,7 +326,7 @@ def claims(d: Data):
          a_bpr_weak, ["SA"]),
         ("content/C4.tex", "LateFusion-F cao nhất ở mọi $K$ và với cả bốn độ đo",
          "Amazon theo K: LateFusion-F cao nhất ở mọi K và mọi độ đo", a_late_top_all_k, ["KA"]),
-        ("content/C4.tex", "NeuMF-F và GMF-F bám sát nhau và đổi chỗ tuỳ độ đo",
+        ("content/C4.tex", "NeuMF-F và GMF-F có kết quả rất gần nhau và đổi chỗ tuỳ độ đo",
          "Amazon theo K: GMF-F cao hơn NeuMF-F ở NDCG@K; NeuMF-F cao hơn ở Recall/HR/Precision @10, @15, @20",
          a_k_swap, ["KA"]),
         ("content/C4.tex", "Kết luận thứ nhất, về đặc trưng so với chỉ dùng ID, còn đúng",

@@ -204,9 +204,9 @@
     "semantic_hash": ""
   },
   "neumf_project/scripts/19_check_report.py": {
-    "mtime": 1794662346.3907008,
-    "seen": 1794662752.1385763,
-    "ast_hash": "7b28f860cd4d9fd17202f5e72f8677fe",
+    "mtime": 1794982068.19252,
+    "seen": 1794982791.030079,
+    "ast_hash": "7ff642ec966125da16faed844927f738",
     "semantic_hash": ""
   },
   "neumf_project/scripts/21_build_features.py": {
@@ -510,9 +510,9 @@
     "semantic_hash": ""
   },
   "CLAUDE.md": {
-    "mtime": 1794662398.8116503,
-    "seen": 1794662752.1385763,
-    "ast_hash": "5bfab1d22b4a82a33503399740219199",
+    "mtime": 1794801239.4381282,
+    "seen": 1794982791.030079,
+    "ast_hash": "ac30ca119a2fb79f3fe83f2b2095e0b9",
     "semantic_hash": ""
   },
   "README.md": {
@@ -600,21 +600,21 @@
     "semantic_hash": ""
   },
   "tong_hop.md": {
-    "mtime": 1794661388.7488832,
-    "seen": 1794662752.1385763,
-    "ast_hash": "5a3701ef76e45d7c28ad0f650adad6b6",
+    "mtime": 1794801239.5281608,
+    "seen": 1794982791.030079,
+    "ast_hash": "b13cfbe7959792ff1dcd1dc2a9f8f454",
     "semantic_hash": ""
   },
   "van_dap.md": {
-    "mtime": 1794661388.749884,
-    "seen": 1794662752.1385763,
-    "ast_hash": "97e516c8c6d244a029ba0d3f7cb2739c",
+    "mtime": 1794801239.5291755,
+    "seen": 1794982791.030079,
+    "ast_hash": "5fdb834bc382e7046970735d317574ed",
     "semantic_hash": ""
   },
   "Report DACNTT/main.pdf": {
-    "mtime": 1794662669.106781,
-    "seen": 1794662752.1385763,
-    "ast_hash": "1acab393e99cafae050046807aea0e82",
+    "mtime": 1794982106.4215689,
+    "seen": 1794982791.030079,
+    "ast_hash": "a6a191a707845849a2bb599cc490efb4",
     "semantic_hash": ""
   },
   "tai_lieu/10. H\u1ed3 Th\u1ecb Linh - To\u00e0n v\u0103n LATS.pdf": {
@@ -756,9 +756,9 @@
     "semantic_hash": ""
   },
   "Report DACNTT/poster/Poster_DACNTT.pdf": {
-    "mtime": 1794661388.445886,
-    "seen": 1794662752.1385763,
-    "ast_hash": "41be5481917bbdd475c35e98decd4a04",
+    "mtime": 1794801239.4759681,
+    "seen": 1794982791.030079,
+    "ast_hash": "2a1b94eaff1a3b2439a4517a418a3910",
     "semantic_hash": ""
   },
   "Report DACNTT/poster/Poster_DACNTT.png": {
@@ -1266,20 +1266,20 @@
     "semantic_hash": ""
   },
   "Report DACNTT/slides/media/demo/cua_hang.png": {
-    "mtime": 1794662549.1003137,
-    "seen": 1794662752.1385763,
+    "mtime": 1794707798.1713464,
+    "seen": 1794982791.030079,
     "ast_hash": "1e9d70aeccf38b0d10255c2d9f6fc9b7",
     "semantic_hash": ""
   },
   "Report DACNTT/slides/media/demo/ket_qua.png": {
-    "mtime": 1794662549.1013458,
-    "seen": 1794662752.1385763,
+    "mtime": 1794707798.1723967,
+    "seen": 1794982791.030079,
     "ast_hash": "3b83562e76ca81bd09db67295d3fc108",
     "semantic_hash": ""
   },
   "Report DACNTT/slides/media/demo/khach_moi.png": {
-    "mtime": 1794662549.1034884,
-    "seen": 1794662752.1385763,
+    "mtime": 1794707798.1739695,
+    "seen": 1794982791.030079,
     "ast_hash": "8f20a71da7a33f9ac8e873d7e961e3da",
     "semantic_hash": ""
   },
@@ -1470,8 +1470,8 @@
     "semantic_hash": ""
   },
   "Report DACNTT/slides/media/demo/xep_hang.png": {
-    "mtime": 1794662549.104536,
-    "seen": 1794662752.1385763,
+    "mtime": 1794707798.174498,
+    "seen": 1794982791.030079,
     "ast_hash": "08c64ac03edaf1e52013f4ec80018ab2",
     "semantic_hash": ""
   },
@@ -1494,15 +1494,33 @@
     "semantic_hash": ""
   },
   "Report DACNTT/poster/media/poster_khach.png": {
-    "mtime": 1794662549.0970993,
-    "seen": 1794662752.1385763,
+    "mtime": 1794707798.167221,
+    "seen": 1794982791.030079,
     "ast_hash": "2416e6b779e5d275fbde9ce54f61b758",
     "semantic_hash": ""
   },
   "Report DACNTT/poster/media/poster_khuyen_nghi.png": {
-    "mtime": 1794662549.0986922,
-    "seen": 1794662752.1385763,
+    "mtime": 1794707798.1687624,
+    "seen": 1794982791.030079,
     "ast_hash": "1e9d70aeccf38b0d10255c2d9f6fc9b7",
+    "semantic_hash": ""
+  },
+  "Report DACNTT/xuat_word.ps1": {
+    "mtime": 1794801239.527049,
+    "seen": 1794982791.02907,
+    "ast_hash": "024897cb5455f8db339e581a7c57ab02",
+    "semantic_hash": ""
+  },
+  "Report DACNTT/baocao.pdf": {
+    "mtime": 1794801239.4637947,
+    "seen": 1794982791.030079,
+    "ast_hash": "d0567216c36bee7b66cee5fced9901c6",
+    "semantic_hash": ""
+  },
+  "Report DACNTT/phieu_tien_do/PhieuTheoDoiTienDo.pdf": {
+    "mtime": 1794927319.1025915,
+    "seen": 1794982791.030079,
+    "ast_hash": "be1f139575167e037162e528ee79b68d",
     "semantic_hash": ""
   }
 }

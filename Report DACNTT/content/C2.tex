@@ -71,7 +71,7 @@ Nhánh dựa trên bộ nhớ có ưu điểm và nhược điểm sau:
     \item Nhược điểm: ma trận tương đồng đầy đủ tăng theo bình phương số đối tượng, và chất lượng giảm khi dữ liệu quá thưa.
 \end{itemize}
 
-Nhánh dựa trên mô hình (\textit{model-based}) không giữ cả ma trận mà học một hàm có tham số, chẳng hạn nhân tử hoá ma trận hay mạng lưới thần kinh, để tóm tắt mỗi khách và mỗi sản phẩm bằng một vector ngắn. Vì mỗi đối tượng chỉ còn vài chục con số thay cho hàng nghìn ô của ma trận, mô hình vẫn chấm điểm được những cặp chưa từng xuất hiện, và chi phí huấn luyện chỉ tăng tuyến tính theo số tương tác. Nhân tử hoá ma trận và các mô hình dùng mạng lưới thần kinh như NeuMF đều thuộc nhánh này.
+Nhánh dựa trên mô hình (\textit{model-based}) không giữ cả ma trận mà học một hàm có tham số, chẳng hạn nhân tử hoá ma trận hay mạng lưới thần kinh, để tóm tắt mỗi khách và mỗi sản phẩm bằng một vector ngắn. Vì mỗi đối tượng chỉ còn vài chục con số thay cho hàng nghìn ô của ma trận, mô hình vẫn tính được điểm cho những cặp chưa từng xuất hiện, và chi phí huấn luyện chỉ tăng tuyến tính theo số tương tác. Nhân tử hoá ma trận và các mô hình dùng mạng lưới thần kinh như NeuMF đều thuộc nhánh này.
 
 \subsection{Phản hồi ẩn}
 \label{subsec:feedback_types}
@@ -124,7 +124,7 @@ Tích vô hướng kết hợp các chiều ẩn theo dạng tuyến tính. Các
 \subsection{Tối ưu thứ hạng theo cặp: BPR}
 \label{subsec:bpr}
 
-MF, GMF và MLP được huấn luyện như một bài toán phân loại, trong đó mỗi cặp $(u, i)$ được chấm riêng thành $\hat{y}_{ui}$ rồi so với nhãn 0 hoặc 1. Trong khi đó, hệ thống khuyến nghị chỉ cần xếp đúng thứ tự: món khách sẽ mua phải đứng trên món khách không mua. Bayesian Personalized Ranking (BPR) \parencite{rendle2009bpr} huấn luyện thẳng theo yêu cầu này, với giả định người dùng thích một sản phẩm đã tương tác $i$ hơn một sản phẩm chưa tương tác $j$. Với mỗi bộ ba $(u, i, j)$ trong đó $i \in \mathcal{I}_u$ và $j \notin \mathcal{I}_u$, hàm mất mát BPR là:
+MF, GMF và MLP được huấn luyện như một bài toán phân loại, trong đó mỗi cặp $(u, i)$ được tính điểm riêng thành $\hat{y}_{ui}$ rồi so với nhãn 0 hoặc 1. Trong khi đó, hệ thống khuyến nghị chỉ cần xếp đúng thứ tự: món khách sẽ mua phải đứng trên món khách không mua. Bayesian Personalized Ranking (BPR) \parencite{rendle2009bpr} huấn luyện thẳng theo yêu cầu này, với giả định người dùng thích một sản phẩm đã tương tác $i$ hơn một sản phẩm chưa tương tác $j$. Với mỗi bộ ba $(u, i, j)$ trong đó $i \in \mathcal{I}_u$ và $j \notin \mathcal{I}_u$, hàm mất mát BPR là:
 \begin{equation}
     \mathcal{L}_{BPR} = -\sum_{(u,i,j) \in \mathcal{D}_S} \ln \sigma\left(\hat{y}_{ui} - \hat{y}_{uj}\right) + \lambda_\Theta \lVert \Theta \rVert^2
     \label{eq:bpr_loss}
@@ -254,7 +254,7 @@ Một cách khắc phục hạn chế về thông tin của MF là cho mô hình
 
 NeuMF-F đi theo hướng này. Mô hình giữ hai nhánh GMF và MLP, nhưng biểu diễn mỗi khách hàng và sản phẩm bằng vector nhúng mã ID cộng với phép chiếu tuyến tính của đặc trưng.
 
-Khi mô hình nhận cả mã ID và đặc trưng, nó có thể dựa hẳn vào mã ID mà bỏ qua đặc trưng. DropoutNet \parencite{volkovs2017dropoutnet} xử lý điều này bằng cách bỏ ngẫu nhiên vector ID khi huấn luyện, buộc mô hình học chấm điểm từ đặc trưng. Kỹ thuật này hữu ích khi muốn mô hình chấm được cả những sản phẩm có ít hoặc chưa có lượt mua.
+Khi mô hình nhận cả mã ID và đặc trưng, nó có thể dựa hẳn vào mã ID mà bỏ qua đặc trưng. DropoutNet \parencite{volkovs2017dropoutnet} xử lý điều này bằng cách bỏ ngẫu nhiên vector ID khi huấn luyện, buộc mô hình học cách tính điểm từ đặc trưng. Kỹ thuật này hữu ích khi muốn mô hình tính được điểm cho cả những sản phẩm có ít hoặc chưa có lượt mua.
 
 Văn bản của sản phẩm (tên, mô tả) được biểu diễn bằng TF-IDF \parencite{salton1988term}. Một từ có trọng số cao với một sản phẩm khi nó lặp lại trong mô tả của sản phẩm đó nhưng ít gặp trong cả danh mục. Ma trận TF-IDF sau đó được giảm chiều bằng phân tích giá trị suy biến rút gọn (\textit{truncated SVD}) \parencite{deerwester1990lsa}. Nhờ bước này, các mô tả cùng chủ đề nhưng dùng từ khác nhau có vector gần nhau. Cách biểu diễn này không cần dữ liệu tương tác và tính nhanh.
 

@@ -131,7 +131,7 @@ Kết quả so sánh với mô hình lai truyền thống được trình bày t
     \item Hybrid-CBCF so với UserKNN chỉ chênh ít và không khác biệt có ý nghĩa. Điều này khớp với trọng số đã học, dồn phần lớn vào UserKNN, và với việc Content đứng riêng rất yếu trên H\&M.
 \end{itemize}
 
-Hybrid-CBCF được đánh giá trong một phân tích bổ sung, với kế hoạch riêng được cố định trước khi chấm tập kiểm thử. Cách kết hợp được chọn trên tập xác thực của mẫu phát triển, rồi chấm trên tập kiểm thử của mẫu kiểm định với cùng dữ liệu, tập ứng viên và quy tắc xếp thứ tự khi bằng điểm như 14 mô hình còn lại. Hai so sánh bổ sung dùng hiệu chỉnh Holm riêng: B1 đặt NeuMF-F cạnh Hybrid-CBCF, B2 đặt Hybrid-CBCF cạnh UserKNN, thành phần mạnh nhất của nó.
+Hybrid-CBCF được đánh giá trong một phân tích bổ sung, với kế hoạch riêng được cố định trước khi đánh giá trên tập kiểm thử. Cách kết hợp được chọn trên tập xác thực của mẫu phát triển, rồi đánh giá trên tập kiểm thử của mẫu kiểm định với cùng dữ liệu, tập ứng viên và quy tắc xếp thứ tự khi bằng điểm như 14 mô hình còn lại. Hai so sánh bổ sung dùng hiệu chỉnh Holm riêng: B1 đặt NeuMF-F cạnh Hybrid-CBCF, B2 đặt Hybrid-CBCF cạnh UserKNN, thành phần mạnh nhất của nó.
 
 \bangketquaV{tab_v2_sigbs.tex}{\texttt{scripts/25\_bosung.py final}}
 
@@ -159,7 +159,7 @@ Kết quả về độ phủ:
 \begin{itemize}
     \item Most Popular và MostPopular-Recent có độ phủ thấp nhất, vì mọi khách nhận gần như cùng một danh sách.
     \item Trong các mô hình cá nhân hoá, MLP chỉ dùng ID có độ phủ thấp nhất.
-    \item NeuMF-F có độ phủ cao nhất trong các mạng lưới thần kinh. Không tính Random, NeuMF-F chỉ đứng sau Content và ItemKNN, hai mô hình chấm điểm theo độ giống thay vì độ phổ biến.
+    \item NeuMF-F có độ phủ cao nhất trong các mạng lưới thần kinh. Không tính Random, NeuMF-F chỉ đứng sau Content và ItemKNN, hai mô hình tính điểm theo độ giống thay vì độ phổ biến.
     \item Độ phủ của Hybrid-CBCF nằm giữa độ phủ của UserKNN và ItemKNN.
     \item Random có độ phủ gần như toàn bộ danh mục nhưng độ chính xác thấp nhất, nên độ phủ chỉ có giá trị khi được xem cùng với độ chính xác.
 \end{itemize}
@@ -210,7 +210,7 @@ So với H\&M, văn bản được biểu diễn theo cùng một cách. Khác b
         \hline
         Thuộc tính sản phẩm & 11 thuộc tính danh mục (88 chiều) & 5 thuộc tính: thương hiệu, danh mục cấp 1, 2, 3, nhóm giá (8 nhóm, 0 là không có giá) (40 chiều) \\ \hline
         Văn bản & tên và mô tả, TF-IDF và SVD 64 chiều & tiêu đề và mô tả, cùng cách biểu diễn \\ \hline
-        Thời gian của sản phẩm tại $t$ & doanh số toàn H\&M trong 7, 28, 91 ngày trước $t$; tuổi sản phẩm; cờ chưa từng bán (5 chiều) & số đánh giá trong tệp 5-core trong 7, 28, 91 ngày trước $t$; tuổi tính từ đánh giá đầu tiên; cờ chưa có đánh giá (5 chiều) \\ \hline
+        Thời gian của sản phẩm tại $t$ & doanh số toàn H\&M trong 7, 28, 91 ngày trước $t$; tuổi sản phẩm; biến 0/1 chưa từng bán (5 chiều) & số đánh giá trong tệp 5-core trong 7, 28, 91 ngày trước $t$; tuổi tính từ đánh giá đầu tiên; biến 0/1 chưa có đánh giá (5 chiều) \\ \hline
         Vector đặc trưng sản phẩm & $d_I = 88 + 64 + 5 = 157$ & $d_I = 40 + 64 + 5 = 109$ \\ \hline
         Thông tin khách hàng & 5 thuộc tính tĩnh và 2 đặc trưng thời gian ($d_U = 42$) & chỉ 2 đặc trưng thời gian ($d_U = 2$) \\ \hline
         Content (đối chứng) & one-hot nhóm sản phẩm, nhóm chỉ mục, nhóm may mặc & one-hot danh mục cấp 1 và cấp 2 \\ \hline
@@ -235,7 +235,7 @@ Kết quả trên Amazon được trình bày như bảng kết quả trên H\&M
 
 \bangketquaA{tab_amz_main.tex}
 
-LateFusion-F cao nhất ở mọi $K$ và với cả bốn độ đo, theo \bangrefA{tab_amz_k1.tex}{tab:amzk1} và \bangrefA{tab_amz_k2.tex}{tab:amzk2}. NeuMF-F và GMF-F bám sát nhau và đổi chỗ tuỳ độ đo: GMF-F cao hơn một chút ở NDCG@$K$, còn NeuMF-F cao hơn một chút ở Recall@$K$, HR@$K$ và Precision@$K$.
+LateFusion-F cao nhất ở mọi $K$ và với cả bốn độ đo, theo \bangrefA{tab_amz_k1.tex}{tab:amzk1} và \bangrefA{tab_amz_k2.tex}{tab:amzk2}. NeuMF-F và GMF-F có kết quả rất gần nhau và đổi chỗ tuỳ độ đo: GMF-F cao hơn một chút ở NDCG@$K$, còn NeuMF-F cao hơn một chút ở Recall@$K$, HR@$K$ và Precision@$K$.
 
 \bangketquaA{tab_amz_k1.tex}
 
