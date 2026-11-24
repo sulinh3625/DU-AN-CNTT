@@ -178,7 +178,7 @@ NeuMF ghép song song nhánh tuyến tính GMF và nhánh phi tuyến MLP trư�
 \end{equation}
 Chữ ``lai'' trong tên đề tài trước hết chỉ việc kết hợp hai cách mô hình hoá tương tác, nhân tử hoá ma trận (tuyến tính) và mạng lưới thần kinh sâu (phi tuyến), trong cùng một mô hình. Vì hai nhánh được ghép ngay ở mức biểu diễn, trước lớp dự đoán, NeuMF là một mô hình hợp nhất sớm. Mô hình đề xuất NeuMF-F giữ cấu trúc này và bổ sung đặc trưng sản phẩm, khách hàng và thời gian vào vector của cả hai nhánh. Vì kết hợp lọc cộng tác với thông tin nội dung, NeuMF-F cũng là một hệ thống khuyến nghị lai theo nghĩa rộng.
 
-Kiến trúc NeuMF có các điểm sau:
+Hình~\ref{fig:neumf_architecture} vẽ kiến trúc NeuMF, với các điểm sau:
 \begin{itemize}
     \item Người dùng và sản phẩm được mã hoá one-hot.
     \item Mỗi nhánh có bộ vector nhúng riêng.
@@ -213,7 +213,7 @@ Khi hệ thống khuyến nghị kết hợp nhiều nguồn thông tin, hay nhi
 
 Ưu điểm của hợp nhất sớm là học được tương tác giữa các nguồn thông tin, nhưng nó đòi hỏi một mô hình phù hợp với mọi nguồn. Hợp nhất muộn linh hoạt hơn, song chỉ làm việc trên kết quả dự đoán nên không nắm được tương tác đó.
 
-Trong đề tài, hai góc nhìn chính là hai cách mô hình hoá tương tác: góc nhìn tuyến tính của nhánh MF (vector $p_u^G \odot q_i^G$ của GMF) và góc nhìn phi tuyến của nhánh DNN (vector cuối $\phi_L^{MLP}$ của MLP). NeuMF nối hai vector này rồi đưa qua một lớp dự đoán chung. Đây là hợp nhất sớm ở mức biểu diễn, và cả mạng được huấn luyện chung từ đầu đến cuối. Mô hình đề xuất của đề tài giữ cách hợp nhất này. Ngoài ra, đặc trưng nội dung và ngữ cảnh được cộng vào vector của từng nhánh ngay ở đầu vào, do đó cũng được hợp nhất sớm với thông tin cộng tác.
+Trong đề tài, hai góc nhìn chính là hai cách mô hình hoá tương tác: góc nhìn tuyến tính của nhánh MF (vector $p_u^G \odot q_i^G$ của GMF) và góc nhìn phi tuyến của nhánh DNN (vector cuối $\phi_L^{MLP}$ của MLP). NeuMF nối hai vector này rồi đưa qua một lớp dự đoán chung (Công thức~\eqref{eq:neumf_concat}, \eqref{eq:neumf_prediction}). Đây là hợp nhất sớm ở mức biểu diễn, và cả mạng được huấn luyện chung từ đầu đến cuối, như phần (a) của Hình~\ref{fig:fusion_compare}. Mô hình đề xuất của đề tài giữ cách hợp nhất này. Ngoài ra, đặc trưng nội dung và ngữ cảnh được cộng vào vector của từng nhánh ngay ở đầu vào, do đó cũng được hợp nhất sớm với thông tin cộng tác.
 
 Hợp nhất muộn tương ứng là trộn điểm của hai mô hình MF và DNN được huấn luyện riêng:
 \begin{equation}
@@ -221,7 +221,7 @@ Hợp nhất muộn tương ứng là trộn điểm của hai mô hình MF và 
     \tilde{s}_{ui} = \frac{s_{ui} - \min_{j \in \mathcal{C}_u} s_{uj}}{\max_{j \in \mathcal{C}_u} s_{uj} - \min_{j \in \mathcal{C}_u} s_{uj}}
     \label{eq:late_fusion_mfdnn}
 \end{equation}
-trong đó điểm $s_{ui}$ của mỗi mô hình được chuẩn hoá min--max trên tập ứng viên $\mathcal{C}_u$ để hai thang điểm so sánh được. Tập ứng viên là các sản phẩm được đem ra xếp hạng cho người dùng $u$. Trọng số $w \in [0, 1]$ được chọn trên tập xác thực. Với $w = 1$ hoặc $w = 0$, thứ hạng trùng với thứ hạng của từng thành phần. Trong đề tài, mô hình hợp nhất muộn LateFusion-F trộn điểm của hai nhánh có đặc trưng được huấn luyện riêng. Riêng nhánh MLP khi đứng một mình chỉ nối vector người dùng và sản phẩm ở đầu vào. Đó là một mô hình DNN thuần, chưa có phần MF.
+trong đó điểm $s_{ui}$ của mỗi mô hình được chuẩn hoá min--max trên tập ứng viên $\mathcal{C}_u$ để hai thang điểm so sánh được. Tập ứng viên là các sản phẩm được đem ra xếp hạng cho người dùng $u$. Trọng số $w \in [0, 1]$ được chọn trên tập xác thực. Với $w = 1$ hoặc $w = 0$, thứ hạng trùng với thứ hạng của từng thành phần. Trong đề tài, mô hình hợp nhất muộn LateFusion-F trộn điểm của hai nhánh có đặc trưng được huấn luyện riêng, như phần (b) của Hình~\ref{fig:fusion_compare}. Riêng nhánh MLP khi đứng một mình chỉ nối vector người dùng và sản phẩm ở đầu vào. Đó là một mô hình DNN thuần, chưa có phần MF.
 
 \begin{figure}[H]
     \centering
@@ -322,7 +322,7 @@ Một mô hình chỉ khuyến nghị những món bán chạy nhất vẫn có 
     \item Luận án của \textcite{holinh2023multisource} hệ thống hoá hai cách hợp nhất sớm, muộn và việc bổ sung nguồn thông tin ngoài ma trận tương tác.
 \end{itemize}
 
-Số liệu của mỗi nghiên cứu lấy từ bài gốc.
+Bảng~\ref{tab:foundation_studies} đối chiếu thiết lập thực nghiệm của ba nghiên cứu với đề tài, với số liệu lấy từ bài gốc.
 
 Các con số này không so sánh trực tiếp được với nhau:
 \begin{itemize}

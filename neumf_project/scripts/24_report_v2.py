@@ -634,6 +634,27 @@ def sig_rows(m: Macros, sig: pd.DataFrame) -> list[list[str]]:
     return rows
 
 
+def export_demo(m: Macros) -> None:
+    """Số đo của hệ thống demo (Bảng 3.7) từ outputs/demo/benchmark.json (demo/scripts/benchmark_demo.py).
+    Macro \\VData{demoH|demoA}{...} và \\VData{demo}{cpu, users}; bỏ qua nếu chưa đo."""
+    path = PROJECT_ROOT / "outputs" / "demo" / "benchmark.json"
+    if not path.exists():
+        return
+    b = json.loads(path.read_text(encoding="utf-8"))
+    m.add("data", "demo", "cpu", tex_escape(str(b.get("cpu", "")).replace("(R)", "").replace("(TM)", "")))
+    m.add("data", "demo", "users", thousands(b["n_users"]))
+    for key, ds in (("demoH", "hm"), ("demoA", "amazon")):
+        d = b[ds]
+        m.add("data", key, "load", vn(d["load_s"], 1))
+        m.add("data", key, "img", thousands(d["items_with_image"]))
+        m.add("data", key, "med", vn(d["recommend_top10_ms"]["median"], 1))
+        m.add("data", key, "medint", str(round(d["recommend_top10_ms"]["median"])))
+        m.add("data", key, "ptf", vn(d["recommend_top10_ms"]["p95"], 1))
+        m.add("data", key, "similar", vn(d["similar_items_ms_median"], 1))
+        m.add("data", key, "neighbors", vn(d["neighbors_ms_median"], 1))
+        m.add("data", key, "newcust", vn(d["new_customer_ms_median"], 1))
+
+
 def export_supplement(m: Macros, tables: Path, sig_bs: pd.DataFrame, sup: dict) -> None:
     """Phân tích bổ sung (audit/PREREG_bosung.md): kiểm định họ B1–B2 (Holm trong họ), thông tin lần chấm bổ sung và đối
     chiếu ba thành phần của Hybrid-CBCF với lần đánh giá cuối đã đăng ký."""
@@ -1089,6 +1110,7 @@ def main():
         if V.TUNED_HERE:
             export_data(m, tables, dev_info(), info_b)
             export_tuning(m, tables, best, bs_best)
+            export_demo(m)
         else:
             manifest = json.loads(V.MANIFEST.read_text(encoding="utf-8")) if V.MANIFEST.exists() else {}
             export_data_amazon(m, tables, info_b, manifest.get(V.data_name("holdout"), {}))

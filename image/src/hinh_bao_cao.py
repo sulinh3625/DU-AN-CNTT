@@ -509,7 +509,7 @@ def kien_truc_demo():
     t3 = tang(408, 166, "Tầng mô hình và dữ liệu", "xam")
     ba_the(458, [("brain", "Mô hình đã huấn luyện", "trọng số của đánh giá cuối"),
                  ("database", "Dữ liệu, tập ứng viên", "dựng lại bằng hàm đánh giá"),
-                 ("file-text", "Kết quả đánh giá cuối", "đọc lại, không chấm mới")])
+                 ("file-text", "Kết quả đánh giá cuối", "đọc lại, không tính lại")])
     t.noi(t1, t2, (360, 172), (360, 228), "HTTP/JSON")
     t.noi(t2, t3, (360, 352), (360, 408), "nạp một lần khi khởi động")
     return t
@@ -578,7 +578,7 @@ def demo_ngang():
            ("API suy luận", "xam", [("server-2", "FastAPI", "tra cứu khách, gọi mô hình, chỉ suy luận")]),
            ("Mô hình, dữ liệu", "xam", [("brain", "Mô hình đã huấn luyện", "trọng số của đánh giá cuối"),
                                         ("database", "Dữ liệu, ứng viên", "dựng lại bằng hàm đánh giá"),
-                                        ("file-text", "Kết quả đánh giá", "đọc lại, không chấm mới")])]
+                                        ("file-text", "Kết quả đánh giá", "đọc lại, không tính lại")])]
     W_, GAP, H_ = 340, 110, 330
     khung = []
     for k, (ten, mau, the_) in enumerate(cot):
