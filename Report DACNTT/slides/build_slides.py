@@ -963,13 +963,13 @@ s = slide("Demo: giao diện ứng dụng", "Chương 3 · Demo",
           "trực tiếp ở localhost:8000. Khách mẫu: H&M KH0028, KH0303; Amazon KH0376, KH0039 (NeuMF-F trúng trong "
           "top-10, NeuMF chỉ dùng ID thì không); đây là ví dụ chọn lọc, kết quả trung bình xem các slide kết quả.",
           blob=(10.3, -3.3, 6.0, 6.1))
-man = [(cat_anh("cua_hang.png", "demo_v2.png", (0, 1232, 2428, 2360)), "Khuyến nghị sản phẩm",
+man = [(cat_anh("cua_hang.png", "demo_v2.png", (0, 1212, 2440, 2332)), "Khuyến nghị sản phẩm",
         "NeuMF-F bên trái, đối chứng bên phải; dòng xanh là món khách mua"),
-       (cat_anh("khach_moi.png", "demo_v2_new.png", (0, 0, 2428, 1460)), "Khách mới",
+       (cat_anh("khach_moi.png", "demo_v2_new.png", (0, 0, 2440, 1466)), "Khách mới",
         "chưa có lịch sử: nhận danh sách bán chạy"),
-       (cat_anh("ket_qua.png", "demo_v2_results.png", (0, 255, 1280, 790)), "Kết quả kiểm định",
+       (cat_anh("ket_qua.png", "demo_v2_results.png", (0, 510, 2560, 1596)), "Kết quả kiểm định",
         "NeuMF-F với từng đối chứng: NDCG@10 và chênh lệch"),
-       (cat_anh("xep_hang.png", "demo_v2_results.png", (0, 805, 1280, 1332)), "Xếp hạng và bóc tách",
+       (cat_anh("xep_hang.png", "demo_v2_results.png", (0, 1610, 2560, 2657)), "Xếp hạng và bóc tách",
         "NDCG@10 của 15 mô hình; mức giảm khi bỏ từng nhóm đặc trưng")]
 XA, WA, HA = L, 8.75, 4.85
 khung_anh = the(s, XA, 1.95, WA, HA, fill=WHITE, name="Khung ảnh demo")

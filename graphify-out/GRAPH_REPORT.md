@@ -1,7 +1,7 @@
-# Graph Report - DU-AN-CNTT  (2026-11-24)
+# Graph Report - DU-AN-CNTT  (2026-11-26)
 
 ## Corpus Check
-- 110 files · ~624,702 words
+- 110 files · ~638,191 words
 - Verdict: corpus is large enough that graph structure adds value.
 - Unclassified: 116 file(s) not represented in the graph (top: .tex 37, .csv 31, .gz 20)
 
@@ -11,7 +11,7 @@
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `4d3d02f9`
+- Built from commit: `8ebe87f4`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
@@ -502,16 +502,16 @@ Nodes (8): amazon_image_path(), main(), fetch(), main(), bucket_of(), main(), se
 _Questions this graph is uniquely positioned to answer:_
 
 - **Why does `7. Cấu trúc mã và API` connect `.getProps` to `test_demo.py`, `o`, `Demo web — shop thời trang H&M (kèm Amazon Beauty)`?**
-  _High betweenness centrality (0.386) - this node is a cross-community bridge._
+  _High betweenness centrality (0.379) - this node is a cross-community bridge._
 - **Are the 14 inferred relationships involving `s()` (e.g. with `ho()` and `ii()`) actually correct?**
   _`s()` has 14 INFERRED edges - model-reasoned connections that need verification._
 - **Should `data_context.py` be split into smaller, more focused modules?**
   _Cohesion score 0.051131354687040845 - nodes in this community are weakly interconnected._
 - **Why does `test_results_page_matches_report_macros()` connect `test_demo.py` to `.getProps`, `unavailable_reason`?**
-  _High betweenness centrality (0.356) - this node is a cross-community bridge._
+  _High betweenness centrality (0.349) - this node is a cross-community bridge._
 - **Should `app.js` be split into smaller, more focused modules?**
   _Cohesion score 0.06600877192982456 - nodes in this community are weakly interconnected._
 - **Why does `a()` connect `o` to `i`, `.getLabels`, `.getParsed`, `d`, `no`, `.getContext`, `.getProps`, `.get`, `n`, `chart.umd.min.js`, `va`, `.update`?**
-  _High betweenness centrality (0.159) - this node is a cross-community bridge._
+  _High betweenness centrality (0.157) - this node is a cross-community bridge._
 - **Should `build_poster.py` be split into smaller, more focused modules?**
   _Cohesion score 0.09116809116809117 - nodes in this community are weakly interconnected._

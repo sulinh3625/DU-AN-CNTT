@@ -33,6 +33,7 @@ function route() {
   document.querySelectorAll("#main-nav a").forEach((a) => {
     if (a.dataset.view === view) a.setAttribute("aria-current", "page"); else a.removeAttribute("aria-current");
   });
+  document.querySelectorAll("#ds-nav a").forEach((a) => { a.href = a.href.split("#")[0] + location.hash; });  // đổi bộ dữ liệu giữ tab đang xem
   if (!CTX) return;
   if (view === "overview") loadOverview();
   if (view === "shop" && !inited.admin) initAdmin();
@@ -132,7 +133,8 @@ const hue = (cid) => [...cid].reduce((h, ch) => (h * 31 + ch.charCodeAt(0)) % 36
 const avatar = (cid, cls = "", code = "") => `<span class="avatar ${cls}" style="--h:${hue(cid)}" aria-hidden="true">${esc(code ? code.slice(-2) : "KH")}</span>`;
 const pickId = (r, q) => {
   const byLong = q && !(r.code || "").toLowerCase().includes(q.toLowerCase()) && r.customer_id.toLowerCase().includes(q.toLowerCase());
-  return `<b>${esc(r.code || "")}</b>${byLong ? ` · ${idHtml(r.customer_id, q)}` : ""}`;
+  if (!r.code) return idHtml(r.customer_id, q);  // mục "xem gần đây" lưu từ bản cũ chưa có mã ngắn
+  return `<b>${esc(r.code)}</b>${byLong ? ` · ${idHtml(r.customer_id, q)}` : ""}`;
 };
 function idHtml(cid, q = "") {
   const p = q ? cid.toLowerCase().indexOf(q.toLowerCase()) : -1;
@@ -291,7 +293,7 @@ function openPicker() {
 }
 
 function seg(el, items, current, onPick) {
-  el.innerHTML = items.map((x) => `<button type="button" data-v="${esc(x.value)}" aria-pressed="${x.value === current}"${x.title ? ` title="${esc(x.title)}"` : ""}>${esc(x.label)}${x.n != null ? `<span class="n">${num(x.n)}</span>` : ""}</button>`).join("");
+  el.innerHTML = items.map((x) => `<button type="button" data-v="${esc(x.value)}" aria-pressed="${x.value === current}" title="${esc(x.title || x.label)}"><span class="l">${esc(x.label)}</span>${x.n != null ? `<span class="n">${num(x.n)}</span>` : ""}</button>`).join("");
   el.querySelectorAll("button").forEach((btn) => btn.addEventListener("click", () => onPick(btn.dataset.v)));
 }
 
@@ -300,7 +302,7 @@ function renderFilters() {
   const [lo, hi] = f.thresholds.map(Math.floor);
   const range = { low: `≤ ${lo}`, mid: `${lo + 1}–${hi}`, high: `≥ ${hi + 1}` };
   seg($("pk-bucket"), [{ value: "", label: "Tất cả", n: f.total },
-    ...f.buckets.map((x) => ({ value: x.key, label: `${x.label} (${range[x.key]} món)`, n: x.n_users }))],
+    ...f.buckets.map((x) => ({ value: x.key, label: `${x.label.replace(/ giao dịch$/, "")} (${range[x.key]})`, title: `${x.label}: ${range[x.key]} món đã mua`, n: x.n_users }))],
   pk.bucket, (v) => { pk.bucket = v; renderFilters(); loadUsers(); });
   seg($("pk-area"), [{ value: "", label: "Mọi khu vực" },
     ...f.areas.map((x) => ({ value: x.key, label: areaLabel(x.key), n: x.n_users, title: `Mua nhiều nhất ở ${x.key}` }))],
@@ -345,7 +347,8 @@ function loadMore() {
 }
 
 function renderPicker(keepActive = false) {
-  const recent = pk.q || pk.bucket || pk.area || pk.hit ? [] : recentUsers();
+  // "Xem gần đây" chỉ hiện ở trạng thái mặc định; đã lọc/tìm/đổi sắp xếp thì danh sách bắt đầu ngay bằng kết quả
+  const recent = pk.q || pk.bucket || pk.area || pk.hit || pk.sort !== "train_desc" ? [] : recentUsers();
   pk.view = [...recent, ...pk.items];
   if (!keepActive) {
     const cur = pk.view.findIndex((r) => r.customer_id === ad.user);
@@ -367,10 +370,11 @@ function renderPicker(keepActive = false) {
       <div class="note">Khách chưa có trong dữ liệu đã học nhận danh sách sản phẩm phổ biến; khách đã có lịch sử nhận khuyến nghị của mô hình.</div>` : "";
   $("pk-list").innerHTML = (recent.length ? head("Xem gần đây") + recent.map(opt).join("") : "")
     + (pk.items.length
-      ? head(pk.q ? "Kết quả tìm" : "Khách có sản phẩm đích") + pk.items.map((r, i) => opt(r, i + recent.length)).join("")
+      ? head(`${pk.q ? "Kết quả tìm" : "Khách có sản phẩm đích"} · ${SORT_LABELS[pk.sort].toLowerCase()}`) + pk.items.map((r, i) => opt(r, i + recent.length)).join("")
       : `<div class="pk-empty">${empty}<br>Thử bỏ bớt bộ lọc hoặc kiểm tra lại mã.${anyId ? `<br>${anyId}` : ""}</div>`);
   $("pk-any")?.addEventListener("click", () => { $("picker").close(); selectUser(pk.q); });
   $("pk-count").textContent = `${num(pk.items.length)} / ${num(pk.total)} khách${pk.items.length < pk.total ? " · cuộn để xem thêm" : ""}`;
+  if (!keepActive) $("pk-list").scrollTop = 0;  // danh sách mới (lọc/sắp xếp/mở lại): bắt đầu từ đầu
   paintActive(!keepActive);
 }
 
@@ -602,8 +606,8 @@ function renderNeighbors() {
   const card = $("sh-nb-card");
   if (!ad.nb || !ad.nb.length) { card.classList.add("hidden"); return; }
   card.classList.remove("hidden");
-  $("sh-nb").innerHTML = ad.nb.map((n) => `<div class="nb">${avatar(n.customer_id, "", n.code)}
-    <div><div class="nb-id">${n.code ? `Khách ${esc(n.code)}` : "Khách tương tự"}</div>
+  $("sh-nb").innerHTML = ad.nb.map((n, i) => `<div class="nb">${avatar(n.customer_id, "", String(i + 1).padStart(2, "0"))}
+    <div><div class="nb-id">Khách tương tự ${i + 1}</div>
       <div class="nb-meta">mua chung ${num(n.n_common)} món · đã mua ${num(n.train_count)} món</div>
       <div class="nb-items">${n.common_items.map((it) => `<span title="${esc(it.prod_name)}">${esc(it.prod_name)} <i>(${esc(typeOf(it))})</i></span>`).join("")}</div>
       ${ad.revealed && n.bought_target.length ? `<div class="nb-hit">✓ Đã mua món khách này mua sau đó: ${n.bought_target.map((it) => esc(it.prod_name)).join(", ")}</div>` : ""}

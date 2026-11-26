@@ -52,7 +52,7 @@
   <div class="wrap top">
     <a class="brand" href="#/shop">
       <img class="brand-logo" src="logo.png" width="52" height="52" alt="">
-      <span>Demo khuyến nghị sản phẩm<small>Dự án CNTT · NeuMF-F</small></span>
+      <span>DEMO KHUYẾN NGHỊ SẢN PHẨM<small>Dự án CNTT · NeuMF-F</small></span>
     </a>
     <div class="tools">
       <nav class="seg" id="ds-nav" aria-label="Bộ dữ liệu"></nav>
@@ -163,15 +163,17 @@
         <kbd>Esc</kbd>
       </div>
       <div class="pk-filters">
-        <div class="seg" id="pk-bucket" role="group" aria-label="Nhóm giao dịch"></div>
-        <div class="pk-row">
-          <div class="seg small" id="pk-area" role="group" aria-label="Khu vực mua nhiều nhất"></div>
-          <label class="pk-sort">Sắp xếp <select id="pk-sort"></select></label>
-        </div>
-        <div class="pk-row">
+        <span class="pk-lab" title="Số món khách đã mua trước mốc">Số món</span>
+        <div class="seg small" id="pk-bucket" role="group" aria-label="Nhóm giao dịch"></div>
+        <span class="pk-lab">Khu vực</span>
+        <div class="seg small" id="pk-area" role="group" aria-label="Khu vực mua nhiều nhất"></div>
+        <span class="pk-lab">Kết quả</span>
+        <div class="pk-cell">
           <div class="seg small" id="pk-hit" role="group" aria-label="Kết quả khuyến nghị"></div>
           <span class="note" id="pk-hit-note"></span>
         </div>
+        <label class="pk-lab" for="pk-sort">Sắp xếp</label>
+        <div class="pk-cell"><select id="pk-sort"></select></div>
       </div>
       <div class="pk-list" id="pk-list" role="listbox" aria-label="Khách hàng"></div>
       <div class="pk-foot">
