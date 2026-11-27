@@ -1,6 +1,6 @@
 const API = "/api";
 const DS = new URLSearchParams(location.search).get("ds") === "amazon" ? "amazon" : "hm";
-document.documentElement.dataset.ds = DS;  // CSS: nền khung ảnh theo nền ảnh của bộ dữ liệu
+document.documentElement.dataset.ds = DS;
 const $ = (id) => document.getElementById(id);
 const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 const fmt = (v, d = 4) => (v == null || Number.isNaN(Number(v)) ? "—" : Number(v).toFixed(d));
@@ -21,11 +21,10 @@ let CTX = null;
 const inited = {};
 let charts = [];
 
-/* ------------------------------------------------------------ routing */
 const VIEWS = ["shop", "results", "overview", "dashboard"];
 function currentView() {
   const v = location.hash.replace(/^#\/?/, "");
-  return VIEWS.includes(v) ? v : "shop";  // gồm cả #/admin cũ
+  return VIEWS.includes(v) ? v : "shop";
 }
 function route() {
   const view = currentView();
@@ -33,7 +32,7 @@ function route() {
   document.querySelectorAll("#main-nav a").forEach((a) => {
     if (a.dataset.view === view) a.setAttribute("aria-current", "page"); else a.removeAttribute("aria-current");
   });
-  document.querySelectorAll("#ds-nav a").forEach((a) => { a.href = a.href.split("#")[0] + location.hash; });  // đổi bộ dữ liệu giữ tab đang xem
+  document.querySelectorAll("#ds-nav a").forEach((a) => { a.href = a.href.split("#")[0] + location.hash; });
   if (!CTX) return;
   if (view === "overview") loadOverview();
   if (view === "shop" && !inited.admin) initAdmin();
@@ -48,10 +47,9 @@ async function renderDatasets() {
     $("ds-nav").innerHTML = list.map((d) => `<a href="?${new URLSearchParams({ ds: d.key })}${location.hash}"
       ${d.key === DS ? 'aria-current="true"' : ""}${d.reason ? ` title="${esc(d.reason)}"` : ""}>${esc(d.label)}${d.reason
         ? ' <span class="muted-tag">chưa có kết quả</span>' : ""}</a>`).join("");
-  } catch { /* không đọc được danh sách: chỉ còn bộ dữ liệu đang xem */ }
+  } catch {}
 }
 
-/* ------------------------------------------------------------ sáng / tối */
 const cssVar = (name) => getComputedStyle(document.documentElement).getPropertyValue(name).trim();
 function chartTheme() {
   if (!window.Chart) return;
@@ -61,7 +59,7 @@ function chartTheme() {
 }
 function setTheme(t) {
   document.documentElement.dataset.theme = t;
-  try { localStorage.setItem("demo.theme", t); } catch { /* trình duyệt chặn lưu: chỉ đổi trong lần xem này */ }
+  try { localStorage.setItem("demo.theme", t); } catch {}
   chartTheme();
   if (currentView() === "dashboard" && CTX) loadDashboard();
 }
@@ -85,7 +83,6 @@ async function init() {
   route();
 }
 
-/* ------------------------------------------------------------ shared UI */
 const TYPE_VI = { "Trousers": "Quần dài", "Pyjama set": "Bộ đồ ngủ", "Sweater": "Áo len", "Underwear Tights": "Quần tất",
   "Bra": "Áo ngực", "Underwear bottom": "Quần lót", "Leggings/Tights": "Quần legging", "T-shirt": "Áo thun", "Top": "Áo",
   "Shorts": "Quần short", "Vest top": "Áo ba lỗ", "Swimwear bottom": "Quần bơi", "Swimwear top": "Áo bơi", "Skirt": "Chân váy",
@@ -115,7 +112,6 @@ const kOptions = (sel) => {
   sel.value = Math.max(...CTX.k_values);
 };
 
-/* ------------------------------------------------------------ cửa hàng: chọn khách */
 const ad = { user: null, prev: null, next: null, facets: null, seq: 0 };
 const pk = { q: "", bucket: "", area: "", hit: "", sort: "train_desc", items: [], total: 0, view: [], active: -1,
   loading: false, seq: 0, timer: null, loadedQ: null };
@@ -133,7 +129,7 @@ const hue = (cid) => [...cid].reduce((h, ch) => (h * 31 + ch.charCodeAt(0)) % 36
 const avatar = (cid, cls = "", code = "") => `<span class="avatar ${cls}" style="--h:${hue(cid)}" aria-hidden="true">${esc(code ? code.slice(-2) : "KH")}</span>`;
 const pickId = (r, q) => {
   const byLong = q && !(r.code || "").toLowerCase().includes(q.toLowerCase()) && r.customer_id.toLowerCase().includes(q.toLowerCase());
-  if (!r.code) return idHtml(r.customer_id, q);  // mục "xem gần đây" lưu từ bản cũ chưa có mã ngắn
+  if (!r.code) return idHtml(r.customer_id, q);
   return `<b>${esc(r.code)}</b>${byLong ? ` · ${idHtml(r.customer_id, q)}` : ""}`;
 };
 function idHtml(cid, q = "") {
@@ -159,7 +155,7 @@ function recentUsers() {
 }
 function rememberUser(row) {
   const list = [row, ...recentUsers().filter((r) => r.customer_id !== row.customer_id)].slice(0, 5);
-  try { localStorage.setItem(recentKey(), JSON.stringify(list)); } catch { /* trình duyệt chặn lưu: bỏ qua */ }
+  try { localStorage.setItem(recentKey(), JSON.stringify(list)); } catch {}
 }
 
 async function initAdmin() {
@@ -174,9 +170,9 @@ async function initAdmin() {
   const un = Object.entries(CTX.unavailable_models || {});
   $("ad-unavailable").innerHTML = un.map(([m, r]) => `<b>${esc(m)}</b> bị ẩn: ${esc(r)}`).join("<br>");
   [b, $("ad-k")].forEach((el) => el.addEventListener("change", loadAdmin));
-  $("ad-k").addEventListener("change", () => {  // lọc trúng / trượt theo NeuMF-F và K
+  $("ad-k").addEventListener("change", () => {
     if (!needsRanks()) return;
-    pk.loadedQ = null;  // mở bảng chọn lần sau thì tải lại danh sách
+    pk.loadedQ = null;
     if (ad.user) loadPosition();
   });
 
@@ -196,8 +192,8 @@ async function initAdmin() {
     if (el && +el.dataset.i !== pk.active) { pk.active = +el.dataset.i; paintActive(false); }
   });
   list.addEventListener("scroll", () => { if (list.scrollTop + list.clientHeight > list.scrollHeight - 160) loadMore(); });
-  $("picker").addEventListener("click", (e) => { if (e.target === $("picker")) $("picker").close(); });  // bấm ra nền
-  $("picker").addEventListener("close", () => { if (ad.user) loadPosition(); });  // bộ lọc có thể đã đổi
+  $("picker").addEventListener("click", (e) => { if (e.target === $("picker")) $("picker").close(); });
+  $("picker").addEventListener("close", () => { if (ad.user) loadPosition(); });
   $("cust-open").addEventListener("click", openPicker);
   $("cust-random").addEventListener("click", async () => {
     try { selectUser((await api(`/users/random?${filterParams()}`)).customer_id); } catch (e) { showAdminError(e); }
@@ -230,11 +226,11 @@ async function initAdmin() {
   }
   try {
     const ex = await api("/example");
-    if (ad.user) return;  // người xem đã tự chọn khách trong lúc chờ
+    if (ad.user) return;
     if (others.includes(ex.model_b)) b.value = ex.model_b;
     $("ad-k").value = String(ex.k || 10);
     selectUser(ex.customer_id);
-  } catch { /* chưa tìm được ví dụ: để trống, người xem tự chọn khách */ }
+  } catch {}
 }
 
 async function showcase() {
@@ -279,7 +275,7 @@ async function onPickerKey(e) {
     if (pk.active >= pk.view.length - 4) loadMore();
   } else if (e.key === "Enter") {
     e.preventDefault();
-    if (pk.loadedQ !== pk.q) { clearTimeout(pk.timer); await loadUsers(); }  // dán mã rồi Enter ngay
+    if (pk.loadedQ !== pk.q) { clearTimeout(pk.timer); await loadUsers(); }
     if (pk.view[pk.active]) pickUser(pk.view[pk.active]);
   }
 }
@@ -288,8 +284,8 @@ function openPicker() {
   const dlg = $("picker");
   if (!dlg.open) dlg.showModal();
   $("pk-q").select();
-  if (ad.facets) renderFilters();  // nhãn "theo <mô hình> · top-K" theo lựa chọn hiện tại
-  if (pk.loadedQ === null) loadUsers(); else renderPicker();  // vẽ lại: "đang xem", gần đây
+  if (ad.facets) renderFilters();
+  if (pk.loadedQ === null) loadUsers(); else renderPicker();
 }
 
 function seg(el, items, current, onPick) {
@@ -319,7 +315,7 @@ async function loadUsers(more = false) {
   const seq = ++pk.seq;
   const q = pk.q;
   pk.loading = true;
-  const slow = setTimeout(() => {  // chấm mọi khách lần đầu với một mô hình mất vài giây
+  const slow = setTimeout(() => {
     if (seq === pk.seq && !more) {
       $("pk-list").innerHTML = `<div class="pk-empty">${needsRanks()
         ? `Đang chấm mọi khách với <b>${esc(show(mainModel()))}</b>… (lần đầu với mỗi mô hình mất khoảng 5–15 giây)`
@@ -347,7 +343,6 @@ function loadMore() {
 }
 
 function renderPicker(keepActive = false) {
-  // "Xem gần đây" chỉ hiện ở trạng thái mặc định; đã lọc/tìm/đổi sắp xếp thì danh sách bắt đầu ngay bằng kết quả
   const recent = pk.q || pk.bucket || pk.area || pk.hit || pk.sort !== "train_desc" ? [] : recentUsers();
   pk.view = [...recent, ...pk.items];
   if (!keepActive) {
@@ -374,7 +369,7 @@ function renderPicker(keepActive = false) {
       : `<div class="pk-empty">${empty}<br>Thử bỏ bớt bộ lọc hoặc kiểm tra lại mã.${anyId ? `<br>${anyId}` : ""}</div>`);
   $("pk-any")?.addEventListener("click", () => { $("picker").close(); selectUser(pk.q); });
   $("pk-count").textContent = `${num(pk.items.length)} / ${num(pk.total)} khách${pk.items.length < pk.total ? " · cuộn để xem thêm" : ""}`;
-  if (!keepActive) $("pk-list").scrollTop = 0;  // danh sách mới (lọc/sắp xếp/mở lại): bắt đầu từ đầu
+  if (!keepActive) $("pk-list").scrollTop = 0;
   paintActive(!keepActive);
 }
 
@@ -403,7 +398,7 @@ function selectUser(cid, caseNote = null) {
   if (!cid) return;
   ad.user = cid;
   ad.caseNote = caseNote;
-  ad.revealed = false;  // khách mới chọn: ẩn đáp án, để người xem tự đoán trước
+  ad.revealed = false;
   ad.prev = ad.next = null;
   $("cust-pos").textContent = "…";
   $("cust-prev").disabled = $("cust-next").disabled = true;
@@ -447,7 +442,7 @@ function renderCustomerEmpty() {
 
 function renderCustomer(hist) {
   const p = hist.profile;
-  if (hist.is_new) {  // khách chưa có trong dữ liệu đã học: chỉ có mã, khuyến nghị phổ biến
+  if (hist.is_new) {
     $("cust-current").innerHTML = `${avatar(p.customer_id, "lg")}
       <div class="cust-info">
         <div class="cust-id"><span class="mono" title="${esc(p.customer_id)}">Khách ${esc(p.customer_id.slice(0, 8))}…</span></div>
@@ -486,7 +481,7 @@ function showAdminError(e) {
 
 async function loadAdmin() {
   if (!ad.user) return;
-  const seq = ++ad.seq;  // bấm ‹ › liên tục: chỉ vẽ kết quả của lần chọn sau cùng
+  const seq = ++ad.seq;
   const k = $("ad-k").value;
   const models = [mainModel()];
   if ($("ad-model-b").value) models.push($("ad-model-b").value);
@@ -507,7 +502,7 @@ async function loadAdmin() {
     $("ad-case").classList.toggle("hidden", !ad.caseNote);
     $("ad-grid").classList.remove("hidden");
     ad.hist = hist;
-    ad.recs = recs[0].fallback ? recs.slice(0, 1) : recs;  // khách mới: mọi mô hình trả cùng danh sách phổ biến
+    ad.recs = recs[0].fallback ? recs.slice(0, 1) : recs;
     ad.k = Number(k);
     renderHistory(hist);
     renderShop();
@@ -520,7 +515,6 @@ async function loadAdmin() {
   loadNeighbors(uid, seq);
 }
 
-/* ------------------------------------------------------------ cửa hàng: thẻ sản phẩm */
 const typeOf = (it) => (DS === "hm" ? typeVi(it.product_type_name) : it.product_type_name);
 const GROUP_VI = { "Garment Upper body": "Áo", "Garment Lower body": "Quần, váy", "Garment Full body": "Đồ liền thân",
   "Underwear": "Đồ lót", "Swimwear": "Đồ bơi", "Nightwear": "Đồ ngủ", "Socks & Tights": "Tất", "Accessories": "Phụ kiện",
@@ -546,7 +540,7 @@ function renderHistory(hist) {
     return;
   }
   $("sh-hist-note").textContent = `${hist.items.length} món, trước ${vnDate(CTX.test_start)}`;
-  $("sh-history").innerHTML = [...hist.items].reverse()  // mới nhất trước
+  $("sh-history").innerHTML = [...hist.items].reverse()
     .map((it) => pcard(it, { extra: `<span class="pdate">mua ${esc(vnDate(it.t_dat))}</span>` })).join("");
 }
 
@@ -649,7 +643,6 @@ async function openProduct(item) {
   $("pd-body").scrollTop = 0;
 }
 
-/* ------------------------------------------------------------ dashboard */
 function body(block, render) {
   return block.status === "ok" ? render(block.data) : `<div class="missing">${esc(block.message)}</div>`;
 }
@@ -678,7 +671,7 @@ function simpleTable(rows, cols) {
 const BY_K = [10, 15, 20];
 const K_SHADES = ["#8fb0dc", "#4f7fc0", "#1f4785"];
 function byKCard(block, note) {
-  if (!block) return "";  // máy chủ demo cũ chưa có khối này: bỏ thẻ, không làm hỏng cả dashboard
+  if (!block) return "";
   return `<div class="card wide"><h2>Khi đổi số khuyến nghị K = 10, 15, 20</h2>${body(block, (rows) => {
     const cols = ["NDCG", "HR"].flatMap((m) => BY_K.map((k) => `${m}@${k}`))
       .filter((c) => rows.some((r) => r[`${c}_mean`] != null));
@@ -736,7 +729,7 @@ function renderDashboard(d, dash) {
     chart("c-final", {
       type: "bar",
       data: { labels: rows.map((r) => show(r.model)),
-              datasets: [{ label: "NDCG@10 (trung bình qua seed)", data: rows.map((r) => r["NDCG@10_mean"]), backgroundColor: cssVar("--bar"), borderRadius: 4 }] },  // mọi mô hình cùng màu (góp ý GVHD 09/11/2026)
+              datasets: [{ label: "NDCG@10 (trung bình qua seed)", data: rows.map((r) => r["NDCG@10_mean"]), backgroundColor: cssVar("--bar"), borderRadius: 4 }] },
       options: { plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true } } },
     });
   }
@@ -751,7 +744,6 @@ async function loadDashboard() {
   try { renderDashboard(await api("/dashboard"), dash); } catch (e) { dash.innerHTML = `<div class="error">${esc(e.message)}</div>`; }
 }
 
-/* ------------------------------------------------------------ tổng quan & kết quả đánh giá */
 let RESULTS = null;
 const vi = (x, d) => Number(x).toLocaleString("vi-VN", { minimumFractionDigits: d, maximumFractionDigits: d });
 const signedPct = (x) => (x > 0 ? "+" : "") + vi(100 * x, 1) + "%";
@@ -792,7 +784,7 @@ function exampleList(items, hits) {
 }
 
 async function renderExample(ex) {
-  await getResults().catch(() => null);  // số khách của câu kết; trang vẫn vẽ nếu thiếu file kết quả
+  await getResults().catch(() => null);
   const { a, b, k } = ex;
   const p = ex.profile;
   const targets = a.targets;

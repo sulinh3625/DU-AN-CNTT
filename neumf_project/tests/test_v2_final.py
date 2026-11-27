@@ -1,5 +1,4 @@
-"""Đánh giá cuối v2 (scripts/23_final_v2.py) và phân tích (scripts/24_report_v2.py): khoá kiểm thử, ablation, không ghi
-lẫn kết quả của dữ liệu khác, tiêu chí kết luận và họ so sánh đã đăng ký."""
+"""Đánh giá cuối v2 (scripts/5_final.py) và phân tích (scripts/7_report.py)."""
 from __future__ import annotations
 
 import importlib.util
@@ -22,8 +21,8 @@ def _load(name, file):
     return mod
 
 
-final = _load("final_v2", "23_final_v2.py")
-report = _load("report_v2", "24_report_v2.py")
+final = _load("final_v2", "5_final.py")
+report = _load("report_v2", "7_report.py")
 
 
 def _args(**kw):
@@ -90,9 +89,9 @@ def test_lock_skips_tuning_hash_when_configs_come_from_other_dataset(monkeypatch
 
 def test_dirty_files_ignores_outputs_and_test_log(monkeypatch):
     status = (' M neumf_project/audit/test_access_log.csv\n M neumf_project/outputs/v2/final/summary.csv\n'
-              ' M neumf_project/scripts/v2_common.py\n M "Report DACNTT/content/C4.tex"\n D .vscode/settings.json\n')
+              ' M neumf_project/scripts/common.py\n M "Report DACNTT/content/C4.tex"\n D .vscode/settings.json\n')
     monkeypatch.setattr(final, "git", lambda *a: "neumf_project/\n" if a[0] == "rev-parse" else status)
-    assert final.dirty_files() == ["neumf_project/scripts/v2_common.py", "Report DACNTT/content/C4.tex",
+    assert final.dirty_files() == ["neumf_project/scripts/common.py", "Report DACNTT/content/C4.tex",
                                    ".vscode/settings.json"]
 
 

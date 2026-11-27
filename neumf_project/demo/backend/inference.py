@@ -67,7 +67,7 @@ def candidate_scores(ctx, model_name: str, u: int, record, all_items_row=None) -
 
 
 def rank_from_scores(ctx, u: int, scores: np.ndarray, top_k: int, record) -> dict:
-    """scores: điểm trên record.candidates (cùng thứ tự). Thứ hạng = điểm giảm dần, hoà thì theo khoá tất định."""
+    """scores: điểm trên record.candidates (cùng thứ tự)."""
     cand = record.candidates
     tie = deterministic_tie_key(u, cand, ctx.tie_seed)
     order = np.lexsort((tie, -np.asarray(scores, dtype=np.float64)))
@@ -131,8 +131,7 @@ def recommend(ctx, model_name: str, u: int, k: int) -> dict:
 
 
 def popular(ctx, k: int) -> dict:
-    """Khách chưa có trong dữ liệu đã học (khách mới, hoặc quá ít lần mua để qua lọc k-core): mô hình không có thông tin
-    về khách này, nên trả K sản phẩm phổ biến nhất (Most Popular) kèm nhãn — luôn có gợi ý, không báo lỗi."""
+    """Khách chưa có trong dữ liệu đã học (khách mới, hoặc quá ít lần mua để qua lọc k-core)."""
     items, counts = ctx.popular_items(k)
     return {
         "model": "MostPopular",

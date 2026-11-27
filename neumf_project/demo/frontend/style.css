@@ -228,22 +228,22 @@ dialog.picker[open] { display: flex; flex-direction: column; }
 dialog.picker::backdrop { background: rgba(10, 12, 20, .45); backdrop-filter: blur(3px); }
 .pk-search { display: flex; align-items: center; gap: 10px; padding: 14px 18px; border-bottom: 1px solid var(--line); color: var(--muted); }
 .pk-search input { flex: 1; min-width: 0; border: 0; outline: 0; padding: 4px 0; font-size: 15px; background: transparent; box-shadow: none; }
-/* Bộ lọc: cột nhãn + lưới 4 cột đều nhau cho mọi nhóm, nên các nút thẳng hàng giữa các dòng */
+
 .pk-filters { display: grid; grid-template-columns: 74px minmax(0, 1fr); align-items: start; gap: 8px 10px; padding: 12px 18px; border-bottom: 1px solid var(--line); background: var(--surface-2); }
 .pk-lab { padding-top: 9px; font-size: 12px; font-weight: 700; color: var(--muted); }
 .pk-cell { display: grid; gap: 4px; justify-items: start; }
 .pk-cell select { padding: 5px 8px; font-size: 13px; }
 #picker .seg { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); width: 100%; box-sizing: border-box; border-radius: 10px; }
 #picker .seg button { display: flex; justify-content: space-between; align-items: center; gap: 6px; min-width: 0; border-radius: 7px; text-align: left; }
-#picker .seg .l { min-width: 0; overflow-wrap: anywhere; line-height: 1.3; }  /* chữ dài xuống dòng trong ô, không bị cắt */
+#picker .seg .l { min-width: 0; overflow-wrap: anywhere; line-height: 1.3; }
 #picker .seg .n { flex: none; margin-left: 0; }
 @media (max-width: 640px) { #picker .seg { grid-template-columns: repeat(2, minmax(0, 1fr)); } .pk-filters { grid-template-columns: 1fr; } .pk-lab { padding-top: 0; } }
 .seg.small button { padding: 4px 10px; font-size: 12px; }
 .pk-list { flex: 1; overflow-y: auto; padding: 4px 8px 8px; overscroll-behavior: contain; }
 .pk-group { position: sticky; top: 0; z-index: 1; padding: 10px 10px 6px; background: var(--surface); font-size: 11px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); }
-.pk-item { display: flex; align-items: center; gap: 12px; padding: 9px 10px; border-radius: 12px; cursor: pointer; scroll-margin-top: 36px; }  /* chừa chỗ tiêu đề nhóm dính trên cùng */
+.pk-item { display: flex; align-items: center; gap: 12px; padding: 9px 10px; border-radius: 12px; cursor: pointer; scroll-margin-top: 36px; }
 .pk-item.active { background: var(--accent-soft); }
-.pk-item.active .badge { background: var(--surface); }  /* nhãn cùng màu nền dòng đang chọn thì mất viền */
+.pk-item.active .badge { background: var(--surface); }
 .pk-text { flex: 1; min-width: 0; }
 .pk-id { font: 600 13px var(--mono); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .pk-id mark { background: var(--warn-soft); color: inherit; border-radius: 3px; padding: 0 1px; }

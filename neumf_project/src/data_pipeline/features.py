@@ -46,7 +46,7 @@ class Catalog:
 
 
 def category_codes(values: pd.Series) -> tuple[np.ndarray, int]:
-    """Mã hoá một thuộc tính: giá trị theo thứ tự từ điển -> 1, 2, ...; trống / thiếu -> 0. Trả về (mã, cardinality)."""
+    """Mã hoá một thuộc tính: giá trị theo thứ tự từ điển -> 1, 2, ...; trống / thiếu -> 0."""
     values = values.astype("string").fillna("")
     vocab = sorted(set(values) - {""})
     code = {v: k + 1 for k, v in enumerate(vocab)}
@@ -134,9 +134,7 @@ def load_daily_sales(path: str | Path) -> DailySales:
 
 
 def item_time_features(cum: np.ndarray, first_day: np.ndarray, items: np.ndarray, day) -> np.ndarray:
-    """Đặc trưng thời gian của item tại ngày `day` (scalar hoặc mảng cùng cỡ items), chỉ dùng các ngày < day:
-    log1p(doanh số trong 7/28/91 ngày trước), log1p(tuổi sản phẩm tính từ ngày bán đầu), cờ "chưa từng bán trước
-    day". `cum` là ma trận cộng dồn của DailySales.cumulative (hàng theo chỉ số item của mô hình)."""
+    """Đặc trưng thời gian của item tại ngày `day` (scalar hoặc mảng cùng cỡ items), chỉ dùng các ngày < day."""
     items = np.asarray(items, dtype=np.int64)
     day = np.broadcast_to(np.asarray(day, dtype=np.int64), items.shape)
     now = cum[items, np.clip(day, 0, cum.shape[1] - 1)].astype(np.float32)
@@ -212,8 +210,7 @@ def _codes(s: pd.Series, vocab: list[str]) -> np.ndarray:
 
 
 def user_time_features(pair_users: np.ndarray, pair_days: np.ndarray, users: np.ndarray, days) -> np.ndarray:
-    """Đặc trưng thời gian của user tại ngày `days`, từ các cặp (user, ngày mua đầu) TRƯỚC ngày đó: log1p(số ngày từ lần
-    mua gần nhất; 730 nếu chưa mua) và log1p(số cặp đã mua)."""
+    """Đặc trưng thời gian của user tại ngày `days`, từ các cặp (user, ngày mua đầu) TRƯỚC ngày đó."""
     users = np.asarray(users, dtype=np.int64)
     days = np.broadcast_to(np.asarray(days, dtype=np.int64), users.shape)
     order = np.lexsort((pair_days, pair_users))

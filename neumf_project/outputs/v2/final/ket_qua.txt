@@ -206,4 +206,4 @@ ItemKNN     0,02860                0,02860               3165/3165
 Máy chạy bổ sung: 11th Gen Intel(R) Core(TM) i5-1135G7 @ 2.40GHz; commit fcf33f3. Tệp đặc trưng văn bản không nằm trong git, mỗi máy tự dựng, nên Content có thể lệch nhẹ; UserKNN, ItemKNN không dùng đặc trưng.
 
 
-Nguồn: summary.csv, significance.csv, ablation.csv, beyond.csv, by_k.csv cùng thư mục (scripts/24_report_v2.py); phân tích bổ sung: bosung/.
+Nguồn: summary.csv, significance.csv, ablation.csv, beyond.csv, by_k.csv cùng thư mục (scripts/7_report.py); phân tích bổ sung: bosung/.

@@ -1,6 +1,5 @@
-"""Giao thức v2: đặc trưng không rò rỉ thời gian, mẫu âm hợp lệ, k-core trước mốc kiểm thử, ứng viên và đáp án chỉ gồm
-sản phẩm có cặp huấn luyện, NeuMF-F nhất quán giữa lúc huấn luyện và lúc đánh giá, mô hình chỉ dùng ID xếp sản phẩm
-không chấm được cuối cùng."""
+"""Giao thức v2: đặc trưng không rò rỉ thời gian, mẫu âm hợp lệ, k-core trước mốc kiểm thử, ứng viên và đáp án chỉ
+gồm sản phẩm có cặp huấn luyện, NeuMF-F nhất quán giữa lúc huấn luyện và lúc đánh giá."""
 from __future__ import annotations
 
 import numpy as np

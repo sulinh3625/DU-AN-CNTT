@@ -1,20 +1,7 @@
-"""Đối chiếu báo cáo và tài liệu với số liệu hiện có — chạy sau scripts/24_report_v2.py; không chấm test.
+"""Đối chiếu báo cáo và tài liệu với số liệu hiện có — chạy sau scripts/7_report.py; không chấm test.
 
-    python scripts/19_check_report.py            # in kết quả, luôn trả mã 0
-    python scripts/19_check_report.py --strict   # trả mã 1 nếu có khẳng định sai / macro, bảng, hình thiếu
-
-Bốn phần:
-  1. Tái lập: outputs/v2/final/{summary,significance,ablation,beyond,by_k}.csv so với bản đã commit (git HEAD) — độ
-     lệch tuyệt đối lớn nhất (chạy lại đánh giá cuối trên cùng máy kỳ vọng lệch 0).
-  2. Khẳng định bằng chữ trong báo cáo mà macro số liệu không tự cập nhật — mỗi khẳng định là một điều kiện trên CSV
-     của outputs/v2/final/ (H&M), outputs/amazon/final/ (Amazon Beauty), thư mục bosung/ của hai nơi này (Hybrid-CBCF)
-     hoặc audit/v2/*best_configs.json; sai thì in tệp:dòng cần sửa.
-  3. Số chép tay trong tong_hop.md, van_dap.md, README.md: nếu số v2 khác bản đã commit, liệt kê các dòng còn ghi số
-     cũ.
-  4. Mọi macro (\\VRes, \\VSig, ... của H&M; \\ARes, \\ASig, ... của Amazon; \\Res, \\Sig của lịch sử phát triển), mọi
-     bảng \\bangketquaV, \\bangketquaA và hình \\hinhketqua mà báo cáo dùng đều đã được sinh (nếu không, PDF hiện
-     "[chưa có]" / khung "Chưa có số liệu").
-"""
+python scripts/8_check_report.py            # in kết quả, luôn trả mã 0
+python scripts/8_check_report.py --strict   # trả mã 1 nếu có khẳng định sai / macro, bảng, hình thiếu"""
 from __future__ import annotations
 
 import argparse
@@ -95,10 +82,10 @@ def claims(d: Data):
     S2, G2, B2, A2, info, best = d.S2, d.G2, d.B2, d.A2, d.info2, d.best
     K2, SA, GA, BA, AA, KA = d.K2, d.SA, d.GA, d.BA, d.AA, d.KA
     test = lambda: order(S2["NDCG@10_mean"].drop("random", errors="ignore"))  # noqa: E731
-    val = lambda: order(S2["val_NDCG@10"].dropna())  # noqa: E731  mô hình có tinh chỉnh (không có Random)
+    val = lambda: order(S2["val_NDCG@10"].dropna())  # noqa: E731
     verdict = lambda a, b: G2.loc[(a, b), "verdict"]  # noqa: E731
     rel = lambda a, b: abs(G2.loc[(a, b), "rel_diff"])  # noqa: E731
-    abl = lambda: A2["rel"].drop("neumf_f").sort_values()  # noqa: E731  thay đổi khi tắt từng thành phần, tăng dần
+    abl = lambda: A2["rel"].drop("neumf_f").sort_values()  # noqa: E731
     cov = lambda: B2["coverage10"]  # noqa: E731
     personal = lambda: cov().drop(["random", "popularity", "recent_pop"])  # noqa: E731
 
@@ -428,7 +415,7 @@ def check_claims(d: Data) -> tuple[int, int]:
             ok, desc = False, f"{desc} [lỗi đọc dữ liệu: {exc}]"
         if line is None:
             bad += 1
-            print(f"   [CHÚ Ý] {where}: câu đã đổi — cập nhật danh sách khẳng định trong 19_check_report.py")
+            print(f"   [CHÚ Ý] {where}: câu đã đổi — cập nhật danh sách khẳng định trong 8_check_report.py")
         elif not ok:
             bad += 1
             print(f"   [SAI]    {where}: {desc} — sửa câu này theo số mới")

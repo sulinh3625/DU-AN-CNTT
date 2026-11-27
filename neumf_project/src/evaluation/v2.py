@@ -1,5 +1,4 @@
-"""Đánh giá Full Ranking cho giao thức v2: như full_ranking.py nhưng ghi hạng của TỪNG sản phẩm đúng, để tính mọi chỉ số
-@K từ một lần xếp hạng và lưu được hạng theo từng người dùng."""
+"""Đánh giá Full Ranking cho giao thức v2."""
 from __future__ import annotations
 
 import numpy as np

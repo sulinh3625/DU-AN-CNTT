@@ -1,5 +1,4 @@
-"""Dữ liệu cho trang "Kết quả đánh giá": đọc file kết quả của scripts/24_report_v2.py (cùng nguồn với bảng và macro số
-liệu của báo cáo), không tính lại, không có số gõ tay."""
+"""Dữ liệu cho trang "Kết quả đánh giá"."""
 from __future__ import annotations
 
 import json

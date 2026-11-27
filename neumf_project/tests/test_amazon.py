@@ -1,5 +1,4 @@
-"""Dữ liệu đối chứng Amazon Beauty (configs/amazon.yaml, audit/PREREG_amazon.md): adapter, đặc trưng, ngày tính từ day0
-của cấu hình, dữ liệu không có thông tin khách, lệnh amazon-* của run.py — trên file giả nhỏ."""
+"""Dữ liệu đối chứng Amazon Beauty (configs/amazon.yaml, audit/PREREG_amazon.md)."""
 from __future__ import annotations
 
 import gzip
@@ -17,12 +16,12 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "scripts"))
 
 import run  # noqa: E402
-import v2_common as V  # noqa: E402
+import common as V  # noqa: E402
 from src.data_pipeline.adapters.amazon import AmazonAdapter, build_features, category_path  # noqa: E402
 from src.data_pipeline.features import save_catalog, save_daily_sales, to_day  # noqa: E402
 from src.models.hybrid_features import ContentProfile, NeuMFF  # noqa: E402
 
-spec = importlib.util.spec_from_file_location("prep", ROOT / "scripts" / "02_prepare_data.py")
+spec = importlib.util.spec_from_file_location("prep", ROOT / "scripts" / "2_prepare.py")
 prep = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(prep)
 
@@ -116,7 +115,7 @@ def test_amazon_config_uses_hm_configs_without_tuning():
     cfg = V.read_config(ROOT / "configs" / "amazon.yaml")
     assert "tuning" not in cfg and cfg["best_configs"] == "audit/v2/best_configs.json"
     best = json.loads((ROOT / cfg["best_configs"]).read_text(encoding="utf-8"))
-    final = importlib.util.module_from_spec(importlib.util.spec_from_file_location("f", ROOT / "scripts" / "23_final_v2.py"))
+    final = importlib.util.module_from_spec(importlib.util.spec_from_file_location("f", ROOT / "scripts" / "5_final.py"))
     final.__spec__.loader.exec_module(final)
     assert set(final.TUNED) <= set(best)
 
@@ -133,9 +132,9 @@ def test_content_profile_uses_given_onehot_columns():
 
 def test_run_amazon_commands_use_amazon_config(monkeypatch):
     ns = run.argparse.Namespace
-    assert run.cmd_amazon_data(ns()) == [["scripts/21_build_features.py"], ["scripts/02_prepare_data.py"]]
+    assert run.cmd_amazon_data(ns()) == [["scripts/3_features.py"], ["scripts/2_prepare.py"]]
     assert run.cmd_v2_dry_run(ns(max_epochs=1, seeds=[42], command="amazon-dry-run"))[-1] == [
-        "scripts/24_report_v2.py", "--final-dir", "outputs/amazon/dry_run", "--report-dir", ""]
+        "scripts/7_report.py", "--final-dir", "outputs/amazon/dry_run", "--report-dir", ""]
     assert "amazon-tune" not in run.COMMANDS
     got = {}
     monkeypatch.setattr(run, "run_steps", lambda name, steps, config=None: got.setdefault(name, config) and 0)

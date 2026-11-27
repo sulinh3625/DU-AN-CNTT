@@ -1,38 +1,9 @@
 """Entry point tổng hợp cho pipeline NeuMF — gom các lệnh trong scripts/ lại một chỗ.
 
-    python run.py                            # menu: chọn việc bằng số, nhập tham số, xem trước các bước rồi chạy
-    python run.py <lệnh> -h                  # tham số của một lệnh
-
-Giao thức v2 (audit/PREREG_v2.md) — kết quả chính của báo cáo:
-    python run.py sample-hm                  # mẫu phát triển (khối 0) -> data/processed/hm/mau_phat_trien.csv (1 lần)
-    python run.py v2-data                    # mẫu kiểm định (khối 2) + đặc trưng + prepare (1 lần, cần dữ liệu gốc)
-    python run.py prepare                    # gộp màu theo product_code, k-core -> outputs/data/<mẫu>.csv.gz + MD5
-    python run.py all                        # chạy qua đêm: prepare -> tinh chỉnh mọi mô hình -> chạy thử đánh giá cuối
-    python run.py all --final --reason "..." #   ... rồi chấm luôn tập kiểm thử ở cuối (mở đúng một lần)
-    python run.py v2-tune --resume           # chỉ tinh chỉnh trên tập xác thực của mẫu phát triển (5–6 giờ CPU)
-    python run.py v2-dry-run                 # thử trọn đường ống đánh giá cuối trên tập xác thực (không chấm test)
-    python run.py v2-final --reason "..."    # đánh giá cuối trên tập kiểm thử của mẫu kiểm định (mở đúng một lần)
-    python run.py v2-report                  # chỉ tính lại kiểm định, bảng, hình, macro từ outputs/v2/final/
-    python run.py check-report               # đối chiếu câu chữ báo cáo + tài liệu với số liệu hiện có
-    python run.py demo                       # H&M và Amazon (chọn trên thanh đầu trang), chỉ nạp checkpoint
-
-Dữ liệu đối chứng Amazon Beauty (audit/PREREG_amazon.md) — cùng script, NEUMF_CONFIG=configs/amazon.yaml:
-    python run.py amazon-data                # đặc trưng + dữ liệu đã lọc (cần data/raw/amazon/)
-    python run.py amazon-dry-run             # thử trọn đường ống trên tập xác thực (không chấm test)
-    python run.py amazon-final --reason "..."  # đánh giá cuối Amazon (sau khi commit audit/PREREG_amazon.md)
-    python run.py amazon-report              # kiểm định, bảng, hình, macro LaTeX (content/tables/amazon/) từ outputs/amazon/final/
-
-Bổ sung sau đánh giá cuối — mô hình lai truyền thống Hybrid-CBCF (audit/PREREG_bosung.md, scripts/25_bosung.py):
-    python run.py bosung-tune                # chọn cách kết hợp trên tập xác thực của mẫu phát triển H&M (dưới 1 phút)
-    python run.py bosung-dry-run             # thử đường ống trên tập xác thực (không chấm test)
-    python run.py bosung-final --reason "..."          # chấm tập kiểm thử H&M một lần, rồi xuất lại bảng (24)
-    python run.py amazon-bosung-final --reason "..."   # như trên cho Amazon Beauty (cách kết hợp chọn trên H&M)
-
-Mỗi lệnh chỉ gọi lần lượt các script tương ứng trong scripts/ (chi tiết: README.md mục 3) — file này không chứa logic
-huấn luyện/đánh giá. Trước mỗi bước in thanh tiến trình [████░░░░] k/N kèm thời gian đã chạy; bước nào lỗi thì dừng
-ngay, in bảng tóm tắt (✓ xong / ✗ lỗi / ⏹ bị ngắt, thời gian từng bước) và lệnh chạy lại riêng bước đó — thông báo lỗi
-của script nằm ngay phía trên bảng.
-"""
+python run.py                            # menu: chọn việc bằng số, nhập tham số, xem trước các bước rồi chạy
+python run.py <lệnh> -h                  # tham số của một lệnh
+python run.py sample-hm                  # mẫu phát triển (khối 0) -> data/processed/hm/mau_phat_trien.csv (1 lần)
+python run.py v2-data                    # mẫu kiểm định (khối 2) + đặc trưng + prepare (1 lần, cần dữ liệu gốc)"""
 from __future__ import annotations
 
 import argparse
@@ -120,7 +91,7 @@ def run_steps(name: str, steps: list[list[str]], config: str = CONFIGS["hm"]) ->
 
 
 def cmd_sample_hm(args):
-    return [_s("00_sample_hm.py", "--block", args.block)]
+    return [_s("1_sample.py", "--block", args.block)]
 
 
 def cmd_demo(args):
@@ -128,64 +99,63 @@ def cmd_demo(args):
 
 
 def cmd_check_report(args):
-    return [_s("19_check_report.py", *(["--strict"] if args.strict else []))]
+    return [_s("8_check_report.py", *(["--strict"] if args.strict else []))]
 
 
 def cmd_v2_data(args):
     """Mẫu kiểm định (khối 2, khách khác hẳn mẫu phát triển), đặc trưng danh mục/doanh số theo ngày, rồi file dữ liệu đã
     lọc của mọi mẫu."""
-    return [_s("00_sample_hm.py", "--block", 2), _s("21_build_features.py"), _s("02_prepare_data.py")]
+    return [_s("1_sample.py", "--block", 2), _s("3_features.py"), _s("2_prepare.py")]
 
 
 def cmd_prepare(args):
     """File dữ liệu đã lọc (gộp màu theo product_code, k-core trước mốc kiểm thử) + MD5 cho mọi mô hình v2."""
-    return [_s("02_prepare_data.py", *(["--sample", args.sample] if args.sample else []))]
+    return [_s("2_prepare.py", *(["--sample", args.sample] if args.sample else []))]
 
 
 def cmd_v2_tune(args):
-    return [_s("22_tune_v2.py", "--model", *args.model, *(["--resume"] if args.resume else []))]
+    return [_s("4_tune.py", "--model", *args.model, *(["--resume"] if args.resume else []))]
 
 
 def cmd_amazon_data(args):
-    """Amazon Beauty: catalog, số đánh giá theo ngày, thông tin sản phẩm (21) rồi file dữ liệu đã lọc + MD5 (02)."""
-    return [_s("21_build_features.py"), _s("02_prepare_data.py")]
+    """Amazon Beauty: catalog, số đánh giá theo ngày, thông tin sản phẩm (3) rồi file dữ liệu đã lọc + MD5 (2)."""
+    return [_s("3_features.py"), _s("2_prepare.py")]
 
 
 def cmd_v2_dry_run(args):
-    """Chạy thử 23_final_v2.py trên tập xác thực của mẫu phát triển (1 epoch) rồi 24_report_v2.py, không ghi vào báo
+    """Chạy thử 5_final.py trên tập xác thực của mẫu phát triển (1 epoch) rồi 7_report.py, không ghi vào báo
     cáo."""
     out = "outputs/amazon/dry_run" if _amazon(args) else "outputs/v2/dry_run"
-    return [_s("23_final_v2.py", "--dry-run", "--max-epochs", args.max_epochs, "--seeds", *args.seeds),
-            _s("24_report_v2.py", "--final-dir", out, "--report-dir", "")]
+    return [_s("5_final.py", "--dry-run", "--max-epochs", args.max_epochs, "--seeds", *args.seeds),
+            _s("7_report.py", "--final-dir", out, "--report-dir", "")]
 
 
 def cmd_v2_final(args):
     """Đánh giá cuối trên tập kiểm thử của mẫu kiểm định (khoá kiểm thử v2), rồi kiểm định + xuất báo cáo."""
-    return [_s("23_final_v2.py", "--reason", args.reason, *(["--seeds", *args.seeds] if args.seeds else [])),
-            _s("24_report_v2.py")]
+    return [_s("5_final.py", "--reason", args.reason, *(["--seeds", *args.seeds] if args.seeds else [])),
+            _s("7_report.py")]
 
 
 def cmd_v2_report(args):
-    return [_s("24_report_v2.py")]
+    return [_s("7_report.py")]
 
 
 def cmd_bosung_tune(args):
-    return [_s("25_bosung.py", "tune")]
+    return [_s("6_bosung.py", "tune")]
 
 
 def cmd_bosung_dry_run(args):
-    return [_s("25_bosung.py", "final", "--dry-run")]
+    return [_s("6_bosung.py", "final", "--dry-run")]
 
 
 def cmd_bosung_final(args):
-    """Mô hình lai truyền thống: chấm tập kiểm thử một lần (khoá kiểm thử của 25_bosung.py), rồi xuất lại bảng (24)."""
-    return [_s("25_bosung.py", "final", "--reason", args.reason), _s("24_report_v2.py")]
+    """Mô hình lai truyền thống: chấm tập kiểm thử một lần (khoá kiểm thử của 6_bosung.py), rồi xuất lại bảng (7)."""
+    return [_s("6_bosung.py", "final", "--reason", args.reason), _s("7_report.py")]
 
 
 def cmd_all(args):
-    """Chạy qua đêm: file dữ liệu đã lọc -> tinh chỉnh mọi mô hình (--resume: bị ngắt thì chạy lại lệnh là đi tiếp) ->
-    chạy thử đánh giá cuối trên tập xác thực (bắt lỗi đường ống, không chấm test). --final: chấm luôn tập kiểm thử ở
-    cuối — khoá kiểm thử của 23_final_v2.py vẫn áp dụng (PREREG_v2 đã commit, tree sạch, cùng mã băm lúc tinh chỉnh)."""
+    """Chạy qua đêm: file dữ liệu đã lọc -> tinh chỉnh mọi mô hình (--resume: bị ngắt thì chạy lại lệnh là đi tiếp)
+    -> chạy thử đánh giá cuối trên tập xác thực (bắt lỗi đường ống, không chấm test)."""
     if args.final and not args.reason.strip():
         raise SystemExit("all --final cần --reason (ghi vào audit/test_access_log.csv)")
     ns = argparse.Namespace
@@ -252,41 +222,41 @@ def main():
     def add(name, text):
         return sub.add_parser(name, help=text, description=text)
 
-    add("sample-hm", "Lấy mẫu khách theo khối từ transactions_train.csv gốc (00)") \
+    add("sample-hm", "Lấy mẫu khách theo khối từ transactions_train.csv gốc (1)") \
         .add_argument("--block", type=int, default=0, help="0 = mẫu phát triển (mặc định), 2 = mẫu kiểm định")
-    add("v2-data", "Mẫu kiểm định (khối 2) + đặc trưng + dữ liệu đã lọc (00 --block 2, 21, 02)")
-    add("prepare", "Gộp màu theo product_code, k-core, xuất outputs/data/*.csv.gz + MD5 (02)") \
+    add("v2-data", "Mẫu kiểm định (khối 2) + đặc trưng + dữ liệu đã lọc (1 --block 2, 3, 2)")
+    add("prepare", "Gộp màu theo product_code, k-core, xuất outputs/data/*.csv.gz + MD5 (2)") \
         .add_argument("--sample", choices=["dev", "holdout"], help="chỉ một mẫu (mặc định: mọi mẫu)")
-    p = add("all", "Chạy qua đêm: prepare → tinh chỉnh mọi mô hình → chạy thử đánh giá cuối (02, 22, 23 --dry-run, 24)")
+    p = add("all", "Chạy qua đêm: prepare → tinh chỉnh mọi mô hình → chạy thử đánh giá cuối (2, 4, 5 --dry-run, 7)")
     p.add_argument("--final", action="store_true",
-                   help="chấm luôn tập kiểm thử ở cuối (23, 24) — cần --reason và audit/PREREG_v2.md đã commit")
+                   help="chấm luôn tập kiểm thử ở cuối (5, 7) — cần --reason và audit/PREREG_v2.md đã commit")
     p.add_argument("--reason", default="", help="lý do chấm test (ghi vào audit/test_access_log.csv), dùng với --final")
-    p = add("v2-tune", "Tinh chỉnh trên tập xác thực của mẫu phát triển (22)")
+    p = add("v2-tune", "Tinh chỉnh trên tập xác thực của mẫu phát triển (4)")
     p.add_argument("--model", nargs="+", default=["all"], help="mặc định: mọi mô hình")
     p.add_argument("--resume", action="store_true", help="bỏ qua cấu hình đã có trong audit/v2/tuning_log.csv")
-    p = add("v2-dry-run", "Chạy thử đánh giá cuối trên tập xác thực (23 --dry-run, 24; không chấm test)")
+    p = add("v2-dry-run", "Chạy thử đánh giá cuối trên tập xác thực (5 --dry-run, 7; không chấm test)")
     p.add_argument("--max-epochs", type=int, default=1)
     p.add_argument("--seeds", nargs="+", type=int, default=[42])
-    p = add("v2-final", "Đánh giá cuối trên tập kiểm thử của mẫu kiểm định (23) + báo cáo (24)")
+    p = add("v2-final", "Đánh giá cuối trên tập kiểm thử của mẫu kiểm định (5) + báo cáo (7)")
     p.add_argument("--reason", required=True, help="Lý do chấm test (ghi vào audit/test_access_log.csv)")
     p.add_argument("--seeds", nargs="+", type=int, default=None, help="mặc định: 5 seed của configs/v2.yaml")
-    add("v2-report", "Kiểm định, bảng, hình, macro LaTeX từ outputs/v2/final (24)")
-    add("check-report", "Đối chiếu câu chữ báo cáo/tài liệu với số liệu hiện có (19)") \
+    add("v2-report", "Kiểm định, bảng, hình, macro LaTeX từ outputs/v2/final (7)")
+    add("check-report", "Đối chiếu câu chữ báo cáo/tài liệu với số liệu hiện có (8)") \
         .add_argument("--strict", action="store_true", help="trả mã lỗi nếu có khẳng định sai")
     add("demo", "Chạy giao diện demo (http://localhost:8000)")
-    add("amazon-data", "Amazon: đặc trưng + dữ liệu đã lọc + MD5 (21, 02) — cần data/raw/amazon/")
-    p = add("amazon-dry-run", "Amazon: chạy thử đánh giá cuối trên tập xác thực (23 --dry-run, 24; không chấm test)")
+    add("amazon-data", "Amazon: đặc trưng + dữ liệu đã lọc + MD5 (3, 2) — cần data/raw/amazon/")
+    p = add("amazon-dry-run", "Amazon: chạy thử đánh giá cuối trên tập xác thực (5 --dry-run, 7; không chấm test)")
     p.add_argument("--max-epochs", type=int, default=1)
     p.add_argument("--seeds", nargs="+", type=int, default=[42])
-    p = add("amazon-final", "Amazon: đánh giá cuối trên tập kiểm thử (23) + kiểm định, ket_qua.txt (24)")
+    p = add("amazon-final", "Amazon: đánh giá cuối trên tập kiểm thử (5) + kiểm định, ket_qua.txt (7)")
     p.add_argument("--reason", required=True, help="Lý do chấm test (ghi vào audit/test_access_log.csv)")
     p.add_argument("--seeds", nargs="+", type=int, default=None, help="mặc định: 5 seed của configs/amazon.yaml")
     add("amazon-report", "Amazon: kiểm định, hình, ket_qua.txt, bảng/macro LaTeX (content/tables/amazon/) từ "
-        "outputs/amazon/final (24)")
-    add("bosung-tune", "Hybrid-CBCF: chọn cách kết hợp trên tập xác thực của mẫu phát triển H&M (25 tune)")
-    add("bosung-dry-run", "Hybrid-CBCF: thử đường ống trên tập xác thực (25 final --dry-run; không chấm test)")
+        "outputs/amazon/final (7)")
+    add("bosung-tune", "Hybrid-CBCF: chọn cách kết hợp trên tập xác thực của mẫu phát triển H&M (6 tune)")
+    add("bosung-dry-run", "Hybrid-CBCF: thử đường ống trên tập xác thực (6 final --dry-run; không chấm test)")
     for name, where in (("bosung-final", "H&M"), ("amazon-bosung-final", "Amazon")):
-        add(name, f"Hybrid-CBCF: chấm tập kiểm thử {where} một lần (25 final) + báo cáo (24)") \
+        add(name, f"Hybrid-CBCF: chấm tập kiểm thử {where} một lần (6 final) + báo cáo (7)") \
             .add_argument("--reason", required=True, help="Lý do chấm test (ghi vào audit/test_access_log.csv)")
 
     argv = sys.argv[1:]

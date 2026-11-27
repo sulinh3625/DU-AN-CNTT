@@ -193,8 +193,7 @@ class NeuMFF(nn.Module):
 
 
 class MaskedScorer(nn.Module):
-    """Bọc mô hình PyTorch chỉ dùng ID: item không có dữ liệu huấn luyện của giai đoạn (scoreable = False) nhận điểm
-    -inf, tức bị xếp cuối (thứ tự giữa chúng do khoá phá hoà quyết định)."""
+    """Bọc mô hình PyTorch chỉ dùng ID."""
 
     def __init__(self, model: nn.Module, scoreable, n_model_items: int):
         super().__init__()
@@ -245,9 +244,7 @@ CONTENT_ONEHOT = {"product_group_name": 1, "index_group_no": 8, "garment_group_n
 
 
 class ContentProfile:
-    """Gợi ý theo nội dung (không dùng ID, không cần lấy mẫu âm): vector sản phẩm = [vector văn bản ; one-hot nhóm sản
-    phẩm, nhóm chỉ mục, nhóm may mặc], chuẩn hoá L2; hồ sơ user = trung bình (có trọng số theo độ mới nếu đặt
-    half_life ngày) vector các sản phẩm đã mua trong tập huấn luyện; điểm = cosine."""
+    """Gợi ý theo nội dung (không dùng ID, không cần lấy mẫu âm)."""
 
     def __init__(self, item_text, item_cats, item_cards, train_df, n_users: int, cutoff: int,
                  half_life: float | None = None, onehot_cols=None):

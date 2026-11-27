@@ -1,30 +1,7 @@
 """Phân tích kết quả giao thức v2 và xuất sang báo cáo (audit/PREREG_v2.md mục 6–7).
 
-    python scripts/24_report_v2.py                     # sau scripts/23_final_v2.py
-    python scripts/24_report_v2.py --final-dir outputs/v2/dry_run --report-dir <thư mục tạm>   # thử trên bản chạy thử
-
-Đọc outputs/v2/final/ (23_final_v2.py) và audit/v2/best_configs.json (tinh chỉnh trên mẫu phát triển). Tính:
-- trung bình ± độ lệch chuẩn qua seed của mọi chỉ số;
-- họ 10 so sánh đã đăng ký: NDCG@10 theo người dùng trung bình qua seed, Wilcoxon signed-rank, khoảng tin cậy bootstrap
-  ghép cặp 95% (10.000 lần, seed 0), hiệu chỉnh Holm; "tốt hơn" khi p Holm < 0,05, CI không chứa 0 và chênh lệch tương
-  đối >= 5%;
-- NDCG/Recall/HR/Precision@K với K = 5, 10, 15, 20, tính lại từ hạng của từng sản phẩm đúng đã lưu (cột ranks của
-  per_user.csv.gz) — không chấm lại tập kiểm thử; @5/@10/@20 trùng khớp số của lần đánh giá cuối (kiểm tra khi chạy);
-  bảng và ket_qua.txt chỉ trình bày K = 10, 15, 20 (K_BAOCAO);
-- ablation NeuMF-F (seed 42), mô tả top-10 (độ phủ), số epoch và thời gian huấn luyện.
-Không còn sản phẩm mới (một sản phẩm = product_code, ứng viên chỉ gồm sản phẩm đã có cặp huấn luyện) nên không còn phân
-tích theo nhóm sản phẩm cũ/mới.
-Ghi: <final-dir>/{summary,significance,ablation,beyond,by_k}.csv, hình <final-dir>/figures/*.png; nếu có
---report-dir (mặc định: Report DACNTT) thì chép hình sang media/figures/v2/ và ghi bảng + macro LaTeX vào content/tables/v2/.
-Mọi số trong báo cáo lấy từ các file này, không gõ tay.
-Amazon Beauty (NEUMF_CONFIG=configs/amazon.yaml, `python run.py amazon-report`): đọc outputs/amazon/final/, ghi bảng +
-macro (\\ARes, \\ASig, ...) vào content/tables/amazon/ và hình vào media/figures/amazon/ — không đụng bảng của H&M.
-Bổ sung sau đánh giá cuối (audit/PREREG_bosung.md): nếu có <final-dir>/bosung/ (scripts/25_bosung.py) thì thêm mô hình lai
-truyền thống Hybrid-CBCF (đánh dấu *) vào bảng kết quả theo ba nhóm baseline, bảng theo K, bảng độ phủ và bảng tinh
-chỉnh, và kiểm định riêng họ bổ sung B1–B2 (Holm trong họ) -> <final-dir>/bosung/{summary,significance,by_k,beyond}.csv,
-bảng tab_*_sigbs.tex, macro \\VSig{B1}{...}, \\VRes{Hyb}{...}. Các tệp, thứ hạng và họ 10 so sánh của 14 mô hình đăng ký
-trước giữ nguyên.
-"""
+python scripts/7_report.py                     # sau scripts/5_final.py
+python scripts/7_report.py --final-dir outputs/v2/dry_run --report-dir <thư mục tạm>   # thử trên bản chạy thử"""
 from __future__ import annotations
 
 import argparse
@@ -43,8 +20,8 @@ from matplotlib.lines import Line2D
 from matplotlib.ticker import FuncFormatter, MaxNLocator
 from scipy.stats import wilcoxon
 
-import v2_common as V
-from src.evaluation.metrics import multi_ranking_metrics  # noqa: E402  (đường dẫn src do v2_common thêm)
+import common as V
+from src.evaluation.metrics import multi_ranking_metrics  # noqa: E402
 
 PROJECT_ROOT = V.PROJECT_ROOT
 AUDIT = V.AUDIT
@@ -82,7 +59,7 @@ K_METRICS = ("NDCG", "Recall", "HR", "Precision")
 NOT_SIG = "không khác biệt có ý nghĩa"
 N_BOOT, BOOT_SEED, ALPHA, MIN_REL = 10_000, 0, 0.05, 0.05
 INK, INK2, MUTED, GRID, SURFACE = "#0b0b0b", "#52514e", "#898781", "#e1e0d9", "#fcfcfb"
-HEADER = "% Sinh tự động bởi neumf_project/scripts/24_report_v2.py — KHÔNG sửa tay."
+HEADER = "% Sinh tự động bởi neumf_project/scripts/7_report.py — KHÔNG sửa tay."
 TEXT = {
     "hm": dict(test="tập kiểm thử của mẫu kiểm định", test_fig="Tập kiểm thử của mẫu kiểm định H&M",
                test_cap="tập kiểm thử của mẫu kiểm định H\\&M", short="H\\&M",
@@ -133,7 +110,7 @@ def verdict(p_holm: float, lo: float, hi: float, rel: float, diff: float) -> str
 def load(final_dir: Path):
     seeds = sorted(int(p.name[4:]) for p in final_dir.glob("seed*") if (p / "results.json").exists())
     if not seeds:
-        raise SystemExit(f"Chưa có kết quả trong {final_dir} — chạy scripts/23_final_v2.py trước.")
+        raise SystemExit(f"Chưa có kết quả trong {final_dir} — chạy scripts/5_final.py trước.")
     res = {s: json.loads((final_dir / f"seed{s}" / "results.json").read_text(encoding="utf-8")) for s in seeds}
     per = pd.concat([pd.read_csv(final_dir / f"seed{s}" / "per_user.csv.gz") for s in seeds], ignore_index=True)
     models = [m for m in MODELS if all(m in res[s]["results"] for s in seeds)]
@@ -141,7 +118,7 @@ def load(final_dir: Path):
 
 
 def load_supplement(final_dir: Path, seeds, res: dict):
-    """Kết quả bổ sung của scripts/25_bosung.py trong <final-dir>/bosung/."""
+    """Kết quả bổ sung của scripts/6_bosung.py trong <final-dir>/bosung/."""
     d = final_dir / "bosung"
     if not (d / "results.json").exists():
         return None, pd.DataFrame(), res
@@ -355,9 +332,7 @@ def grid(colspec: str) -> str:
 
 def table(label: str, caption: str, colspec: str, header: list[str] | str, rows: list[list[str]],
           colsep: str = "", size: str = "\\small") -> str:
-    """Bảng kẻ lưới đầy đủ: | giữa mọi cột, \\hline sau mọi hàng. header: danh sách ô của một hàng tiêu đề, hoặc chuỗi
-    LaTeX của nhiều hàng tiêu đề (tự kết thúc bằng \\hline). colsep: \\tabcolsep riêng cho bảng rộng (vd. "4pt");
-    size: cỡ chữ của bảng (không nhỏ hơn \\footnotesize, tức 10,8pt ở cỡ chữ 13pt của báo cáo)."""
+    """Bảng kẻ lưới đầy đủ: | giữa mọi cột, \\hline sau mọi hàng."""
     body = "\n".join("        " + " & ".join(r) + r" \\ \hline" for r in rows)
     head = header if isinstance(header, str) else f"        {' & '.join(header)} \\\\ \\hline"
     sep = f"\\setlength{{\\tabcolsep}}{{{colsep}}}" if colsep else ""
@@ -370,7 +345,7 @@ def table(label: str, caption: str, colspec: str, header: list[str] | str, rows:
 
 
 class Macros:
-    """Macro số liệu \\<P>Res{mô hình}{chỉ số}, ... với P = V (H&M: vres-..., \\VRes) hoặc A (Amazon: ares-..., \\ARes)."""
+    """Macro số liệu \\<P>Res{mô hình}{chỉ số}, với P = V (H&M) hoặc A (Amazon)."""
     FAMILIES = ("res", "sd", "val", "rank", "sig", "abl", "bey", "data", "cfg")
 
     def __init__(self, prefix: str = "v"):
@@ -448,8 +423,7 @@ def vn_date(iso: str) -> str:
 
 
 def export_data_amazon(m: Macros, tables: Path, info: dict, entry: dict) -> None:
-    """Quy mô dữ liệu Amazon Beauty: một bộ, chia theo thời gian (xác thực chỉ để chọn số epoch). info: data.json của
-    đánh giá cuối; entry: mục của file đã lọc trong manifest.json (số dòng gốc, số liệu trước mốc kiểm thử)."""
+    """Quy mô dữ liệu Amazon Beauty: một bộ, chia theo thời gian (xác thực chỉ để chọn số epoch)."""
     before = entry.get("before_test_start", {})
     k, vs, ts = V.CFG["k_core"], vn_date(V.CFG["val_start"]), vn_date(V.CFG["test_start"])
     rows = [
@@ -488,7 +462,7 @@ def export_data_amazon(m: Macros, tables: Path, info: dict, entry: dict) -> None
 
 
 def export_data(m: Macros, tables: Path, info_a: dict, info_b: dict | None) -> None:
-    """Quy mô dữ liệu H&M. info_b = None trước đánh giá cuối (mẫu kiểm định chưa được dựng)."""
+    """Quy mô dữ liệu H&M."""
     ta, tb = info_a, info_b or {}
 
     rows = [
@@ -522,8 +496,7 @@ def export_data(m: Macros, tables: Path, info_a: dict, info_b: dict | None) -> N
 
 
 def export_tuning(m: Macros, tables: Path, best: dict, bs: dict | None = None) -> None:
-    """Cấu hình tốt nhất trên tập xác thực của mẫu A + thống kê nhật ký tinh chỉnh. bs: bosung_best_configs.json (mô
-    hình bổ sung, dòng đánh dấu *; nhật ký riêng bosung_tuning_log.csv -> bảng các cách kết hợp)."""
+    """Cấu hình tốt nhất trên tập xác thực của mẫu A + thống kê nhật ký tinh chỉnh."""
     rows = []
     bs = bs or {}
     for mm in [x for x in MODELS if x in best] + [x for x in SUP if x in bs]:
@@ -635,8 +608,7 @@ def sig_rows(m: Macros, sig: pd.DataFrame) -> list[list[str]]:
 
 
 def export_demo(m: Macros) -> None:
-    """Số đo của hệ thống demo (Bảng 3.7) từ outputs/demo/benchmark.json (demo/scripts/benchmark_demo.py).
-    Macro \\VData{demoH|demoA}{...} và \\VData{demo}{cpu, users}; bỏ qua nếu chưa đo."""
+    """Số đo của hệ thống demo (Bảng 3.7) từ outputs/demo/benchmark.json (demo/scripts/benchmark_demo.py)."""
     path = PROJECT_ROOT / "outputs" / "demo" / "benchmark.json"
     if not path.exists():
         return
@@ -656,8 +628,7 @@ def export_demo(m: Macros) -> None:
 
 
 def export_supplement(m: Macros, tables: Path, sig_bs: pd.DataFrame, sup: dict) -> None:
-    """Phân tích bổ sung (audit/PREREG_bosung.md): kiểm định họ B1–B2 (Holm trong họ), thông tin lần chấm bổ sung và đối
-    chiếu ba thành phần của Hybrid-CBCF với lần đánh giá cuối đã đăng ký."""
+    """Phân tích bổ sung (audit/PREREG_bosung.md)."""
     tab, lab = TEXT["tab"], TEXT["label"]
     if not sig_bs.empty:
         rows = sig_rows(m, sig_bs)
@@ -681,8 +652,7 @@ def export_supplement(m: Macros, tables: Path, sig_bs: pd.DataFrame, sup: dict) 
 
 def export_results(m: Macros, tables: Path, seeds, summary, sig, abl, bey, display=None,
                    bey_display=None) -> None:
-    """summary, sig, abl, bey: 14 mô hình đăng ký trước (thứ hạng \\<P>Rank tính trên đây). display, bey_display: thêm
-    mô hình bổ sung (SUP, đánh dấu *) — dùng cho bảng kết quả theo ba nhóm và bảng độ phủ."""
+    """summary, sig, abl, bey: 14 mô hình đăng ký trước (thứ hạng \\<P>Rank tính trên đây)."""
     n_seed = len(seeds)
     models = summary["model"].tolist()
     rank = {mm: i + 1 for i, mm in enumerate(models)}
@@ -934,8 +904,7 @@ def plot_val_vs_test(summary: pd.DataFrame, fig_dir: Path):
 def text_report(seeds, summary, sig, abl, bey, info_b, bk: pd.DataFrame | None = None, sup: dict | None = None,
                 display: pd.DataFrame | None = None, sig_bs: pd.DataFrame | None = None,
                 bk_all: pd.DataFrame | None = None) -> str:
-    """Bản tóm tắt dễ đọc (<final-dir>/ket_qua.txt): cùng số với các file CSV, không tính lại gì. sup, display, sig_bs,
-    bk_all: phân tích bổ sung (mục 6), nếu có."""
+    """Bản tóm tắt dễ đọc (<final-dir>/ket_qua.txt): cùng số với các file CSV, không tính lại gì."""
     f = lambda x, nd=5: "—" if pd.isna(x) else vn_plain(x, nd)  # noqa: E731
     pc = lambda x: "—" if pd.isna(x) else f"{x * 100:+.1f}%".replace(".", ",")  # noqa: E731
     s = summary.set_index("model")
@@ -1024,7 +993,7 @@ def text_report(seeds, summary, sig, abl, bey, info_b, bk: pd.DataFrame | None =
                    f"{str(sup.get('provenance', {}).get('git_commit') or '')[:7]}. Tệp đặc trưng văn bản không nằm trong "
                    "git, mỗi máy tự dựng, nên Content có thể lệch nhẹ; UserKNN, ItemKNN không dùng đặc trưng."])
     out.append("Nguồn: summary.csv, significance.csv, ablation.csv, beyond.csv"
-               f"{'' if bk is None or bk.empty else ', by_k.csv'} cùng thư mục (scripts/24_report_v2.py)"
+               f"{'' if bk is None or bk.empty else ', by_k.csv'} cùng thư mục (scripts/7_report.py)"
                + ("; phân tích bổ sung: bosung/." if sup is not None else "."))
     return "\n".join(out) + "\n"
 

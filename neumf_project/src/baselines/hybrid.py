@@ -1,6 +1,4 @@
-"""Mô hình lai truyền thống Hybrid-CBCF (audit/PREREG_bosung.md): kết hợp ở mức điểm dự đoán ba mô hình gợi ý truyền
-thống — lọc nội dung (Content), lọc cộng tác theo người dùng (UserKNN) và theo sản phẩm (ItemKNN) — theo mô hình lai
-của Hồ Thị Linh (2023, chương 3), điều chỉnh cho phản hồi ẩn và xếp hạng Top-K."""
+"""Mô hình lai truyền thống Hybrid-CBCF (audit/PREREG_bosung.md)."""
 from __future__ import annotations
 
 import numpy as np
@@ -26,8 +24,8 @@ def combine(x: np.ndarray, fusion: str, weights=None) -> np.ndarray:
 
 
 class TraditionalHybrid:
-    """score_items(u, items): điểm lai trên `items` — tập ứng viên của u; chuẩn hoá min–max lấy trên chính tập này, như
-    LateFusion-F lúc chấm. components: ba đối tượng có score_items, theo thứ tự COMPONENTS."""
+    """score_items(u, items): điểm lai trên `items` — tập ứng viên của u; chuẩn hoá min–max lấy trên chính tập này,
+    như LateFusion-F lúc chấm."""
 
     def __init__(self, components, fusion: str, weights=None):
         if fusion not in FUSIONS:
@@ -69,8 +67,7 @@ def pair_differences(features: list[np.ndarray], labels: list[np.ndarray], n_neg
 
 def fit_weights(features: list[np.ndarray], labels: list[np.ndarray], n_neg: int = N_NEG, seed: int = PAIR_SEED,
                 C: float = C_REG) -> np.ndarray:
-    """Trọng số w của cách kết hợp 'lr': hồi quy logistic (scikit-learn, lbfgs — tất định) trên hiệu đặc trưng theo cặp
-    (pair_differences), không hệ số chặn."""
+    """Trọng số w của cách kết hợp 'lr'."""
     from sklearn.linear_model import LogisticRegression
 
     X, y = pair_differences(features, labels, n_neg, seed)

@@ -99,9 +99,8 @@ def load_pairs(path: str | Path, md5: str) -> pd.DataFrame:
 
 def build_from_pairs(pairs: pd.DataFrame, val_start: str, test_start: str, catalog: Catalog, sales: DailySales,
                      customers_path: str | Path | None = None, with_test: bool = False, day0=DAY0) -> DataV2:
-    """Dựng DataV2 từ bảng cặp của prepare_pairs: khách và sản phẩm lấy từ các cặp in_kcore; sản phẩm đúng lấy từ mọi
-    cặp của các khách đó. catalog, sales phải là bản đã gộp theo sản phẩm (group_by_product) — mã sản phẩm của chúng
-    là item_id. day0 phải trùng day0 lúc prepare_pairs (first_day) và lúc dựng sales."""
+    """Dựng DataV2 từ bảng cặp của prepare_pairs: khách và sản phẩm lấy từ các cặp in_kcore; sản phẩm đúng lấy từ
+    mọi cặp của các khách đó."""
     vd, td = int(to_day(np.datetime64(val_start), day0)), int(to_day(np.datetime64(test_start), day0))
     if not vd < td:
         raise ValueError(f"Cần val_start < test_start, nhận {val_start} / {test_start}")
@@ -142,8 +141,7 @@ def build_from_pairs(pairs: pd.DataFrame, val_start: str, test_start: str, catal
 
 def build_v2(sample_path: str | Path, val_start: str, test_start: str, k_core: int, catalog: Catalog,
              sales: DailySales, customers_path: str | Path | None = None, with_test: bool = False) -> DataV2:
-    """H&M trong bộ nhớ: HMAdapter -> prepare_pairs (gộp màu theo product_code) -> build_from_pairs. catalog, sales là
-    bản theo article_id (cache của 21_build_features.py); hàm tự gộp theo sản phẩm."""
+    """H&M trong bộ nhớ: HMAdapter -> prepare_pairs (gộp màu theo product_code) -> build_from_pairs."""
     pairs = prepare_pairs(HMAdapter(sample_path).load_events(), test_start, k_core, item_map=product_code_of)
     data = build_from_pairs(pairs, val_start, test_start, *group_by_product(catalog, sales), customers_path,
                             with_test=with_test)

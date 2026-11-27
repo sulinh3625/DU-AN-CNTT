@@ -25,14 +25,13 @@ def vctx():
     """Checkpoint seed 42 của đánh giá cuối (outputs/v2/final/seed42)."""
     if not v2_available():
         pytest.skip("Chưa có outputs/v2/final/seed42 kèm checkpoint tạo từ file dữ liệu đã lọc hiện tại — chạy "
-                    "scripts/23_final_v2.py")
+                    "scripts/5_final.py")
     return DataContext(load_customers=False)
 
 
 def test_metrics_match_per_user_file(vctx):
     """Demo đối chiếu với outputs/v2/final/seed42/per_user.csv.gz (số của Chương 4) và, khi đã chấm bổ sung,
-    bosung/per_user.csv.gz của mô hình lai truyền thống: số đã lưu trả kèm luôn đúng; hạng tính lại trùng số đã lưu
-    (mô hình trong TEXT_FREE thì bắt buộc), hoặc demo báo lệch kèm lý do."""
+    bosung/per_user.csv.gz của mô hình lai truyền thống."""
     per = pd.read_csv(V2_DIR / f"seed{SEED}" / "per_user.csv.gz")
     bs = V2_DIR / "bosung" / "per_user.csv.gz"
     if bs.exists():
@@ -122,8 +121,7 @@ def test_neighbors_are_sorted_and_counted(vctx):
 
 
 def test_similar_items_follow_itemknn(vctx):
-    """Sản phẩm tương tự của thẻ chi tiết = láng giềng ItemKNN: độ tương đồng giảm dần, khớp công thức cosine có hệ số
-    co, không gồm chính sản phẩm; sản phẩm H&M có mô tả gốc."""
+    """Sản phẩm tương tự của thẻ chi tiết = láng giềng ItemKNN."""
     knn = vctx.scorers["ItemKNN"].fn
     X = knn.X.tocsc()
     i = int(np.argmax(vctx.train_item_counts))
@@ -160,8 +158,7 @@ def test_dashboard_reads_result_files(vctx):
 
 
 def test_results_from_other_data_are_refused(tmp_path, monkeypatch):
-    """Kết quả tạo từ dữ liệu khác file đã lọc hiện tại (thiếu / lệch data_md5) không được nạp: demo không dựng tập kiểm
-    thử của mẫu kiểm định cho một kết quả cũ."""
+    """Kết quả tạo từ dữ liệu khác file đã lọc hiện tại (thiếu / lệch data_md5) không được nạp."""
     V = data_context.V
     (tmp_path / "seed42").mkdir()
     (tmp_path / "seed42" / "results.json").write_text(json.dumps({"evaluated_on": "test"}), encoding="utf-8")
@@ -286,10 +283,10 @@ REPORT_TABLES = data_context.PROJECT_ROOT.parent / "Report DACNTT" / "content" /
 
 
 def _report_tools():
-    """KEY, vn, pct, ABL của scripts/24_report_v2.py — đúng cách báo cáo định dạng số."""
+    """KEY, vn, pct, ABL của scripts/7_report.py — đúng cách báo cáo định dạng số."""
     import importlib.util
 
-    spec = importlib.util.spec_from_file_location("report_v2", data_context.PROJECT_ROOT / "scripts" / "24_report_v2.py")
+    spec = importlib.util.spec_from_file_location("report_v2", data_context.PROJECT_ROOT / "scripts" / "7_report.py")
     mod = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(mod)
     return mod
@@ -305,8 +302,7 @@ def _macros(path):
 @pytest.mark.parametrize("dataset,prefix,macro_file", [("hm", "v", "v2/results_v2_macros.tex"),
                                                         ("amazon", "a", "amazon/results_amazon_macros.tex")])
 def test_results_page_matches_report_macros(dataset, prefix, macro_file):
-    """Mọi số của /api/results trùng macro số liệu trong báo cáo (cùng định dạng): NDCG@10, HR@10 từng mô hình, chênh
-    lệch của họ 10 so sánh, thay đổi của bóc tách."""
+    """Mọi số của /api/results trùng macro số liệu trong báo cáo (cùng định dạng)."""
     from types import SimpleNamespace
 
     from demo.backend import overview
@@ -346,8 +342,7 @@ def test_research_answers_follow_significance():
 
 
 def test_overview_example_matches_saved_ranks(vctx, monkeypatch):
-    """Khách ví dụ của trang Tổng quan: NeuMF-F có món đích trong top-10, NeuMF thì không, và hạng của cả hai mô hình
-    trùng hạng đã lưu ở đánh giá cuối."""
+    """Khách ví dụ của trang Tổng quan."""
     from demo.backend import routes
 
     monkeypatch.setattr(routes, "_cache", {"hm": vctx})

@@ -62,8 +62,7 @@ NEW_CUSTOMER_NOTE = ("Khách chưa có trong dữ liệu đã học (khách mớ
 
 
 def user_profile(c: DataContext, u: int | None, customer_id: str) -> dict:
-    """Hồ sơ khách cho thanh khách của màn hình Admin: dòng của bảng khách có sản phẩm đích; khách có lịch sử nhưng
-    không có sản phẩm đích thì dựng các cột tương tự từ lịch sử; khách mới thì chỉ có mã và cờ is_new."""
+    """Hồ sơ khách cho thanh khách của màn hình Admin."""
     empty = dict(customer_id=customer_id.strip(), train_count=0, n_targets=0, area=None, area_share=None, age=None,
                  first_date=None, last_date=None, bucket=None)
     if u is None:
@@ -85,9 +84,7 @@ def user_profile(c: DataContext, u: int | None, customer_id: str) -> dict:
 def filter_users(df: pd.DataFrame, q: str = "", bucket: str | None = None, area: str | None = None,
                  sort: str = "train_desc", best_rank: pd.Series | None = None, hit: str | None = None,
                  k: int = 10) -> pd.DataFrame:
-    """Lọc và sắp bảng khách (DataContext.users): customer_id chứa q (không phân biệt hoa thường, khớp ở đầu xếp trước),
-    nhóm giao dịch, khu vực mua nhiều nhất; có best_rank (hạng món đích tốt nhất của một mô hình, index customer_id)
-    thì thêm cột best_rank và lọc hit = có món đích trong top-k / miss = không có."""
+    """Lọc và sắp bảng khách (DataContext.users)."""
     q = q.strip().lower()
     if bucket:
         df = df[df["bucket"] == bucket]
@@ -209,9 +206,7 @@ _examples: dict[str, dict] = {}
 
 
 def pick_example(c: DataContext, a: str = "NeuMF-F", b: str = "NeuMF", k: int = 10) -> dict | None:
-    """Khách ví dụ cho trang Tổng quan, chọn theo dữ liệu chứ không gõ tay: trong các khách mà a gợi ý trúng còn b trượt
-    (theo hạng đã lưu, xếp theo chênh hạng), lấy khách có nhiều món đích nhất trong top-k của a, lịch sử 6–40 món,
-    mọi sản phẩm có loại rõ, và hạng tính lại của cả hai mô hình trùng hạng đã lưu ở đánh giá cuối."""
+    """Khách ví dụ cho trang Tổng quan, chọn theo dữ liệu chứ không gõ tay."""
     df = c.users.assign(best_rank=saved_best_series(c, a).reindex(c.users.index).to_numpy(),
                         rank_b=saved_best_series(c, b).reindex(c.users.index).to_numpy())
     df = df[(df["best_rank"] <= k) & (df["rank_b"] > k) & df["train_count"].between(6, 40)]
@@ -258,7 +253,7 @@ def warm_example(dataset: str) -> None:
     def run():
         try:
             example(dataset)
-        except Exception:  # noqa: BLE001 — chỉ làm nóng bộ nhớ đệm
+        except Exception:  # noqa: BLE001
             pass
     Thread(target=run, daemon=True).start()
 
@@ -388,8 +383,7 @@ def dashboard(dataset: Dataset = "hm"):
 
 @router.get("/image/{article_id}")
 def image(article_id: str, dataset: Dataset = "hm"):
-    """Ảnh sản phẩm đã lưu trên máy (H&M: DEMO_IMAGES_DIR/<3 số đầu>/; Amazon: DEMO_IMAGES_DIR/amazon/); không có ảnh
-    thì vẽ ô thay thế ghi loại sản phẩm."""
+    """Ảnh sản phẩm đã lưu trên máy; không có ảnh thì vẽ ô thay thế ghi loại sản phẩm."""
     aid = article_id.zfill(10) if dataset == "hm" else article_id
     if not aid.isalnum():
         raise HTTPException(400, "article_id không hợp lệ.")

@@ -1,4 +1,4 @@
-"""Đối chiếu báo cáo với số liệu (scripts/19_check_report.py)."""
+"""Đối chiếu báo cáo với số liệu (scripts/8_check_report.py)."""
 from __future__ import annotations
 
 import importlib.util
@@ -16,7 +16,7 @@ def _load(name, file):
     return mod
 
 
-check = _load("check_report", "19_check_report.py")
+check = _load("check_report", "8_check_report.py")
 
 
 @pytest.fixture(scope="module")

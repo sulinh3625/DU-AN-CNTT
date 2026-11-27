@@ -68,7 +68,7 @@ def category_path(meta: dict) -> list[str]:
 
 
 def item_info(reviews_path: str | Path, meta_path: str | Path) -> pd.DataFrame:
-    """Một dòng mỗi sản phẩm theo mã (index = mã, đúng thứ tự asin_list): ITEM_INFO_COLS. Thiếu metadata -> trống."""
+    """Một dòng mỗi sản phẩm theo mã (index = mã, đúng thứ tự asin_list): ITEM_INFO_COLS."""
     ids = asin_list(read_reviews(reviews_path))
     meta = read_meta(meta_path, ids)
     rows = []
@@ -86,11 +86,7 @@ def item_info(reviews_path: str | Path, meta_path: str | Path) -> pd.DataFrame:
 
 def build_features(reviews_path: str | Path, meta_path: str | Path, day0, text_dim: int = 64,
                    seed: int = 0) -> tuple[Catalog, DailySales, pd.DataFrame]:
-    """Đặc trưng của Amazon theo đúng dạng của H&M (features.py), mã sản phẩm = vị trí trong asin_list: - Catalog:
-    ITEM_CAT_COLS (thương hiệu, 3 cấp danh mục, nhóm giá; 0 = không biết) và vector văn bản (title + description,
-    cùng TF-IDF + SVD như H&M); - DailySales: số đánh giá mỗi (sản phẩm, ngày) của toàn bộ file đánh giá, ngày tính
-    từ day0 — thay cho doanh số theo ngày của H&M; đặc trưng thời gian tại ngày t vẫn chỉ đọc các ngày < t; - bảng
-    thông tin sản phẩm (item_info, bỏ cột description) cho demo."""
+    """Đặc trưng của Amazon theo đúng dạng của H&M (features.py), mã sản phẩm = vị trí trong asin_list."""
     r = read_reviews(reviews_path)
     info = item_info(reviews_path, meta_path)
     price = info["price"].to_numpy()

@@ -1,25 +1,8 @@
-"""Chuẩn bị dữ liệu đã lọc của giao thức v2 — mọi mô hình đọc cùng file này, kiểm bằng MD5 (scripts/v2_common.py).
+"""Chuẩn bị dữ liệu đã lọc của giao thức v2 — mọi mô hình đọc cùng file này, kiểm bằng MD5 (scripts/common.py).
 
-    python run.py prepare                                (= python scripts/02_prepare_data.py)
-    python scripts/02_prepare_data.py --sample holdout   # chỉ một mẫu
-    python run.py amazon-data                            # Amazon Beauty (NEUMF_CONFIG=configs/amazon.yaml)
-
-Với từng mẫu trong `samples` của cấu hình (chạy lại khi đổi mẫu, k_core hoặc test_start):
-1. kiểm quy tắc product_code = article_id // 1000 trên data/raw/hm/articles.csv (nếu file có trên máy);
-2. đọc mẫu (HMAdapter), gộp mọi màu của một mẫu thành một sản phẩm, gộp cặp (khách, sản phẩm), lọc k-core chỉ trên
-   các cặp trước test_start (src/data_pipeline/protocol_v2.prepare_pairs);
-3. ghi outputs/data/<tên mẫu>.csv.gz — cột user_id, item_id (product_code), first_day (chỉ số ngày, 0 = 2018-09-20),
-   in_kcore; cùng dữ liệu luôn ra cùng bytes;
-4. ghi/cập nhật outputs/data/manifest.json: MD5 của CSV chưa nén, số dòng của file, số khách / sản phẩm / cặp trong
-   k-core, số sản phẩm và số cặp trước / sau khi gộp product_code, k_core, test_start, commit git (chạy lại ra đúng
-   dữ liệu cũ thì giữ nguyên mục cũ, trừ khi mục cũ tạo từ mã chưa commit).
-
-Amazon (configs/amazon.yaml): đọc bằng AmazonAdapter (asin -> mã số, mỗi đánh giá là một tương tác), không gộp màu
-(một asin là một sản phẩm), ngày tính từ day0 của cấu hình; mẫu phát triển và mẫu kiểm định là cùng một file.
-
-Ngoài số dòng của file, chỉ in và ghi số liệu TRƯỚC test_start: không có gì về cửa sổ kiểm thử (số đáp án, số khách có
-đáp án) — tập kiểm thử của mẫu kiểm định chỉ được mở đúng một lần, ở đánh giá cuối.
-"""
+python run.py prepare                                (= python scripts/2_prepare.py)
+python scripts/2_prepare.py --sample holdout   # chỉ một mẫu
+python run.py amazon-data                            # Amazon Beauty (NEUMF_CONFIG=configs/amazon.yaml)"""
 from __future__ import annotations
 
 import argparse
@@ -28,7 +11,7 @@ import json
 import numpy as np
 import pandas as pd
 
-import v2_common as V
+import common as V
 from src.data_pipeline.adapters import AmazonAdapter, HMAdapter
 from src.data_pipeline.features import DAY0, check_product_code, product_code_of, to_day
 from src.data_pipeline.protocol_v2 import prepare_pairs, save_pairs

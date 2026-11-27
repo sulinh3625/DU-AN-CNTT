@@ -16,14 +16,14 @@ Trả lời bằng tiếng Việt có dấu. Bối cảnh và số liệu: `READ
 
 ## Ranh giới
 - Không push, không tạo hay đổi nhánh; chỉ commit cục bộ trên `main` khi được yêu cầu.
-- Không tự chạy `v2-tune`, `v2-final`, `amazon-final`, `bosung-final` hay `23_final_v2.py`/`25_bosung.py final`: chúng
+- Không tự chạy `v2-tune`, `v2-final`, `amazon-final`, `bosung-final` hay `5_final.py`/`6_bosung.py final`: chúng
   mở tập kiểm thử (đã mở đúng một lần, ghi ở `audit/test_access_log.csv`) và chạy hàng giờ. Chỉ đưa lệnh cho người dùng.
 - Không sửa `audit/PREREG*.md` đã commit; thay đổi kế hoạch ghi ở mục "lệch kế hoạch".
 - Kết quả: LateFusion-F cao nhất trên cả hai bộ; NeuMF-F không vượt GMF-F. Không gọi NeuMF-F là mô hình tốt nhất.
 
 ## Quy ước báo cáo (`Report DACNTT/`)
-- Mọi số trong báo cáo lấy từ macro do `scripts/24_report_v2.py` sinh ra, không gõ tay; sửa lời văn C1–C5 thì giữ các
-  cụm từ mà `scripts/19_check_report.py` kiểm tra.
+- Mọi số trong báo cáo lấy từ macro do `scripts/7_report.py` sinh ra, không gõ tay; sửa lời văn C1–C5 thì giữ các
+  cụm từ mà `scripts/8_check_report.py` kiểm tra.
 - Thuật ngữ: tiếng Việt kèm tiếng Anh in nghiêng ở lần đầu; *cold start* giữ tiếng Anh; "lớp" cho mạng nơ-ron, "tầng"
   chỉ cho demo; "hợp nhất sớm/muộn".
 - Không ghi chú dưới bảng (giải thích trong đoạn văn); bảng/hình dùng `[H]`, đặt sau đoạn văn nói về nó; không phụ lục.

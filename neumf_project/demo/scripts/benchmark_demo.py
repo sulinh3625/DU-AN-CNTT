@@ -1,11 +1,4 @@
-"""Đo hiệu năng hệ thống demo (Mục "Lựa chọn mô hình triển khai và yêu cầu phi chức năng" của báo cáo).
-
-Chỉ gọi API của demo trên checkpoint đã lưu: không huấn luyện, không chạy lại đánh giá cuối. Đo thời gian nạp mỗi bộ dữ
-liệu, độ trễ khuyến nghị Top-K của NeuMF-F trên khách được đánh giá, độ trễ các chức năng phụ, và số sản phẩm có ảnh thật
-lưu trên máy. Kết quả ghi ra outputs/demo/benchmark.json.
-
-Chạy từ thư mục neumf_project:  python demo/scripts/benchmark_demo.py
-"""
+"""Đo hiệu năng hệ thống demo (Mục "Lựa chọn mô hình triển khai và yêu cầu phi chức năng" của báo cáo)."""
 from __future__ import annotations
 
 import json
@@ -67,7 +60,7 @@ def main() -> None:
         c = routes.ctx(ds)
         users = [str(c.customer_ids[u]) for u in c.target_users]
         sample = rng.sample(users, N_USERS)
-        for u in sample[:5]:  # làm nóng
+        for u in sample[:5]:
             timed(f"/api/users/{u}/recommend?model=NeuMF-F&k=10&dataset={ds}")
         rec = [timed(f"/api/users/{u}/recommend?model=NeuMF-F&k=10&dataset={ds}") for u in sample]
         neigh = [timed(f"/api/users/{u}/neighbors?k=6&dataset={ds}") for u in sample[:N_SIDE]]

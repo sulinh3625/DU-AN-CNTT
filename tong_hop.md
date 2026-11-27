@@ -31,6 +31,7 @@ Quy ước đọc:
 | Code, demo, kiểm thử, báo cáo | 10 |
 | Hạn chế, đối chiếu 17 góp ý trước, lịch sử phát triển | 11–13 |
 | Danh sách file, tài liệu tham khảo | 14 |
+| **Học từ gốc**: khái niệm nền, công thức, ví dụ tính tay, thuật ngữ, câu hỏi tự kiểm tra | 15 |
 
 ---
 
@@ -227,7 +228,7 @@ NeuMF-F, trung bình qua 5 seed:
 
 - Ở mọi K và cả bốn độ đo, thứ tự LateFusion-F, NeuMF-F, GMF-F, MLP-F giữ nguyên và đứng trên mọi mô hình còn lại.
   Thứ tự giữa các baseline có đổi nhỏ (MostPopular-Recent vượt UserKNN ở HR@15 và HR@20).
-- Cách tính: lấy cột hạng `ranks` đã lưu trong `seed*/per_user.csv.gz` (`scripts/24_report_v2.py` → `by_k.csv`). Số
+- Cách tính: lấy cột hạng `ranks` đã lưu trong `seed*/per_user.csv.gz` (`scripts/7_report.py` → `by_k.csv`). Số
   @5/@10/@20 tính lại trùng hoàn toàn số đã lưu của lần đánh giá cuối (chênh lệch lớn nhất 0).
 
 ### 3.4 Họ 10 so sánh đăng ký trước
@@ -528,7 +529,7 @@ Cuộc thi Kaggle H&M Personalized Fashion Recommendations:
 ### 7.2 Hai mẫu khách hàng
 
 Băm `customer_id` (khoá cố định) vào 100.000 nhóm, chia dãy nhóm thành các **khối** liên tiếp, mỗi khối vừa đủ khoảng
-500.000 giao dịch (`scripts/00_sample_hm.py`).
+500.000 giao dịch (`scripts/1_sample.py`).
 
 | | Mẫu phát triển | Mẫu kiểm định |
 |---|---|---|
@@ -545,7 +546,7 @@ Băm `customer_id` (khoá cố định) vào 100.000 nhóm, chia dãy nhóm thà
   nó đã bị xem nhiều lần; khối 1 ([1597, 3160)) là mẫu kiểm định của bản đầu kế hoạch và đã được mở ngày 04/10/2026
   (mục 13.2).
 
-### 7.3 Tiền xử lý (`scripts/02_prepare_data.py`; báo cáo Thuật toán 3.1)
+### 7.3 Tiền xử lý (`scripts/2_prepare.py`; báo cáo Thuật toán 3.1)
 
 1. **Gộp màu theo `product_code`**: mọi màu của một mẫu là một sản phẩm; khách mua nhiều màu của cùng một mẫu chỉ tính
    một cặp. Trước mốc kiểm thử: mẫu phát triển từ 55.971 xuống 27.370 sản phẩm, từ 401.293 xuống 359.181 cặp; mẫu kiểm
@@ -599,7 +600,7 @@ Băm `customer_id` (khoá cố định) vào 100.000 nhóm, chia dãy nhóm thà
 - TF-IDF và SVD khớp trên toàn bộ danh mục; phép khớp không dùng dữ liệu mua.
 - Gộp theo mẫu: thuộc tính lấy theo biến thể có `article_id` nhỏ nhất; văn bản = trung bình các biến thể rồi chuẩn hoá
   L2; doanh số = tổng các biến thể; ngày bán đầu = ngày sớm nhất.
-- Code: `scripts/21_build_features.py`, `src/data_pipeline/features.py`.
+- Code: `scripts/3_features.py`, `src/data_pipeline/features.py`.
 
 ### 7.6 Amazon Beauty (`audit/PREREG_amazon.md`)
 
@@ -696,13 +697,13 @@ hình" vẫn tính trên 14 mô hình đăng ký trước.
   sản phẩm. Chỉ seed 42, chỉ mô tả.
 - Biến thể thứ năm của kế hoạch — bỏ cơ chế bỏ ID ngẫu nhiên (ρ = 0) — trùng hệt NeuMF-F vì NeuMF-F đã chọn ρ = 0, nên
   không chạy.
-- Code: `scripts/v2_common.py`.
+- Code: `scripts/common.py`.
 
 ### 8.5 Mô hình lai truyền thống Hybrid-CBCF — bổ sung sau đánh giá cuối
 
 Theo góp ý "baseline ba nhóm" (họp 04/10), nhóm học máy truyền thống cần một mô hình lai truyền thống để đối chiếu với mô
 hình lai học sâu của đề tài. Kế hoạch đăng ký bổ sung: `audit/PREREG_bosung.md` (13/10/2026); mã:
-`src/baselines/hybrid.py`, `scripts/25_bosung.py`; báo cáo mục 4.2 (Bảng 4.3), 4.3.4 (Bảng 4.8), 4.4.2 (Bảng 4.16),
+`src/baselines/hybrid.py`, `scripts/6_bosung.py`; báo cáo mục 4.2 (Bảng 4.3), 4.3.4 (Bảng 4.8), 4.4.2 (Bảng 4.16),
 Thuật toán 3.6.
 
 - **Theo chương 3 luận án của cô:** ba mô hình đơn lẻ truyền thống — lọc nội dung, lọc cộng tác theo người dùng, theo
@@ -764,10 +765,10 @@ Công thức cài ở `src/evaluation/metrics.py`, có unit test tính tay.
 
 ### 9.2 Tinh chỉnh và đánh giá cuối
 
-- **Tinh chỉnh** (`scripts/22_tune_v2.py`): chỉ trên tập xác thực của mẫu phát triển, seed 42. Mỗi mô hình có học thử 6
+- **Tinh chỉnh** (`scripts/4_tune.py`): chỉ trên tập xác thực của mẫu phát triển, seed 42. Mỗi mô hình có học thử 6
   cấu hình (cấu hình mặc định + 5 cấu hình rút ngẫu nhiên cố định từ lưới) — cùng ngân sách cho mọi mô hình; mô hình một
   tham số thử đủ lưới. Lưới: `PREREG_v2.md` mục 4. Đã chạy 09/10 23:17 → 10/10 03:58 (76 cấu hình, 4,7 giờ).
-- **Đánh giá cuối** (`scripts/23_final_v2.py`): giữ nguyên cấu hình tốt nhất của mẫu phát triển; 5 seed (42, 2024, 2025,
+- **Đánh giá cuối** (`scripts/5_final.py`): giữ nguyên cấu hình tốt nhất của mẫu phát triển; 5 seed (42, 2024, 2025,
   2026, 3407).
   - Mạng nơ-ron chọn số epoch trên tập xác thực của mẫu kiểm định, rồi huấn luyện lại từ đầu trên mọi cặp trước
     29/07/2020.
@@ -793,7 +794,7 @@ Công thức cài ở `src/evaluation/metrics.py`, có unit test tính tay.
    commit trước khi mở tập kiểm thử.
 2. **Tách vai trò dữ liệu:** mọi quyết định dựa trên mẫu phát triển; kết luận chỉ dựa trên tập kiểm thử của mẫu kiểm
    định — khách chưa từng được dùng cho quyết định nào.
-3. **Khoá kiểm thử:** `23_final_v2.py` từ chối chạy khi kế hoạch chưa commit, có file đã theo dõi bị sửa mà chưa commit,
+3. **Khoá kiểm thử:** `5_final.py` từ chối chạy khi kế hoạch chưa commit, có file đã theo dõi bị sửa mà chưa commit,
    hoặc mã băm mã nguồn khác lúc tinh chỉnh. Mỗi lần mở tập kiểm thử ghi một dòng `audit/test_access_log.csv` trước khi
    chấm.
 4. **Không dùng thông tin tương lai:** k-core trước mốc kiểm thử, đặc trưng theo thời điểm, mẫu âm trong sản phẩm đã ra
@@ -818,12 +819,12 @@ Lệnh chạy chi tiết: `neumf_project/README.md` mục 3.
 | Bước | Nội dung | File |
 |---|---|---|
 | Đăng ký trước | Mô hình, lưới tinh chỉnh, 5 seed, độ đo chính NDCG@10, **họ 10 so sánh** (Wilcoxon + bootstrap + Holm), tiêu chí "tốt hơn", hạn chế đã biết; mục 10 của mỗi kế hoạch ghi lệch kế hoạch | `audit/PREREG_v2.md`, `audit/PREREG_amazon.md` |
-| Chuẩn bị dữ liệu | Lấy mẫu, đặc trưng, gộp mẫu, k-core, file dữ liệu đã lọc + MD5 | `scripts/00_sample_hm.py`, `21_build_features.py`, `02_prepare_data.py` |
-| Tinh chỉnh | Chỉ trên tập xác thực của mẫu phát triển; nhật ký mỗi cấu hình kèm **mã băm nội dung mã nguồn** và `data_md5` | `scripts/22_tune_v2.py` |
-| Đánh giá cuối | Khoá kiểm thử (mục 9.4); mỗi seed ghi nhật ký trước khi chấm và lưu hạng của từng sản phẩm đúng | `scripts/23_final_v2.py` |
-| Kiểm định, xuất báo cáo | Bảng, hình, macro LaTeX, `ket_qua.txt` tự sinh. Bảng theo K tính lại từ hạng đã lưu (`by_k.csv`; số @5/@10/@20 phải trùng số đã lưu, lệch thì dừng). Amazon ghi bảng vào `content/tables/amazon/`, macro `\ARes`, `\ASig`, ... | `scripts/24_report_v2.py` |
-| Đối chiếu báo cáo | 72 câu nhận xét bằng chữ của báo cáo (H&M, Amazon, theo K và Hybrid-CBCF) được kiểm trên file kết quả; báo macro, bảng, hình còn thiếu và số chép tay đã cũ trong tài liệu md | `scripts/19_check_report.py` |
-| Bổ sung: mô hình lai truyền thống | `tune`: 4 cách kết hợp trên tập xác thực của mẫu phát triển; `final`: chấm một lần tập kiểm thử (khoá kiểm thử riêng, run_tag `bosung_hybrid_*`), chấm lại ba thành phần để đối chiếu. `24_report_v2.py` thêm Hybrid-CBCF (dấu *) vào bảng theo ba nhóm và kiểm định họ B1–B2 | `scripts/25_bosung.py`, `audit/PREREG_bosung.md` |
+| Chuẩn bị dữ liệu | Lấy mẫu, đặc trưng, gộp mẫu, k-core, file dữ liệu đã lọc + MD5 | `scripts/1_sample.py`, `3_features.py`, `2_prepare.py` |
+| Tinh chỉnh | Chỉ trên tập xác thực của mẫu phát triển; nhật ký mỗi cấu hình kèm **mã băm nội dung mã nguồn** và `data_md5` | `scripts/4_tune.py` |
+| Đánh giá cuối | Khoá kiểm thử (mục 9.4); mỗi seed ghi nhật ký trước khi chấm và lưu hạng của từng sản phẩm đúng | `scripts/5_final.py` |
+| Kiểm định, xuất báo cáo | Bảng, hình, macro LaTeX, `ket_qua.txt` tự sinh. Bảng theo K tính lại từ hạng đã lưu (`by_k.csv`; số @5/@10/@20 phải trùng số đã lưu, lệch thì dừng). Amazon ghi bảng vào `content/tables/amazon/`, macro `\ARes`, `\ASig`, ... | `scripts/7_report.py` |
+| Đối chiếu báo cáo | 72 câu nhận xét bằng chữ của báo cáo (H&M, Amazon, theo K và Hybrid-CBCF) được kiểm trên file kết quả; báo macro, bảng, hình còn thiếu và số chép tay đã cũ trong tài liệu md | `scripts/8_check_report.py` |
+| Bổ sung: mô hình lai truyền thống | `tune`: 4 cách kết hợp trên tập xác thực của mẫu phát triển; `final`: chấm một lần tập kiểm thử (khoá kiểm thử riêng, run_tag `bosung_hybrid_*`), chấm lại ba thành phần để đối chiếu. `7_report.py` thêm Hybrid-CBCF (dấu *) vào bảng theo ba nhóm và kiểm định họ B1–B2 | `scripts/6_bosung.py`, `audit/PREREG_bosung.md` |
 | Lệnh tắt | `sample-hm`, `v2-data`, `prepare`, `all`, `v2-tune`, `v2-dry-run`, `v2-final`, `v2-report`, `check-report`, `demo`, `amazon-data`, `amazon-dry-run`, `amazon-final`, `amazon-report`, `bosung-tune`, `bosung-dry-run`, `bosung-final`, `amazon-bosung-final` | `run.py` |
 
 ### 10.2 Demo (`demo/README.md`)
@@ -893,13 +894,13 @@ Số mục, bảng, hình và thuật toán trong bảng này là số của bá
 
 ### 10.5 Lưu ý khi làm tiếp
 
-- **Không chạy lại** `23_final_v2.py` cho H&M hay Amazon: mọi seed đã có dòng nhật ký. Số mới (K khác, bảng mới) phải tính
+- **Không chạy lại** `5_final.py` cho H&M hay Amazon: mọi seed đã có dòng nhật ký. Số mới (K khác, bảng mới) phải tính
   từ file đã lưu trong `outputs/`, không mở lại tập kiểm thử.
 - Mã nguồn đã đổi sau lần chạy H&M (dọn mã, rồi mở rộng cho Amazon), nên mã băm hiện tại khác `0f1ea1eec5a86c31`. Kết quả
   H&M gắn với commit `e4e4f25`, kết quả Amazon gắn với commit `f866337`. Chạy lại H&M sẽ cần `--allow-code-change` và phải
   ghi lệch kế hoạch.
-- Các sửa đổi ngày 13/10 không đụng mã huấn luyện và đánh giá (`src/`, `v2_common.py`, `22_tune_v2.py`,
-  `02_prepare_data.py`, cấu hình), nên mã băm mã nguồn không đổi.
+- Các sửa đổi ngày 13/10 không đụng mã huấn luyện và đánh giá (`src/`, `common.py`, `4_tune.py`,
+  `2_prepare.py`, cấu hình), nên mã băm mã nguồn không đổi.
 - Nhật ký `audit/test_access_log.csv`:
   - 6 dòng H&M ngày 10/10: dòng 08:56 của lần chạy bị dừng ("Đánh giá cuối bản cuối theo PREREG_v2 (406b62c)") và 5 dòng
     của lần chạy hoàn tất ("Đánh giá cuối theo PREREG_v2; seed 42 chạy lại theo mục 10"), trong đó seed 42 mang nhãn
@@ -1047,10 +1048,10 @@ Kết luận giống nhau ở cả hai giai đoạn trên H&M: NeuMF chỉ dùng
 | Kết quả Amazon | `outputs/amazon/final/` (cùng các file như H&M) | 4.5 |
 | Dữ liệu đã lọc | `outputs/data/manifest.json` (MD5 từng mẫu H&M), `outputs/amazon/data/` | 3.2 |
 | Nhật ký mở tập kiểm thử | `audit/test_access_log.csv` | — |
-| Code | `src/data_pipeline/{features,protocol_v2,feature_dataset}.py`, `src/data_pipeline/adapters/{hm,amazon}.py`, `src/models/hybrid_features.py`, `src/evaluation/v2.py`, `scripts/{00_sample_hm,02_prepare_data,21_build_features,22_tune_v2,23_final_v2,24_report_v2,v2_common,19_check_report}.py`, `configs/{v2,amazon}.yaml` | Chương 3 |
+| Code | `src/data_pipeline/{features,protocol_v2,feature_dataset}.py`, `src/data_pipeline/adapters/{hm,amazon}.py`, `src/models/hybrid_features.py`, `src/evaluation/v2.py`, `scripts/{1_sample,2_prepare,3_features,4_tune,5_final,6_bosung,7_report,8_check_report,common}.py`, `configs/{v2,amazon}.yaml` | Chương 3 |
 | Test | `tests/`, `demo/tests/` | — |
 | Báo cáo | `Report DACNTT/` (bảng: `content/tables/v2/`, `content/tables/amazon/`; hình: `media/figures/v2/`, `media/figures/amazon/`, `media/figures/demo/`) | — |
-| Bổ sung: mô hình lai truyền thống | `audit/PREREG_bosung.md`, `audit/v2/bosung_tuning_log.csv`, `audit/v2/bosung_best_configs.json`, `src/baselines/hybrid.py`, `scripts/25_bosung.py`, `tests/test_bosung.py`; kết quả (sau khi chấm): `outputs/v2/final/bosung/`, `outputs/amazon/final/bosung/` | 4.2–4.5 |
+| Bổ sung: mô hình lai truyền thống | `audit/PREREG_bosung.md`, `audit/v2/bosung_tuning_log.csv`, `audit/v2/bosung_best_configs.json`, `src/baselines/hybrid.py`, `scripts/6_bosung.py`, `tests/test_bosung.py`; kết quả (sau khi chấm): `outputs/v2/final/bosung/`, `outputs/amazon/final/bosung/` | 4.2–4.5 |
 | Lịch sử | `audit/PREREG.md` (giai đoạn phát triển ban đầu), `audit/PREREG_v2_cu.md` (bản đầu của kế hoạch); mã và kết quả trong lịch sử git (commit `9799f1a`) | 4.6 |
 
 ### 14.2 Tài liệu tham khảo chính
@@ -1083,3 +1084,316 @@ Kết luận giống nhau ở cả hai giai đoạn trên H&M: NeuMF chỉ dùng
 - Efron, B., & Tibshirani, R. J. (1993). *An Introduction to the Bootstrap*. Chapman & Hall.
 - Kaggle — H&M Personalized Fashion Recommendations:
   https://www.kaggle.com/competitions/h-and-m-personalized-fashion-recommendations
+
+---
+
+## 15. Học từ gốc: kiến thức nền của đề tài
+
+Mục này viết cho hai thành viên ôn bảo vệ: mỗi khái niệm đi theo thứ tự **là gì → công thức → ví dụ bằng số của đề tài →
+nằm ở đâu trong code**. Các mục 6–9 ở trên ghi thiết kế và số liệu; mục này giải thích *vì sao* và *hoạt động thế nào*.
+Đọc lần lượt từ 15.1 đến 15.12; cuối mục có bảng thuật ngữ (15.13) và câu hỏi tự kiểm tra (15.14).
+
+### 15.1 Hệ khuyến nghị và bài toán của đề tài
+
+- **Hệ khuyến nghị** (*recommender system*): từ dữ liệu quá khứ, đoán món mỗi người dùng có khả năng thích hoặc mua, rồi
+  đưa ra một danh sách ngắn. Ví dụ: "Gợi ý cho bạn" của Shopee, Netflix.
+- **Phản hồi tường minh** (*explicit feedback*): người dùng tự cho điểm (1–5 sao). **Phản hồi ngầm** (*implicit
+  feedback*): chỉ biết hành vi (mua, xem, đánh giá). Đề tài dùng phản hồi ngầm: **mua = 1**; **không mua ≠ không thích**
+  (có thể chưa thấy món đó). Đây là lý do phải dùng mẫu âm (15.6) và xếp hạng thay vì đoán điểm.
+- **Bài toán Top-K**: với mỗi khách, xếp mọi sản phẩm ứng viên theo điểm rồi lấy K món đầu (đề tài: K = 10; thêm 15, 20).
+- **Ma trận tương tác**: hàng = khách, cột = sản phẩm, ô = 1 nếu đã mua. Rất **thưa**: mẫu kiểm định sau lọc có 243.696
+  cặp trên 7.994 × 6.749 ≈ 54 triệu ô, tức chỉ khoảng **0,45%** ô bằng 1. Mô hình phải đoán 99,5% ô còn lại.
+- **Cold start**: khách hoặc sản phẩm mới, chưa có (hoặc có rất ít) lịch sử. Mô hình chỉ dùng ID không biết gì về họ; đặc
+  trưng (thuộc tính, mô tả) giúp xử lý. Demo: khách mới nhận danh sách Most Popular.
+
+### 15.2 Các họ phương pháp và mô hình đối chứng tương ứng
+
+| Họ | Ý tưởng | Mô hình trong đề tài |
+|---|---|---|
+| Phổ biến | Ai cũng gợi ý các món bán chạy nhất | Most Popular, MostPopular-Recent (bán chạy trong 28 ngày gần nhất) |
+| Dựa trên nội dung (*content-based*) | Gợi ý món **giống** món khách đã mua (theo thuộc tính, mô tả) | Content |
+| Lọc cộng tác theo láng giềng (*neighborhood CF*) | "Người giống bạn đã mua…" / "Món hay được mua cùng…" | UserKNN, ItemKNN |
+| Nhân tử hoá ma trận (*MF*) | Học vector ẩn cho khách và sản phẩm, điểm = tích vô hướng | BPR-MF, GMF |
+| Mạng nơ-ron (*deep learning*) | Học hàm tương tác phi tuyến | MLP, NeuMF |
+| Lai (*hybrid*) | Kết hợp nhiều nguồn | NeuMF-F, GMF-F, MLP-F, LateFusion-F (lai học sâu); Hybrid-CBCF (lai truyền thống) |
+
+**Độ tương đồng cosine** (dùng trong Content, UserKNN, ItemKNN):
+
+$$\cos(\mathbf{a}, \mathbf{b}) = \frac{\mathbf{a}\cdot\mathbf{b}}{\lVert\mathbf{a}\rVert\,\lVert\mathbf{b}\rVert}$$
+
+- ItemKNN: mỗi sản phẩm là một vector 0/1 dài bằng số khách (khách nào đã mua). Hai sản phẩm cùng được nhiều khách mua →
+  cosine cao. Ví dụ: áo A được khách {1, 2, 3} mua, áo B được {2, 3, 4} mua → tích vô hướng = 2, độ dài mỗi vector =
+  √3 → cos = 2/3 ≈ 0,67.
+- **Hệ số co** (*shrink*) h: mẫu số cộng thêm h (`src/baselines/neighborhood.py`, `denom = norms·norms + shrink`) để
+  hạ điểm của cặp chỉ có rất ít khách chung (tương đồng "ăn may"). ItemKNN chọn h = 50, UserKNN h = 0.
+- **Top-k láng giềng**: mỗi sản phẩm chỉ giữ k láng giềng giống nhất (ItemKNN k = 100). Điểm của món i cho khách u = tổng
+  độ tương đồng giữa i và các món u đã mua.
+- UserKNN làm y hệt nhưng theo khách (k = 200): điểm = tổng độ tương đồng của các khách giống u đã mua món i. Thẻ
+  "Khách có gu giống khách này" trong demo chính là láng giềng UserKNN; "Sản phẩm tương tự" là láng giềng ItemKNN.
+- **Content**: hồ sơ khách = trung bình vector nội dung (văn bản + thuộc tính) các món đã mua, món mua gần đây nặng hơn
+  (chu kỳ bán rã 30 ngày: món mua cách đây 30 ngày chỉ còn nửa trọng số); điểm = cosine giữa hồ sơ và món ứng viên.
+
+### 15.3 Embedding và nhân tử hoá ma trận (MF)
+
+- **Embedding**: một bảng tra, mỗi ID (khách hoặc sản phẩm) ứng với một vector d số thực **do mô hình tự học**. Ban đầu
+  ngẫu nhiên; huấn luyện đẩy vector của khách lại gần vector các món khách mua.
+
+  | ID sản phẩm | Vector (d = 4, ví dụ) |
+  |---|---|
+  | 0 (quần jean) | [0,8; −0,1; 0,3; 0,0] |
+  | 1 (áo thun) | [0,2; 0,9; −0,4; 0,1] |
+
+- **MF**: điểm của khách u với sản phẩm i là tích vô hướng $\hat{y}_{ui} = \mathbf{p}_u^\top \mathbf{q}_i$. Mỗi chiều
+  có thể hiểu như một "gu" ẩn (thích đồ thể thao, thích màu tối…); không ai đặt tên, mô hình tự tìm.
+- **BPR-MF** (Rendle et al., 2009): thay vì đoán 0/1, học **thứ tự**: món u đã mua (i) phải có điểm cao hơn món u chưa
+  mua (j).
+
+  $$L_{\text{BPR}} = -\sum_{(u,i,j)} \ln \sigma(\hat{y}_{ui} - \hat{y}_{uj}) + \lambda \lVert\Theta\rVert^2$$
+
+  σ là hàm sigmoid, λ là hệ số phạt (*regularization*, đề tài chọn 0,001) để vector không phình to. Code:
+  `src/baselines/classical.py`.
+
+### 15.4 Mạng nơ-ron cơ bản
+
+- **Lớp tuyến tính** (*linear / fully-connected*): $\mathbf{h} = W\mathbf{x} + \mathbf{b}$, biến vector n chiều thành m
+  chiều; W, b học được.
+- **Hàm kích hoạt**: ReLU(z) = max(0, z) tạo tính phi tuyến (không có nó, nhiều lớp tuyến tính chồng lên vẫn chỉ là một
+  phép tuyến tính). Sigmoid σ(z) = 1/(1 + e^{−z}) ép số bất kỳ về (0, 1), dùng như xác suất "sẽ mua".
+- **Logit**: giá trị z trước sigmoid. Đề tài **xếp hạng theo logit**, không theo σ(z): khi z lớn, σ(z) làm tròn thành
+  1,0 ở float32 và nhiều món bằng điểm giả (mục 8.1).
+- **Tháp MLP**: nhiều lớp tuyến tính + ReLU, mỗi lớp nhỏ dần. Đề tài: 64 → 32 → 16 → 8 (với d = 32).
+- **Dropout**: khi huấn luyện, ngẫu nhiên tắt một phần nơ-ron để tránh học thuộc; khi chấm thì bật hết. Cấu hình chọn của
+  NeuMF-F: dropout = 0.
+
+### 15.5 NCF: GMF, MLP, NeuMF và bản có đặc trưng NeuMF-F
+
+He et al. (2017) đề xuất khung **NCF** gồm ba mô hình (`src/models/neumf.py`):
+
+| Mô hình | Cách tính tương tác | Ý nghĩa |
+|---|---|---|
+| **GMF** | $\phi = \mathbf{p}_u \odot \mathbf{q}_i$ (nhân **từng phần tử**), rồi qua một lớp tuyến tính | MF tổng quát: như tích vô hướng nhưng mỗi chiều có trọng số học được |
+| **MLP** | Nối $[\mathbf{p}_u ; \mathbf{q}_i]$ rồi qua tháp MLP | Học tương tác phi tuyến |
+| **NeuMF** | GMF và MLP chạy song song, nối đầu ra rồi một lớp tuyến tính → logit | Kết hợp tuyến tính + phi tuyến; **hợp nhất sớm** |
+
+Ví dụ ⊙: [1, 2, 3] ⊙ [4, 0, −1] = [4, 0, −3]; tích vô hướng là tổng các phần tử này = 1.
+
+**NeuMF-F** (mô hình đề xuất, `src/models/hybrid_features.py`) giữ nguyên NeuMF nhưng vector khách và sản phẩm không
+chỉ là embedding ID mà **cộng thêm đặc trưng đã chiếu**:
+
+$$\mathbf{q}_i = \mathbf{e}^{\text{ID}}_i + W_I\,\mathbf{x}_i, \qquad \mathbf{p}_u = \mathbf{e}^{\text{ID}}_u + W_U\,\mathbf{x}_u$$
+
+- $\mathbf{x}_i$ (sản phẩm) gồm 3 phần nối nhau:
+
+  | Phần | Cách tạo | H&M | Amazon |
+  |---|---|---|---|
+  | Thuộc tính danh mục | Mỗi thuộc tính một embedding 8 chiều (`cat_dim = 8`), nối lại | 11 × 8 = 88 | 5 × 8 = 40 |
+  | Văn bản | TF-IDF → SVD 64 chiều (15.7) | 64 | 64 |
+  | Thời gian tại ngày t | Bán trong 7, 28, 91 ngày trước t; tuổi sản phẩm; cờ "chưa từng bán" | 5 | 5 |
+  | **Tổng $d_I$** | | **157** | **109** |
+
+- $\mathbf{x}_u$ (khách): H&M = 5 thuộc tính × 8 (nhóm tuổi, hội viên, nhận tin, FN, Active) + 2 đặc trưng thời gian (số
+  ngày từ lần mua gần nhất, số cặp đã mua) = **42 chiều**; Amazon không có thông tin khách nên chỉ còn 2.
+- $W_I$, $W_U$ là ma trận học được, đưa $\mathbf{x}$ về đúng d chiều (32) để **cộng** được với embedding ID. Mỗi nhánh
+  (GMF, MLP) có ma trận riêng.
+- **Vì sao cộng chứ không thay ID**: sản phẩm mua nhiều thì embedding ID học tốt; sản phẩm ít người mua thì phần đặc
+  trưng gánh phần lớn. **Bỏ ID ngẫu nhiên** (ρ): khi huấn luyện đôi lúc giấu embedding ID để ép mô hình học cả từ đặc
+  trưng; cấu hình chọn của NeuMF-F là ρ = 0 (GMF-F chọn 0,25).
+- **Tính chất thời điểm**: đặc trưng thời gian luôn tính tại ngày của cặp (khi huấn luyện) hoặc ngày mốc τ (khi chấm), chỉ
+  dùng dữ liệu **trước** ngày đó → không lộ tương lai.
+- GMF-F, MLP-F = NeuMF-F chỉ giữ một nhánh. LateFusion-F (15.5b) huấn luyện hai nhánh **riêng** rồi trộn điểm.
+
+**15.5b Hợp nhất sớm và muộn.** Hợp nhất sớm (*early fusion*): nối biểu diễn các nhánh rồi một mô hình dự đoán, học
+**chung** (NeuMF-F). Hợp nhất muộn (*late fusion*): mỗi nhánh là một mô hình riêng, xong mới trộn **điểm** (LateFusion-F):
+
+$$s = w\cdot\text{minmax}(s_{\text{GMF-F}}) + (1-w)\cdot\text{minmax}(s_{\text{MLP-F}}), \quad w = 0{,}4$$
+
+Chuẩn hoá min–max trên tập ứng viên của từng khách: $s' = (s - \min)/(\max - \min)$, đưa điểm hai mô hình về cùng thang
+[0, 1] trước khi cộng. Ví dụ điểm GMF-F của 3 món là [2, 5, 8] → [0; 0,5; 1].
+
+### 15.6 Huấn luyện: hàm mất mát, mẫu âm, epoch, dừng sớm, seed
+
+- **Hàm mất mát BCE** (*binary cross-entropy*, `nn.BCEWithLogitsLoss` trong `src/training/trainer.py`), với z là logit,
+  y = 1 (đã mua) hoặc 0 (mẫu âm):
+
+  $$L = -\big[y \ln\sigma(z) + (1-y)\ln(1-\sigma(z))\big]$$
+
+  Ví dụ: món đã mua mà σ(z) = 0,9 → L = −ln 0,9 ≈ 0,105 (phạt nhẹ); nếu σ(z) = 0,1 → L ≈ 2,30 (phạt nặng).
+- **Mẫu âm** (*negative sampling*): chỉ có cặp "đã mua", nên mỗi cặp dương rút thêm **8** món khách chưa mua làm y = 0
+  (tỉ lệ 1 : 8), chỉ trong các món **đã ra mắt** tại ngày mua đó. Rút lại mới ở mỗi epoch.
+  Code: `src/data_pipeline/negative_sampling.py`, `feature_dataset.py`.
+- **Batch, epoch**: dữ liệu chia thành gói 512 mẫu (*batch*); mỗi gói → tính L → cập nhật trọng số một lần. Đi hết mọi
+  gói = **1 epoch**. Tối đa 20 epoch.
+- **Adam**: thuật toán cập nhật trọng số (biến thể của gradient descent, tự điều chỉnh bước cho từng tham số). Tốc độ học
+  lr = 0,001; **weight decay** 1e-6 là phạt nhỏ lên độ lớn trọng số.
+- **Dừng sớm** (*early stopping*): sau mỗi epoch chấm NDCG@10 trên tập xác thực; 5 epoch liền không tăng (`patience: 5`)
+  thì dừng và lấy epoch tốt nhất. Ví dụ NDCG theo epoch 0,020 / 0,026 / 0,031 / 0,033 / 0,032 / 0,032 / 0,031 / 0,030 /
+  0,029 → tốt nhất ở epoch 4, dừng ở epoch 9.
+- **Seed**: con số khởi đầu cho bộ sinh số ngẫu nhiên (khởi tạo trọng số, mẫu âm, thứ tự batch). Cùng seed → chạy lại ra
+  đúng kết quả. Đề tài chạy 5 seed (42, 2024, 2025, 2026, 3407) để biết kết quả có ổn định không; báo "trung bình ±
+  độ lệch chuẩn". Mô hình **không có bước ngẫu nhiên** (Most Popular, Content, KNN, Hybrid-CBCF) cho cùng kết quả mọi
+  seed → độ lệch chuẩn đúng bằng 0, **không phải thiếu số**.
+
+### 15.7 Biểu diễn văn bản: TF-IDF và SVD
+
+1. **TF-IDF** (`src/data_pipeline/features.py`, `text_vectors`): mỗi mô tả sản phẩm thành một vector, mỗi chiều là một
+   từ hoặc cụm 2 từ. Trọng số cao khi từ xuất hiện nhiều trong mô tả này (**TF**) nhưng hiếm trong các mô tả khác
+   (**IDF**, xấp xỉ log(N / số mô tả chứa từ)). "the", "and" bị bỏ (từ dừng); "denim" hay "push-up" có trọng số cao.
+   Giữ tối đa 30.000 từ, từ phải xuất hiện ở ít nhất 3 sản phẩm.
+2. **SVD cắt cụt** (*truncated SVD*, cũng là ý tưởng của LSA — Deerwester et al., 1990): nén vector 30.000 chiều, gần như
+   toàn số 0, xuống **64 chiều** giữ phần thông tin lớn nhất; các từ hay đi cùng nhau ("jeans", "denim", "skinny") gộp
+   vào cùng hướng.
+3. **Chuẩn hoá L2**: chia vector cho độ dài của nó để mọi vector dài bằng 1 (mô tả dài hay ngắn không ảnh hưởng).
+
+Vector văn bản tính **một lần** trên toàn danh mục (không dùng dữ liệu mua) rồi giữ cố định; khác embedding thuộc tính là
+thứ học trong lúc huấn luyện.
+
+### 15.8 Dữ liệu: lấy mẫu, lọc k-core, chia theo thời gian
+
+- **Lấy mẫu theo khách** (mục 7.1–7.2): giữ trọn lịch sử 2 năm của khách được chọn, vì Full Ranking trên toàn H&M không
+  vừa RAM 16 GB. Hai mẫu không chung khách: mẫu phát triển (để chọn cấu hình) và mẫu kiểm định (để kết luận).
+- **Gộp theo mẫu thiết kế** (`product_code`): áo cùng kiểu khác màu là một sản phẩm.
+- **Lọc k-core** (`src/data_pipeline/kcore.py`), k = 10 (Amazon 5): bỏ khách mua < 10 món và sản phẩm < 10 khách mua,
+  **lặp** đến khi không bỏ thêm được (bỏ sản phẩm có thể làm một khách tụt dưới 10, nên phải lặp). Lý do: món/khách quá
+  ít dữ liệu không học được gì và làm phình tập ứng viên. Chỉ lọc trên dữ liệu **trước mốc kiểm thử**.
+- **Chia theo thời gian** (mục 7.4): huấn luyện trên mọi thứ trước mốc τ = 29/07/2020; đáp án là món khách **mua lần
+  đầu** trong 8 tuần sau τ. Giống thực tế: hôm nay dự đoán tuần sau. Cách **leave-one-out** (giấu món cuối của từng
+  khách) bị loại vì để lọt tương lai: 11,2% cặp huấn luyện xảy ra sau món kiểm thử của chính khách đó (Meng et al., 2020).
+- **Ba tập**: **huấn luyện** (học trọng số), **xác thực** (01/07–28/07/2020: chọn cấu hình, chọn số epoch),
+  **kiểm thử** (29/07–22/09/2020: chỉ để kết luận, mở đúng một lần).
+- **Rò rỉ dữ liệu** (*data leakage*): khi mô hình vô tình thấy thông tin của tương lai/đáp án lúc huấn luyện → điểm đẹp
+  giả. Đề tài chặn bằng: k-core trước τ, đặc trưng tính trước ngày t, mẫu âm trong món đã ra mắt, có test tự động
+  (`tests/test_v2.py`).
+
+### 15.9 Đánh giá: Full Ranking và các độ đo, ví dụ tính tay
+
+- **Full Ranking**: chấm **mọi** sản phẩm ứng viên của khách (~6.700 món) rồi xếp hạng. **Sampled Ranking** chỉ trộn món
+  đúng với ~100 món ngẫu nhiên — rẻ hơn nhưng có thể đảo thứ hạng giữa các mô hình (Krichene & Rendle, 2020), nên đề tài
+  không dùng để kết luận.
+- **Tập ứng viên**: sản phẩm đã có người mua trước τ, trừ món khách đã mua (chỉ gợi ý món **mới với khách**).
+- Hoà điểm phá bằng khoá giả ngẫu nhiên cố định; mọi độ đo tính cho từng khách rồi lấy **trung bình theo khách**.
+
+**Ví dụ** — khách KH0261 trong demo và báo cáo (Hình 3.7): sau mốc mua 2 món, NeuMF-F xếp chúng ở hạng **3** và **6**.
+
+| Độ đo | Công thức | Tính | Kết quả |
+|---|---|---|---|
+| HR@10 | có ít nhất 1 món đúng trong top-10? | có | **1** |
+| Precision@10 | số món đúng trong top-10 / 10 | 2 / 10 | **0,2** |
+| Recall@10 | số món đúng trong top-10 / tổng số món đúng | 2 / 2 | **1** |
+| NDCG@10 | DCG / IDCG (dưới đây) | 0,856 / 1,631 | **≈ 0,525** |
+
+- **DCG** (lợi ích tích luỹ có chiết khấu): món đúng ở hạng r đóng góp 1/log₂(r + 1) — càng xuống thấp càng ít điểm.
+  DCG = 1/log₂4 + 1/log₂7 = 0,5 + 0,356 = 0,856.
+- **IDCG**: DCG lý tưởng — 2 món đúng nằm ở hạng 1 và 2: 1/log₂2 + 1/log₂3 = 1 + 0,631 = 1,631.
+- **NDCG** = DCG / IDCG ∈ [0, 1]; = 1 khi mọi món đúng nằm trên cùng. NDCG thưởng cho việc xếp món đúng **lên cao**, nên
+  là độ đo chính. Cùng khách đó, NeuMF xếp món gần nhất ở hạng 164 → ngoài top-10 → NDCG@10 = 0.
+- **Vì sao NDCG@10 của đề tài chỉ khoảng 0,04**: trung bình trên 3.165 khách của tập kiểm thử H&M, phần lớn khách không có món đúng nào lọt
+  top-10 trong số ~6.700 ứng viên. Random chỉ được 0,001; Most Popular 0,022; NeuMF-F 0,040 — gấp ~40 lần ngẫu nhiên.
+- **Độ phủ** (*coverage*@10): số sản phẩm khác nhau xuất hiện trong top-10 của ít nhất một khách / số sản phẩm ứng viên.
+  Most Popular chỉ 0,3% (ai cũng nhận cùng một danh sách); mô hình cá nhân hoá phủ rộng hơn.
+
+Code: `src/evaluation/metrics.py` (có test tính tay), `src/evaluation/full_ranking.py`, `src/evaluation/v2.py`.
+
+### 15.10 Tinh chỉnh, đăng ký trước và khoá kiểm thử
+
+- **Siêu tham số** (*hyperparameter*): thứ con người chọn, mô hình không tự học — d, lr, số mẫu âm, dropout, ρ, k của
+  KNN… Khác **tham số** (trọng số, embedding) do huấn luyện học ra.
+- **Tinh chỉnh** (`scripts/4_tune.py`): mỗi mô hình thử 6 cấu hình (cùng ngân sách cho mọi mô hình để so công bằng),
+  chấm trên tập **xác thực** của mẫu phát triển, giữ cấu hình tốt nhất (`audit/v2/best_configs.json`).
+- **Vì sao không chọn trên tập kiểm thử**: chọn theo kiểm thử là "học tủ đề thi" — điểm cao vì chọn đúng cấu hình ăn may
+  trên đúng tập đó, không phản ánh dữ liệu mới.
+- **Đăng ký trước** (*pre-registration*, `audit/PREREG_v2.md`): viết sẵn và commit mô hình, lưới, seed, độ đo, các cặp
+  so sánh, tiêu chí "tốt hơn" **trước** khi mở tập kiểm thử. Không thể sửa kế hoạch cho hợp kết quả.
+- **Khoá kiểm thử** (`scripts/5_final.py`): từ chối chạy nếu kế hoạch chưa commit hoặc mã nguồn đang sửa dở; mỗi lần mở
+  tập kiểm thử ghi một dòng vào `audit/test_access_log.csv` trước khi chấm.
+- **Đánh giá cuối**: với mỗi seed, mạng nơ-ron chọn số epoch trên tập xác thực của mẫu kiểm định, rồi **huấn luyện lại từ
+  đầu** trên mọi cặp trước τ với đúng số epoch đó, rồi chấm tập kiểm thử.
+
+### 15.11 Thống kê: so sánh hai mô hình có thật sự khác không
+
+- **Chênh lệch tương đối**: (A − B) / B. Ví dụ NeuMF-F (0,04003) so NeuMF (0,02783): (0,04003 − 0,02783) / 0,02783 ≈
+  **+43,8%**.
+- **Vì sao cần kiểm định**: hai mô hình chênh 2% có thể chỉ do ngẫu nhiên (khách nào được chọn, seed nào). Kiểm định cho
+  biết chênh lệch có đáng tin không.
+- **Ghép cặp theo khách**: hai mô hình chấm **cùng** khách, nên so từng khách: $d_u$ = NDCG@10 của A − của B (mỗi bên đã
+  lấy trung bình 5 seed).
+- **Wilcoxon signed-rank** (`scipy.stats.wilcoxon`, `scripts/7_report.py`): bỏ các $d_u$ = 0, xếp hạng |d_u| từ nhỏ đến
+  lớn, so tổng hạng của các khách A hơn với tổng hạng của khách B hơn. Không giả định phân phối chuẩn (NDCG của từng khách
+  lệch rất mạnh, đa số bằng 0). Kết quả là **p-value**: xác suất thấy chênh lệch lớn như vậy *nếu thật ra hai mô hình
+  ngang nhau*. p nhỏ → khó là ngẫu nhiên.
+- **Bootstrap 95%**: rút ngẫu nhiên có hoàn lại 10.000 lần một tập khách cùng cỡ, mỗi lần tính trung bình $d_u$; lấy
+  phân vị 2,5% và 97,5% làm khoảng tin cậy. Khoảng **không chứa 0** → chênh lệch nhất quán về một phía.
+- **So sánh bội và Holm**: làm 10 phép kiểm định, mỗi phép α = 5%, thì khả năng ít nhất một kết luận sai lên tới ~40%.
+  **Holm** (`holm()` trong `scripts/7_report.py`) sửa bằng cách: xếp p tăng dần p₍₁₎ ≤ … ≤ p₍₁₀₎, nhân p₍ₖ₎ với
+  (10 − k + 1) — nhỏ nhất nhân 10, kế tiếp nhân 9, … — và giữ tính đơn điệu. Ví dụ p nhỏ nhất 0,003 → 0,03 < 0,05 vẫn có
+  ý nghĩa; p = 0,02 đứng thứ 3 → × 8 = 0,16 → không còn ý nghĩa.
+- **Tiêu chí "tốt hơn"** (`verdict()`): **đồng thời** p sau Holm < 0,05, khoảng bootstrap không chứa 0, và chênh lệch
+  tương đối ≥ 5%. Thiếu một điều kiện → "không khác biệt có ý nghĩa" ("ngang nhau" trên demo). Vì vậy NeuMF-F vs GMF-F
+  (+2,6%) và vs LateFusion-F (−2,2%) là "ngang nhau" trên H&M.
+- **Ablation** (bóc tách): tắt lần lượt một nhóm đặc trưng của NeuMF-F, xem NDCG giảm bao nhiêu → biết nhóm nào quan
+  trọng. H&M: bỏ đặc trưng thời gian giảm 42,3% (quan trọng nhất), bỏ thông tin khách giảm 10,3%; bỏ thuộc tính và bỏ
+  văn bản giảm ít và khoảng tin cậy chứa 0 → "chưa khẳng định". Chỉ seed 42, chỉ mô tả.
+
+### 15.12 Hệ thống: từ dữ liệu gốc tới báo cáo và demo
+
+```
+data/raw (Kaggle, Amazon)
+  └─ 1_sample.py ─ lấy mẫu khách ─► data/processed/hm/mau_*.csv
+       └─ 3_features.py ─ đặc trưng sản phẩm (TF-IDF, SVD, doanh số) ─► data/processed/*.npz
+       └─ 2_prepare.py ─ gộp mẫu, k-core, MD5 ─► outputs/data/*.csv.gz
+            └─ 4_tune.py ─ tinh chỉnh trên xác thực ─► audit/v2/best_configs.json
+                 └─ 5_final.py (+ 6_bosung.py) ─ 5 seed trên kiểm thử ─► outputs/*/final/ (kết quả + checkpoint)
+                      └─ 7_report.py ─ kiểm định, bảng, hình, macro ─► Report DACNTT/content/tables, media/figures
+                           └─ 8_check_report.py ─ đối chiếu câu chữ báo cáo với số liệu
+```
+
+Mọi bước gọi qua `python run.py <lệnh>` (mục 10.1). Phần dùng chung (nạp dữ liệu, dựng mô hình, huấn luyện, chấm) nằm ở
+`scripts/common.py` và `src/`.
+
+**Demo** (`demo/`): backend **FastAPI** (Python) nạp checkpoint seed 42 và kết quả đã lưu, mở các API như
+`/api/users/{id}/recommend`, `/neighbors`, `/api/results`; frontend là HTML/CSS/JavaScript thuần gọi các API đó. Khi bấm
+một khách: trình duyệt gọi API → backend chấm ~6.700 món bằng mô hình đã huấn luyện (~16 ms trung vị trên H&M) → trả
+top-K kèm ảnh, tên. Demo **không huấn luyện**, chỉ suy diễn; số trên trang Kết quả đọc thẳng từ file của `7_report.py`
+nên trùng báo cáo.
+
+### 15.13 Bảng thuật ngữ
+
+| Tiếng Việt (báo cáo) | Tiếng Anh | Một câu giải thích |
+|---|---|---|
+| Phản hồi ngầm | Implicit feedback | Chỉ biết hành vi (mua), không có điểm đánh giá |
+| Ma trận tương tác | Interaction matrix | Khách × sản phẩm, ô = 1 nếu đã mua |
+| Nhân tử hoá ma trận | Matrix factorization (MF) | Học vector ẩn, điểm = tích vô hướng |
+| Lọc cộng tác | Collaborative filtering (CF) | Dựa vào hành vi của người/món giống nhau |
+| Lọc dựa trên nội dung | Content-based filtering | Dựa vào thuộc tính, mô tả sản phẩm |
+| Vector nhúng | Embedding | Vector học được cho mỗi ID / giá trị thuộc tính |
+| Hợp nhất sớm / muộn | Early / late fusion | Gộp biểu diễn rồi dự đoán / dự đoán riêng rồi gộp điểm |
+| Mẫu âm | Negative sample | Món chưa mua dùng làm ví dụ y = 0 |
+| Hàm mất mát | Loss function | Đo mô hình sai bao nhiêu; huấn luyện = làm nó nhỏ đi |
+| Dừng sớm | Early stopping | Dừng khi điểm xác thực không tăng nữa |
+| Siêu tham số | Hyperparameter | Thứ người chọn trước khi huấn luyện (d, lr…) |
+| Tập xác thực / kiểm thử | Validation / test set | Để chọn cấu hình / để kết luận |
+| Rò rỉ dữ liệu | Data leakage | Mô hình lỡ thấy thông tin tương lai |
+| Xếp hạng toàn bộ | Full ranking | Chấm mọi ứng viên, không lấy mẫu |
+| Khởi đầu lạnh | Cold start | Khách/sản phẩm chưa có lịch sử (báo cáo giữ tiếng Anh) |
+| Phân tích bóc tách | Ablation study | Tắt từng thành phần để đo đóng góp |
+| Đăng ký trước | Pre-registration | Ghi kế hoạch trước khi xem kết quả |
+| Khoảng tin cậy | Confidence interval (CI) | Khoảng chứa giá trị thật với độ tin cậy 95% |
+| Hiệu chỉnh Holm | Holm correction | Sửa p-value khi làm nhiều phép kiểm định |
+| Độ phủ | Coverage | Tỉ lệ danh mục từng được gợi ý |
+
+### 15.14 Câu hỏi tự kiểm tra
+
+Trả lời được hết mà không nhìn là nắm đề tài. Câu hỏi sát hội đồng hơn: `van_dap.md`.
+
+1. Vì sao không dùng điểm sao mà dùng "đã mua = 1"? Vì sao cần mẫu âm? *(15.1, 15.6)*
+2. GMF khác tích vô hướng MF ở đâu? MLP thêm được gì? *(15.3, 15.5)*
+3. NeuMF-F khác NeuMF đúng ở công thức nào? Vì sao $d_I$ = 157 trên H&M và 109 trên Amazon? *(15.5)*
+4. Hợp nhất sớm và muộn khác nhau thế nào; mô hình nào của đề tài thuộc loại nào? *(15.5b)*
+5. Tính NDCG@10 khi món đúng duy nhất nằm ở hạng 1, hạng 10, hạng 11. *(Đáp án: 1; 1/log₂11 ≈ 0,289; 0.)*
+6. Vì sao chia theo thời gian mà không leave-one-out? *(15.8)*
+7. Vì sao có hai mẫu khách? Chọn cấu hình trên tập kiểm thử thì sai ở đâu? *(15.8, 15.10)*
+8. Vì sao NeuMF-F hơn NeuMF 43,8% thì "tốt hơn", còn hơn GMF-F 2,6% thì "ngang nhau"? *(15.11)*
+9. "± 0,00000" trong bảng nghĩa là gì? *(15.6)*
+10. Nhóm đặc trưng nào quan trọng nhất theo ablation, và vì sao hợp lý với thời trang? *(15.11: đặc trưng thời gian —
+    hàng mới và hàng đang bán chạy đổi theo mùa.)*
+11. Vì sao mô hình đề xuất không đứng đầu (LateFusion-F cao hơn) mà đề tài vẫn có ý nghĩa? *(mục 5, 3.6)*
+12. Demo có huấn luyện lại không? Khách mới nhận gợi ý gì? *(15.12)*

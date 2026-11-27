@@ -23,7 +23,7 @@ def minmax(x: np.ndarray) -> np.ndarray:
 
 
 class LateFusion:
-    """score_items(u, items) = w · minmax(A) + (1 − w) · minmax(B). Dùng với evaluate_score_function."""
+    """score_items(u, items) = w · minmax(A) + (1 − w) · minmax(B)."""
 
     def __init__(self, model_a, model_b, w: float):
         if not 0.0 <= w <= 1.0:

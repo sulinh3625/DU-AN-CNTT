@@ -48,7 +48,7 @@ Kết quả tinh chỉnh trên tập xác thực của mẫu phát triển ở \
 
 Các số này chỉ dùng để chọn cấu hình, không dùng để kết luận. Trong cấu hình được chọn, $d$ là số chiều vector nhúng, lr là tốc độ học và neg là số mẫu âm cho mỗi mẫu dương. Wd và reg là hệ số điều chuẩn, shrink là hệ số co của hai mô hình láng giềng, còn ``bỏ~ID'' là xác suất bỏ vector nhúng ID của sản phẩm. Hybrid-CBCF, đánh dấu \textsuperscript{*}, là mô hình bổ sung.
 
-\bangketquaV{tab_v2_tuning.tex}{\texttt{scripts/22\_tune\_v2.py}}
+\bangketquaV{tab_v2_tuning.tex}{\texttt{scripts/4\_tune.py}}
 
 Với Hybrid-CBCF, nhóm chọn tổng có trọng số học theo cặp, vì đây là cách kết hợp tốt nhất trên tập xác thực và là cách duy nhất vượt thành phần mạnh nhất, theo \bangrefV{tab_v2_hybrid.tex}{tab:v2hybrid}:
 \begin{itemize}
@@ -58,7 +58,7 @@ Với Hybrid-CBCF, nhóm chọn tổng có trọng số học theo cặp, vì đ
 
 Ở lần tính này, vector văn bản được dựng lại nên NDCG@10 của Content đứng riêng lệch nhẹ so với lúc tinh chỉnh, nhưng thứ hạng không đổi.
 
-\bangketquaV{tab_v2_hybrid.tex}{\texttt{scripts/25\_bosung.py tune}}
+\bangketquaV{tab_v2_hybrid.tex}{\texttt{scripts/6\_bosung.py tune}}
 
 \section{Kết quả đánh giá cuối trên mẫu kiểm định}
 \label{sec:exp_results}
@@ -80,9 +80,9 @@ Giá trị tuyệt đối của các độ đo thấp vì mỗi khách chỉ có
 
 Kết quả tính trên \VData{Btest}{users} khách được đánh giá, mỗi ô ghi giá trị trung bình và độ lệch chuẩn qua 5 seed. Các mô hình không có bước ngẫu nhiên khi huấn luyện có độ lệch chuẩn bằng 0.
 
-\bangketquaV{tab_v2_main.tex}{\texttt{scripts/23\_final\_v2.py}}
+\bangketquaV{tab_v2_main.tex}{\texttt{scripts/5\_final.py}}
 
-\hinhketqua{media/figures/v2/v2_metrics.png}{\textwidth}{NDCG@10, Recall@10 và HR@10 trên tập kiểm thử H\&M}{fig:v2_metrics}{chạy \texttt{scripts/23\_final\_v2.py} rồi \texttt{scripts/24\_report\_v2.py}}
+\hinhketqua{media/figures/v2/v2_metrics.png}{\textwidth}{NDCG@10, Recall@10 và HR@10 trên tập kiểm thử H\&M}{fig:v2_metrics}{chạy \texttt{scripts/5\_final.py} rồi \texttt{scripts/7\_report.py}}
 
 \subsection{Kết quả theo \texorpdfstring{$K = 10, 15, 20$}{K = 10, 15, 20}}
 \label{subsec:byk_results}
@@ -94,9 +94,9 @@ Việc chọn $K = 10$ làm độ đo chính không làm thay đổi kết luậ
     \item Thứ tự giữa các mô hình đối chứng chỉ đổi nhẹ, ví dụ MostPopular-Recent vượt UserKNN ở HR@15 và HR@20.
 \end{itemize}
 
-\bangketquaV{tab_v2_k1.tex}{\texttt{scripts/23\_final\_v2.py}}
+\bangketquaV{tab_v2_k1.tex}{\texttt{scripts/5\_final.py}}
 
-\bangketquaV{tab_v2_k2.tex}{\texttt{scripts/23\_final\_v2.py}}
+\bangketquaV{tab_v2_k2.tex}{\texttt{scripts/5\_final.py}}
 
 \subsection{Kiểm định ý nghĩa thống kê}
 \label{subsec:multiseed_results}
@@ -115,9 +115,9 @@ Kiểm định trên họ \VSig{all}{n} so sánh đã đăng ký (\bangrefV{tab_
 
 Mỗi so sánh mô hình A với mô hình B có ba đại lượng: chênh lệch tương đối của NDCG@10, khoảng tin cậy bootstrap 95\% của hiệu theo khách, và giá trị $p$ của kiểm định Wilcoxon sau hiệu chỉnh Holm. Cột kết luận áp dụng tiêu chí ở Mục~\ref{sec:protocol}, và dấu ``---'' nghĩa là không khác biệt có ý nghĩa.
 
-\bangketquaV{tab_v2_sig.tex}{\texttt{scripts/23\_final\_v2.py}}
+\bangketquaV{tab_v2_sig.tex}{\texttt{scripts/5\_final.py}}
 
-\hinhketqua{media/figures/v2/v2_significance.png}{0.95\textwidth}{Hiệu NDCG@10 của họ 10 so sánh trên H\&M}{fig:v2_significance}{chạy \texttt{scripts/24\_report\_v2.py}}
+\hinhketqua{media/figures/v2/v2_significance.png}{0.95\textwidth}{Hiệu NDCG@10 của họ 10 so sánh trên H\&M}{fig:v2_significance}{chạy \texttt{scripts/7\_report.py}}
 
 \subsection{Phân tích bổ sung: so sánh với mô hình lai truyền thống}
 \label{subsec:bosung_results}
@@ -131,7 +131,7 @@ So với mô hình lai truyền thống, theo \bangrefV{tab_v2_sigbs.tex}{tab:v2
 
 Hybrid-CBCF được đánh giá trong một phân tích bổ sung, với kế hoạch riêng được cố định trước khi đánh giá trên tập kiểm thử. Cách kết hợp được chọn trên tập xác thực của mẫu phát triển, rồi đánh giá trên tập kiểm thử của mẫu kiểm định với cùng dữ liệu, tập ứng viên và quy tắc xếp thứ tự khi bằng điểm như 14 mô hình còn lại. Hai so sánh bổ sung dùng hiệu chỉnh Holm riêng: B1 đặt NeuMF-F cạnh Hybrid-CBCF, B2 đặt Hybrid-CBCF cạnh UserKNN, thành phần mạnh nhất của nó.
 
-\bangketquaV{tab_v2_sigbs.tex}{\texttt{scripts/25\_bosung.py final}}
+\bangketquaV{tab_v2_sigbs.tex}{\texttt{scripts/6\_bosung.py final}}
 
 \subsection{Phân tích bóc tách thành phần}
 \label{subsec:ablation}
@@ -144,9 +144,9 @@ Hai biến thể bỏ đặc trưng thời gian và bỏ thông tin khách hàng
 
 Mỗi biến thể chỉ tắt một thành phần và giữ nguyên siêu tham số cùng quy trình huấn luyện của NeuMF-F. Biến thể không bỏ ID ngẫu nhiên trùng với chính NeuMF-F, vì cấu hình được chọn của NeuMF-F có xác suất bỏ ID bằng 0, nên không được chạy. Phân tích này không qua kiểm định đa so sánh và không được dùng để chọn lại cấu hình. Kết quả bóc tách chỉ cho biết nhóm đặc trưng nào đáng giữ lại khi phát triển tiếp mô hình.
 
-\bangketquaV{tab_v2_ablation.tex}{\texttt{scripts/23\_final\_v2.py}}
+\bangketquaV{tab_v2_ablation.tex}{\texttt{scripts/5\_final.py}}
 
-\hinhketqua{media/figures/v2/v2_ablation.png}{\textwidth}{Phân tích bóc tách NeuMF-F trên H\&M}{fig:v2_ablation}{chạy \texttt{scripts/24\_report\_v2.py}}
+\hinhketqua{media/figures/v2/v2_ablation.png}{\textwidth}{Phân tích bóc tách NeuMF-F trên H\&M}{fig:v2_ablation}{chạy \texttt{scripts/7\_report.py}}
 
 \subsection{Độ phủ và chi phí huấn luyện}
 \label{subsec:beyond_results}
@@ -164,7 +164,7 @@ Kết quả về độ phủ:
 
 Về chi phí, số epoch được chọn và thời gian huấn luyện đều lấy trung bình qua 5 seed. Cột số epoch chỉ ghi cho các mạng lưới thần kinh, vốn chọn số epoch bằng dừng sớm. Các mô hình còn lại ghi ``---'', kể cả BPR-MF vì số epoch của nó là một siêu tham số cố định trong cấu hình. Các mạng lưới thần kinh chọn trung bình từ 3 đến khoảng 6 epoch, thấp hơn nhiều so với giới hạn 20 epoch. Điều đó cho thấy NDCG@10 trên tập xác thực đạt đỉnh sớm rồi không tăng thêm. LateFusion-F trộn điểm của GMF-F và MLP-F, nên thời gian của nó là tổng thời gian huấn luyện hai nhánh này ở cùng seed.
 
-\bangketquaV{tab_v2_beyond.tex}{\texttt{scripts/23\_final\_v2.py}}
+\bangketquaV{tab_v2_beyond.tex}{\texttt{scripts/5\_final.py}}
 
 \subsection{Độ ổn định giữa hai mẫu}
 \label{subsec:curves}
@@ -177,7 +177,7 @@ Thứ hạng giữa các mô hình khá ổn định khi chuyển từ mẫu ph�
 
 NDCG@10 của hai lần không cùng thang, vì khác mẫu khách hàng và cửa sổ kiểm thử dài gấp đôi cửa sổ xác thực, nên nhóm chỉ so thứ hạng.
 
-\hinhketqua{media/figures/v2/v2_val_vs_test.png}{0.8\textwidth}{NDCG@10 lúc tinh chỉnh và lúc đánh giá cuối}{fig:v2_val_vs_test}{chạy \texttt{scripts/24\_report\_v2.py}}
+\hinhketqua{media/figures/v2/v2_val_vs_test.png}{0.8\textwidth}{NDCG@10 lúc tinh chỉnh và lúc đánh giá cuối}{fig:v2_val_vs_test}{chạy \texttt{scripts/7\_report.py}}
 
 \section{Kiểm chứng trên dữ liệu Amazon Beauty}
 \label{sec:amazon_results}

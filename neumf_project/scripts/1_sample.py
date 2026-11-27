@@ -1,19 +1,8 @@
-"""00_sample_hm.py — Lấy mẫu khách hàng theo khối bucket từ transactions_train.csv gốc (31,8 triệu dòng).
+"""1_sample.py — Lấy mẫu khách hàng theo khối bucket từ transactions_train.csv gốc (31,8 triệu dòng).
 
-Lấy mẫu THEO KHÁCH HÀNG trải đủ 2018-09-20 → 2020-09-22: băm customer_id (hash key cố định) vào --buckets bucket, chia
-dãy bucket thành các KHỐI liên tiếp, không giao nhau, mỗi khối vừa đủ --target-rows dòng, rồi giữ toàn bộ lịch sử mua
-của khách trong khối được chọn. Đọc file theo chunk 2 lượt nên RAM chỉ khoảng 0,5 GB. File ra giữ nguyên cột như file
-gốc.
-
-    python run.py sample-hm                    # khối 0 -> data/processed/hm/mau_phat_trien.csv
-    python run.py sample-hm --block 2          # khối 2 -> data/processed/hm/mau_kiem_dinh.csv
-    python scripts/00_sample_hm.py --block 1 --output <file>
-
-- Khối 0: mẫu phát triển (trước đây hm500k) — tinh chỉnh, chỉ dùng tập xác thực.
-- Khối 1: trước đây hm500k_b — đã bị mở trong lúc phát triển nên KHÔNG dùng nữa; phải truyền --output tường minh.
-- Khối 2: mẫu kiểm định — chỉ dùng cho lần đánh giá cuối của giao thức v2, tập kiểm thử mở đúng một lần.
-Cùng hash key, cùng --buckets và --target-rows thì mọi máy ra đúng cùng các khối, và các khối không có khách chung.
-"""
+python run.py sample-hm                    # khối 0 -> data/processed/hm/mau_phat_trien.csv
+python run.py sample-hm --block 2          # khối 2 -> data/processed/hm/mau_kiem_dinh.csv
+python scripts/1_sample.py --block 1 --output <file>"""
 from __future__ import annotations
 
 import argparse
@@ -34,9 +23,7 @@ def bucket_of(customer_ids: pd.Series, n_buckets: int, hash_key: str) -> np.ndar
 
 
 def select_buckets(counts: np.ndarray, target_rows: int, block: int = 0) -> tuple[int, int]:
-    """(bucket đầu, số bucket) của khối thứ `block`: các khối nối tiếp nhau từ bucket 0, không giao nhau, mỗi khối gồm
-    số bucket ít nhất để đủ target_rows dòng (khối chạm cuối mảng thì lấy hết phần còn lại). block=0 / block=1 trùng
-    mẫu hm500k / hm500k_b cũ."""
+    """(bucket đầu, số bucket) của khối thứ `block`."""
     if block < 0:
         raise SystemExit(f"--block phải >= 0, nhận {block}")
 

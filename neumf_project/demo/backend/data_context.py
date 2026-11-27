@@ -1,4 +1,4 @@
-"""Nạp đúng dữ liệu và checkpoint của đánh giá cuối (outputs/v2/final/seed42/, scripts/23_final_v2.py) cho demo."""
+"""Nạp đúng dữ liệu và checkpoint của đánh giá cuối (outputs/v2/final/seed42/, scripts/5_final.py) cho demo."""
 from __future__ import annotations
 
 import html
@@ -19,7 +19,7 @@ for p in (PROJECT_ROOT, PROJECT_ROOT / "scripts"):
     if str(p) not in sys.path:
         sys.path.insert(0, str(p))
 
-import v2_common as V  # noqa: E402
+import common as V  # noqa: E402
 from src.baselines import BPRMFBaseline  # noqa: E402
 from src.baselines.hybrid import COMPONENTS as HYBRID_COMPONENTS, TraditionalHybrid  # noqa: E402
 from src.evaluation.full_ranking import EvalRecord  # noqa: E402
@@ -120,10 +120,7 @@ def product_table(articles: pd.DataFrame, item_product: np.ndarray) -> pd.DataFr
 
 
 def amazon_table(items: pd.DataFrame, item_product: np.ndarray) -> pd.DataFrame:
-    """Như product_table cho Amazon (items.csv.gz của 21_build_features.py, index = mã asin): article_id = asin, tên =
-    title, loại = danh mục sâu nhất, nhóm = danh mục cấp 2, khu vực (index_group_name) = danh mục cấp 1; thêm
-    subtitle (thương hiệu · loại · giá), image_src (imUrl gốc, chỉ để demo/scripts/download_amazon_images.py tải về)
-    và image_url (ảnh do máy chủ demo phục vụ từ bản đã tải, không kéo trực tiếp từ Amazon khi demo)."""
+    """Như product_table cho Amazon (items.csv.gz của 3_features.py, index = mã asin)."""
     it = items.reindex(item_product)
     cat = it[["category_1", "category_2", "category_3"]].fillna("").astype(str)
     leaf = (cat["category_3"].where(cat["category_3"] != "", cat["category_2"]).where(lambda s: s != "", cat["category_1"])
@@ -303,9 +300,7 @@ class DataContext:
         return idx
 
     def record(self, u: int) -> EvalRecord:
-        """Ứng viên và sản phẩm đích của khách u: đúng record lúc chấm nếu khách có sản phẩm đích; khách có lịch sử
-        nhưng không mua món mới nào trong giai đoạn đánh giá thì ứng viên = sản phẩm có dữ liệu huấn luyện trừ món đã
-        mua, không có sản phẩm đích (vẫn gợi ý được bằng mô hình, chỉ không có gì để chấm)."""
+        """Ứng viên và sản phẩm đích của khách u."""
         rec = self.records.get(int(u))
         if rec is not None:
             return rec
@@ -314,8 +309,7 @@ class DataContext:
         return EvalRecord(int(u), -1, cand, np.empty(0, dtype=np.int64))
 
     def popular_items(self, k: int) -> tuple[list[int], list[int]]:
-        """K sản phẩm phổ biến nhất cho khách mới (Most Popular): sản phẩm có dữ liệu huấn luyện xếp theo số khách đã
-        mua trước mốc, bằng nhau thì theo khoá tất định."""
+        """K sản phẩm phổ biến nhất cho khách mới (Most Popular)."""
         items = self.scoreable_items
         counts = self.train_item_counts[items]
         order = np.lexsort((deterministic_tie_key(-1, items, self.tie_seed), -counts))[:k]

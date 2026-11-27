@@ -1,29 +1,8 @@
 """Đánh giá cuối giao thức v2 trên tập kiểm thử của mẫu kiểm định (audit/PREREG_v2.md mục 5).
 
-    python scripts/23_final_v2.py --reason "Đánh giá cuối v2 theo PREREG_v2"
-    python scripts/23_final_v2.py --reason "..." --seeds 2026 3407     # chạy tiếp các seed chưa chạy (bị ngắt giữa chừng)
-    python scripts/23_final_v2.py --dry-run --max-epochs 1             # thử toàn bộ đường ống trên tập xác thực của A
-
-Khoá kiểm thử (bỏ qua khi --dry-run): audit/PREREG_v2.md đã commit; có --reason; không có file đã theo dõi bị sửa (trừ
-outputs/ và audit/test_access_log.csv — do chính đánh giá cuối ghi, để chạy tiếp seed còn thiếu sau khi bị ngắt); không
-có file mã nguồn chưa theo dõi trong src/, scripts/, configs/; audit/v2/best_configs.json đủ mọi mô hình; mã băm mã nguồn
-hiện tại trùng mã băm ghi trong audit/v2/tuning_log.csv (cùng mã nguồn với lúc tinh chỉnh); seed chưa có trong
-audit/test_access_log.csv (trừ khi --allow-rerun). Mỗi seed ghi một dòng nhật ký TRƯỚC khi chấm.
-
-Mỗi seed: mạng nơ-ron chọn số epoch trên tập xác thực của B (dừng sớm như lúc tinh chỉnh) rồi huấn luyện lại từ đầu
-trên mọi cặp trước mốc kiểm thử đúng số epoch đó; BPR-MF và các mô hình không phải mạng nơ-ron khớp trên mọi cặp trước
-mốc kiểm thử; LateFusion-F trộn GMF-F và MLP-F của cùng seed. Ablation NeuMF-F chỉ chạy ở seed 42 (mô tả), bỏ biến
-thể trùng NeuMF-F (vd. "bỏ ID ngẫu nhiên" khi cấu hình chọn đã có id_dropout = 0).
-
-Ra outputs/v2/final/: data.json, items.csv.gz và seed<N>/{results.json, per_user.csv.gz, history.csv}; seed 42 thêm
-topk.json.gz và checkpoint mạng nơ-ron (*.pt). Thư mục ra còn kết quả của dữ liệu khác (data_md5 khác) thì dừng, không
-ghi lẫn.
---dry-run dùng mẫu phát triển, giai đoạn xác thực đóng cả vai chọn epoch lẫn chấm, ghi ra outputs/v2/dry_run/, không ghi
-nhật ký kiểm thử: chỉ để kiểm tra đường ống chạy trọn vẹn, số liệu không có ý nghĩa.
-Amazon Beauty (NEUMF_CONFIG=configs/amazon.yaml, `python run.py amazon-final`): cùng khoá với audit/PREREG_amazon.md,
-run_tag amazon_kiemdinh_seed<N>, ra outputs/amazon/final/ (dry-run: outputs/amazon/dry_run/). Không tinh chỉnh trên
-Amazon: cấu hình lấy từ audit/v2/best_configs.json (H&M), nên không so mã băm với nhật ký tinh chỉnh.
-"""
+python scripts/5_final.py --reason "Đánh giá cuối v2 theo PREREG_v2"
+python scripts/5_final.py --reason "..." --seeds 2026 3407     # chạy tiếp các seed chưa chạy (bị ngắt giữa chừng)
+python scripts/5_final.py --dry-run --max-epochs 1             # thử toàn bộ đường ống trên tập xác thực của A"""
 from __future__ import annotations
 
 import os
@@ -44,7 +23,7 @@ import numpy as np
 import pandas as pd
 import torch
 
-import v2_common as V
+import common as V
 from src.baselines import RandomBaseline
 from src.data_pipeline.protocol_v2 import describe
 from src.evaluation.v2 import evaluate_v2
@@ -162,8 +141,7 @@ def foreign_results(root: Path, data_md5: str) -> list[str]:
 
 
 def ablations(p: dict) -> list[str]:
-    """Biến thể ablation khác NeuMF-F (cấu hình p): bỏ biến thể không tắt gì, vd. "bỏ ID ngẫu nhiên" khi cấu hình chọn
-    đã có id_dropout = 0 — chạy nó chỉ ra lại đúng NeuMF-F."""
+    """Biến thể ablation khác NeuMF-F (cấu hình p)."""
     base = {"id_dropout": p.get("id_dropout", 0.0)}
     return [k for k, flags in V.ABLATIONS.items() if any(base.get(f, True) != v for f, v in flags.items())]
 

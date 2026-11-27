@@ -6,15 +6,15 @@ name: Amazon Beauty
 samples:  # một bộ dữ liệu: chọn số epoch trên tập xác thực, đánh giá cuối trên tập kiểm thử (chia theo thời gian)
   dev: data/raw/amazon/reviews_Beauty_5.json.gz
   holdout: data/raw/amazon/reviews_Beauty_5.json.gz
-data_dir: outputs/amazon/data   # dữ liệu đã lọc (scripts/02_prepare_data.py): <tên>.csv.gz + manifest.json
-audit_dir: audit/amazon         # mô tả dữ liệu cho 24_report_v2.py (data_dev.json)
+data_dir: outputs/amazon/data   # dữ liệu đã lọc (scripts/2_prepare.py): <tên>.csv.gz + manifest.json
+audit_dir: audit/amazon         # mô tả dữ liệu cho 7_report.py (data_dev.json)
 out_dir: outputs/amazon         # dry_run/, final/
 best_configs: audit/v2/best_configs.json  # cấu hình chọn trên tập xác thực của mẫu phát triển H&M — không tinh chỉnh lại
 prereg: audit/PREREG_amazon.md
 run_tag: amazon_kiemdinh_seed   # dòng nhật ký audit/test_access_log.csv
 features:
   meta: data/raw/amazon/meta_Beauty.json.gz
-  catalog: data/processed/amazon/catalog.npz       # scripts/21_build_features.py
+  catalog: data/processed/amazon/catalog.npz       # scripts/3_features.py
   sales: data/processed/amazon/daily_reviews.npz   # số đánh giá mỗi (sản phẩm, ngày) — thay doanh số H&M
   items: data/processed/amazon/items.csv.gz        # tên, thương hiệu, danh mục, giá, ảnh — cho demo
   customers: null                                  # Amazon không có thông tin khách

@@ -1,6 +1,5 @@
-"""Mô hình lai truyền thống Hybrid-CBCF (src/baselines/hybrid.py) và đánh giá bổ sung (scripts/25_bosung.py,
-audit/PREREG_bosung.md): chuẩn hoá trên tập ứng viên, bốn cách kết hợp, học trọng số theo cặp, khớp chéo theo khách,
-khoá kiểm thử."""
+"""Mô hình lai truyền thống Hybrid-CBCF (src/baselines/hybrid.py) và đánh giá bổ sung (scripts/6_bosung.py,
+audit/PREREG_bosung.md)."""
 from __future__ import annotations
 
 import importlib.util
@@ -87,7 +86,7 @@ def _load(name, file):
     return mod
 
 
-bosung = _load("bosung", "25_bosung.py")
+bosung = _load("bosung", "6_bosung.py")
 
 
 def _args(**kw):

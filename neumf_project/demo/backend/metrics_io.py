@@ -1,4 +1,4 @@
-"""Đọc file kết quả của scripts/24_report_v2.py (outputs/v2/final/ hoặc outputs/amazon/final/) cho dashboard."""
+"""Đọc file kết quả của scripts/7_report.py (outputs/v2/final/ hoặc outputs/amazon/final/) cho dashboard."""
 from __future__ import annotations
 
 import json

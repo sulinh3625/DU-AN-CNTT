@@ -17,7 +17,7 @@ HEADERS = {"User-Agent": "Mozilla/5.0 (neumf-demo image cache)"}
 
 
 def fetch(asin: str, url: str, timeout: float) -> str:
-    """Tải một ảnh; thử lại bằng máy chủ ảnh hiện tại của Amazon nếu link 2014 lỗi. Trả về 'ok', 'skip' hoặc 'fail'."""
+    """Tải một ảnh; thử lại bằng máy chủ ảnh hiện tại của Amazon nếu link 2014 lỗi."""
     dst = Path(amazon_image_path(asin))
     if dst.exists() and dst.stat().st_size > 0:
         return "skip"

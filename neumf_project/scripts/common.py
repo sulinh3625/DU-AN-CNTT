@@ -123,9 +123,8 @@ def manifest_path(cfg: dict | None = None) -> Path:
 
 
 def load_data(sample: str, with_test: bool = False, cfg: dict | None = None) -> DataV2:
-    """Dựng dữ liệu của mẫu từ file đã lọc <data_dir>/<tên mẫu>.csv.gz — mọi mô hình đọc cùng file này — sau khi kiểm
-    MD5 (nội dung đã giải nén) với manifest.json; không dựng lại từ dữ liệu thô. cfg: cấu hình khác CFG (demo nạp cả
-    H&M lẫn Amazon trong một tiến trình)."""
+    """Dựng dữ liệu của mẫu từ file đã lọc <data_dir>/<tên mẫu>.csv.gz — mọi mô hình đọc cùng file này — sau khi
+    kiểm MD5 (nội dung đã giải nén) với manifest.json; không dựng lại từ dữ liệu thô."""
     own = cfg is None
     cfg = CFG if own else cfg
     prep = "python run.py prepare" if cfg.get("dataset", "hm") == "hm" else "python run.py amazon-data"
@@ -145,7 +144,7 @@ def load_data(sample: str, with_test: bool = False, cfg: dict | None = None) -> 
     f = cfg["features"]
     for p in (f["catalog"], f["sales"]):
         if not (PROJECT_ROOT / p).exists():
-            raise SystemExit(f"Thiếu {p} — chạy `{prep}` (gồm scripts/21_build_features.py) trước.")
+            raise SystemExit(f"Thiếu {p} — chạy `{prep}` (gồm scripts/3_features.py) trước.")
     catalog, sales = load_catalog(PROJECT_ROOT / f["catalog"]), load_daily_sales(PROJECT_ROOT / f["sales"])
     if cfg.get("dataset", "hm") == "hm":
         catalog, sales = group_by_product(catalog, sales)
@@ -181,13 +180,13 @@ def provenance() -> dict:
             "git_dirty": bool(git("status", "--porcelain", "--untracked-files=no"))}
 
 
-CODE_FILES = ["src", "scripts/v2_common.py", "scripts/22_tune_v2.py", "scripts/02_prepare_data.py",
+CODE_FILES = ["src", "scripts/common.py", "scripts/4_tune.py", "scripts/2_prepare.py",
               CONFIG.relative_to(PROJECT_ROOT).as_posix()]
 
 
 def code_hash() -> str:
     """Mã băm nội dung mã nguồn ảnh hưởng tới kết quả v2 (src/*.py, script v2, cấu hình) — truy vết được cả khi chạy
-    trước lúc commit: cùng mã băm = cùng mã nguồn."""
+    trước lúc commit."""
     import hashlib
 
     h = hashlib.sha256()
@@ -292,8 +291,7 @@ def late_fusion(parts: dict, w: float) -> LateFusion:
 
 def hybrid_components(best: dict, D: DataV2, stage: Stage) -> list:
     """Ba thành phần của mô hình lai truyền thống Hybrid-CBCF (Content, UserKNN, ItemKNN — thứ tự COMPONENTS của
-    src/baselines/hybrid.py), khớp trên tập huấn luyện của giai đoạn với đúng cấu hình đã chọn khi tinh chỉnh (best =
-    audit/v2/best_configs.json)."""
+    src/baselines/hybrid.py)."""
     return [score_fn(k, best[k]["params"], D, stage) for k in HYBRID_PARTS]
 
 
