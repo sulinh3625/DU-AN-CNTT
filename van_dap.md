@@ -4,7 +4,8 @@ Tài liệu này để cả nhóm nắm toàn bộ đề tài và trả lời th
 bản báo cáo viết gọn ngày 24/11/2026 (số mục, bảng, hình giữ nguyên như bản 18/11; phần demo có Bảng 3.7 số đo, Hình 3.8–3.9, hình kết quả demo là Hình 3.10, bảng điểm cuối API được thay bằng đoạn văn). Mọi số
 liệu ở đây khớp với báo cáo và tệp kết quả cuối `neumf_project/outputs/*/final/` (kiểm bằng `python run.py
 check-report` và đối chiếu từng số ngày 26/11/2026). Bản 26/11 viết lại Câu 1 về LateFusion-F (câu trọng tâm) và thêm
-Phần 0.2, 0.3, 5.7, 5.8, 9. Bản 27/11 thêm câu (m)–(o) ở 0.3, câu 5.8.10 về kết quả kiểm tra trùng lặp, bảng vị trí công
+Phần 0.2, 0.3, 5.7, 5.8, 9. Bản 27/11 thêm mục (g) ở Câu 1 (điểm yếu của LateFusion-F, có đếm bộ nhớ và đo thời gian
+trả kết quả), câu (m)–(o) ở 0.3, câu 5.8.10 về kết quả kiểm tra trùng lặp, bảng vị trí công
 thức ở Phần 8 và Phần 10 (lời nói mẫu theo từng slide, có canh giờ).
 
 Báo cáo nộp cuối (27/11) khác bản đã kiểm Turnitin (25/11) ở mấy điểm sau. Số chương, mục, bảng, hình và thuật toán vẫn
@@ -180,6 +181,58 @@ Không tự kể chi tiết các bản kế hoạch; nếu bị hỏi vì sao c�
 - "Nhóm chọn NeuMF-F vì huấn luyện nhanh hơn": lý do chọn là mục tiêu đề tài, có trước kết quả; thời gian và độ phủ là
   đánh đổi đo được sau đó.
 - Số của các lần chạy cũ (khối 1, giao thức đầu).
+
+*(g) Điểm yếu của LateFusion-F so với NeuMF-F: nói được gì, bằng số nào (kiểm ngày 27/11/2026)*
+
+Dùng khi bị hỏi "NeuMF-F hơn LateFusion-F ở điểm nào?". Nói các điểm đo được trước, điểm thiết kế sau. Đây là đánh đổi
+đo được sau khi đã chọn mô hình, không phải lý do chọn (xem (f)).
+
+| Khía cạnh | NeuMF-F | LateFusion-F | Cách nói |
+|---|---|---|---|
+| Thời gian huấn luyện mỗi seed (Bảng 4.10, mục 4.7) | 15,2 phút (H&M); 4,1 phút (Amazon) | 30,1 phút (GMF-F 13,7 + MLP-F 16,4); 10,9 phút (6,1 + 4,9) | Gấp khoảng 2 lần trên H&M, khoảng 2,7 lần trên Amazon. |
+| Tổng số epoch phải chạy | 3,0 (H&M); 5,4 (Amazon) | 4,4 + 4,6 = 9,0; 14,0 + 8,0 = 22,0 | Một phần khoản tiết kiệm đến từ việc NeuMF-F dừng sớm hơn. Số epoch hai nhánh trên Amazon lấy từ `beyond.csv`, không có trong báo cáo. |
+| Số mạng phải huấn luyện, lưu và cập nhật | 1 | 2, cộng trọng số trộn $w$ | Mỗi lần có dữ liệu mới phải huấn luyện lại cả hai và giữ đúng cặp phiên bản. |
+| Độ phủ top-10, seed 42 (Bảng 4.10, mục 4.7) | 13,3% (H&M); 20,5% (Amazon) | 5,3%; 15,3% | Danh sách của LateFusion-F dồn vào ít sản phẩm hơn. |
+| Dao động giữa 5 seed (độ lệch chuẩn NDCG@10) | 0,00147 (H&M); 0,00189 (Amazon) | 0,00212; 0,00180 | Chỉ nói "trên H&M LateFusion-F dao động nhiều hơn"; trên Amazon hai mức xấp xỉ nhau. |
+
+Điểm yếu về thiết kế, nói được mà không cần số:
+- **Điểm phụ thuộc vào tập ứng viên.** LateFusion-F chuẩn hoá min–max điểm của từng nhánh trên toàn bộ tập ứng viên của
+  khách rồi mới trộn (mục 2.3.4, Thuật toán 3.5). Danh sách ứng viên đổi (lọc theo loại hàng, thêm hàng mới) thì điểm của
+  một sản phẩm cũng đổi, và không tính được điểm cho riêng một cặp khách–sản phẩm. NeuMF-F cho điểm độc lập từng cặp.
+- **Thêm một siêu tham số.** Trọng số $w$ phải chọn trên tập xác thực (lưới 11 giá trị), và là một trọng số chung cho
+  mọi khách.
+- **Hai nhánh không học cùng nhau.** Bước trộn chỉ là tổng có trọng số cố định của hai điểm đã chuẩn hoá. NeuMF-F học
+  trọng số của lớp dự đoán trên vector hợp nhất 40 chiều cùng lúc với hai nhánh. Điểm này cũng là lý do NeuMF-F đúng
+  mục tiêu "một mô hình lai học chung" (mục 1.1.3).
+
+Không được nói (đã kiểm, LateFusion-F không thua ở các mặt này):
+- **"NeuMF-F tốn ít bộ nhớ hơn."** Số tham số gần như bằng nhau, vì NeuMF-F cũng có hai bảng vector nhúng riêng cho hai
+  nhánh:
+  - H&M: NeuMF-F 963.992 tham số, LateFusion-F (GMF-F cộng MLP-F) 968.848.
+  - Amazon: 1.100.184 so với 1.118.416.
+  - LateFusion-F chỉ nhiều hơn 0,5–1,7%, do mỗi nhánh giữ một bản vector nhúng thuộc tính riêng.
+  - Tệp mô hình: 3,86 MB so với 1,94 MB + 1,95 MB.
+  - Các số trên đếm từ mô hình đã lưu của seed 42, không có trong báo cáo.
+- **"NeuMF-F trả kết quả nhanh hơn."** NeuMF-F chứa cả hai nhánh, nên khối lượng tính cho mỗi cặp gần bằng GMF-F cộng
+  MLP-F. Nhóm đo qua API demo ngày 27/11 trên laptop chỉ có CPU, theo cách đo của Bảng 3.7 (300 khách, seed 2026). Trung
+  vị thời gian trả top-10:
+  - H&M: NeuMF-F 18,9 ms, LateFusion-F 13,5 ms.
+  - Amazon: 15,6 ms và 15,0 ms.
+
+  Số đo dao động giữa các lần chạy: Bảng 3.7 ghi NeuMF-F 16,1 ms. Lợi thế về thời gian của NeuMF-F chỉ nằm ở khâu
+  huấn luyện.
+- **"Tốn ít token hơn."** Đây không phải mô hình ngôn ngữ, nên không xử lý văn bản theo token. Mô tả sản phẩm đã được
+  đổi thành vector TF-IDF 64 chiều trước khi vào mô hình, giống nhau cho cả hai. Nói "token" sẽ bị hiểu là nhầm loại mô
+  hình.
+
+Cần thừa nhận ưu điểm thật của LateFusion-F: NDCG@10 cao hơn (ngang trên H&M, cao hơn có ý nghĩa trên Amazon), chỉnh
+lại $w$ không cần huấn luyện lại, và thay được từng nhánh độc lập.
+
+Câu nói gọn khoảng 20 giây:
+> So với LateFusion-F, NeuMF-F chỉ huấn luyện một mạng: thời gian bằng khoảng một nửa trên H&M và hơn một phần ba trên
+> Amazon. Danh sách khuyến nghị của NeuMF-F phủ nhiều sản phẩm hơn, và điểm của mỗi cặp khách–sản phẩm không phụ thuộc
+> danh sách ứng viên. Bộ nhớ và tốc độ trả kết quả thì hai mô hình tương đương. Đổi lại, LateFusion-F có NDCG@10 cao
+> hơn, rõ nhất trên Amazon.
 
 Mở: báo cáo mục 1.1.3 (lý do chọn hợp nhất sớm), 4.3.3 và 4.4.3 (kiểm định), 4.7 (đánh đổi), 5.2.
 
