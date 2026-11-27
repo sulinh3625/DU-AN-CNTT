@@ -1,4 +1,4 @@
-"""Lấy mẫu theo khối bucket (scripts/00_sample_hm.py): khối 0/1 trùng mẫu hm500k/hm500k_b cũ; các khối liên tiếp, không
+"""Lấy mẫu theo khối bucket (scripts/1_sample.py): khối 0/1 trùng mẫu hm500k/hm500k_b cũ; các khối liên tiếp, không
 giao nhau, mỗi khối vừa đủ số dòng; hết bucket thì dừng."""
 from __future__ import annotations
 
@@ -9,7 +9,7 @@ import numpy as np
 import pytest
 
 ROOT = Path(__file__).resolve().parents[1]
-_spec = importlib.util.spec_from_file_location("sample_hm", ROOT / "scripts" / "00_sample_hm.py")
+_spec = importlib.util.spec_from_file_location("sample_hm", ROOT / "scripts" / "1_sample.py")
 sample_hm = importlib.util.module_from_spec(_spec)
 _spec.loader.exec_module(sample_hm)
 

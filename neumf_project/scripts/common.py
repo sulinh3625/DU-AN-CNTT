@@ -145,7 +145,7 @@ def load_data(sample: str, with_test: bool = False, cfg: dict | None = None) -> 
     f = cfg["features"]
     for p in (f["catalog"], f["sales"]):
         if not (PROJECT_ROOT / p).exists():
-            raise SystemExit(f"Thiếu {p} — chạy `{prep}` (gồm scripts/21_build_features.py) trước.")
+            raise SystemExit(f"Thiếu {p} — chạy `{prep}` (gồm scripts/3_features.py) trước.")
     catalog, sales = load_catalog(PROJECT_ROOT / f["catalog"]), load_daily_sales(PROJECT_ROOT / f["sales"])
     if cfg.get("dataset", "hm") == "hm":
         catalog, sales = group_by_product(catalog, sales)
@@ -181,7 +181,7 @@ def provenance() -> dict:
             "git_dirty": bool(git("status", "--porcelain", "--untracked-files=no"))}
 
 
-CODE_FILES = ["src", "scripts/v2_common.py", "scripts/22_tune_v2.py", "scripts/02_prepare_data.py",
+CODE_FILES = ["src", "scripts/common.py", "scripts/4_tune.py", "scripts/2_prepare.py",
               CONFIG.relative_to(PROJECT_ROOT).as_posix()]
 
 

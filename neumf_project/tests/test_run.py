@@ -20,18 +20,18 @@ def test_run_steps_stops_at_first_failure_and_reports_it(tmp_path, capsys):
 
 
 def test_v2_data_runs_sample_features_then_prepare():
-    assert run.cmd_v2_data(None) == [["scripts/00_sample_hm.py", "--block", "2"], ["scripts/21_build_features.py"],
-                                     ["scripts/02_prepare_data.py"]]
+    assert run.cmd_v2_data(None) == [["scripts/1_sample.py", "--block", "2"], ["scripts/3_features.py"],
+                                     ["scripts/2_prepare.py"]]
 
 
 def test_all_tunes_then_dry_run_and_opens_test_only_with_final(monkeypatch):
-    overnight = [["scripts/02_prepare_data.py"], ["scripts/22_tune_v2.py", "--model", "all", "--resume"],
-                 ["scripts/23_final_v2.py", "--dry-run", "--max-epochs", "1", "--seeds", "42"],
-                 ["scripts/24_report_v2.py", "--final-dir", "outputs/v2/dry_run", "--report-dir", ""]]
+    overnight = [["scripts/2_prepare.py"], ["scripts/4_tune.py", "--model", "all", "--resume"],
+                 ["scripts/5_final.py", "--dry-run", "--max-epochs", "1", "--seeds", "42"],
+                 ["scripts/7_report.py", "--final-dir", "outputs/v2/dry_run", "--report-dir", ""]]
     ns = run.argparse.Namespace
     assert run.cmd_all(ns(final=False, reason="")) == overnight
     assert run.cmd_all(ns(final=True, reason="đêm")) == overnight + [
-        ["scripts/23_final_v2.py", "--reason", "đêm"], ["scripts/24_report_v2.py"]]
+        ["scripts/5_final.py", "--reason", "đêm"], ["scripts/7_report.py"]]
     with pytest.raises(SystemExit, match="--reason"):
         run.cmd_all(ns(final=True, reason=" "))
 
@@ -55,11 +55,11 @@ def test_menu_asks_required_args_and_defaults_to_no_for_test_commands(monkeypatc
     assert _menu(monkeypatch, ["0", str(pick), "lý do thử", "--seeds 42", ""]) == []
     out = capsys.readouterr().out
     assert "Không có lựa chọn '0'" in out
-    assert 'scripts/23_final_v2.py --reason "lý do thử" --seeds 42' in out and "chấm tập kiểm thử" in out
+    assert 'scripts/5_final.py --reason "lý do thử" --seeds 42' in out and "chấm tập kiểm thử" in out
 
 
 def test_menu_runs_command_with_extra_options(monkeypatch):
     pick = run.MENU[0][1].index("prepare") + 1
     assert _menu(monkeypatch, [str(pick), "--sample holdout", ""]) == [
-        [["scripts/02_prepare_data.py", "--sample", "holdout"]]]
+        [["scripts/2_prepare.py", "--sample", "holdout"]]]
     assert _menu(monkeypatch, [""]) == []

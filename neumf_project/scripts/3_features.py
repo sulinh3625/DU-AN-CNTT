@@ -1,7 +1,7 @@
 """Dựng cache đặc trưng cho giao thức v2 (chạy một lần, khoảng 2–3 phút; không đụng nhãn kiểm thử nào):
 
-    python scripts/21_build_features.py
-    python run.py amazon-data          # Amazon Beauty (NEUMF_CONFIG=configs/amazon.yaml), kèm 02_prepare_data.py
+    python scripts/3_features.py
+    python run.py amazon-data          # Amazon Beauty (NEUMF_CONFIG=configs/amazon.yaml), kèm 2_prepare.py
 
 H&M (configs/v2.yaml):
 - data/processed/hm/catalog_v2.npz      thuộc tính sản phẩm + vector mô tả văn bản (articles.csv)
@@ -18,7 +18,7 @@ from __future__ import annotations
 import argparse
 import time
 
-import v2_common as V
+import common as V
 from src.data_pipeline.features import (build_catalog, build_daily_sales, save_catalog,  # noqa: E402
                                         save_daily_sales)
 

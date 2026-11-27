@@ -143,7 +143,7 @@ def build_from_pairs(pairs: pd.DataFrame, val_start: str, test_start: str, catal
 def build_v2(sample_path: str | Path, val_start: str, test_start: str, k_core: int, catalog: Catalog,
              sales: DailySales, customers_path: str | Path | None = None, with_test: bool = False) -> DataV2:
     """H&M trong bộ nhớ: HMAdapter -> prepare_pairs (gộp màu theo product_code) -> build_from_pairs. catalog, sales là
-    bản theo article_id (cache của 21_build_features.py); hàm tự gộp theo sản phẩm."""
+    bản theo article_id (cache của 3_features.py); hàm tự gộp theo sản phẩm."""
     pairs = prepare_pairs(HMAdapter(sample_path).load_events(), test_start, k_core, item_map=product_code_of)
     data = build_from_pairs(pairs, val_start, test_start, *group_by_product(catalog, sales), customers_path,
                             with_test=with_test)

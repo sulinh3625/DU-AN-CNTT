@@ -1,9 +1,9 @@
 """Phân tích kết quả giao thức v2 và xuất sang báo cáo (audit/PREREG_v2.md mục 6–7).
 
-    python scripts/24_report_v2.py                     # sau scripts/23_final_v2.py
-    python scripts/24_report_v2.py --final-dir outputs/v2/dry_run --report-dir <thư mục tạm>   # thử trên bản chạy thử
+    python scripts/7_report.py                     # sau scripts/5_final.py
+    python scripts/7_report.py --final-dir outputs/v2/dry_run --report-dir <thư mục tạm>   # thử trên bản chạy thử
 
-Đọc outputs/v2/final/ (23_final_v2.py) và audit/v2/best_configs.json (tinh chỉnh trên mẫu phát triển). Tính:
+Đọc outputs/v2/final/ (5_final.py) và audit/v2/best_configs.json (tinh chỉnh trên mẫu phát triển). Tính:
 - trung bình ± độ lệch chuẩn qua seed của mọi chỉ số;
 - họ 10 so sánh đã đăng ký: NDCG@10 theo người dùng trung bình qua seed, Wilcoxon signed-rank, khoảng tin cậy bootstrap
   ghép cặp 95% (10.000 lần, seed 0), hiệu chỉnh Holm; "tốt hơn" khi p Holm < 0,05, CI không chứa 0 và chênh lệch tương
@@ -19,7 +19,7 @@ Ghi: <final-dir>/{summary,significance,ablation,beyond,by_k}.csv, hình <final-d
 Mọi số trong báo cáo lấy từ các file này, không gõ tay.
 Amazon Beauty (NEUMF_CONFIG=configs/amazon.yaml, `python run.py amazon-report`): đọc outputs/amazon/final/, ghi bảng +
 macro (\\ARes, \\ASig, ...) vào content/tables/amazon/ và hình vào media/figures/amazon/ — không đụng bảng của H&M.
-Bổ sung sau đánh giá cuối (audit/PREREG_bosung.md): nếu có <final-dir>/bosung/ (scripts/25_bosung.py) thì thêm mô hình lai
+Bổ sung sau đánh giá cuối (audit/PREREG_bosung.md): nếu có <final-dir>/bosung/ (scripts/6_bosung.py) thì thêm mô hình lai
 truyền thống Hybrid-CBCF (đánh dấu *) vào bảng kết quả theo ba nhóm baseline, bảng theo K, bảng độ phủ và bảng tinh
 chỉnh, và kiểm định riêng họ bổ sung B1–B2 (Holm trong họ) -> <final-dir>/bosung/{summary,significance,by_k,beyond}.csv,
 bảng tab_*_sigbs.tex, macro \\VSig{B1}{...}, \\VRes{Hyb}{...}. Các tệp, thứ hạng và họ 10 so sánh của 14 mô hình đăng ký
@@ -43,8 +43,8 @@ from matplotlib.lines import Line2D
 from matplotlib.ticker import FuncFormatter, MaxNLocator
 from scipy.stats import wilcoxon
 
-import v2_common as V
-from src.evaluation.metrics import multi_ranking_metrics  # noqa: E402  (đường dẫn src do v2_common thêm)
+import common as V
+from src.evaluation.metrics import multi_ranking_metrics  # noqa: E402  (đường dẫn src do common thêm)
 
 PROJECT_ROOT = V.PROJECT_ROOT
 AUDIT = V.AUDIT
@@ -82,7 +82,7 @@ K_METRICS = ("NDCG", "Recall", "HR", "Precision")
 NOT_SIG = "không khác biệt có ý nghĩa"
 N_BOOT, BOOT_SEED, ALPHA, MIN_REL = 10_000, 0, 0.05, 0.05
 INK, INK2, MUTED, GRID, SURFACE = "#0b0b0b", "#52514e", "#898781", "#e1e0d9", "#fcfcfb"
-HEADER = "% Sinh tự động bởi neumf_project/scripts/24_report_v2.py — KHÔNG sửa tay."
+HEADER = "% Sinh tự động bởi neumf_project/scripts/7_report.py — KHÔNG sửa tay."
 TEXT = {
     "hm": dict(test="tập kiểm thử của mẫu kiểm định", test_fig="Tập kiểm thử của mẫu kiểm định H&M",
                test_cap="tập kiểm thử của mẫu kiểm định H\\&M", short="H\\&M",
@@ -133,7 +133,7 @@ def verdict(p_holm: float, lo: float, hi: float, rel: float, diff: float) -> str
 def load(final_dir: Path):
     seeds = sorted(int(p.name[4:]) for p in final_dir.glob("seed*") if (p / "results.json").exists())
     if not seeds:
-        raise SystemExit(f"Chưa có kết quả trong {final_dir} — chạy scripts/23_final_v2.py trước.")
+        raise SystemExit(f"Chưa có kết quả trong {final_dir} — chạy scripts/5_final.py trước.")
     res = {s: json.loads((final_dir / f"seed{s}" / "results.json").read_text(encoding="utf-8")) for s in seeds}
     per = pd.concat([pd.read_csv(final_dir / f"seed{s}" / "per_user.csv.gz") for s in seeds], ignore_index=True)
     models = [m for m in MODELS if all(m in res[s]["results"] for s in seeds)]
@@ -141,7 +141,7 @@ def load(final_dir: Path):
 
 
 def load_supplement(final_dir: Path, seeds, res: dict):
-    """Kết quả bổ sung của scripts/25_bosung.py trong <final-dir>/bosung/."""
+    """Kết quả bổ sung của scripts/6_bosung.py trong <final-dir>/bosung/."""
     d = final_dir / "bosung"
     if not (d / "results.json").exists():
         return None, pd.DataFrame(), res
@@ -1024,7 +1024,7 @@ def text_report(seeds, summary, sig, abl, bey, info_b, bk: pd.DataFrame | None =
                    f"{str(sup.get('provenance', {}).get('git_commit') or '')[:7]}. Tệp đặc trưng văn bản không nằm trong "
                    "git, mỗi máy tự dựng, nên Content có thể lệch nhẹ; UserKNN, ItemKNN không dùng đặc trưng."])
     out.append("Nguồn: summary.csv, significance.csv, ablation.csv, beyond.csv"
-               f"{'' if bk is None or bk.empty else ', by_k.csv'} cùng thư mục (scripts/24_report_v2.py)"
+               f"{'' if bk is None or bk.empty else ', by_k.csv'} cùng thư mục (scripts/7_report.py)"
                + ("; phân tích bổ sung: bosung/." if sup is not None else "."))
     return "\n".join(out) + "\n"
 

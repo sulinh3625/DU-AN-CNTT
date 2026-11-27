@@ -1,7 +1,7 @@
-"""Chuẩn bị dữ liệu đã lọc của giao thức v2 — mọi mô hình đọc cùng file này, kiểm bằng MD5 (scripts/v2_common.py).
+"""Chuẩn bị dữ liệu đã lọc của giao thức v2 — mọi mô hình đọc cùng file này, kiểm bằng MD5 (scripts/common.py).
 
-    python run.py prepare                                (= python scripts/02_prepare_data.py)
-    python scripts/02_prepare_data.py --sample holdout   # chỉ một mẫu
+    python run.py prepare                                (= python scripts/2_prepare.py)
+    python scripts/2_prepare.py --sample holdout   # chỉ một mẫu
     python run.py amazon-data                            # Amazon Beauty (NEUMF_CONFIG=configs/amazon.yaml)
 
 Với từng mẫu trong `samples` của cấu hình (chạy lại khi đổi mẫu, k_core hoặc test_start):
@@ -28,7 +28,7 @@ import json
 import numpy as np
 import pandas as pd
 
-import v2_common as V
+import common as V
 from src.data_pipeline.adapters import AmazonAdapter, HMAdapter
 from src.data_pipeline.features import DAY0, check_product_code, product_code_of, to_day
 from src.data_pipeline.protocol_v2 import prepare_pairs, save_pairs

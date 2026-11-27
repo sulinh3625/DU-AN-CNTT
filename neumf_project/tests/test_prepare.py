@@ -1,4 +1,4 @@
-"""Dữ liệu đã lọc của giao thức v2 (protocol_v2.prepare_pairs / build_from_pairs, scripts/02_prepare_data.py): gộp màu
+"""Dữ liệu đã lọc của giao thức v2 (protocol_v2.prepare_pairs / build_from_pairs, scripts/2_prepare.py): gộp màu
 theo product_code, ứng viên và đáp án chỉ gồm sản phẩm có cặp huấn luyện, xuất file tất định, đọc lại có kiểm MD5,
 dựng từ file khớp với build_v2 dựng trực tiếp."""
 from __future__ import annotations
@@ -20,7 +20,7 @@ from src.evaluation.v2 import evaluate_v2
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "scripts"))
-_spec = importlib.util.spec_from_file_location("prepare_data", ROOT / "scripts" / "02_prepare_data.py")
+_spec = importlib.util.spec_from_file_location("prepare_data", ROOT / "scripts" / "2_prepare.py")
 prep = importlib.util.module_from_spec(_spec)
 _spec.loader.exec_module(prep)
 V = prep.V
@@ -121,7 +121,7 @@ def test_prepare_again_keeps_manifest_when_only_commit_differs(tmp_path, monkeyp
                         ("CFG", {**V.CFG, "samples": {"dev": "s.csv"}, "test_start": TEST, "k_core": K})):
         monkeypatch.setattr(V, attr, value)
     monkeypatch.setattr(prep, "ARTICLES", tmp_path / "khong_co.csv")
-    monkeypatch.setattr(sys, "argv", ["02_prepare_data.py"])
+    monkeypatch.setattr(sys, "argv", ["2_prepare.py"])
 
     def run(commit, dirty):
         monkeypatch.setattr(V, "provenance", lambda: {"git_commit": commit, "git_dirty": dirty})
@@ -134,14 +134,14 @@ def test_prepare_again_keeps_manifest_when_only_commit_differs(tmp_path, monkeyp
 
 
 def test_tune_refuses_log_from_other_data(tmp_path, monkeypatch):
-    spec = importlib.util.spec_from_file_location("tune_v2", ROOT / "scripts" / "22_tune_v2.py")
+    spec = importlib.util.spec_from_file_location("tune_v2", ROOT / "scripts" / "4_tune.py")
     tune = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(tune)
     (tmp_path / "tuning_log.csv").write_text("model,params,code_hash\npopularity,{},abc\n",
                                              encoding="utf-8")
     monkeypatch.setattr(tune, "CKPT", tmp_path / "ckpt")
     monkeypatch.setattr(V, "load_data", lambda *a, **k: SimpleNamespace(meta={"data_md5": "x"}))
-    monkeypatch.setattr(sys, "argv", ["22_tune_v2.py", "--resume", "--log-dir", str(tmp_path)])
+    monkeypatch.setattr(sys, "argv", ["4_tune.py", "--resume", "--log-dir", str(tmp_path)])
     with pytest.raises(SystemExit, match="1 dòng tinh chỉnh trên dữ liệu khác"):
         tune.main()
 

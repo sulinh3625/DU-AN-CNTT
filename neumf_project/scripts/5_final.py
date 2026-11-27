@@ -1,8 +1,8 @@
 """Đánh giá cuối giao thức v2 trên tập kiểm thử của mẫu kiểm định (audit/PREREG_v2.md mục 5).
 
-    python scripts/23_final_v2.py --reason "Đánh giá cuối v2 theo PREREG_v2"
-    python scripts/23_final_v2.py --reason "..." --seeds 2026 3407     # chạy tiếp các seed chưa chạy (bị ngắt giữa chừng)
-    python scripts/23_final_v2.py --dry-run --max-epochs 1             # thử toàn bộ đường ống trên tập xác thực của A
+    python scripts/5_final.py --reason "Đánh giá cuối v2 theo PREREG_v2"
+    python scripts/5_final.py --reason "..." --seeds 2026 3407     # chạy tiếp các seed chưa chạy (bị ngắt giữa chừng)
+    python scripts/5_final.py --dry-run --max-epochs 1             # thử toàn bộ đường ống trên tập xác thực của A
 
 Khoá kiểm thử (bỏ qua khi --dry-run): audit/PREREG_v2.md đã commit; có --reason; không có file đã theo dõi bị sửa (trừ
 outputs/ và audit/test_access_log.csv — do chính đánh giá cuối ghi, để chạy tiếp seed còn thiếu sau khi bị ngắt); không
@@ -44,7 +44,7 @@ import numpy as np
 import pandas as pd
 import torch
 
-import v2_common as V
+import common as V
 from src.baselines import RandomBaseline
 from src.data_pipeline.protocol_v2 import describe
 from src.evaluation.v2 import evaluate_v2

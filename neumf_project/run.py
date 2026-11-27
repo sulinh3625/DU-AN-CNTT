@@ -22,7 +22,7 @@ Dữ liệu đối chứng Amazon Beauty (audit/PREREG_amazon.md) — cùng scri
     python run.py amazon-final --reason "..."  # đánh giá cuối Amazon (sau khi commit audit/PREREG_amazon.md)
     python run.py amazon-report              # kiểm định, bảng, hình, macro LaTeX (content/tables/amazon/) từ outputs/amazon/final/
 
-Bổ sung sau đánh giá cuối — mô hình lai truyền thống Hybrid-CBCF (audit/PREREG_bosung.md, scripts/25_bosung.py):
+Bổ sung sau đánh giá cuối — mô hình lai truyền thống Hybrid-CBCF (audit/PREREG_bosung.md, scripts/6_bosung.py):
     python run.py bosung-tune                # chọn cách kết hợp trên tập xác thực của mẫu phát triển H&M (dưới 1 phút)
     python run.py bosung-dry-run             # thử đường ống trên tập xác thực (không chấm test)
     python run.py bosung-final --reason "..."          # chấm tập kiểm thử H&M một lần, rồi xuất lại bảng (24)
@@ -120,7 +120,7 @@ def run_steps(name: str, steps: list[list[str]], config: str = CONFIGS["hm"]) ->
 
 
 def cmd_sample_hm(args):
-    return [_s("00_sample_hm.py", "--block", args.block)]
+    return [_s("1_sample.py", "--block", args.block)]
 
 
 def cmd_demo(args):
@@ -128,64 +128,64 @@ def cmd_demo(args):
 
 
 def cmd_check_report(args):
-    return [_s("19_check_report.py", *(["--strict"] if args.strict else []))]
+    return [_s("8_check_report.py", *(["--strict"] if args.strict else []))]
 
 
 def cmd_v2_data(args):
     """Mẫu kiểm định (khối 2, khách khác hẳn mẫu phát triển), đặc trưng danh mục/doanh số theo ngày, rồi file dữ liệu đã
     lọc của mọi mẫu."""
-    return [_s("00_sample_hm.py", "--block", 2), _s("21_build_features.py"), _s("02_prepare_data.py")]
+    return [_s("1_sample.py", "--block", 2), _s("3_features.py"), _s("2_prepare.py")]
 
 
 def cmd_prepare(args):
     """File dữ liệu đã lọc (gộp màu theo product_code, k-core trước mốc kiểm thử) + MD5 cho mọi mô hình v2."""
-    return [_s("02_prepare_data.py", *(["--sample", args.sample] if args.sample else []))]
+    return [_s("2_prepare.py", *(["--sample", args.sample] if args.sample else []))]
 
 
 def cmd_v2_tune(args):
-    return [_s("22_tune_v2.py", "--model", *args.model, *(["--resume"] if args.resume else []))]
+    return [_s("4_tune.py", "--model", *args.model, *(["--resume"] if args.resume else []))]
 
 
 def cmd_amazon_data(args):
     """Amazon Beauty: catalog, số đánh giá theo ngày, thông tin sản phẩm (21) rồi file dữ liệu đã lọc + MD5 (02)."""
-    return [_s("21_build_features.py"), _s("02_prepare_data.py")]
+    return [_s("3_features.py"), _s("2_prepare.py")]
 
 
 def cmd_v2_dry_run(args):
-    """Chạy thử 23_final_v2.py trên tập xác thực của mẫu phát triển (1 epoch) rồi 24_report_v2.py, không ghi vào báo
+    """Chạy thử 5_final.py trên tập xác thực của mẫu phát triển (1 epoch) rồi 7_report.py, không ghi vào báo
     cáo."""
     out = "outputs/amazon/dry_run" if _amazon(args) else "outputs/v2/dry_run"
-    return [_s("23_final_v2.py", "--dry-run", "--max-epochs", args.max_epochs, "--seeds", *args.seeds),
-            _s("24_report_v2.py", "--final-dir", out, "--report-dir", "")]
+    return [_s("5_final.py", "--dry-run", "--max-epochs", args.max_epochs, "--seeds", *args.seeds),
+            _s("7_report.py", "--final-dir", out, "--report-dir", "")]
 
 
 def cmd_v2_final(args):
     """Đánh giá cuối trên tập kiểm thử của mẫu kiểm định (khoá kiểm thử v2), rồi kiểm định + xuất báo cáo."""
-    return [_s("23_final_v2.py", "--reason", args.reason, *(["--seeds", *args.seeds] if args.seeds else [])),
-            _s("24_report_v2.py")]
+    return [_s("5_final.py", "--reason", args.reason, *(["--seeds", *args.seeds] if args.seeds else [])),
+            _s("7_report.py")]
 
 
 def cmd_v2_report(args):
-    return [_s("24_report_v2.py")]
+    return [_s("7_report.py")]
 
 
 def cmd_bosung_tune(args):
-    return [_s("25_bosung.py", "tune")]
+    return [_s("6_bosung.py", "tune")]
 
 
 def cmd_bosung_dry_run(args):
-    return [_s("25_bosung.py", "final", "--dry-run")]
+    return [_s("6_bosung.py", "final", "--dry-run")]
 
 
 def cmd_bosung_final(args):
-    """Mô hình lai truyền thống: chấm tập kiểm thử một lần (khoá kiểm thử của 25_bosung.py), rồi xuất lại bảng (24)."""
-    return [_s("25_bosung.py", "final", "--reason", args.reason), _s("24_report_v2.py")]
+    """Mô hình lai truyền thống: chấm tập kiểm thử một lần (khoá kiểm thử của 6_bosung.py), rồi xuất lại bảng (24)."""
+    return [_s("6_bosung.py", "final", "--reason", args.reason), _s("7_report.py")]
 
 
 def cmd_all(args):
     """Chạy qua đêm: file dữ liệu đã lọc -> tinh chỉnh mọi mô hình (--resume: bị ngắt thì chạy lại lệnh là đi tiếp) ->
     chạy thử đánh giá cuối trên tập xác thực (bắt lỗi đường ống, không chấm test). --final: chấm luôn tập kiểm thử ở
-    cuối — khoá kiểm thử của 23_final_v2.py vẫn áp dụng (PREREG_v2 đã commit, tree sạch, cùng mã băm lúc tinh chỉnh)."""
+    cuối — khoá kiểm thử của 5_final.py vẫn áp dụng (PREREG_v2 đã commit, tree sạch, cùng mã băm lúc tinh chỉnh)."""
     if args.final and not args.reason.strip():
         raise SystemExit("all --final cần --reason (ghi vào audit/test_access_log.csv)")
     ns = argparse.Namespace

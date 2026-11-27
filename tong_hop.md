@@ -227,7 +227,7 @@ NeuMF-F, trung bình qua 5 seed:
 
 - Ở mọi K và cả bốn độ đo, thứ tự LateFusion-F, NeuMF-F, GMF-F, MLP-F giữ nguyên và đứng trên mọi mô hình còn lại.
   Thứ tự giữa các baseline có đổi nhỏ (MostPopular-Recent vượt UserKNN ở HR@15 và HR@20).
-- Cách tính: lấy cột hạng `ranks` đã lưu trong `seed*/per_user.csv.gz` (`scripts/24_report_v2.py` → `by_k.csv`). Số
+- Cách tính: lấy cột hạng `ranks` đã lưu trong `seed*/per_user.csv.gz` (`scripts/7_report.py` → `by_k.csv`). Số
   @5/@10/@20 tính lại trùng hoàn toàn số đã lưu của lần đánh giá cuối (chênh lệch lớn nhất 0).
 
 ### 3.4 Họ 10 so sánh đăng ký trước
@@ -528,7 +528,7 @@ Cuộc thi Kaggle H&M Personalized Fashion Recommendations:
 ### 7.2 Hai mẫu khách hàng
 
 Băm `customer_id` (khoá cố định) vào 100.000 nhóm, chia dãy nhóm thành các **khối** liên tiếp, mỗi khối vừa đủ khoảng
-500.000 giao dịch (`scripts/00_sample_hm.py`).
+500.000 giao dịch (`scripts/1_sample.py`).
 
 | | Mẫu phát triển | Mẫu kiểm định |
 |---|---|---|
@@ -545,7 +545,7 @@ Băm `customer_id` (khoá cố định) vào 100.000 nhóm, chia dãy nhóm thà
   nó đã bị xem nhiều lần; khối 1 ([1597, 3160)) là mẫu kiểm định của bản đầu kế hoạch và đã được mở ngày 04/10/2026
   (mục 13.2).
 
-### 7.3 Tiền xử lý (`scripts/02_prepare_data.py`; báo cáo Thuật toán 3.1)
+### 7.3 Tiền xử lý (`scripts/2_prepare.py`; báo cáo Thuật toán 3.1)
 
 1. **Gộp màu theo `product_code`**: mọi màu của một mẫu là một sản phẩm; khách mua nhiều màu của cùng một mẫu chỉ tính
    một cặp. Trước mốc kiểm thử: mẫu phát triển từ 55.971 xuống 27.370 sản phẩm, từ 401.293 xuống 359.181 cặp; mẫu kiểm
@@ -599,7 +599,7 @@ Băm `customer_id` (khoá cố định) vào 100.000 nhóm, chia dãy nhóm thà
 - TF-IDF và SVD khớp trên toàn bộ danh mục; phép khớp không dùng dữ liệu mua.
 - Gộp theo mẫu: thuộc tính lấy theo biến thể có `article_id` nhỏ nhất; văn bản = trung bình các biến thể rồi chuẩn hoá
   L2; doanh số = tổng các biến thể; ngày bán đầu = ngày sớm nhất.
-- Code: `scripts/21_build_features.py`, `src/data_pipeline/features.py`.
+- Code: `scripts/3_features.py`, `src/data_pipeline/features.py`.
 
 ### 7.6 Amazon Beauty (`audit/PREREG_amazon.md`)
 
@@ -696,13 +696,13 @@ hình" vẫn tính trên 14 mô hình đăng ký trước.
   sản phẩm. Chỉ seed 42, chỉ mô tả.
 - Biến thể thứ năm của kế hoạch — bỏ cơ chế bỏ ID ngẫu nhiên (ρ = 0) — trùng hệt NeuMF-F vì NeuMF-F đã chọn ρ = 0, nên
   không chạy.
-- Code: `scripts/v2_common.py`.
+- Code: `scripts/common.py`.
 
 ### 8.5 Mô hình lai truyền thống Hybrid-CBCF — bổ sung sau đánh giá cuối
 
 Theo góp ý "baseline ba nhóm" (họp 04/10), nhóm học máy truyền thống cần một mô hình lai truyền thống để đối chiếu với mô
 hình lai học sâu của đề tài. Kế hoạch đăng ký bổ sung: `audit/PREREG_bosung.md` (13/10/2026); mã:
-`src/baselines/hybrid.py`, `scripts/25_bosung.py`; báo cáo mục 4.2 (Bảng 4.3), 4.3.4 (Bảng 4.8), 4.4.2 (Bảng 4.16),
+`src/baselines/hybrid.py`, `scripts/6_bosung.py`; báo cáo mục 4.2 (Bảng 4.3), 4.3.4 (Bảng 4.8), 4.4.2 (Bảng 4.16),
 Thuật toán 3.6.
 
 - **Theo chương 3 luận án của cô:** ba mô hình đơn lẻ truyền thống — lọc nội dung, lọc cộng tác theo người dùng, theo
@@ -764,10 +764,10 @@ Công thức cài ở `src/evaluation/metrics.py`, có unit test tính tay.
 
 ### 9.2 Tinh chỉnh và đánh giá cuối
 
-- **Tinh chỉnh** (`scripts/22_tune_v2.py`): chỉ trên tập xác thực của mẫu phát triển, seed 42. Mỗi mô hình có học thử 6
+- **Tinh chỉnh** (`scripts/4_tune.py`): chỉ trên tập xác thực của mẫu phát triển, seed 42. Mỗi mô hình có học thử 6
   cấu hình (cấu hình mặc định + 5 cấu hình rút ngẫu nhiên cố định từ lưới) — cùng ngân sách cho mọi mô hình; mô hình một
   tham số thử đủ lưới. Lưới: `PREREG_v2.md` mục 4. Đã chạy 09/10 23:17 → 10/10 03:58 (76 cấu hình, 4,7 giờ).
-- **Đánh giá cuối** (`scripts/23_final_v2.py`): giữ nguyên cấu hình tốt nhất của mẫu phát triển; 5 seed (42, 2024, 2025,
+- **Đánh giá cuối** (`scripts/5_final.py`): giữ nguyên cấu hình tốt nhất của mẫu phát triển; 5 seed (42, 2024, 2025,
   2026, 3407).
   - Mạng nơ-ron chọn số epoch trên tập xác thực của mẫu kiểm định, rồi huấn luyện lại từ đầu trên mọi cặp trước
     29/07/2020.
@@ -793,7 +793,7 @@ Công thức cài ở `src/evaluation/metrics.py`, có unit test tính tay.
    commit trước khi mở tập kiểm thử.
 2. **Tách vai trò dữ liệu:** mọi quyết định dựa trên mẫu phát triển; kết luận chỉ dựa trên tập kiểm thử của mẫu kiểm
    định — khách chưa từng được dùng cho quyết định nào.
-3. **Khoá kiểm thử:** `23_final_v2.py` từ chối chạy khi kế hoạch chưa commit, có file đã theo dõi bị sửa mà chưa commit,
+3. **Khoá kiểm thử:** `5_final.py` từ chối chạy khi kế hoạch chưa commit, có file đã theo dõi bị sửa mà chưa commit,
    hoặc mã băm mã nguồn khác lúc tinh chỉnh. Mỗi lần mở tập kiểm thử ghi một dòng `audit/test_access_log.csv` trước khi
    chấm.
 4. **Không dùng thông tin tương lai:** k-core trước mốc kiểm thử, đặc trưng theo thời điểm, mẫu âm trong sản phẩm đã ra
@@ -818,12 +818,12 @@ Lệnh chạy chi tiết: `neumf_project/README.md` mục 3.
 | Bước | Nội dung | File |
 |---|---|---|
 | Đăng ký trước | Mô hình, lưới tinh chỉnh, 5 seed, độ đo chính NDCG@10, **họ 10 so sánh** (Wilcoxon + bootstrap + Holm), tiêu chí "tốt hơn", hạn chế đã biết; mục 10 của mỗi kế hoạch ghi lệch kế hoạch | `audit/PREREG_v2.md`, `audit/PREREG_amazon.md` |
-| Chuẩn bị dữ liệu | Lấy mẫu, đặc trưng, gộp mẫu, k-core, file dữ liệu đã lọc + MD5 | `scripts/00_sample_hm.py`, `21_build_features.py`, `02_prepare_data.py` |
-| Tinh chỉnh | Chỉ trên tập xác thực của mẫu phát triển; nhật ký mỗi cấu hình kèm **mã băm nội dung mã nguồn** và `data_md5` | `scripts/22_tune_v2.py` |
-| Đánh giá cuối | Khoá kiểm thử (mục 9.4); mỗi seed ghi nhật ký trước khi chấm và lưu hạng của từng sản phẩm đúng | `scripts/23_final_v2.py` |
-| Kiểm định, xuất báo cáo | Bảng, hình, macro LaTeX, `ket_qua.txt` tự sinh. Bảng theo K tính lại từ hạng đã lưu (`by_k.csv`; số @5/@10/@20 phải trùng số đã lưu, lệch thì dừng). Amazon ghi bảng vào `content/tables/amazon/`, macro `\ARes`, `\ASig`, ... | `scripts/24_report_v2.py` |
-| Đối chiếu báo cáo | 72 câu nhận xét bằng chữ của báo cáo (H&M, Amazon, theo K và Hybrid-CBCF) được kiểm trên file kết quả; báo macro, bảng, hình còn thiếu và số chép tay đã cũ trong tài liệu md | `scripts/19_check_report.py` |
-| Bổ sung: mô hình lai truyền thống | `tune`: 4 cách kết hợp trên tập xác thực của mẫu phát triển; `final`: chấm một lần tập kiểm thử (khoá kiểm thử riêng, run_tag `bosung_hybrid_*`), chấm lại ba thành phần để đối chiếu. `24_report_v2.py` thêm Hybrid-CBCF (dấu *) vào bảng theo ba nhóm và kiểm định họ B1–B2 | `scripts/25_bosung.py`, `audit/PREREG_bosung.md` |
+| Chuẩn bị dữ liệu | Lấy mẫu, đặc trưng, gộp mẫu, k-core, file dữ liệu đã lọc + MD5 | `scripts/1_sample.py`, `3_features.py`, `2_prepare.py` |
+| Tinh chỉnh | Chỉ trên tập xác thực của mẫu phát triển; nhật ký mỗi cấu hình kèm **mã băm nội dung mã nguồn** và `data_md5` | `scripts/4_tune.py` |
+| Đánh giá cuối | Khoá kiểm thử (mục 9.4); mỗi seed ghi nhật ký trước khi chấm và lưu hạng của từng sản phẩm đúng | `scripts/5_final.py` |
+| Kiểm định, xuất báo cáo | Bảng, hình, macro LaTeX, `ket_qua.txt` tự sinh. Bảng theo K tính lại từ hạng đã lưu (`by_k.csv`; số @5/@10/@20 phải trùng số đã lưu, lệch thì dừng). Amazon ghi bảng vào `content/tables/amazon/`, macro `\ARes`, `\ASig`, ... | `scripts/7_report.py` |
+| Đối chiếu báo cáo | 72 câu nhận xét bằng chữ của báo cáo (H&M, Amazon, theo K và Hybrid-CBCF) được kiểm trên file kết quả; báo macro, bảng, hình còn thiếu và số chép tay đã cũ trong tài liệu md | `scripts/8_check_report.py` |
+| Bổ sung: mô hình lai truyền thống | `tune`: 4 cách kết hợp trên tập xác thực của mẫu phát triển; `final`: chấm một lần tập kiểm thử (khoá kiểm thử riêng, run_tag `bosung_hybrid_*`), chấm lại ba thành phần để đối chiếu. `7_report.py` thêm Hybrid-CBCF (dấu *) vào bảng theo ba nhóm và kiểm định họ B1–B2 | `scripts/6_bosung.py`, `audit/PREREG_bosung.md` |
 | Lệnh tắt | `sample-hm`, `v2-data`, `prepare`, `all`, `v2-tune`, `v2-dry-run`, `v2-final`, `v2-report`, `check-report`, `demo`, `amazon-data`, `amazon-dry-run`, `amazon-final`, `amazon-report`, `bosung-tune`, `bosung-dry-run`, `bosung-final`, `amazon-bosung-final` | `run.py` |
 
 ### 10.2 Demo (`demo/README.md`)
@@ -893,13 +893,13 @@ Số mục, bảng, hình và thuật toán trong bảng này là số của bá
 
 ### 10.5 Lưu ý khi làm tiếp
 
-- **Không chạy lại** `23_final_v2.py` cho H&M hay Amazon: mọi seed đã có dòng nhật ký. Số mới (K khác, bảng mới) phải tính
+- **Không chạy lại** `5_final.py` cho H&M hay Amazon: mọi seed đã có dòng nhật ký. Số mới (K khác, bảng mới) phải tính
   từ file đã lưu trong `outputs/`, không mở lại tập kiểm thử.
 - Mã nguồn đã đổi sau lần chạy H&M (dọn mã, rồi mở rộng cho Amazon), nên mã băm hiện tại khác `0f1ea1eec5a86c31`. Kết quả
   H&M gắn với commit `e4e4f25`, kết quả Amazon gắn với commit `f866337`. Chạy lại H&M sẽ cần `--allow-code-change` và phải
   ghi lệch kế hoạch.
-- Các sửa đổi ngày 13/10 không đụng mã huấn luyện và đánh giá (`src/`, `v2_common.py`, `22_tune_v2.py`,
-  `02_prepare_data.py`, cấu hình), nên mã băm mã nguồn không đổi.
+- Các sửa đổi ngày 13/10 không đụng mã huấn luyện và đánh giá (`src/`, `common.py`, `4_tune.py`,
+  `2_prepare.py`, cấu hình), nên mã băm mã nguồn không đổi.
 - Nhật ký `audit/test_access_log.csv`:
   - 6 dòng H&M ngày 10/10: dòng 08:56 của lần chạy bị dừng ("Đánh giá cuối bản cuối theo PREREG_v2 (406b62c)") và 5 dòng
     của lần chạy hoàn tất ("Đánh giá cuối theo PREREG_v2; seed 42 chạy lại theo mục 10"), trong đó seed 42 mang nhãn
@@ -1033,6 +1033,26 @@ Kết luận giống nhau ở cả hai giai đoạn trên H&M: NeuMF chỉ dùng
 - Bỏ phần tính chỉ số sản phẩm cũ/mới khỏi `evaluate_v2` (không còn sản phẩm mới); chỉ số chính không đổi (đã so với bản
   cũ: trùng từng số).
 
+### 13.5 Đổi tên script (27/11/2026, commit `12abda7`)
+
+Các script trong `scripts/` được đánh số lại theo thứ tự chạy; nội dung không đổi, mọi chỗ gọi đã cập nhật theo tên mới.
+`audit/PREREG*.md`, `audit/test_access_log.csv` và các tệp trong `outputs/` vẫn ghi tên cũ vì đó là vết của lúc chạy.
+
+| Tên cũ | Tên mới |
+|---|---|
+| `00_sample_hm.py` | `1_sample.py` |
+| `02_prepare_data.py` | `2_prepare.py` |
+| `21_build_features.py` | `3_features.py` |
+| `22_tune_v2.py` | `4_tune.py` |
+| `23_final_v2.py` | `5_final.py` |
+| `25_bosung.py` | `6_bosung.py` |
+| `24_report_v2.py` | `7_report.py` |
+| `19_check_report.py` | `8_check_report.py` |
+| `v2_common.py` | `common.py` |
+
+Mã băm mã nguồn (`code_hash`) có tính cả đường dẫn tệp, nên sau khi đổi tên sẽ khác mã băm ghi lúc tinh chỉnh. Việc này
+chỉ ảnh hưởng nếu chạy lại `5_final.py`/`6_bosung.py final` (đã chạy xong, không chạy lại); kết quả đã lưu không đổi.
+
 ---
 
 ## 14. Danh sách file và tài liệu tham khảo
@@ -1047,10 +1067,10 @@ Kết luận giống nhau ở cả hai giai đoạn trên H&M: NeuMF chỉ dùng
 | Kết quả Amazon | `outputs/amazon/final/` (cùng các file như H&M) | 4.5 |
 | Dữ liệu đã lọc | `outputs/data/manifest.json` (MD5 từng mẫu H&M), `outputs/amazon/data/` | 3.2 |
 | Nhật ký mở tập kiểm thử | `audit/test_access_log.csv` | — |
-| Code | `src/data_pipeline/{features,protocol_v2,feature_dataset}.py`, `src/data_pipeline/adapters/{hm,amazon}.py`, `src/models/hybrid_features.py`, `src/evaluation/v2.py`, `scripts/{00_sample_hm,02_prepare_data,21_build_features,22_tune_v2,23_final_v2,24_report_v2,v2_common,19_check_report}.py`, `configs/{v2,amazon}.yaml` | Chương 3 |
+| Code | `src/data_pipeline/{features,protocol_v2,feature_dataset}.py`, `src/data_pipeline/adapters/{hm,amazon}.py`, `src/models/hybrid_features.py`, `src/evaluation/v2.py`, `scripts/{1_sample,2_prepare,3_features,4_tune,5_final,7_report,common,8_check_report}.py`, `configs/{v2,amazon}.yaml` | Chương 3 |
 | Test | `tests/`, `demo/tests/` | — |
 | Báo cáo | `Report DACNTT/` (bảng: `content/tables/v2/`, `content/tables/amazon/`; hình: `media/figures/v2/`, `media/figures/amazon/`, `media/figures/demo/`) | — |
-| Bổ sung: mô hình lai truyền thống | `audit/PREREG_bosung.md`, `audit/v2/bosung_tuning_log.csv`, `audit/v2/bosung_best_configs.json`, `src/baselines/hybrid.py`, `scripts/25_bosung.py`, `tests/test_bosung.py`; kết quả (sau khi chấm): `outputs/v2/final/bosung/`, `outputs/amazon/final/bosung/` | 4.2–4.5 |
+| Bổ sung: mô hình lai truyền thống | `audit/PREREG_bosung.md`, `audit/v2/bosung_tuning_log.csv`, `audit/v2/bosung_best_configs.json`, `src/baselines/hybrid.py`, `scripts/6_bosung.py`, `tests/test_bosung.py`; kết quả (sau khi chấm): `outputs/v2/final/bosung/`, `outputs/amazon/final/bosung/` | 4.2–4.5 |
 | Lịch sử | `audit/PREREG.md` (giai đoạn phát triển ban đầu), `audit/PREREG_v2_cu.md` (bản đầu của kế hoạch); mã và kết quả trong lịch sử git (commit `9799f1a`) | 4.6 |
 
 ### 14.2 Tài liệu tham khảo chính

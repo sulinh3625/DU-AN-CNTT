@@ -28,18 +28,12 @@
 
 Kết quả thực nghiệm trả lời được ba câu hỏi nghiên cứu:
 \begin{itemize}
-    \item Trên H\&M, NeuMF-F tốt hơn có ý nghĩa thống kê so với NeuMF chỉ dùng ID, nhánh MLP-F và năm mô hình đối chứng trong họ so sánh:
-    \begin{itemize}
-        \item BPR-MF.
-        \item Hai mô hình láng giềng ItemKNN và UserKNN.
-        \item Mô hình phổ biến theo thời gian MostPopular-Recent.
-        \item Mô hình lọc nội dung Content.
-    \end{itemize}
+    \item Trên H\&M, NeuMF-F tốt hơn có ý nghĩa thống kê so với NeuMF chỉ dùng ID, nhánh MLP-F và năm mô hình đối chứng trong họ so sánh: BPR-MF, ItemKNN, UserKNN, MostPopular-Recent và Content.
     \item NeuMF-F tốt hơn mô hình lai truyền thống Hybrid-CBCF trên cả hai bộ dữ liệu.
     \item Kết luận về vai trò của đặc trưng lặp lại trên Amazon Beauty, dù bộ dữ liệu này khác lĩnh vực, không có thông tin khách hàng và mô hình không được tinh chỉnh lại.
 \end{itemize}
 
-Mọi mô hình được tinh chỉnh và đánh giá trong cùng điều kiện, nên các kết quả trên phản ánh giá trị của đặc trưng, không do khác biệt về tinh chỉnh, dữ liệu hay dao động ngẫu nhiên (Mục~\ref{sec:nguon_goc}).
+Mọi mô hình được tinh chỉnh và đánh giá trong cùng điều kiện, nên các kết quả trên phản ánh giá trị của đặc trưng, không do khác biệt về tinh chỉnh, dữ liệu hay dao động ngẫu nhiên (mục~\ref{sec:nguon_goc}).
 
 Phần cải thiện của mô hình lai đến chủ yếu từ việc bổ sung đặc trưng, trong đó đặc trưng thời gian đóng góp nhiều nhất trên cả hai bộ dữ liệu. Cách hợp nhất hai nhánh ảnh hưởng ít hơn:
 \begin{itemize}
@@ -64,7 +58,7 @@ Về ứng dụng, doanh nghiệp bán lẻ có thể cải thiện khuyến ngh
 Theo phạm vi nhóm đã chọn, đề tài có ba giới hạn:
 \begin{itemize}
     \item Nhóm dùng hai mẫu, mỗi mẫu khoảng 1,6\% khách hàng của H\&M, với ngưỡng lọc $k = 10$. Quy mô này cho phép tinh chỉnh mọi mô hình với cùng ngân sách và chạy đủ năm seed trong tài nguyên tính toán sẵn có. Kết luận vì vậy áp dụng cho nhóm khách có lịch sử mua tương đối nhiều.
-    \item Đề tài tập trung vào khách hàng và sản phẩm đã có lịch sử. Khách hàng mới nhận danh sách sản phẩm bán chạy (Mục~\ref{sec:inference}), còn chất lượng khuyến nghị cho sản phẩm mới và khách hàng mới chưa được đo định lượng.
+    \item Đề tài tập trung vào khách hàng và sản phẩm đã có lịch sử. Khách hàng mới nhận danh sách sản phẩm bán chạy (mục~\ref{sec:inference}), còn chất lượng khuyến nghị cho sản phẩm mới và khách hàng mới chưa được đo định lượng.
     \item Mô tả sản phẩm được biểu diễn bằng TF-IDF, cách biểu diễn gọn và dễ giải thích. Ảnh sản phẩm chưa được sử dụng. Lợi ích của đặc trưng được đo trong họ mô hình NeuMF, đúng với phạm vi của đề tài.
 \end{itemize}
 
@@ -73,7 +67,7 @@ Theo phạm vi nhóm đã chọn, đề tài có ba giới hạn:
 
 Hướng phát triển của đề tài mở rộng từ ba giới hạn trên.
 \begin{itemize}
-    \item Mở rộng quy mô dữ liệu. Thực nghiệm có thể chạy trên nhiều khách hàng hơn và với ngưỡng lọc thấp hơn, khi có thêm tài nguyên tính toán, để kiểm tra kết luận với nhóm khách mua ít.
-    \item Đánh giá trên sản phẩm mới và khách hàng mới. NeuMF-F đã có cơ chế tính điểm sản phẩm chỉ từ đặc trưng khi bỏ vector ID. Bước tiếp theo là huấn luyện với cơ chế này và đánh giá riêng trên tập sản phẩm vừa ra mắt.
-    \item Bổ sung và so sánh đặc trưng. Ảnh và mô tả sản phẩm có thể được biểu diễn bằng mô hình tiền huấn luyện, và đặc trưng thời gian có thể thêm yếu tố mùa vụ. Cùng bộ đặc trưng đó nên được thử với Factorization Machines để tách vai trò của đặc trưng khỏi vai trò của mạng lưới thần kinh.
+    \item Mở rộng quy mô dữ liệu: thực nghiệm có thể chạy trên nhiều khách hàng hơn và với ngưỡng lọc thấp hơn, khi có thêm tài nguyên tính toán, để kiểm tra kết luận với nhóm khách mua ít.
+    \item Đánh giá trên sản phẩm mới và khách hàng mới: NeuMF-F đã có cơ chế tính điểm sản phẩm chỉ từ đặc trưng khi bỏ vector ID. Bước tiếp theo là huấn luyện với cơ chế này và đánh giá riêng trên tập sản phẩm vừa ra mắt.
+    \item Bổ sung và so sánh đặc trưng: ảnh và mô tả sản phẩm có thể được biểu diễn bằng mô hình tiền huấn luyện, và đặc trưng thời gian có thể thêm yếu tố mùa vụ. Cùng bộ đặc trưng đó nên được thử với Factorization Machines để tách vai trò của đặc trưng khỏi vai trò của mạng lưới thần kinh.
 \end{itemize}

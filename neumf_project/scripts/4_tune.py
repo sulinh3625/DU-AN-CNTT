@@ -1,7 +1,7 @@
 """Tinh chỉnh CHỈ trên tập xác thực của mẫu phát triển theo giao thức v2 (audit/PREREG_v2.md).
 
-    python scripts/22_tune_v2.py                       # mọi mô hình, theo thứ tự ORDER
-    python scripts/22_tune_v2.py --model neumf_f --resume
+    python scripts/4_tune.py                       # mọi mô hình, theo thứ tự ORDER
+    python scripts/4_tune.py --model neumf_f --resume
 
 - Mô hình có học: 6 cấu hình mỗi mô hình (cấu hình mặc định + 5 cấu hình rút cố định từ lưới), seed 42, tối đa 20
   epoch, dừng sớm sau 5 epoch không cải thiện NDCG@10 trên tập xác thực. Most Popular gần đây, gợi ý theo nội dung và
@@ -27,7 +27,7 @@ from pathlib import Path
 
 import torch
 
-import v2_common as V
+import common as V
 from src.utils.io import ensure_dir
 
 ORDER = ["popularity", "recent_pop", "content", "itemknn", "userknn", "bpr", "gmf", "mlp", "neumf",

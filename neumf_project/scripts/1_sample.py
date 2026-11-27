@@ -1,4 +1,4 @@
-"""00_sample_hm.py — Lấy mẫu khách hàng theo khối bucket từ transactions_train.csv gốc (31,8 triệu dòng).
+"""1_sample.py — Lấy mẫu khách hàng theo khối bucket từ transactions_train.csv gốc (31,8 triệu dòng).
 
 Lấy mẫu THEO KHÁCH HÀNG trải đủ 2018-09-20 → 2020-09-22: băm customer_id (hash key cố định) vào --buckets bucket, chia
 dãy bucket thành các KHỐI liên tiếp, không giao nhau, mỗi khối vừa đủ --target-rows dòng, rồi giữ toàn bộ lịch sử mua
@@ -7,7 +7,7 @@ gốc.
 
     python run.py sample-hm                    # khối 0 -> data/processed/hm/mau_phat_trien.csv
     python run.py sample-hm --block 2          # khối 2 -> data/processed/hm/mau_kiem_dinh.csv
-    python scripts/00_sample_hm.py --block 1 --output <file>
+    python scripts/1_sample.py --block 1 --output <file>
 
 - Khối 0: mẫu phát triển (trước đây hm500k) — tinh chỉnh, chỉ dùng tập xác thực.
 - Khối 1: trước đây hm500k_b — đã bị mở trong lúc phát triển nên KHÔNG dùng nữa; phải truyền --output tường minh.

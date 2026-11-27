@@ -25,7 +25,7 @@ def vctx():
     """Checkpoint seed 42 của đánh giá cuối (outputs/v2/final/seed42)."""
     if not v2_available():
         pytest.skip("Chưa có outputs/v2/final/seed42 kèm checkpoint tạo từ file dữ liệu đã lọc hiện tại — chạy "
-                    "scripts/23_final_v2.py")
+                    "scripts/5_final.py")
     return DataContext(load_customers=False)
 
 
@@ -286,10 +286,10 @@ REPORT_TABLES = data_context.PROJECT_ROOT.parent / "Report DACNTT" / "content" /
 
 
 def _report_tools():
-    """KEY, vn, pct, ABL của scripts/24_report_v2.py — đúng cách báo cáo định dạng số."""
+    """KEY, vn, pct, ABL của scripts/7_report.py — đúng cách báo cáo định dạng số."""
     import importlib.util
 
-    spec = importlib.util.spec_from_file_location("report_v2", data_context.PROJECT_ROOT / "scripts" / "24_report_v2.py")
+    spec = importlib.util.spec_from_file_location("report_v2", data_context.PROJECT_ROOT / "scripts" / "7_report.py")
     mod = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(mod)
     return mod

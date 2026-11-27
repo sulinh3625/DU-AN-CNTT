@@ -1,7 +1,7 @@
-"""Đối chiếu báo cáo và tài liệu với số liệu hiện có — chạy sau scripts/24_report_v2.py; không chấm test.
+"""Đối chiếu báo cáo và tài liệu với số liệu hiện có — chạy sau scripts/7_report.py; không chấm test.
 
-    python scripts/19_check_report.py            # in kết quả, luôn trả mã 0
-    python scripts/19_check_report.py --strict   # trả mã 1 nếu có khẳng định sai / macro, bảng, hình thiếu
+    python scripts/8_check_report.py            # in kết quả, luôn trả mã 0
+    python scripts/8_check_report.py --strict   # trả mã 1 nếu có khẳng định sai / macro, bảng, hình thiếu
 
 Bốn phần:
   1. Tái lập: outputs/v2/final/{summary,significance,ablation,beyond,by_k}.csv so với bản đã commit (git HEAD) — độ
@@ -428,7 +428,7 @@ def check_claims(d: Data) -> tuple[int, int]:
             ok, desc = False, f"{desc} [lỗi đọc dữ liệu: {exc}]"
         if line is None:
             bad += 1
-            print(f"   [CHÚ Ý] {where}: câu đã đổi — cập nhật danh sách khẳng định trong 19_check_report.py")
+            print(f"   [CHÚ Ý] {where}: câu đã đổi — cập nhật danh sách khẳng định trong 8_check_report.py")
         elif not ok:
             bad += 1
             print(f"   [SAI]    {where}: {desc} — sửa câu này theo số mới")

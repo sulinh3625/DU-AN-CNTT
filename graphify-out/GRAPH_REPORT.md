@@ -1,43 +1,43 @@
-# Graph Report - DU-AN-CNTT  (2026-11-26)
+# Graph Report - DU-AN-CNTT  (2026-11-27)
 
 ## Corpus Check
-- 110 files · ~638,191 words
+- 113 files · ~222,621 words
 - Verdict: corpus is large enough that graph structure adds value.
-- Unclassified: 116 file(s) not represented in the graph (top: .tex 37, .csv 31, .gz 20)
+- Unclassified: 115 file(s) not represented in the graph (top: .tex 36, .csv 31, .gz 20)
 
 ## Summary
-- 2313 nodes · 5533 edges · 108 communities (87 shown, 21 thin omitted)
-- Extraction: 96% EXTRACTED · 4% INFERRED · 0% AMBIGUOUS · INFERRED: 226 edges (avg confidence: 0.87)
+- 2327 nodes · 5281 edges · 122 communities (90 shown, 32 thin omitted)
+- Extraction: 95% EXTRACTED · 5% INFERRED · 0% AMBIGUOUS · INFERRED: 239 edges (avg confidence: 0.87)
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `8ebe87f4`
+- Built from commit: `12abda76`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
 ## Community Hubs (Navigation)
-- data_context.py
+- recommend
 - app.js
 - build_poster.py
 - run.py
 - d
 - routes.py
-- .getContext
+- .isHorizontal
 - Đăng ký trước (pre-registration) — giao thức v2
-- .getProps
+- o
 - DataContext
 - mau_kiem_dinh
 - En
 - test_prepare.py
-- v2_common.py
+- os
 - download_hm_images.py
 - benchmark_demo.py
-- 19_check_report.py
+- 8_check_report.py
 - test_v2_final.py
 - NeuMFF
 - bn
 - reviews_Beauty_5
-- 23_final_v2.py
+- 5_final.py
 - n
 - test_v2_final.py
 - Trang
@@ -46,13 +46,13 @@
 - features.py
 - va
 - ns
-- 02_prepare_data.py
+- 2_prepare.py
 - pathlib
 - i
 - hop
-- jn
-- .getDatasetMeta
-- ._stop
+- 7_report.py
+- .buildOrUpdateControllers
+- bt
 - no
 - amazon.yaml
 - .constructor
@@ -65,7 +65,7 @@
 - README.md
 - Đăng ký bổ sung — mô hình lai truyền thống (sau đánh giá cuối)
 - test_models.py
-- hi
+- draw
 - test_v2.py
 - numpy
 - Tổng hợp đồ án: phương pháp, kết quả và tiến độ
@@ -74,13 +74,13 @@
 - 4. Kiểm chứng trên Amazon Beauty
 - 7. Dữ liệu
 - 22_tune_v2.py
-- 24_report_v2.py
-- 25_bosung.py
+- metrics_io.py
+- 10. Code, demo, kiểm thử và báo cáo
 - 6. Bài toán, câu hỏi nghiên cứu và phạm vi
 - 8. Mô hình
 - s
 - __main__.py
-- build_slides.py
+- macros
 - user_rows
 - 9. Đánh giá, kiểm định và chống thiên lệch
 - Đồ án NeuMF-F (khuyến nghị lai MF + DNN có đặc trưng, H&M + Amazon Beauty)
@@ -89,33 +89,47 @@
 - o
 - tn
 - BPRMFBaseline
-- Phần 5. Câu hỏi hội đồng hay hỏi
-- unavailable_reason
+- data_context.py
+- results_dir
 - .get
-- trainer.py
+- fit_torch
 - user_filter
 - 2. Tiến độ (12/11/2026)
 - 13. Lịch sử phát triển
 - hybrid_features.py
 - LateFusion
-- .getDataset
+- .__init__
 - test_baselines.py
-- ._resolveElementOptions
-- updateElements
+- test_evaluation.py
+- EvalRecord
 - pathlib
-- .update
+- u
 - summary
-- .getLabels
+- 6_bosung.py
+- Cs
 - slide
-- .getParsed
+- .getLabels
 - bam
 - Sơ đồ của đề tài
-- claims
+- .notifyPlugins
 - neumf_project — mã nguồn của đề tài
+- rs
+- cn
+- TrainDataset
+- history
 - ket_qua
-- Phần 2. Nắm toàn bộ đề tài
+- claims
+- evaluate_v2
+- add_par
+- update
+- the_bt
+- ItemKNNBaseline
 - main.py
 - argparse
+- Kế hoạch phân công tiến độ DACNTT_8d8e062d.md
+- morph
+- trang_thai
+- so_voi_truyen_thong
 - kien_truc_demo
 
 ## God Nodes (most connected - your core abstractions)
@@ -131,53 +145,53 @@
 10. `Trang` - 28 edges
 
 ## Surprising Connections (you probably didn't know these)
+- `0.3 Câu hỏi xoáy mới (kiểm bằng số liệu và mã nguồn ngày 26/11/2026)` --references--> `fit_torch()`  [INFERRED]
+  van_dap.md → neumf_project/scripts/common.py
 - `2.2 Đối chiếu 21 yêu cầu của buổi họp 04/10/2026` --references--> `make_stage()`  [INFERRED]
   tong_hop.md → neumf_project/src/data_pipeline/protocol_v2.py
 - `13.4 Dọn mã (10/10/2026)` --references--> `evaluate_v2()`  [INFERRED]
   tong_hop.md → neumf_project/src/evaluation/v2.py
+- `10.1 Quy trình thực nghiệm` --references--> `tune()`  [INFERRED]
+  tong_hop.md → neumf_project/scripts/6_bosung.py
 - `10.1 Quy trình thực nghiệm` --references--> `final()`  [INFERRED]
-  tong_hop.md → neumf_project/scripts/25_bosung.py
-- `10.3 Kiểm thử` --references--> `saved_final_ranks()`  [INFERRED]
-  tong_hop.md → neumf_project/demo/backend/data_context.py
-- `10.3 Kiểm thử` --references--> `final_result()`  [INFERRED]
-  tong_hop.md → neumf_project/demo/backend/inference.py
+  tong_hop.md → neumf_project/scripts/6_bosung.py
 
 ## Import Cycles
 - None detected.
 
-## Communities (108 total, 21 thin omitted)
+## Communities (122 total, 32 thin omitted)
 
-### Community 0 - "data_context.py"
-Cohesion: 0.05
-Nodes (37): saved_final_ranks(), best_ranks(), candidate_scores(), eval_record(), final_result(), metrics_of(), rank_from_scores(), recommend() (+29 more)
+### Community 0 - "recommend"
+Cohesion: 0.16
+Nodes (8): best_ranks(), candidate_scores(), eval_record(), rank_from_scores(), recommend(), score_items(), test_best_ranks_match_recommend(), test_late_fusion_minmax_on_candidates()
 
 ### Community 1 - "app.js"
 Cohesion: 0.07
 Nodes (95): ad, api(), AREA_VI, areaLabel(), avatar(), body(), BUCKET_SHORT, BY_K (+87 more)
 
 ### Community 2 - "build_poster.py"
-Cohesion: 0.09
-Nodes (7): add_par(), bullets(), chu_thich(), ribbon(), set_runs(), style(), textbox()
+Cohesion: 0.11
+Nodes (4): set_runs(), ghi_hieu_ung(), _hien(), _hieu_ung()
 
 ### Community 3 - "run.py"
 Cohesion: 0.07
 Nodes (29): _amazon(), _c(), cmd_all(), cmd_amazon_data(), cmd_bosung_dry_run(), cmd_bosung_final(), cmd_bosung_tune(), cmd_check_report() (+21 more)
 
-### Community 4 - "d"
-Cohesion: 0.09
-Nodes (4): d(), Di(), Xs(), Y()
-
 ### Community 5 - "routes.py"
-Cohesion: 0.11
-Nodes (20): context(), ctx(), dashboard(), example(), has_images(), health(), history(), image() (+12 more)
+Cohesion: 0.12
+Nodes (18): context(), ctx(), example(), _filtered(), has_images(), health(), image(), neighbors() (+10 more)
+
+### Community 6 - ".isHorizontal"
+Cohesion: 0.10
+Nodes (4): Do(), Oe(), Xs(), Y()
 
 ### Community 7 - "Đăng ký trước (pre-registration) — giao thức v2"
 Cohesion: 0.06
-Nodes (33): 0. Vì sao có bản này, 10. Lệch kế hoạch, 1. Dữ liệu, 2. Giao thức v2 (`src/data_pipeline/protocol_v2.py`), 3. Mô hình, 4. Tinh chỉnh — chỉ trên tập xác thực của mẫu phát triển (`scripts/22_tune_v2.py`), 5. Đánh giá cuối trên mẫu kiểm định (`scripts/23_final_v2.py`), 6. Độ đo (+25 more)
+Nodes (32): 0. Vì sao có bản này, 10. Lệch kế hoạch, 1. Dữ liệu, 2. Giao thức v2 (`src/data_pipeline/protocol_v2.py`), 3. Mô hình, 4. Tinh chỉnh — chỉ trên tập xác thực của mẫu phát triển (`scripts/22_tune_v2.py`), 5. Đánh giá cuối trên mẫu kiểm định (`scripts/23_final_v2.py`), 6. Độ đo (+24 more)
 
-### Community 8 - ".getProps"
-Cohesion: 0.11
-Nodes (22): ai(), ao(), average(), getCenterPoint(), ho(), Hs, _i(), inRange() (+14 more)
+### Community 8 - "o"
+Cohesion: 0.10
+Nodes (32): b(), e(), ei(), fs(), g(), gi(), Gn(), inRange() (+24 more)
 
 ### Community 9 - "DataContext"
 Cohesion: 0.10
@@ -187,129 +201,117 @@ Nodes (9): DataContext, best_rank_series(), pick_example(), saved_best_series(),
 Cohesion: 0.08
 Nodes (28): article_pairs, articles, product_pairs, products, mau_kiem_dinh, before_test_start, customers, file (+20 more)
 
-### Community 11 - "En"
-Cohesion: 0.13
-Nodes (7): ei(), En, init(), je(), qe(), ti(), ze()
-
 ### Community 12 - "test_prepare.py"
-Cohesion: 0.10
-Nodes (17): data_name(), load_data(), manifest_path(), DailySales, group_by_product(), build_from_pairs(), build_v2(), load_pairs() (+9 more)
-
-### Community 13 - "v2_common.py"
 Cohesion: 0.08
-Nodes (20): base_key(), configs_for(), device(), eval_kw(), evaluate(), fit_torch(), hybrid_components(), is_feature() (+12 more)
+Nodes (21): hybrid_components(), HMAdapter, DailySales, group_by_product(), product_code_of(), build_from_pairs(), build_v2(), DataV2 (+13 more)
 
 ### Community 14 - "download_hm_images.py"
 Cohesion: 0.12
 Nodes (6): fetch(), get_range(), main(), member_bytes(), RangeFile, zip_url()
 
-### Community 16 - "19_check_report.py"
+### Community 16 - "8_check_report.py"
 Cohesion: 0.13
 Nodes (15): _net(), o(), check_claims(), check_macros_and_tables(), compare_with_committed(), Data, load(), defined_macros() (+7 more)
 
 ### Community 17 - "test_v2_final.py"
-Cohesion: 0.11
-Nodes (14): combine(), crossfit_scores(), fit_weights(), pair_differences(), TraditionalHybrid, _args(), _synthetic(), Table (+6 more)
+Cohesion: 0.12
+Nodes (15): tune(), combine(), crossfit_scores(), fit_weights(), pair_differences(), TraditionalHybrid, _args(), _synthetic() (+7 more)
 
 ### Community 18 - "NeuMFF"
 Cohesion: 0.18
 Nodes (3): NeuMFF, branch(), id_emb()
 
-### Community 19 - "bn"
-Cohesion: 0.17
-Nodes (5): bn, on(), pn(), xn(), Ye()
-
 ### Community 20 - "reviews_Beauty_5"
 Cohesion: 0.12
 Nodes (16): article_pairs, articles, product_pairs, products, reviews_Beauty_5, before_test_start, customers, file (+8 more)
 
-### Community 21 - "23_final_v2.py"
+### Community 21 - "5_final.py"
 Cohesion: 0.12
 Nodes (14): ablations(), beyond(), cpu_name(), dirty_files(), foreign_results(), git(), lock_errors(), machine_info() (+6 more)
 
 ### Community 22 - "n"
 Cohesion: 0.11
-Nodes (5): ca(), Do(), eo(), n(), Oe()
+Nodes (14): Fn(), getLabelAndValue(), getMaxOverflow(), _getRuler(), In(), lt(), n(), ne() (+6 more)
 
 ### Community 23 - "test_v2_final.py"
 Cohesion: 0.09
-Nodes (13): final(), lock_errors(), opened_tags(), _args(), test_by_k_recomputes_metrics_from_saved_ranks(), test_dirty_files_ignores_outputs_and_test_log(), test_lock_lists_every_violation(), test_lock_passes_and_overrides_are_explicit() (+5 more)
+Nodes (8): _args(), test_by_k_recomputes_metrics_from_saved_ranks(), test_lock_lists_every_violation(), test_lock_passes_and_overrides_are_explicit(), test_lock_skips_tuning_hash_when_configs_come_from_other_dataset(), test_report_beyond_late_fusion_time_is_sum_of_branches(), test_report_metric_bars_share_one_color(), test_report_runs_end_to_end_on_tiny_results()
 
 ### Community 24 - "Trang"
 Cohesion: 0.12
 Nodes (9): cac_buoc(), chia_thoi_gian(), demo_ngang(), duong_ong(), tinh_chinh_danh_gia(), Trang, vien_(), xu_ly_du_lieu() (+1 more)
 
 ### Community 25 - "chart.umd.min.js"
-Cohesion: 0.04
-Nodes (47): at(), be(), beforeDatasetDraw(), beforeDatasetsDraw(), beforeDraw(), beforeLayout(), cn(), da() (+39 more)
+Cohesion: 0.03
+Nodes (29): at(), beforeDatasetDraw(), beforeDatasetsDraw(), beforeDraw(), beforeLayout(), Bi(), da(), destroy() (+21 more)
 
 ### Community 26 - "hinh_bao_cao.py"
 Cohesion: 0.16
 Nodes (13): du_lieu_amazon_ngang(), du_lieu_hm_ngang(), _du_lieu_ngang(), hop_nhat(), kien_truc_neumf(), kien_truc_neumf_f(), _neumf(), neumf_f_ngang() (+5 more)
 
 ### Community 27 - "features.py"
-Cohesion: 0.17
-Nodes (14): build_amazon(), main(), build_catalog(), build_daily_sales(), build_user_profile(), Catalog, category_codes(), _codes() (+6 more)
+Cohesion: 0.14
+Nodes (17): build_amazon(), main(), load_data(), build_catalog(), build_daily_sales(), build_user_profile(), Catalog, category_codes() (+9 more)
 
 ### Community 28 - "va"
 Cohesion: 0.06
-Nodes (22): afterDraw(), afterEvent(), afterUpdate(), Bi(), Ci(), configure(), Ee(), Fi() (+14 more)
+Nodes (11): Ee(), eo(), f(), Hs, Le(), Oi(), Si(), start() (+3 more)
 
-### Community 30 - "02_prepare_data.py"
-Cohesion: 0.12
-Nodes (9): export(), main(), AmazonAdapter, DatasetAdapter, HMAdapter, check_product_code(), product_code_of(), save_pairs() (+1 more)
+### Community 29 - "ns"
+Cohesion: 0.05
+Nodes (8): As(), _calculateBarValuePixels(), initialize(), jn, ns(), rt(), updateElements(), zs()
+
+### Community 30 - "2_prepare.py"
+Cohesion: 0.26
+Nodes (6): export(), main(), check_product_code(), to_day(), prepare_pairs(), write_json()
 
 ### Community 31 - "pathlib"
 Cohesion: 0.11
-Nodes (13): asin_list(), build_features(), category_path(), item_info(), read_meta(), read_reviews(), to_day(), test_adapter_codes_asins_in_sorted_order() (+5 more)
+Nodes (13): AmazonAdapter, asin_list(), build_features(), category_path(), item_info(), read_meta(), read_reviews(), test_adapter_codes_asins_in_sorted_order() (+5 more)
 
 ### Community 32 - "i"
-Cohesion: 0.17
-Nodes (11): ct(), fs(), ge(), gs(), ms(), ps(), i(), vs() (+3 more)
+Cohesion: 0.12
+Nodes (12): be(), ct(), ge(), generateLabels(), gs(), ki(), ms(), pe() (+4 more)
 
 ### Community 33 - "hop"
-Cohesion: 0.11
-Nodes (14): bong(), chan_trang(), chu_thich(), chuoi_buoc(), hop(), khung_cam(), khung_tren_hinh(), mui_ten() (+6 more)
+Cohesion: 0.18
+Nodes (7): bong(), chu_thich(), hop(), khung_cam(), khung_tren_hinh(), paras(), so_tron()
 
-### Community 35 - ".getDatasetMeta"
-Cohesion: 0.22
-Nodes (3): afterDatasetsUpdate(), Mn(), onClick()
+### Community 34 - "7_report.py"
+Cohesion: 0.06
+Nodes (50): ablation(), beyond(), bootstrap_ci(), by_k(), cell(), dev_info(), ensure(), export_by_k() (+42 more)
 
 ### Community 37 - "no"
-Cohesion: 0.11
-Nodes (9): buildLookupTable(), Fo(), _generate(), _getTimestampsForTable(), initOffsets(), no, nt(), zi() (+1 more)
+Cohesion: 0.09
+Nodes (11): buildLookupTable(), ca(), Fo(), _generate(), _getTimestampsForTable(), ha, initOffsets(), no (+3 more)
 
 ### Community 38 - "amazon.yaml"
 Cohesion: 0.06
 Nodes (32): audit_dir, best_configs, content_onehot, data_dir, dataset, day0, evaluation, k_values (+24 more)
 
 ### Community 39 - ".constructor"
-Cohesion: 0.29
-Nodes (4): fe(), ks(), nn(), sn
+Cohesion: 0.16
+Nodes (8): Ci(), dt(), fe(), ks(), nn(), on(), sn, wn()
 
 ### Community 40 - "Đăng ký trước (pre-registration) — kiểm chứng trên Amazon Beauty"
 Cohesion: 0.18
 Nodes (11): 0. Mục đích, 10. Lệch kế hoạch, 1. Dữ liệu, 2. Giao thức, 3. Mô hình — giống H&M, trừ phần đặc trưng, 4. Không tinh chỉnh — dùng cấu hình đã chọn trên H&M, 5. Đánh giá cuối, 6–7. Độ đo và kiểm định (+3 more)
 
-### Community 41 - "an"
-Cohesion: 0.13
-Nodes (3): an(), ke(), wn()
-
 ### Community 42 - "zt"
-Cohesion: 0.06
-Nodes (14): bt, color(), Cs, Ft(), It(), kt(), mt(), os() (+6 more)
+Cohesion: 0.11
+Nodes (9): Ft(), It(), kt(), mt(), qt(), _t(), wt(), Xt() (+1 more)
 
 ### Community 43 - "Đăng ký trước (pre-registration) — thực nghiệm hm500k"
-Cohesion: 0.20
-Nodes (9): 1. Dữ liệu & protocol, 2. Độ đo, 3. Mô hình, 4. Ngân sách tuning (như nhau cho mọi mô hình có siêu tham số), 5. Đánh giá cuối (test), 6. Kiểm định, 7. Chọn "mô hình lai tốt nhất", 9. Mở rộng sau khi xem test (+1 more)
+Cohesion: 0.18
+Nodes (10): 1. Dữ liệu & protocol, 2. Độ đo, 3. Mô hình, 4. Ngân sách tuning (như nhau cho mọi mô hình có siêu tham số), 5. Đánh giá cuối (test), 6. Kiểm định, 7. Chọn "mô hình lai tốt nhất", 8. Lệch kế hoạch (+2 more)
 
 ### Community 44 - "Demo web — shop thời trang H&M (kèm Amazon Beauty)"
 Cohesion: 0.20
 Nodes (8): popular(), 1. Chuẩn bị, 2. Chạy, 3. Màn hình, 4. Cách chấm — khớp đánh giá cuối, 5. Biến môi trường, 6. Ảnh sản phẩm (tuỳ chọn), Demo web — shop thời trang H&M (kèm Amazon Beauty)
 
 ### Community 45 - "Chuẩn bị bảo vệ trước hội đồng — Mô hình gợi ý lai NeuMF-F"
-Cohesion: 0.17
-Nodes (12): 0.1 Bốn điểm yếu hội đồng có thể xoáy sâu (đánh giá 18/11/2026), 1.1 Ba câu phải nói được ngay, 1.2 Bốn đóng góp (dùng cho slide kết luận), 1.3 Lời mở đầu gợi ý (khoảng 3 phút), Chuẩn bị bảo vệ trước hội đồng — Mô hình gợi ý lai NeuMF-F, Phần 0. 10 câu dễ bị hỏi nhất (sàng lọc 18/11/2026), Phần 1. Thông điệp chính, Phần 3. Số liệu cần nhớ (+4 more)
+Cohesion: 0.05
+Nodes (40): 0.1 Bốn điểm yếu hội đồng có thể xoáy sâu (đánh giá 18/11/2026), 0.2 Câu hỏi bám theo từng slide (soạn 26/11/2026), 0.3 Câu hỏi xoáy mới (kiểm bằng số liệu và mã nguồn ngày 26/11/2026), 1.1 Ba câu phải nói được ngay, 1.2 Bốn đóng góp (dùng cho slide kết luận), 1.3 Lời mở đầu gợi ý (khoảng 3 phút), 2.1 Bài toán và câu hỏi nghiên cứu (Chương 1), 2.2 Cơ sở lý thuyết (Chương 2) (+32 more)
 
 ### Community 46 - "README.md"
 Cohesion: 0.22
@@ -320,20 +322,20 @@ Cohesion: 0.22
 Nodes (9): 1. Mô hình: Hybrid-CBCF (`src/baselines/hybrid.py`), 2. Chọn cách kết hợp — chỉ trên tập xác thực của mẫu phát triển H&M (`scripts/25_bosung.py tune`), 3. Đánh giá — mở tập kiểm thử một lần cho mỗi bộ dữ liệu (`scripts/25_bosung.py final`), 4. Độ đo và kiểm định, 5. Trình bày theo ba nhóm baseline, 6. Kết luận được phép, 7. Hạn chế đã biết lúc đăng ký, 8. Lệch kế hoạch (+1 more)
 
 ### Community 48 - "test_models.py"
-Cohesion: 0.12
-Nodes (10): 8. Lệch kế hoạch, build_torch(), mlp_layers(), GMF, MLP, NeuMF, test_forward_shapes_and_logits(), test_mlp_dropout_is_configurable() (+2 more)
+Cohesion: 0.15
+Nodes (9): build_torch(), mlp_layers(), GMF, MLP, NeuMF, test_late_fusion_extremes_reproduce_component_ranking(), test_forward_shapes_and_logits(), test_mlp_dropout_is_configurable() (+1 more)
 
-### Community 49 - "hi"
-Cohesion: 0.22
-Nodes (8): dataset(), generateLabels(), hi(), index(), ji(), Re(), ve(), Yi()
+### Community 49 - "draw"
+Cohesion: 0.12
+Nodes (19): ai(), ao(), dataset(), draw(), hi(), index(), ji(), kn() (+11 more)
 
 ### Community 50 - "test_v2.py"
 Cohesion: 0.12
-Nodes (15): FeatureTrainDataset, item_time_features(), user_time_features(), _catalog(), _day(), _sales(), test_feature_dataset_negatives_launched_and_not_positive(), test_group_by_product_merges_colour_variants() (+7 more)
+Nodes (13): FeatureTrainDataset, item_time_features(), _catalog(), _day(), _sales(), test_feature_dataset_negatives_launched_and_not_positive(), test_group_by_product_merges_colour_variants(), test_item_time_features_use_only_days_before_t() (+5 more)
 
 ### Community 51 - "numpy"
-Cohesion: 0.15
-Nodes (8): TrainDataset, available_negatives(), build_user_positive_sets(), sample_train_negatives(), aggregate_unique_user_item(), test_aggregate_before_kcore_counts_unique_edges(), test_negative_sampler_never_returns_positive(), test_train_dataset_never_labels_positive_as_negative()
+Cohesion: 0.13
+Nodes (9): DatasetAdapter, iterative_k_core(), available_negatives(), build_user_positive_sets(), sample_train_negatives(), aggregate_unique_user_item(), test_aggregate_before_kcore_counts_unique_edges(), test_negative_sampler_never_returns_positive() (+1 more)
 
 ### Community 52 - "Tổng hợp đồ án: phương pháp, kết quả và tiến độ"
 Cohesion: 0.25
@@ -353,19 +355,19 @@ Nodes (7): 4.1 Lần chạy, 4.2 Kết quả trên tập kiểm thử Amazon (5 
 
 ### Community 56 - "7. Dữ liệu"
 Cohesion: 0.29
-Nodes (7): 7.1 Nguồn H&M và lý do lấy mẫu, 7.2 Hai mẫu khách hàng, 7.3 Tiền xử lý (`scripts/02_prepare_data.py`; báo cáo Thuật toán 3.1), 7.4 Giai đoạn đánh giá và tập ứng viên, 7.5 Đặc trưng theo thời điểm (H&M), 7.6 Amazon Beauty (`audit/PREREG_amazon.md`), 7. Dữ liệu
+Nodes (7): 7.1 Nguồn H&M và lý do lấy mẫu, 7.2 Hai mẫu khách hàng, 7.3 Tiền xử lý (`scripts/2_prepare.py`; báo cáo Thuật toán 3.1), 7.4 Giai đoạn đánh giá và tập ứng viên, 7.5 Đặc trưng theo thời điểm (H&M), 7.6 Amazon Beauty (`audit/PREREG_amazon.md`), 7. Dữ liệu
 
 ### Community 57 - "22_tune_v2.py"
 Cohesion: 0.18
 Nodes (9): load_best(), log_row(), logged(), main(), ensure_dir(), log_test_access(), prereg_committed(), test_log_test_access_appends_rows() (+1 more)
 
-### Community 58 - "24_report_v2.py"
-Cohesion: 0.05
-Nodes (55): _block(), _by_k(), dashboard(), _named(), test_dashboard_reads_result_files(), ablation(), beyond(), bootstrap_ci() (+47 more)
+### Community 58 - "metrics_io.py"
+Cohesion: 0.29
+Nodes (6): _block(), _by_k(), dashboard(), _named(), dashboard(), test_dashboard_reads_result_files()
 
-### Community 59 - "25_bosung.py"
-Cohesion: 0.13
-Nodes (10): component_check(), file_md5(), Precomputed, provenance(), tune(), 10.1 Quy trình thực nghiệm, 10.2 Demo (`demo/README.md`), 10.4 Báo cáo LaTeX (`Report DACNTT/`) (+2 more)
+### Community 59 - "10. Code, demo, kiểm thử và báo cáo"
+Cohesion: 0.40
+Nodes (5): 10.1 Quy trình thực nghiệm, 10.2 Demo (`demo/README.md`), 10.4 Báo cáo LaTeX (`Report DACNTT/`), 10.5 Lưu ý khi làm tiếp, 10. Code, demo, kiểm thử và báo cáo
 
 ### Community 60 - "6. Bài toán, câu hỏi nghiên cứu và phạm vi"
 Cohesion: 0.33
@@ -376,16 +378,12 @@ Cohesion: 0.33
 Nodes (6): 8.1 NeuMF-F — mô hình đề xuất (`src/models/hybrid_features.py`), 8.2 Hợp nhất sớm và hợp nhất muộn, 8.3 Mô hình đối chứng và cấu hình đã chọn, 8.4 Ablation NeuMF-F, 8.5 Mô hình lai truyền thống Hybrid-CBCF — bổ sung sau đánh giá cuối, 8. Mô hình
 
 ### Community 62 - "s"
-Cohesion: 0.11
-Nodes (9): bo, et(), H(), s(), label(), mo(), ne(), numeric() (+1 more)
-
-### Community 64 - "build_slides.py"
-Cohesion: 0.11
-Nodes (10): bieu_do(), cat_anh(), ghi_hieu_ung(), _hien(), _hieu_ung(), macros(), morph(), so_voi_truyen_thong() (+2 more)
+Cohesion: 0.12
+Nodes (15): bo, _calculateBarIndexPixels(), et(), _getStackCount(), _getStackIndex(), _getStacks(), H(), ho() (+7 more)
 
 ### Community 65 - "user_rows"
-Cohesion: 0.15
-Nodes (12): filter_users(), _filtered(), position(), random_user(), search_users(), user_position(), at(), user_rows() (+4 more)
+Cohesion: 0.18
+Nodes (8): filter_users(), user_position(), at(), user_rows(), test_filter_users_search_sort_and_position(), test_short_code_finds_customer(), test_user_table_counts_area_age_and_buckets(), _users()
 
 ### Community 66 - "9. Đánh giá, kiểm định và chống thiên lệch"
 Cohesion: 0.40
@@ -396,36 +394,36 @@ Cohesion: 0.33
 Nodes (5): graphify, Lệnh (chạy từ `neumf_project/`, Python 3.12, thêm `PYTHONIOENCODING=utf-8` khi gọi thẳng script), Quy ước báo cáo (`Report DACNTT/`), Ranh giới, Đồ án NeuMF-F (khuyến nghị lai MF + DNN có đặc trưng, H&M + Amazon Beauty)
 
 ### Community 74 - "test_demo.py"
-Cohesion: 0.09
-Nodes (14): amazon_table(), product_table(), user_table(), answers(), results(), _verdict(), _macros(), _report_tools() (+6 more)
+Cohesion: 0.08
+Nodes (15): unavailable_reason(), v2_available(), answers(), results(), _verdict(), datasets(), 7. Cấu trúc mã và API, _macros() (+7 more)
 
 ### Community 75 - "subprocess"
 Cohesion: 0.22
 Nodes (6): _ghi(), _edge(), _html(), _khung(), xuat(), main()
 
 ### Community 76 - "o"
-Cohesion: 0.08
-Nodes (25): a(), aa(), b(), dn(), e(), g(), gi(), Gn() (+17 more)
+Cohesion: 0.09
+Nodes (14): a(), aa(), afterDatasetsUpdate(), configure(), determineDataLimits(), Di(), _i(), j() (+6 more)
 
 ### Community 78 - "BPRMFBaseline"
 Cohesion: 0.14
 Nodes (3): BPRMFBaseline, MostPopularBaseline, RandomBaseline
 
-### Community 79 - "Phần 5. Câu hỏi hội đồng hay hỏi"
-Cohesion: 0.29
-Nodes (7): 5.1 Đề tài và đóng góp, 5.2 Mô hình, 5.3 Dữ liệu, đánh giá và thống kê, 5.4 Kết quả, 5.5 Amazon Beauty và Hybrid-CBCF, 5.6 Quá trình làm (chỉ nói khi được hỏi), Phần 5. Câu hỏi hội đồng hay hỏi
+### Community 79 - "data_context.py"
+Cohesion: 0.21
+Nodes (3): deterministic_tie_key(), rank_positives(), test_tie_ranking_is_deterministic()
 
-### Community 80 - "unavailable_reason"
-Cohesion: 0.10
-Nodes (9): results_dir(), unavailable_reason(), v2_available(), v2_data_mismatch(), datasets(), test_dataset_without_final_results_reports_command_not_training(), test_results_from_other_data_are_refused(), vctx() (+1 more)
+### Community 80 - "results_dir"
+Cohesion: 0.14
+Nodes (7): results_dir(), saved_final_ranks(), v2_data_mismatch(), final_result(), metrics_of(), test_results_from_other_data_are_refused(), 10.3 Kiểm thử
 
 ### Community 81 - ".get"
 Cohesion: 0.19
-Nodes (5): ce(), de, dt(), he(), ia()
+Nodes (5): ce(), de, he(), qs(), te()
 
-### Community 82 - "trainer.py"
-Cohesion: 0.39
-Nodes (3): count_parameters(), _gpu_mem_str(), train_one_model()
+### Community 82 - "fit_torch"
+Cohesion: 0.19
+Nodes (8): base_key(), fit_torch(), is_feature(), torch_scorer(), count_parameters(), _gpu_mem_str(), make_optimizer(), train_one_model()
 
 ### Community 84 - "2. Tiến độ (12/11/2026)"
 Cohesion: 0.40
@@ -436,36 +434,44 @@ Cohesion: 0.40
 Nodes (5): 13.1 Giai đoạn phát triển ban đầu — chỉ dùng ID, 13.2 Bản đầu của kế hoạch đánh giá (khối 1) và vì sao có bản cuối, 13.3 Bản cuối so với giai đoạn phát triển ban đầu, 13.4 Dọn mã (10/10/2026), 13. Lịch sử phát triển
 
 ### Community 86 - "hybrid_features.py"
-Cohesion: 0.10
-Nodes (7): ContentProfile, MaskedScoreFn, MaskedScorer, RecentPopularity, test_content_profile_uses_given_onehot_columns(), test_masked_scorer_puts_unscoreable_items_last(), test_recent_popularity_and_content_profile()
+Cohesion: 0.06
+Nodes (18): 2. Giao thức v2 (`src/data_pipeline/protocol_v2.py`), configs_for(), data_name(), device(), eval_kw(), evaluate(), manifest_path(), read_config() (+10 more)
 
 ### Community 87 - "LateFusion"
-Cohesion: 0.18
-Nodes (6): late_fusion(), LateFusion, minmax(), model_scores(), test_late_fusion_extremes_reproduce_component_ranking(), test_minmax_constant_is_zero()
+Cohesion: 0.17
+Nodes (11): late_fusion(), LateFusion, minmax(), model_scores(), _dense_cosine(), test_itemknn_scores_follow_definition(), test_minmax_constant_is_zero(), test_topk_cosine_matches_dense_bruteforce() (+3 more)
+
+### Community 88 - ".__init__"
+Cohesion: 0.15
+Nodes (6): amazon_table(), product_table(), user_table(), test_amazon_table_maps_metadata_to_item_columns(), test_product_table_uses_first_variant_and_counts_colours(), test_bpr_checkpoint_roundtrip_and_demo_scoring_match()
 
 ### Community 89 - "test_baselines.py"
-Cohesion: 0.13
-Nodes (10): interaction_matrix(), ItemKNNBaseline, topk_cosine(), UserKNNBaseline, _dense_cosine(), test_itemknn_scores_follow_definition(), test_topk_cosine_matches_dense_bruteforce(), test_userknn_scores_and_neighbors() (+2 more)
+Cohesion: 0.17
+Nodes (3): interaction_matrix(), topk_cosine(), UserKNNBaseline
+
+### Community 90 - "test_evaluation.py"
+Cohesion: 0.28
+Nodes (10): build_full_ranking_records_multi(), hr_at_k(), multi_ranking_metrics(), ndcg_at_k(), precision_at_k(), recall_at_k(), test_full_ranking_excludes_seen_and_keeps_positive(), test_multi_metrics_equal_single_item_formulas() (+2 more)
+
+### Community 91 - "EvalRecord"
+Cohesion: 0.16
+Nodes (9): _append(), _empty_metric_lists(), EvalRecord, evaluate_score_function(), evaluate_torch_model(), _per_user_row(), test_per_user_rows_match_summary_and_count_candidates(), test_perfect_model_hr_ndcg_one() (+1 more)
 
 ### Community 93 - "pathlib"
 Cohesion: 0.11
 Nodes (6): test_hm_adapter_rejects_excel(), data(), test_report_claims_detect_changed_results(), _old_select_buckets(), test_blocks_0_and_1_match_old_holdout_logic(), test_last_block_may_hit_end_then_runs_out()
 
-### Community 94 - ".update"
-Cohesion: 0.16
-Nodes (6): addBox(), beforeUpdate(), initialize(), reset(), start(), u()
-
-### Community 97 - ".getLabels"
-Cohesion: 0.15
-Nodes (12): buildTicks(), determineDataLimits(), Fn(), go(), ii(), parse(), parseArrayData(), parseObjectData() (+4 more)
+### Community 96 - "6_bosung.py"
+Cohesion: 0.17
+Nodes (7): component_check(), file_md5(), final(), lock_errors(), opened_tags(), Precomputed, provenance()
 
 ### Community 98 - "slide"
-Cohesion: 0.27
-Nodes (7): anh(), anh_vua(), logo(), nen(), nhan_chuong(), ra_sau(), slide()
+Cohesion: 0.21
+Nodes (8): anh(), anh_vua(), hinh(), logo(), nen(), nhan_chuong(), ra_sau(), slide()
 
-### Community 99 - ".getParsed"
+### Community 99 - ".getLabels"
 Cohesion: 0.10
-Nodes (15): Ae(), _calculateBarIndexPixels(), _calculateBarValuePixels(), getLabelAndValue(), getLabelForValue(), getPixelForTick(), getPixelForValue(), _getRuler() (+7 more)
+Nodes (10): Ae(), buildTicks(), getPixelForTick(), getPixelForValue(), getValueForPixel(), go(), init(), parse() (+2 more)
 
 ### Community 100 - "bam"
 Cohesion: 0.33
@@ -475,43 +481,63 @@ Nodes (3): bam(), pha(), phang()
 Cohesion: 0.50
 Nodes (3): Lối vẽ, Sơ đồ của đề tài, Sửa và xuất lại
 
-### Community 102 - "claims"
-Cohesion: 0.28
-Nodes (4): claims(), by_k_order(), hyb_fifth(), order()
-
 ### Community 103 - "neumf_project — mã nguồn của đề tài"
 Cohesion: 0.22
 Nodes (7): test_metrics_match_per_user_file(), 1. Cài đặt, 2. Dữ liệu, 4. Kiểm thử, 5. Demo, 6. Cấu trúc thư mục, neumf_project — mã nguồn của đề tài
 
-### Community 108 - "ket_qua"
-Cohesion: 0.22
-Nodes (6): du_lieu(), hinh(), ket_qua(), n_better(), the(), the_so()
+### Community 105 - "cn"
+Cohesion: 0.18
+Nodes (8): cn(), dn(), hn(), ln(), rn(), to(), un(), x()
 
-### Community 109 - "Phần 2. Nắm toàn bộ đề tài"
+### Community 107 - "history"
+Cohesion: 0.24
+Nodes (5): history(), recommend(), _user(), test_customer_without_targets_gets_model_recommendations(), test_new_customer_gets_popular_list_instead_of_error()
+
+### Community 108 - "ket_qua"
+Cohesion: 0.20
+Nodes (9): bieu_do(), du_lieu(), ket_qua(), n_better(), nhan_xet(), text(), the(), the_so() (+1 more)
+
+### Community 109 - "claims"
+Cohesion: 0.28
+Nodes (4): claims(), by_k_order(), hyb_fifth(), order()
+
+### Community 110 - "evaluate_v2"
 Cohesion: 0.22
-Nodes (9): 2.1 Bài toán và câu hỏi nghiên cứu (Chương 1), 2.2 Cơ sở lý thuyết (Chương 2), 2.3 Dữ liệu và tiền xử lý (mục 3.2), 2.4 Mô hình đề xuất NeuMF-F (mục 3.3, Hình 3.4), 2.5 Mô hình đối chứng (mục 3.4, Bảng 3.5), 2.6 Quy trình đánh giá (mục 3.7, Hình 3.5), 2.7 Kết quả (Chương 4), 2.8 Demo (mục 3.9) (+1 more)
+Nodes (3): evaluate_v2(), positive_ranks(), _torch_scores()
+
+### Community 111 - "add_par"
+Cohesion: 0.25
+Nodes (6): add_par(), bullets(), chu_thich(), ribbon(), style(), textbox()
+
+### Community 112 - "update"
+Cohesion: 0.29
+Nodes (8): addElements(), es(), is(), pt(), Qi(), ss(), ts(), update()
+
+### Community 113 - "the_bt"
+Cohesion: 0.25
+Nodes (5): chan_trang(), chuoi_buoc(), mui_ten(), the_bt(), vong()
 
 ### Community 116 - "argparse"
 Cohesion: 0.12
 Nodes (8): amazon_image_path(), main(), fetch(), main(), bucket_of(), main(), select_buckets(), main()
 
 ## Knowledge Gaps
-- **21 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
+- **32 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
 
 ## Suggested Questions
 _Questions this graph is uniquely positioned to answer:_
 
-- **Why does `7. Cấu trúc mã và API` connect `.getProps` to `test_demo.py`, `o`, `Demo web — shop thời trang H&M (kèm Amazon Beauty)`?**
-  _High betweenness centrality (0.379) - this node is a cross-community bridge._
+- **Why does `Tổng hợp đồ án: phương pháp, kết quả và tiến độ` connect `Tổng hợp đồ án: phương pháp, kết quả và tiến độ` to `9. Đánh giá, kiểm định và chống thiên lệch`, `README.md`, `2. Tiến độ (12/11/2026)`, `3. Kết quả trên H&M — đánh giá cuối trên mẫu kiểm định`, `13. Lịch sử phát triển`, `4. Kiểm chứng trên Amazon Beauty`, `7. Dữ liệu`, `10. Code, demo, kiểm thử và báo cáo`, `6. Bài toán, câu hỏi nghiên cứu và phạm vi`, `8. Mô hình`?**
+  _High betweenness centrality (0.027) - this node is a cross-community bridge._
 - **Are the 14 inferred relationships involving `s()` (e.g. with `ho()` and `ii()`) actually correct?**
   _`s()` has 14 INFERRED edges - model-reasoned connections that need verification._
-- **Should `data_context.py` be split into smaller, more focused modules?**
-  _Cohesion score 0.051131354687040845 - nodes in this community are weakly interconnected._
-- **Why does `test_results_page_matches_report_macros()` connect `test_demo.py` to `.getProps`, `unavailable_reason`?**
-  _High betweenness centrality (0.349) - this node is a cross-community bridge._
 - **Should `app.js` be split into smaller, more focused modules?**
   _Cohesion score 0.06600877192982456 - nodes in this community are weakly interconnected._
-- **Why does `a()` connect `o` to `i`, `.getLabels`, `.getParsed`, `d`, `no`, `.getContext`, `.getProps`, `.get`, `n`, `chart.umd.min.js`, `va`, `.update`?**
-  _High betweenness centrality (0.157) - this node is a cross-community bridge._
+- **Why does `an()` connect `an` to `.buildOrUpdateControllers`, `bt`, `.notifyPlugins`, `.constructor`, `cn`, `tn`, `draw`, `u`, `chart.umd.min.js`, `s`?**
+  _High betweenness centrality (0.020) - this node is a cross-community bridge._
 - **Should `build_poster.py` be split into smaller, more focused modules?**
-  _Cohesion score 0.09116809116809117 - nodes in this community are weakly interconnected._
+  _Cohesion score 0.10826210826210826 - nodes in this community are weakly interconnected._
+- **Why does `Chuẩn bị bảo vệ trước hội đồng — Mô hình gợi ý lai NeuMF-F` connect `Chuẩn bị bảo vệ trước hội đồng — Mô hình gợi ý lai NeuMF-F` to `README.md`?**
+  _High betweenness centrality (0.019) - this node is a cross-community bridge._
+- **Should `run.py` be split into smaller, more focused modules?**
+  _Cohesion score 0.07446808510638298 - nodes in this community are weakly interconnected._

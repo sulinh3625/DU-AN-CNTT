@@ -1,9 +1,9 @@
 """Bổ sung sau đánh giá cuối: mô hình lai truyền thống Hybrid-CBCF (audit/PREREG_bosung.md).
 
-    python scripts/25_bosung.py tune                     # H&M: chọn cách kết hợp trên tập xác thực của mẫu phát triển
-    python scripts/25_bosung.py final --dry-run          # thử đường ống trên tập xác thực của mẫu phát triển
-    python scripts/25_bosung.py final --reason "..."     # chấm tập kiểm thử một lần (H&M: mẫu kiểm định)
-    NEUMF_CONFIG=configs/amazon.yaml python scripts/25_bosung.py final --reason "..."   # Amazon: cách chọn trên H&M
+    python scripts/6_bosung.py tune                     # H&M: chọn cách kết hợp trên tập xác thực của mẫu phát triển
+    python scripts/6_bosung.py final --dry-run          # thử đường ống trên tập xác thực của mẫu phát triển
+    python scripts/6_bosung.py final --reason "..."     # chấm tập kiểm thử một lần (H&M: mẫu kiểm định)
+    NEUMF_CONFIG=configs/amazon.yaml python scripts/6_bosung.py final --reason "..."   # Amazon: cách chọn trên H&M
 
 Theo góp ý của GVHD (họp 04/10/2026: baseline ba nhóm), một mô hình lai truyền thống được thêm vào nhóm học máy truyền
 thống sau khi đánh giá cuối của 14 mô hình đã xong. Hybrid-CBCF kết hợp ba baseline đã tinh chỉnh — Content, UserKNN,
@@ -15,13 +15,13 @@ logistic theo cặp (khớp chéo hai phần theo khách để số xác thực 
 xác thực) — ghi audit/v2/bosung_tuning_log.csv và cách có NDCG@10 cao nhất vào audit/v2/bosung_best_configs.json. Không
 dựng tập kiểm thử.
 
-final: mô hình tất định nên chấm một lần, dùng cho mọi seed. Khoá kiểm thử như 23_final_v2.py: audit/PREREG_bosung.md đã
+final: mô hình tất định nên chấm một lần, dùng cho mọi seed. Khoá kiểm thử như 5_final.py: audit/PREREG_bosung.md đã
 commit; có --reason; không có file đã theo dõi bị sửa (trừ outputs/ và audit/test_access_log.csv); không có file mã nguồn
 chưa theo dõi trong src/, scripts/, configs/; đã tinh chỉnh; mã băm mã nguồn trùng lúc tinh chỉnh (H&M); run_tag
 bosung_hybrid_<bộ dữ liệu> chưa có trong audit/test_access_log.csv (trừ khi --allow-rerun). Ghi nhật ký TRƯỚC khi chấm.
 Ba thành phần được chấm lại cùng lúc để đối chiếu với lần đánh giá cuối đã đăng ký (hạng từng khách trong
 seed42/per_user.csv.gz).
-Ra <out_dir>/final/bosung/ (dry-run: <out_dir>/dry_run/bosung/): results.json, per_user.csv.gz (cột như 23_final_v2.py,
+Ra <out_dir>/final/bosung/ (dry-run: <out_dir>/dry_run/bosung/): results.json, per_user.csv.gz (cột như 5_final.py,
 một bản cho mỗi seed của đánh giá cuối vì mô hình tất định), topk.json.gz.
 """
 from __future__ import annotations
@@ -43,7 +43,7 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 
-import v2_common as V
+import common as V
 from src.baselines.hybrid import (C_REG, COMPONENTS, FUSIONS, N_NEG, PAIR_SEED, TraditionalHybrid, combine,
                                   crossfit_scores, fit_weights)
 from src.evaluation.v2 import evaluate_v2
@@ -57,8 +57,8 @@ def _script(name: str, file: str):
     return mod
 
 
-F = _script("final_v2", "23_final_v2.py")
-T = _script("tune_v2", "22_tune_v2.py")
+F = _script("final_v2", "5_final.py")
+T = _script("tune_v2", "4_tune.py")
 
 MODEL = "hybrid"
 PREREG = V.PROJECT_ROOT / "audit" / "PREREG_bosung.md"
@@ -173,7 +173,7 @@ def lock_errors(args, prov: dict, hb: dict | None) -> list[str]:
     if untracked:
         errs.append("file mã nguồn chưa theo dõi: " + ", ".join(untracked))
     if hb is None:
-        errs.append(f"chưa tinh chỉnh {V.DISPLAY[MODEL]} — chạy `python scripts/25_bosung.py tune` (H&M) trước")
+        errs.append(f"chưa tinh chỉnh {V.DISPLAY[MODEL]} — chạy `python scripts/6_bosung.py tune` (H&M) trước")
     elif not all(prereg_committed(p) for p in (BEST, *([LOG] if V.TUNED_HERE else []))):
         errs.append(f"kết quả tinh chỉnh ({BEST.name}, {LOG.name}) chưa commit")
     elif V.TUNED_HERE and hb.get("code_hash") != prov["code_hash"] and not args.allow_code_change:
@@ -212,7 +212,7 @@ def final(args) -> None:
         if errs:
             raise SystemExit(f"Khoá kiểm thử ({V.NAME}, bổ sung) — không chạy:\n  - " + "\n  - ".join(errs))
     elif hb is None:
-        raise SystemExit(f"chưa tinh chỉnh {V.DISPLAY[MODEL]} — chạy `python scripts/25_bosung.py tune` trước")
+        raise SystemExit(f"chưa tinh chỉnh {V.DISPLAY[MODEL]} — chạy `python scripts/6_bosung.py tune` trước")
     t0 = time.time()
     if args.dry_run:
         D = V.load_data("dev")
