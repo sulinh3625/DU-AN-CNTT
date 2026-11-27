@@ -20,12 +20,7 @@ Ngoài lịch sử mua, bộ dữ liệu còn có thuộc tính và mô tả vă
 \subsection{Hạn chế của nhân tử hoá ma trận}
 \label{subsec:hanche_cf}
 
-Phương pháp cơ bản của lọc cộng tác (\textit{collaborative filtering}, CF) là nhân tử hoá ma trận (\textit{matrix factorization}, MF). MF gán cho mỗi khách hàng $u$ và mỗi sản phẩm $i$ một vector ẩn $p_u, q_i \in \mathbb{R}^d$, rồi dự đoán mức độ quan tâm bằng tích vô hướng:
-\begin{equation}
-    \hat{y}_{ui} = p_u^T q_i = \sum_{f=1}^{d} p_{uf} q_{if}
-    \label{eq:mf_intro}
-\end{equation}
-Trên dữ liệu H\&M, MF có hai hạn chế:
+Phương pháp cơ bản của lọc cộng tác (\textit{collaborative filtering}, CF) là nhân tử hoá ma trận (\textit{matrix factorization}, MF). MF gán cho mỗi khách hàng $u$ và mỗi sản phẩm $i$ một vector ẩn $p_u, q_i \in \mathbb{R}^d$, rồi dự đoán mức độ quan tâm bằng tích vô hướng $p_u^T q_i$ (mục~\ref{subsec:mf_model}). Trên dữ liệu H\&M, MF có hai hạn chế:
 \begin{itemize}
     \item Về cách kết hợp hai vector: tích vô hướng cộng các chiều ẩn với trọng số như nhau, nên MF chỉ biểu diễn được tương tác tuyến tính giữa khách hàng và sản phẩm.
     \item Về nguồn thông tin: vector $q_i$ chỉ được học từ các lần sản phẩm $i$ được mua. Sản phẩm ít người mua vì vậy có vector kém tin cậy, và tăng số chiều hay huấn luyện lâu hơn không khắc phục được điều này.

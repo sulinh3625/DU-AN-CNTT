@@ -78,7 +78,7 @@ Thứ hạng nêu trong chương tính trên 14 mô hình đăng ký trước. H
 
 Giá trị tuyệt đối của các độ đo thấp vì mỗi khách chỉ có vài sản phẩm mục tiêu giữa hàng nghìn ứng viên. Đoán trước những món khách sẽ mua lần đầu trong 8 tuần tới cũng là bài toán khó với hàng thời trang. Vì vậy điều cần xem là thứ hạng tương đối giữa các mô hình và việc chênh lệch có ý nghĩa thống kê hay không, hơn là giá trị tuyệt đối.
 
-Kết quả tính trên \VData{Btest}{users} khách được đánh giá, mỗi ô ghi giá trị trung bình và độ lệch chuẩn qua 5 seed. Các mô hình không có bước ngẫu nhiên khi huấn luyện có độ lệch chuẩn bằng 0.
+Kết quả tính trên \VData{Btest}{users} khách được đánh giá. Các mô hình không có bước ngẫu nhiên khi huấn luyện có độ lệch chuẩn bằng 0.
 
 \bangketquaV{tab_v2_main.tex}{\texttt{scripts/5\_final.py}}
 
@@ -113,7 +113,7 @@ Kiểm định trên họ \VSig{all}{n} so sánh đã đăng ký (\bangrefV{tab_
     Ở cả ba trường hợp, khoảng tin cậy đều chứa 0, nên kết luận không phụ thuộc vào ngưỡng 5\%.
 \end{itemize}
 
-Mỗi so sánh mô hình A với mô hình B có ba đại lượng: chênh lệch tương đối của NDCG@10, khoảng tin cậy bootstrap 95\% của hiệu theo khách, và giá trị $p$ của kiểm định Wilcoxon sau hiệu chỉnh Holm. Cột kết luận áp dụng tiêu chí ở Mục~\ref{sec:protocol}, và dấu ``---'' nghĩa là không khác biệt có ý nghĩa.
+Mỗi so sánh mô hình A với mô hình B có ba đại lượng: chênh lệch tương đối của NDCG@10, khoảng tin cậy bootstrap 95\% của hiệu theo khách, và giá trị $p$ của kiểm định Wilcoxon sau hiệu chỉnh Holm. Cột kết luận áp dụng tiêu chí ở mục~\ref{sec:protocol}, và dấu ``---'' nghĩa là không khác biệt có ý nghĩa.
 
 \bangketquaV{tab_v2_sig.tex}{\texttt{scripts/5\_final.py}}
 
@@ -129,7 +129,7 @@ So với mô hình lai truyền thống, theo \bangrefV{tab_v2_sigbs.tex}{tab:v2
     \item Hybrid-CBCF so với UserKNN chỉ chênh ít và không khác biệt có ý nghĩa. Điều này khớp với trọng số đã học, dồn phần lớn vào UserKNN, và với việc Content đứng riêng rất yếu trên H\&M.
 \end{itemize}
 
-Hybrid-CBCF được đánh giá trong một phân tích bổ sung, với kế hoạch riêng được cố định trước khi đánh giá trên tập kiểm thử. Cách kết hợp được chọn trên tập xác thực của mẫu phát triển, rồi đánh giá trên tập kiểm thử của mẫu kiểm định với cùng dữ liệu, tập ứng viên và quy tắc xếp thứ tự khi bằng điểm như 14 mô hình còn lại. Hai so sánh bổ sung dùng hiệu chỉnh Holm riêng: B1 đặt NeuMF-F cạnh Hybrid-CBCF, B2 đặt Hybrid-CBCF cạnh UserKNN, thành phần mạnh nhất của nó.
+Hybrid-CBCF được đánh giá trong một phân tích bổ sung, với kế hoạch riêng được cố định trước khi đánh giá trên tập kiểm thử. Cách kết hợp được chọn trên tập xác thực của mẫu phát triển. Mô hình sau đó được đánh giá trên tập kiểm thử của mẫu kiểm định với cùng dữ liệu, tập ứng viên và quy tắc xếp thứ tự khi bằng điểm như 14 mô hình còn lại. Hai so sánh bổ sung dùng hiệu chỉnh Holm riêng: B1 đặt NeuMF-F cạnh Hybrid-CBCF, B2 đặt Hybrid-CBCF cạnh UserKNN, thành phần mạnh nhất của nó.
 
 \bangketquaV{tab_v2_sigbs.tex}{\texttt{scripts/6\_bosung.py final}}
 
@@ -162,7 +162,7 @@ Kết quả về độ phủ:
     \item Random có độ phủ gần như toàn bộ danh mục nhưng độ chính xác thấp nhất, nên độ phủ chỉ có giá trị khi được xem cùng với độ chính xác.
 \end{itemize}
 
-Về chi phí, số epoch được chọn và thời gian huấn luyện đều lấy trung bình qua 5 seed. Cột số epoch chỉ ghi cho các mạng lưới thần kinh, vốn chọn số epoch bằng dừng sớm. Các mô hình còn lại ghi ``---'', kể cả BPR-MF vì số epoch của nó là một siêu tham số cố định trong cấu hình. Các mạng lưới thần kinh chọn trung bình từ 3 đến khoảng 6 epoch, thấp hơn nhiều so với giới hạn 20 epoch. Điều đó cho thấy NDCG@10 trên tập xác thực đạt đỉnh sớm rồi không tăng thêm. LateFusion-F trộn điểm của GMF-F và MLP-F, nên thời gian của nó là tổng thời gian huấn luyện hai nhánh này ở cùng seed.
+Về chi phí, số epoch được chọn và thời gian huấn luyện đều lấy trung bình qua 5 seed. Cột số epoch chỉ ghi cho các mạng lưới thần kinh vì chúng chọn số epoch bằng dừng sớm. Các mô hình còn lại ghi ``---'', kể cả BPR-MF vì số epoch của nó là một siêu tham số cố định trong cấu hình. Các mạng lưới thần kinh chọn trung bình từ 3 đến khoảng 6 epoch, thấp hơn nhiều so với giới hạn 20 epoch. Điều đó cho thấy NDCG@10 trên tập xác thực đạt đỉnh sớm rồi không tăng thêm. LateFusion-F trộn điểm của GMF-F và MLP-F, nên thời gian của nó là tổng thời gian huấn luyện hai nhánh này ở cùng seed.
 
 \bangketquaV{tab_v2_beyond.tex}{\texttt{scripts/5\_final.py}}
 
@@ -266,7 +266,7 @@ Kết quả này cho thấy cách hợp nhất phù hợp phụ thuộc vào d�
 
 Kết luận thứ ba, về NeuMF chỉ dùng ID so với BPR-MF, không đối chiếu được. Trên Amazon, NeuMF tốt hơn BPR-MF có ý nghĩa, trong khi trên H\&M hai mô hình không khác biệt có ý nghĩa. Tuy nhiên BPR-MF trên Amazon dùng cấu hình chọn trên H\&M và kém xa ItemKNN lẫn MostPopular-Recent. Khoảng cách này vì thế nhiều khả năng phản ánh cấu hình không hợp với dữ liệu hơn là ưu thế của NeuMF. Vì lý do tương tự, so sánh NeuMF-F với BPR-MF trên Amazon không được dùng làm thước đo lợi ích của NeuMF-F.
 
-\bangrefA{tab_amz_sig.tex}{tab:amzsig} là kiểm định họ 10 so sánh trên Amazon, với cùng cấu trúc và tiêu chí như trên H\&M. Bảng~\ref{tab:hm_amz_compare} đặt kết luận của hai bộ dữ liệu cạnh nhau, trong đó cột ``Chênh'' là chênh lệch tương đối $(A - B)/B$ của NDCG@10, và hai so sánh có BPR-MF trên Amazon được đánh dấu $^{*}$ vì lý do ở kết luận thứ ba.
+Họ 10 so sánh trên Amazon được kiểm định với cùng cấu trúc và tiêu chí như trên H\&M (\bangrefA{tab_amz_sig.tex}{tab:amzsig}). Bảng~\ref{tab:hm_amz_compare} đặt kết luận của hai bộ dữ liệu cạnh nhau, trong đó cột ``Chênh'' là chênh lệch tương đối $(A - B)/B$ của NDCG@10, và hai so sánh có BPR-MF trên Amazon được đánh dấu $^{*}$ vì lý do ở kết luận thứ ba.
 
 \bangketquaA{tab_amz_sig.tex}
 

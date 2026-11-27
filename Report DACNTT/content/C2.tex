@@ -49,20 +49,17 @@ Vì vậy, mô hình của đề tài lấy lọc cộng tác (nhân tử hoá m
 Theo cách khai thác dữ liệu tương tác, lọc cộng tác chia thành hai nhánh.
 
 Nhánh dựa trên bộ nhớ (\textit{memory-based}) giữ nguyên ma trận tương tác và so trực tiếp các hàng hoặc các cột của nó. Hai khách được coi là giống nhau nếu đã mua nhiều sản phẩm chung, và hai sản phẩm giống nhau nếu có nhiều người cùng mua. Cách làm này không có tham số nào phải học. Với lọc cộng tác theo sản phẩm (ItemKNN) \parencite{sarwar2001item}, độ tương đồng cosine giữa hai sản phẩm $i$ và $j$ được tính trên vector cột tương tác của chúng:
-\begin{equation}
+\begin{equation*}
     \text{sim}(i, j) = \cos(\vec{i}, \vec{j}) = \frac{\vec{i} \cdot \vec{j}}{\lVert \vec{i} \rVert \, \lVert \vec{j} \rVert}
-    \label{eq:cosine_sim}
-\end{equation}
+\end{equation*}
 Với phản hồi ẩn nhị phân, điểm của sản phẩm $i$ đối với người dùng $u$ là tổng độ tương đồng giữa $i$ và các sản phẩm $u$ đã mua, chỉ xét $k$ láng giềng gần nhất (\textit{nearest neighbors}) $\mathcal{N}_k(i)$ của $i$:
-\begin{equation}
+\begin{equation*}
     \hat{y}_{ui} = \sum_{j \in \mathcal{N}_k(i) \cap \mathcal{I}_u} \text{sim}(i, j)
-    \label{eq:itemcf_predict}
-\end{equation}
+\end{equation*}
 Lọc cộng tác theo người dùng (UserKNN) làm đối xứng. Mô hình tìm $k$ người dùng có lịch sử mua giống $u$ nhất, ký hiệu $\mathcal{N}_k(u)$, rồi tính điểm mỗi sản phẩm bằng tổng độ tương đồng của các láng giềng đã mua sản phẩm đó:
-\begin{equation}
+\begin{equation*}
     \hat{y}_{ui} = \sum_{v \in \mathcal{N}_k(u)} \text{sim}(u, v)\, y_{vi}
-    \label{eq:usercf_predict}
-\end{equation}
+\end{equation*}
 Với dữ liệu mua hàng, độ tương đồng cosine thường được tính trên vector mua nhị phân. Mẫu số được cộng thêm hệ số co (\textit{shrinkage}) $\lambda$ để giảm trọng số của các cặp có quá ít tương tác chung: $\text{sim}(a, b) = |\mathcal{I}_a \cap \mathcal{I}_b| / (\sqrt{|\mathcal{I}_a|\,|\mathcal{I}_b|} + \lambda)$, với $\mathcal{I}_a$ là tập sản phẩm $a$ đã mua (hoặc tập người dùng đã mua sản phẩm $a$). Mỗi hàng của ma trận tương đồng chỉ giữ $k$ láng giềng và được lưu dưới dạng ma trận thưa.
 
 Nhánh dựa trên bộ nhớ có ưu điểm và nhược điểm sau:
@@ -83,13 +80,12 @@ Thông tin về sở thích của người dùng có hai dạng:
 \end{itemize}
 
 Tệp giao dịch H\&M không có điểm đánh giá, chỉ có các giao dịch đã xảy ra. Vì vậy đề tài dùng phản hồi ẩn dạng nhị phân, lấy từ sự kiện mua hàng:
-\begin{equation}
+\begin{equation*}
     y_{ui} = \begin{cases}
         1, & \text{nếu người dùng } u \text{ đã mua sản phẩm } i \\
         0, & \text{ngược lại}
     \end{cases}
-    \label{eq:implicit_binary}
-\end{equation}
+\end{equation*}
 Nhãn $y_{ui} = 1$ chỉ xác nhận khách đã mua, không xác nhận khách hài lòng. Nhãn $y_{ui} = 0$ có thể nghĩa là khách chưa biết đến sản phẩm, không nhất thiết là không thích. Do đó các cặp chưa tương tác không thể coi là nhãn âm chắc chắn, và kỹ thuật lấy mẫu âm phải được thiết kế cẩn thận.
 
 \subsection{Độ thưa dữ liệu và vấn đề \textit{cold start}}
@@ -97,8 +93,8 @@ Nhãn $y_{ui} = 1$ chỉ xác nhận khách đã mua, không xác nhận khách 
 
 Lọc cộng tác có hai thách thức chính:
 \begin{itemize}
-    \item Độ thưa dữ liệu. Mỗi khách chỉ mua một phần rất nhỏ trong hàng nghìn sản phẩm, nên gần như mọi ô của ma trận $M \times N$ đều trống. Lọc $k$-core (chỉ giữ khách và sản phẩm có ít nhất $k$ lượt mua) làm giảm độ thưa, nhưng ma trận vẫn rất thưa.
-    \item \textit{Cold start}. Khách vừa đăng ký hoặc sản phẩm vừa lên kệ chưa có lượt mua nào, nên lọc cộng tác không có dữ liệu để học vector cho chúng. Những đối tượng chỉ có ít lượt mua gặp dạng nhẹ hơn của vấn đề này: vector mã ID của chúng kém tin cậy.
+    \item Độ thưa dữ liệu: mỗi khách chỉ mua một phần rất nhỏ trong hàng nghìn sản phẩm, nên gần như mọi ô của ma trận $M \times N$ đều trống. Lọc $k$-core (chỉ giữ khách và sản phẩm có ít nhất $k$ lượt mua) làm giảm độ thưa, nhưng ma trận vẫn rất thưa.
+    \item \textit{Cold start}: khách vừa đăng ký hoặc sản phẩm vừa lên kệ chưa có lượt mua nào, nên lọc cộng tác không có dữ liệu để học vector cho chúng. Những đối tượng chỉ có ít lượt mua gặp dạng nhẹ hơn của vấn đề này: vector mã ID của chúng kém tin cậy.
 \end{itemize}
 
 Đề tài bổ sung đặc trưng nội dung và ngữ cảnh vào mô hình lai chủ yếu để giảm ảnh hưởng của hai thách thức này.
@@ -110,10 +106,9 @@ Lọc cộng tác có hai thách thức chính:
 \label{subsec:mf_model}
 
 Ý tưởng của nhân tử hoá ma trận \parencite{koren2009matrix} là mô tả mỗi người dùng và mỗi sản phẩm bằng $d$ con số, với $d \ll \min(M, N)$. Có thể hình dung mỗi chiều như một ``khẩu vị'' ẩn, chẳng hạn thiên về đồ thể thao hay đồ công sở, dù mô hình không đặt tên cho các chiều này. Người dùng $u$ ứng với vector $p_u \in \mathbb{R}^d$, sản phẩm $i$ ứng với $q_i \in \mathbb{R}^d$, và điểm dự đoán là tích vô hướng của hai vector:
-\begin{equation}
+\begin{equation*}
     \hat{y}_{ui} = p_u^T q_i = \sum_{f=1}^{d} p_{uf} q_{if}
-    \label{eq:mf_dot}
-\end{equation}
+\end{equation*}
 Các biến thể của MF khác nhau ở cách học hai ma trận $P$ và $Q$. Phân tích giá trị suy biến (\textit{singular value decomposition}, SVD) cổ điển cần ma trận đầy đủ, vì vậy không áp dụng trực tiếp được cho ma trận tương tác thưa, nơi phần lớn ô chưa được quan sát. Các biến thể dùng trong hệ thống khuyến nghị thay vào đó tối ưu sai số trên các ô đã biết, kèm điều chuẩn (\textit{regularization}). Với phản hồi ẩn, BPR tối ưu trực tiếp thứ hạng theo cặp, và đề tài dùng BPR-MF làm mô hình đối chứng MF chính.
 
 \subsection{Hạn chế của tích vô hướng}
@@ -125,10 +120,9 @@ Tích vô hướng kết hợp các chiều ẩn theo dạng tuyến tính. Các
 \label{subsec:bpr}
 
 MF, GMF và MLP được huấn luyện như một bài toán phân loại, trong đó mỗi cặp $(u, i)$ được tính điểm riêng thành $\hat{y}_{ui}$ rồi so với nhãn 0 hoặc 1. Trong khi đó, hệ thống khuyến nghị chỉ cần xếp đúng thứ tự: món khách sẽ mua phải đứng trên món khách không mua. Bayesian Personalized Ranking (BPR) \parencite{rendle2009bpr} huấn luyện thẳng theo yêu cầu này, với giả định người dùng thích một sản phẩm đã tương tác $i$ hơn một sản phẩm chưa tương tác $j$. Với mỗi bộ ba $(u, i, j)$ trong đó $i \in \mathcal{I}_u$ và $j \notin \mathcal{I}_u$, hàm mất mát BPR là:
-\begin{equation}
+\begin{equation*}
     \mathcal{L}_{BPR} = -\sum_{(u,i,j) \in \mathcal{D}_S} \ln \sigma\left(\hat{y}_{ui} - \hat{y}_{uj}\right) + \lambda_\Theta \lVert \Theta \rVert^2
-    \label{eq:bpr_loss}
-\end{equation}
+\end{equation*}
 trong đó $\mathcal{D}_S$ là tập các bộ ba được lấy mẫu. Khi $\hat{y}_{ui}$ là tích vô hướng $p_u^T q_i$ của MF, ta có mô hình BPR-MF, một mô hình đối chứng của đề tài. Mục tiêu theo cặp của BPR sát với bài toán xếp hạng Top-$K$ hơn hàm mất mát theo từng điểm, nhưng BPR-MF vẫn là mô hình tuyến tính.
 
 \section{Kiến trúc lọc cộng tác bằng mạng lưới thần kinh (NCF)}
@@ -140,45 +134,39 @@ Kiến trúc NCF do \textcite{he2017ncf} đề xuất gồm hai mô hình thành
 \label{subsec:gmf}
 
 GMF viết lại MF dưới dạng một mạng lưới thần kinh. Thay vì cộng ngay các tích $p_{uf} q_{if}$ như MF, GMF giữ chúng thành một vector bằng phép nhân từng phần tử (tích Hadamard, ký hiệu $\odot$) giữa vector nhúng của người dùng $p_u^G$ và của sản phẩm $q_i^G$:
-\begin{equation}
+\begin{equation*}
     \phi^{GMF} = p_u^G \odot q_i^G
-    \label{eq:gmf_hadamard}
-\end{equation}
-\begin{equation}
+\end{equation*}
+\begin{equation*}
     \hat{y}_{ui}^{GMF} = \sigma \left( h^T \phi^{GMF} \right) = \sigma \left( h^T (p_u^G \odot q_i^G) \right)
-    \label{eq:gmf_predict}
-\end{equation}
+\end{equation*}
 trong đó $h$ là vector trọng số của lớp đầu ra và $\sigma(x) = 1 / (1 + e^{-x})$ là hàm sigmoid. Nếu mọi phần tử của $h$ bằng 1 và bỏ hàm sigmoid, GMF trở về đúng MF. Khi $h$ được học, mỗi chiều ẩn có trọng số riêng.
 
 \subsection{Multi-Layer Perceptron (MLP)}
 \label{subsec:mlp}
 
 Nhánh MLP nối vector nhúng $p_u^M$ và $q_i^M$ thành đầu vào của một chuỗi lớp ẩn:
-\begin{equation}
+\begin{equation*}
     z_1 = \phi_1^{MLP} = \begin{bmatrix} p_u^M \\ q_i^M \end{bmatrix}
-    \label{eq:mlp_concat}
-\end{equation}
-\begin{equation}
+\end{equation*}
+\begin{equation*}
     \phi_L^{MLP} = a_L \left( W_L^T \phi_{L-1}^{MLP} + b_L \right)
-    \label{eq:mlp_layerL}
-\end{equation}
+\end{equation*}
 trong đó $W_L$, $b_L$ và $a_L$ lần lượt là ma trận trọng số, vector độ lệch (\textit{bias}) và hàm kích hoạt phi tuyến (ví dụ ReLU) của lớp thứ $L$. Cấu trúc này cho phép mô hình học tương tác phi tuyến giữa biểu diễn của người dùng và của sản phẩm.
 
 \subsection{Mô hình lai NeuMF}
 \label{subsec:neumf_arch}
 
 NeuMF ghép song song nhánh tuyến tính GMF và nhánh phi tuyến MLP trước lớp dự đoán:
-\begin{equation}
+\begin{equation*}
     \phi^{NeuMF} = \begin{bmatrix} \phi^{GMF} \\ \phi_L^{MLP} \end{bmatrix} = \begin{bmatrix} p_u^G \odot q_i^G \\ \phi_L^{MLP} \end{bmatrix}
-    \label{eq:neumf_concat}
-\end{equation}
-\begin{equation}
+\end{equation*}
+\begin{equation*}
     \hat{y}_{ui} = \sigma \left( h^T \begin{bmatrix} p_u^G \odot q_i^G \\ \phi_L^{MLP} \end{bmatrix} \right)
-    \label{eq:neumf_prediction}
-\end{equation}
-Chữ ``lai'' trong tên đề tài trước hết chỉ việc kết hợp hai cách mô hình hoá tương tác, nhân tử hoá ma trận (tuyến tính) và mạng lưới thần kinh sâu (phi tuyến), trong cùng một mô hình. Vì hai nhánh được ghép ngay ở mức biểu diễn, trước lớp dự đoán, NeuMF là một mô hình hợp nhất sớm. Mô hình đề xuất NeuMF-F giữ cấu trúc này và bổ sung đặc trưng sản phẩm, khách hàng và thời gian vào vector của cả hai nhánh. Vì kết hợp lọc cộng tác với thông tin nội dung, NeuMF-F cũng là một hệ thống khuyến nghị lai theo nghĩa rộng.
+\end{equation*}
+Chữ ``lai'' trong tên đề tài trước hết chỉ việc kết hợp hai cách mô hình hoá tương tác, nhân tử hoá ma trận (tuyến tính) và mạng lưới thần kinh sâu (phi tuyến), trong cùng một mô hình. Mô hình đề xuất NeuMF-F giữ cấu trúc này và bổ sung đặc trưng sản phẩm, khách hàng và thời gian vào vector của cả hai nhánh. Vì kết hợp lọc cộng tác với thông tin nội dung, NeuMF-F cũng là một hệ thống khuyến nghị lai theo nghĩa rộng.
 
-Hình~\ref{fig:neumf_architecture} vẽ kiến trúc NeuMF, với các điểm sau:
+Kiến trúc NeuMF (Hình~\ref{fig:neumf_architecture}) có các điểm sau:
 \begin{itemize}
     \item Người dùng và sản phẩm được mã hoá one-hot.
     \item Mỗi nhánh có bộ vector nhúng riêng.
@@ -199,28 +187,25 @@ Hình~\ref{fig:neumf_architecture} vẽ kiến trúc NeuMF, với các điểm s
 Khi hệ thống khuyến nghị kết hợp nhiều nguồn thông tin, hay nhiều góc nhìn về người dùng và sản phẩm, có hai cách hợp nhất cơ bản. Hai cách này khác nhau ở mức diễn ra phép hợp nhất \parencite{holinh2023multisource}.
 \begin{itemize}
     \item Hợp nhất sớm diễn ra ở mức đặc trưng hoặc biểu diễn. Các vector $v_1, \dots, v_m$ của từng góc nhìn được nối thành một biểu diễn chung, rồi một mô hình $h$ duy nhất học tương tác giữa chúng và đưa ra dự đoán:
-    \begin{equation}
+    \begin{equation*}
         p = h\big([v_1;\, v_2;\, \dots;\, v_m]\big)
-        \label{eq:early_fusion}
-    \end{equation}
+    \end{equation*}
     \item Hợp nhất muộn diễn ra ở mức điểm dự đoán. Mỗi góc nhìn được xử lý bởi một mô hình riêng $h_j$, rồi các dự đoán được kết hợp bằng một cơ chế $F$, như lấy trung bình, bỏ phiếu, trọng số cố định hoặc một mô hình học:
-    \begin{equation}
+    \begin{equation*}
         p = F\big(h_1(v_1),\, h_2(v_2),\, \dots,\, h_m(v_m)\big)
-        \label{eq:late_fusion}
-    \end{equation}
+    \end{equation*}
     Khi $F$ là tổng có trọng số, đây chính là cách lai có trọng số trong phân loại của Burke. Mô hình lai ở chương 3 luận án thuộc loại này, và mô hình đối chứng Hybrid-CBCF của đề tài cũng vậy. Ở hai mô hình này, $F$ là bỏ phiếu hoặc tổng có trọng số của điểm từ ba mô hình truyền thống.
 \end{itemize}
 
 Ưu điểm của hợp nhất sớm là học được tương tác giữa các nguồn thông tin, nhưng nó đòi hỏi một mô hình phù hợp với mọi nguồn. Hợp nhất muộn linh hoạt hơn, song chỉ làm việc trên kết quả dự đoán nên không nắm được tương tác đó.
 
-Trong đề tài, hai góc nhìn chính là hai cách mô hình hoá tương tác: góc nhìn tuyến tính của nhánh MF (vector $p_u^G \odot q_i^G$ của GMF) và góc nhìn phi tuyến của nhánh DNN (vector cuối $\phi_L^{MLP}$ của MLP). NeuMF nối hai vector này rồi đưa qua một lớp dự đoán chung (Công thức~\eqref{eq:neumf_concat}, \eqref{eq:neumf_prediction}). Đây là hợp nhất sớm ở mức biểu diễn, và cả mạng được huấn luyện chung từ đầu đến cuối, như phần (a) của Hình~\ref{fig:fusion_compare}. Mô hình đề xuất của đề tài giữ cách hợp nhất này. Ngoài ra, đặc trưng nội dung và ngữ cảnh được cộng vào vector của từng nhánh ngay ở đầu vào, do đó cũng được hợp nhất sớm với thông tin cộng tác.
+Trong đề tài, hai góc nhìn chính là hai cách mô hình hoá tương tác: góc nhìn tuyến tính của nhánh MF (vector $p_u^G \odot q_i^G$ của GMF) và góc nhìn phi tuyến của nhánh DNN (vector cuối $\phi_L^{MLP}$ của MLP). NeuMF nối hai vector này rồi đưa qua một lớp dự đoán chung (mục~\ref{subsec:neumf_arch}). Đây là hợp nhất sớm ở mức biểu diễn, và cả mạng được huấn luyện chung từ đầu đến cuối, như phần (a) của Hình~\ref{fig:fusion_compare}. Mô hình đề xuất của đề tài giữ cách hợp nhất này. Ngoài ra, đặc trưng nội dung và ngữ cảnh được cộng vào vector của từng nhánh ngay ở đầu vào, do đó cũng được hợp nhất sớm với thông tin cộng tác.
 
 Hợp nhất muộn tương ứng là trộn điểm của hai mô hình MF và DNN được huấn luyện riêng:
-\begin{equation}
+\begin{equation*}
     \hat{y}_{ui} = w\,\tilde{s}^{MF}_{ui} + (1-w)\,\tilde{s}^{DNN}_{ui}, \qquad
     \tilde{s}_{ui} = \frac{s_{ui} - \min_{j \in \mathcal{C}_u} s_{uj}}{\max_{j \in \mathcal{C}_u} s_{uj} - \min_{j \in \mathcal{C}_u} s_{uj}}
-    \label{eq:late_fusion_mfdnn}
-\end{equation}
+\end{equation*}
 trong đó điểm $s_{ui}$ của mỗi mô hình được chuẩn hoá min--max trên tập ứng viên $\mathcal{C}_u$ để hai thang điểm so sánh được. Tập ứng viên là các sản phẩm được đem ra xếp hạng cho người dùng $u$. Trọng số $w \in [0, 1]$ được chọn trên tập xác thực. Với $w = 1$ hoặc $w = 0$, thứ hạng trùng với thứ hạng của từng thành phần. Trong đề tài, mô hình hợp nhất muộn LateFusion-F trộn điểm của hai nhánh có đặc trưng được huấn luyện riêng, như phần (b) của Hình~\ref{fig:fusion_compare}. Riêng nhánh MLP khi đứng một mình chỉ nối vector người dùng và sản phẩm ở đầu vào. Đó là một mô hình DNN thuần, chưa có phần MF.
 
 \begin{figure}[H]
@@ -234,10 +219,9 @@ trong đó điểm $s_{ui}$ của mỗi mô hình được chuẩn hoá min--max
 \label{subsec:negative_sampling_loss}
 
 Dữ liệu mua hàng chỉ cho biết khách đã mua gì, vì vậy chỉ có nhãn dương ($y_{ui} = 1$). Để mô hình học được cả chiều ngược lại, NCF lấy mẫu âm: với mỗi lượt mua, chọn ngẫu nhiên vài sản phẩm khách chưa mua và tạm coi là nhãn âm ($y_{ui} = 0$). Mô hình sau đó được huấn luyện như một bộ phân loại nhị phân, với hàm mất mát entropy chéo nhị phân (BCE):
-\begin{equation}
+\begin{equation*}
     \mathcal{L}_{BCE} = -\sum_{(u, i) \in \mathcal{Y} \cup \mathcal{Y}^-} \left[ y_{ui} \log \hat{y}_{ui} + (1 - y_{ui}) \log (1 - \hat{y}_{ui}) \right]
-    \label{eq:bce_loss}
-\end{equation}
+\end{equation*}
 trong đó $\mathcal{Y}$ là tập tương tác dương và $\mathcal{Y}^-$ là tập cặp âm được lấy mẫu.
 
 \section{Mô hình lai dựa trên đặc trưng}
@@ -274,27 +258,24 @@ Ngoài mô hình lai dựa trên đặc trưng, hệ thống khuyến nghị cò
 Với mỗi người dùng được đánh giá $u$, mô hình xếp hạng tập ứng viên $\mathcal{C}_u$ và trả về danh sách $\text{Rec}_K(u)$ gồm $K$ sản phẩm đầu. Gọi $T_u$ là tập sản phẩm mục tiêu của $u$ và $\text{hits}_u = |T_u \cap \text{Rec}_K(u)|$. Khi chia dữ liệu theo một mốc thời gian chung như trong đề tài, một người dùng có thể có nhiều sản phẩm mục tiêu. Mọi độ đo được tính cho từng người dùng rồi lấy trung bình trên tập người dùng được đánh giá $\mathcal{U}_{test}$.
 
 Hit Ratio (HR@K) là độ đo đơn giản nhất. Nó kiểm tra trong $K$ khuyến nghị có ít nhất một món khách thật sự mua hay không. Mỗi người dùng được tính 1 nếu có và 0 nếu không:
-\begin{equation}
+\begin{equation*}
     \text{HR@K} = \frac{1}{|\mathcal{U}_{test}|} \sum_{u \in \mathcal{U}_{test}} \mathbb{I}\left( \text{hits}_u \ge 1 \right)
-    \label{eq:hr_k}
-\end{equation}
+\end{equation*}
 
 Precision@K là tỉ lệ khuyến nghị đúng trong $K$ khuyến nghị, đo độ chính xác từ phía danh sách. Recall@K là tỉ lệ các món khách thật sự mua đã có mặt trong danh sách, đo độ bao phủ từ phía khách:
-\begin{equation}
+\begin{equation*}
     \text{Precision@K}(u) = \frac{\text{hits}_u}{K}, \qquad \text{Recall@K}(u) = \frac{\text{hits}_u}{|T_u|}
-    \label{eq:precision_recall}
-\end{equation}
+\end{equation*}
 Khi $|T_u| = 1$, Recall@K trùng HR@K và Precision@K bằng HR@K chia cho $K$. Hai độ đo này chỉ mang thông tin riêng khi người dùng có nhiều sản phẩm mục tiêu.
 
 Ba độ đo trên không phân biệt món đúng nằm ở vị trí đầu hay vị trí thứ $K$, trong khi người dùng thường chỉ xem vài khuyến nghị đầu. NDCG@K (\textit{normalized discounted cumulative gain}) tính đến vị trí bằng cách giảm dần đóng góp của một món đúng khi nó nằm càng xa đầu danh sách. Độ đo này do \textcite{jarvelin2002} đề xuất. Với mức liên quan nhị phân, đề tài dùng dạng thường gặp trong đánh giá hệ thống khuyến nghị:
-\begin{equation}
+\begin{equation*}
     \begin{aligned}
         \text{NDCG@K}(u) &= \frac{\text{DCG@K}(u)}{\text{IDCG@K}(u)}, \\
         \text{DCG@K}(u) &= \sum_{j=1}^{K} \frac{\mathbb{I}(\text{Rec}_K(u)_j \in T_u)}{\log_2(j + 1)}, \\
         \text{IDCG@K}(u) &= \sum_{j=1}^{\min(|T_u|, K)} \frac{1}{\log_2(j + 1)}
     \end{aligned}
-    \label{eq:ndcg_k}
-\end{equation}
+\end{equation*}
 IDCG là giá trị DCG khi mọi sản phẩm mục tiêu xếp ở đầu danh sách, nên NDCG@K nằm trong $[0, 1]$. Với $|T_u| = 1$ và sản phẩm mục tiêu ở hạng $r$, NDCG@K bằng $1/\log_2(r+1)$ nếu $r \le K$ và bằng 0 nếu ngược lại.
 
 \subsection{Xếp hạng toàn bộ và xếp hạng trên tập lấy mẫu}
@@ -305,10 +286,9 @@ Một số công trình, trong đó có NCF, đánh giá bằng cách xếp sả
 \label{subsec:beyond_accuracy}
 
 Một mô hình chỉ khuyến nghị những món bán chạy nhất vẫn có thể đạt HR@K khá, vì món bán chạy dễ trúng, nhưng danh sách của nó gần như giống nhau với mọi khách. Để mô tả danh sách khuyến nghị ngoài độ chính xác, đề tài dùng độ phủ (\textit{coverage}): tỉ lệ sản phẩm của không gian ứng viên $\mathcal{I}_{cand}$ xuất hiện trong danh sách khuyến nghị của ít nhất một người dùng:
-\begin{equation}
+\begin{equation*}
     \text{Coverage@K} = \frac{\left| \bigcup_{u \in \mathcal{U}_{test}} \text{Rec}_K(u) \right|}{|\mathcal{I}_{cand}|}
-    \label{eq:coverage}
-\end{equation}
+\end{equation*}
 Độ phủ thấp cho thấy mô hình chỉ dùng một phần nhỏ danh mục. Trường hợp giới hạn là Most Popular, khi mọi người dùng nhận gần như cùng một danh sách. Độ đo này chỉ mang tính mô tả.
 
 \section{Ba nghiên cứu nền tảng}
@@ -322,9 +302,7 @@ Một mô hình chỉ khuyến nghị những món bán chạy nhất vẫn có 
     \item Luận án của \textcite{holinh2023multisource} hệ thống hoá hai cách hợp nhất sớm, muộn và việc bổ sung nguồn thông tin ngoài ma trận tương tác.
 \end{itemize}
 
-Bảng~\ref{tab:foundation_studies} đối chiếu thiết lập thực nghiệm của ba nghiên cứu với đề tài, với số liệu lấy từ bài gốc.
-
-Các con số này không so sánh trực tiếp được với nhau:
+Thiết lập thực nghiệm của ba nghiên cứu và của đề tài được đặt cạnh nhau trong Bảng~\ref{tab:foundation_studies}, với số liệu lấy từ bài gốc. Các con số này không so sánh trực tiếp được với nhau:
 \begin{itemize}
     \item Hai bài về NCF xếp sản phẩm mục tiêu giữa 101 ứng viên, nên HR@10 đạt khoảng 0,7 đến 0,9.
     \item Đề tài xếp hạng trên khoảng 6 đến 7 nghìn ứng viên, nên cùng độ đo cho giá trị thấp hơn nhiều.

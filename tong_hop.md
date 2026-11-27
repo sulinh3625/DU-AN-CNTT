@@ -1034,6 +1034,26 @@ Kết luận giống nhau ở cả hai giai đoạn trên H&M: NeuMF chỉ dùng
 - Bỏ phần tính chỉ số sản phẩm cũ/mới khỏi `evaluate_v2` (không còn sản phẩm mới); chỉ số chính không đổi (đã so với bản
   cũ: trùng từng số).
 
+### 13.5 Đổi tên script (27/11/2026, commit `12abda7`)
+
+Các script trong `scripts/` được đánh số lại theo thứ tự chạy; nội dung không đổi, mọi chỗ gọi đã cập nhật theo tên mới.
+`audit/PREREG*.md`, `audit/test_access_log.csv` và các tệp trong `outputs/` vẫn ghi tên cũ vì đó là vết của lúc chạy.
+
+| Tên cũ | Tên mới |
+|---|---|
+| `00_sample_hm.py` | `1_sample.py` |
+| `02_prepare_data.py` | `2_prepare.py` |
+| `21_build_features.py` | `3_features.py` |
+| `22_tune_v2.py` | `4_tune.py` |
+| `23_final_v2.py` | `5_final.py` |
+| `25_bosung.py` | `6_bosung.py` |
+| `24_report_v2.py` | `7_report.py` |
+| `19_check_report.py` | `8_check_report.py` |
+| `v2_common.py` | `common.py` |
+
+Mã băm mã nguồn (`code_hash`) có tính cả đường dẫn tệp, nên sau khi đổi tên sẽ khác mã băm ghi lúc tinh chỉnh. Việc này
+chỉ ảnh hưởng nếu chạy lại `5_final.py`/`6_bosung.py final` (đã chạy xong, không chạy lại); kết quả đã lưu không đổi.
+
 ---
 
 ## 14. Danh sách file và tài liệu tham khảo
